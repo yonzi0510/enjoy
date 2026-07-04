@@ -1,0 +1,192 @@
+/* 단어 사전: 집·물건·장난감 — 계약
+ *  CATS.push({ id, name, emoji })  ·  WORDS.push({ ko, alt:[], en, read, emoji, cat })
+ *  - ko: 대표 한국어(매칭용), alt: 발음 변형·유의어(선택), en: 영어(소문자),
+ *    read: 한글 발음 표기, emoji: 그림 1개, cat: 카테고리 id
+ *  - en은 사전 전체에서 유일해야 함. 1글자 ko는 오탐 주의(가급적 2글자+)
+ */
+window.WORDS = window.WORDS || [];
+window.CATS = window.CATS || [];
+
+CATS.push({ id: 'home', name: '집·물건', emoji: '🏠' });
+
+[
+  // ── 집·공간 ──
+  { ko: '집', alt: ['우리집'], en: 'house', read: '하우스', emoji: '🏠' },
+  { ko: '방', alt: ['안방'], en: 'room', read: '룸', emoji: '🏡' },
+  { ko: '문', alt: ['대문'], en: 'door', read: '도어', emoji: '🚪' },
+  { ko: '창문', en: 'window', read: '윈도우', emoji: '🪟' },
+  { ko: '침대', en: 'bed', read: '베드', emoji: '🛏️' },
+  { ko: '의자', en: 'chair', read: '체어', emoji: '🪑' },
+  { ko: '책상', en: 'desk', read: '데스크', emoji: '🖥️' },
+  { ko: '소파', alt: ['쇼파'], en: 'sofa', read: '소파', emoji: '🛋️' },
+  { ko: '화장실', alt: ['욕실'], en: 'bathroom', read: '배스룸', emoji: '🚻' },
+  { ko: '변기', en: 'toilet', read: '토일렛', emoji: '🚽' },
+  { ko: '부엌', alt: ['주방'], en: 'kitchen', read: '키친', emoji: '🍳' },
+  { ko: '계단', en: 'stairs', read: '스테어즈', emoji: '🪜' },
+  { ko: '거울', en: 'mirror', read: '미러', emoji: '🪞' },
+  { ko: '시계', alt: ['벽시계'], en: 'clock', read: '클락', emoji: '⏰' },
+
+  // ── 욕실·생활용품 ──
+  { ko: '칫솔', en: 'toothbrush', read: '투스브러시', emoji: '🪥' },
+  { ko: '치약', en: 'toothpaste', read: '투스페이스트', emoji: '🦷' },
+  { ko: '비누', en: 'soap', read: '소프', emoji: '🧼' },
+  { ko: '수건', alt: ['타올'], en: 'towel', read: '타월', emoji: '🧺' },
+  { ko: '휴지', alt: ['화장지'], en: 'tissue', read: '티슈', emoji: '🧻' },
+  { ko: '욕조', en: 'bathtub', read: '배스텁', emoji: '🛁' },
+  { ko: '샤워기', en: 'shower', read: '샤워', emoji: '🚿' },
+  { ko: '샴푸', en: 'shampoo', read: '샴푸', emoji: '🧴' },
+  { ko: '빗', alt: ['머리빗'], en: 'comb', read: '콤', emoji: '🪮' },
+  { ko: '우산', en: 'umbrella', read: '엄브렐라', emoji: '☂️' },
+  { ko: '열쇠', en: 'key', read: '키', emoji: '🔑' },
+  { ko: '자물쇠', en: 'lock', read: '락', emoji: '🔒' },
+  { ko: '전화', alt: ['전화기'], en: 'phone', read: '폰', emoji: '☎️' },
+  { ko: '휴대폰', alt: ['핸드폰', '스마트폰'], en: 'smartphone', read: '스마트폰', emoji: '📱' },
+  { ko: '텔레비전', alt: ['티비', '테레비'], en: 'television', read: '텔레비전', emoji: '📺' },
+  { ko: '컴퓨터', en: 'computer', read: '컴퓨터', emoji: '💻' },
+  { ko: '카메라', alt: ['사진기'], en: 'camera', read: '카메라', emoji: '📷' },
+  { ko: '전등', alt: ['램프', '전구'], en: 'lamp', read: '램프', emoji: '💡' },
+  { ko: '손전등', alt: ['후레쉬'], en: 'flashlight', read: '플래시라이트', emoji: '🔦' },
+  { ko: '배터리', alt: ['건전지'], en: 'battery', read: '배터리', emoji: '🔋' },
+  { ko: '자석', en: 'magnet', read: '마그넷', emoji: '🧲' },
+  { ko: '쓰레기통', alt: ['휴지통'], en: 'trash can', read: '트래시 캔', emoji: '🗑️' },
+  { ko: '빗자루', en: 'broom', read: '브룸', emoji: '🧹' },
+  { ko: '베개', alt: ['배게'], en: 'pillow', read: '필로우', emoji: '🛌' },
+  { ko: '이불', en: 'blanket', read: '블랭킷', emoji: '🛏️' },
+  { ko: '라디오', en: 'radio', read: '라디오', emoji: '📻' },
+  { ko: '스피커', en: 'speaker', read: '스피커', emoji: '🔊' },
+  { ko: '헤드폰', alt: ['헤드셋'], en: 'headphones', read: '헤드폰', emoji: '🎧' },
+  { ko: '부채', en: 'fan', read: '팬', emoji: '🪭' },
+  { ko: '망치', en: 'hammer', read: '해머', emoji: '🔨' },
+  { ko: '반창고', alt: ['밴드'], en: 'bandage', read: '밴디지', emoji: '🩹' },
+  { ko: '달력', en: 'calendar', read: '캘린더', emoji: '📅' },
+  { ko: '지도', en: 'map', read: '맵', emoji: '🗺️' },
+  { ko: '지구본', en: 'globe', read: '글로브', emoji: '🌍' },
+  { ko: '텐트', en: 'tent', read: '텐트', emoji: '⛺' },
+  { ko: '비눗방울', alt: ['버블'], en: 'bubbles', read: '버블즈', emoji: '🫧' },
+
+  // ── 학용품·미술 ──
+  { ko: '책', alt: ['그림책'], en: 'book', read: '북', emoji: '📖' },
+  { ko: '공책', alt: ['노트'], en: 'notebook', read: '노트북', emoji: '📓' },
+  { ko: '연필', en: 'pencil', read: '펜슬', emoji: '✏️' },
+  { ko: '크레용', alt: ['크레파스'], en: 'crayon', read: '크레용', emoji: '🖍️' },
+  { ko: '종이', alt: ['색종이'], en: 'paper', read: '페이퍼', emoji: '📄' },
+  { ko: '가위', en: 'scissors', read: '시저스', emoji: '✂️' },
+  { ko: '풀', alt: ['딱풀'], en: 'glue', read: '글루', emoji: '🫙' },
+  { ko: '테이프', en: 'tape', read: '테이프', emoji: '📼' },
+  { ko: '가방', alt: ['책가방', '배낭'], en: 'bag', read: '백', emoji: '🎒' },
+  { ko: '붓', alt: ['그림붓'], en: 'brush', read: '브러시', emoji: '🖌️' },
+  { ko: '물감', en: 'paint', read: '페인트', emoji: '🎨' },
+  { ko: '스티커', en: 'sticker', read: '스티커', emoji: '🏷️' },
+  { ko: '편지', alt: ['편지지'], en: 'letter', read: '레터', emoji: '✉️' },
+  { ko: '카드', en: 'card', read: '카드', emoji: '💌' },
+
+  // ── 장난감·놀이 ──
+  { ko: '공', alt: ['축구공'], en: 'ball', read: '볼', emoji: '⚽' },
+  { ko: '풍선', en: 'balloon', read: '벌룬', emoji: '🎈' },
+  { ko: '인형', en: 'doll', read: '돌', emoji: '🪆' },
+  { ko: '곰인형', alt: ['곰돌이인형'], en: 'teddy bear', read: '테디 베어', emoji: '🧸' },
+  { ko: '로봇', alt: ['로보트'], en: 'robot', read: '로봇', emoji: '🤖' },
+  { ko: '블록', alt: ['블럭'], en: 'blocks', read: '블록스', emoji: '🧱' },
+  { ko: '퍼즐', en: 'puzzle', read: '퍼즐', emoji: '🧩' },
+  { ko: '주사위', en: 'dice', read: '다이스', emoji: '🎲' },
+  { ko: '요요', en: 'yoyo', read: '요요', emoji: '🪀' },
+  { ko: '연', alt: ['방패연'], en: 'kite', read: '카이트', emoji: '🪁' },
+  { ko: '그네', en: 'swing', read: '스윙', emoji: '🛝' },
+  { ko: '미끄럼틀', alt: ['미끄럼'], en: 'slide', read: '슬라이드', emoji: '🛝' },
+  { ko: '씽씽카', en: 'kick scooter', read: '킥 스쿠터', emoji: '🛴' }, // '킥보드'는 탈것(scooter) 소관
+  { ko: '물총', en: 'water gun', read: '워터 건', emoji: '🔫' },
+  { ko: '줄넘기', en: 'jump rope', read: '점프 로프', emoji: '🪢' },
+  { ko: '장난감', en: 'toy', read: '토이', emoji: '🪅' },
+
+  // ── 악기 ──
+  { ko: '피아노', en: 'piano', read: '피아노', emoji: '🎹' },
+  { ko: '기타', en: 'guitar', read: '기타', emoji: '🎸' },
+  { ko: '드럼', en: 'drum', read: '드럼', emoji: '🥁' },
+  { ko: '탬버린', alt: ['템버린'], en: 'tambourine', read: '탬버린', emoji: '🪘' },
+  { ko: '트럼펫', alt: ['나팔'], en: 'trumpet', read: '트럼펫', emoji: '🎺' },
+  { ko: '바이올린', en: 'violin', read: '바이올린', emoji: '🎻' },
+  { ko: '실로폰', en: 'xylophone', read: '자일로폰', emoji: '🎵' },
+  { ko: '마이크', en: 'microphone', read: '마이크로폰', emoji: '🎤' },
+
+  // ── 기타(선물·파티·보물) ──
+  { ko: '선물', alt: ['선물상자'], en: 'gift', read: '기프트', emoji: '🎁' },
+  { ko: '고깔모자', alt: ['파티모자'], en: 'party hat', read: '파티 햇', emoji: '🥳' },
+  { ko: '돈', alt: ['용돈'], en: 'money', read: '머니', emoji: '💰' },
+  { ko: '동전', en: 'coin', read: '코인', emoji: '🪙' },
+  { ko: '보물', alt: ['보물상자'], en: 'treasure', read: '트레저', emoji: '💎' },
+  { ko: '촛불', alt: ['양초'], en: 'candle', read: '캔들', emoji: '🕯️' },
+  { ko: '그림', alt: ['액자'], en: 'picture', read: '픽처', emoji: '🖼️' },
+  { ko: '깃발', en: 'flag', read: '플래그', emoji: '🚩' },
+  { ko: '상자', alt: ['박스'], en: 'box', read: '박스', emoji: '📦' },
+  { ko: '종', alt: ['방울'], en: 'bell', read: '벨', emoji: '🔔' },
+
+  // ── 가전 ──
+  { ko: '냉장고', en: 'refrigerator', read: '리프리저레이터', emoji: '🧊' },
+  { ko: '세탁기', en: 'washing machine', read: '워싱 머신', emoji: '🫧' },
+  { ko: '청소기', alt: ['진공청소기'], en: 'vacuum', read: '배큠', emoji: '🧹' },
+  { ko: '전자레인지', alt: ['전자렌지'], en: 'microwave', read: '마이크로웨이브', emoji: '♨️' },
+  { ko: '에어컨', en: 'air conditioner', read: '에어 컨디셔너', emoji: '❄️' },
+  { ko: '밥솥', alt: ['전기밥솥'], en: 'rice cooker', read: '라이스 쿠커', emoji: '🍚' },
+  { ko: '선풍기', en: 'electric fan', read: '일렉트릭 팬', emoji: '🌬️' },
+  { ko: '히터', alt: ['난로'], en: 'heater', read: '히터', emoji: '🔥' },
+  { ko: '게임기', alt: ['게임패드'], en: 'game controller', read: '게임 컨트롤러', emoji: '🎮' },
+  { ko: '리모컨', alt: ['리모콘'], en: 'remote control', read: '리모트 컨트롤', emoji: '📺' },
+
+  // ── 주방 도구 ──
+  { ko: '냄비', en: 'pot', read: '팟', emoji: '🍲' },
+  { ko: '프라이팬', alt: ['후라이팬'], en: 'frying pan', read: '프라잉 팬', emoji: '🥘' },
+  { ko: '주전자', en: 'kettle', read: '케틀', emoji: '🫖' },
+  { ko: '도마', en: 'cutting board', read: '커팅 보드', emoji: '🪵' },
+  { ko: '국자', en: 'ladle', read: '레이들', emoji: '🥄' },
+  { ko: '믹서기', alt: ['믹서'], en: 'blender', read: '블렌더', emoji: '🥤' },
+  { ko: '토스터', alt: ['토스트기'], en: 'toaster', read: '토스터', emoji: '🍞' },
+  { ko: '젖병', alt: ['우유병'], en: 'baby bottle', read: '베이비 보틀', emoji: '🍼' },
+  { ko: '빨대', en: 'straw', read: '스트로', emoji: '🧃' },
+  { ko: '도시락', alt: ['도시락통'], en: 'lunch box', read: '런치 박스', emoji: '🍱' },
+  { ko: '물통', alt: ['물병'], en: 'water bottle', read: '워터 보틀', emoji: '🚰' },
+
+  // ── 가구·집안 ──
+  { ko: '옷장', alt: ['장롱'], en: 'closet', read: '클로짓', emoji: '🗄️' },
+  { ko: '서랍', alt: ['서랍장'], en: 'drawer', read: '드로어', emoji: '🗃️' },
+  { ko: '책장', alt: ['책꽂이'], en: 'bookshelf', read: '북셸프', emoji: '📚' },
+  { ko: '식탁', alt: ['테이블'], en: 'table', read: '테이블', emoji: '🍽️' },
+  { ko: '커튼', en: 'curtain', read: '커튼', emoji: '🪟' },
+  { ko: '바구니', en: 'basket', read: '배스킷', emoji: '🧺' },
+  { ko: '화분', en: 'flower pot', read: '플라워 팟', emoji: '🪴' },
+  { ko: '로션', en: 'lotion', read: '로션', emoji: '🧴' },
+
+  // ── 놀이·게임 ──
+  { ko: '시소', en: 'seesaw', read: '시소', emoji: '🛝' },
+  { ko: '고무오리', alt: ['오리인형', '러버덕'], en: 'rubber duck', read: '러버 덕', emoji: '🐥' },
+  { ko: '저금통', alt: ['돼지저금통'], en: 'piggy bank', read: '피기 뱅크', emoji: '🐷' },
+  { ko: '팽이', en: 'spinning top', read: '스피닝 탑', emoji: '🌀' },
+  { ko: '구슬', en: 'marble', read: '마블', emoji: '🔮' },
+  { ko: '보드게임', alt: ['카드게임'], en: 'board game', read: '보드 게임', emoji: '🎲' },
+  { ko: '훌라후프', alt: ['후프'], en: 'hula hoop', read: '훌라 후프', emoji: '🤸' },
+  { ko: '농구공', en: 'basketball', read: '배스킷볼', emoji: '🏀' },
+  { ko: '야구공', en: 'baseball', read: '베이스볼', emoji: '⚾' },
+  { ko: '낚싯대', alt: ['낚시대'], en: 'fishing rod', read: '피싱 로드', emoji: '🎣' },
+
+  // ── 문구·미술 ──
+  { ko: '색연필', en: 'colored pencil', read: '컬러드 펜슬', emoji: '🖍️' },
+  { ko: '지우개', en: 'eraser', read: '이레이저', emoji: '🧽' },
+  { ko: '스케치북', en: 'sketchbook', read: '스케치북', emoji: '📒' },
+  { ko: '사인펜', alt: ['싸인펜', '마커'], en: 'marker', read: '마커', emoji: '🖊️' },
+  { ko: '볼펜', en: 'pen', read: '펜', emoji: '🖋️' },
+  { ko: '필통', en: 'pencil case', read: '펜슬 케이스', emoji: '👝' },
+
+  // ── 도구·기타 ──
+  { ko: '돋보기', en: 'magnifying glass', read: '매그니파잉 글래스', emoji: '🔍' },
+  { ko: '망원경', en: 'telescope', read: '텔레스코프', emoji: '🔭' },
+  { ko: '사다리', en: 'ladder', read: '래더', emoji: '🪜' },
+  { ko: '드라이버', en: 'screwdriver', read: '스크루드라이버', emoji: '🪛' },
+  { ko: '렌치', alt: ['스패너'], en: 'wrench', read: '렌치', emoji: '🔧' },
+  { ko: '바늘', alt: ['바느질'], en: 'needle', read: '니들', emoji: '🪡' },
+  { ko: '온도계', alt: ['체온계'], en: 'thermometer', read: '서모미터', emoji: '🌡️' },
+  { ko: '저울', alt: ['체중계'], en: 'scale', read: '스케일', emoji: '⚖️' },
+  { ko: '사진', en: 'photo', read: '포토', emoji: '📸' },
+  { ko: '신문', en: 'newspaper', read: '뉴스페이퍼', emoji: '📰' },
+  { ko: '리본', en: 'ribbon', read: '리본', emoji: '🎀' },
+  { ko: '크리스마스트리', alt: ['트리'], en: 'christmas tree', read: '크리스마스 트리', emoji: '🎄' },
+  { ko: '불꽃놀이', alt: ['폭죽'], en: 'fireworks', read: '파이어웍스', emoji: '🎆' }
+].forEach(w => { w.cat = 'home'; WORDS.push(w); });

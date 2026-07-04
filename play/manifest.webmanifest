@@ -1,0 +1,16 @@
+{
+  "name": "찾기 놀이터",
+  "short_name": "찾기 놀이터",
+  "description": "5세 아이를 위한 숨은그림찾기·다른그림찾기 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFF7D6",
+  "theme_color": "#FFD93D",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

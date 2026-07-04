@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#7DD8FF">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>영어 놀이터</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════════ 홈 화면 ═══════════ -->
+<div id="screen-home" class="screen active">
+  <header class="top-bar">
+    <h1 class="app-title"><span>🗣️</span> 영어 놀이터</h1>
+  </header>
+  <div class="home-body">
+    <div class="mic-guide" id="mic-guide">토끼를 누르고 물어보세요!<br><span class="mic-guide-sub">"코끼리가 영어로 뭐야?"</span></div>
+    <div class="bunny-bubble">은아야 안녕?</div>
+    <button id="btn-mic" class="mic-btn" aria-label="토끼를 눌러서 물어보기">
+      <svg class="bunny" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g class="bunny-ear-l">
+          <ellipse cx="66" cy="52" rx="20" ry="46" transform="rotate(-14 66 52)" fill="#FF7FAE"/>
+          <ellipse cx="67" cy="58" rx="10" ry="31" transform="rotate(-14 67 58)" fill="#FFDCE9"/>
+        </g>
+        <g class="bunny-ear-r">
+          <ellipse cx="134" cy="52" rx="20" ry="46" transform="rotate(14 134 52)" fill="#FF7FAE"/>
+          <ellipse cx="133" cy="58" rx="10" ry="31" transform="rotate(14 133 58)" fill="#FFDCE9"/>
+        </g>
+        <circle cx="100" cy="128" r="62" fill="#FFA8C8"/>
+        <circle cx="78" cy="116" r="7" fill="#4A2B3A"/><circle cx="122" cy="116" r="7" fill="#4A2B3A"/>
+        <circle cx="80.5" cy="113.5" r="2.4" fill="#FFFFFF"/><circle cx="124.5" cy="113.5" r="2.4" fill="#FFFFFF"/>
+        <circle cx="60" cy="136" r="10" fill="#FF7FA8" opacity="0.5"/><circle cx="140" cy="136" r="10" fill="#FF7FA8" opacity="0.5"/>
+        <ellipse cx="100" cy="131" rx="7" ry="5" fill="#E85C8C"/>
+        <path d="M100 136 Q100 145 91 147 M100 136 Q100 145 109 147" stroke="#B84A6E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M52 128 L34 122 M52 136 L34 138 M148 128 L166 122 M148 136 L166 138" stroke="#E88CB0" stroke-width="3" stroke-linecap="round"/>
+        <g transform="rotate(14 118 172)">
+          <rect x="112" y="158" width="13" height="40" rx="6.5" fill="#5A6078"/>
+          <circle cx="118.5" cy="150" r="17" fill="#8A90A8"/>
+          <path d="M106 144 L131 144 M104 150 L133 150 M106 156 L131 156" stroke="#6E7590" stroke-width="2.5"/>
+        </g>
+        <circle cx="72" cy="186" r="13" fill="#FFA8C8" stroke="#E88CB0" stroke-width="3.5"/>
+        <circle cx="112" cy="188" r="13" fill="#FFA8C8" stroke="#E88CB0" stroke-width="3.5"/>
+      </svg>
+    </button>
+    <div class="home-nav">
+      <button id="btn-dict" class="nav-card nav-dict"><span class="nav-emoji">📖</span><span>그림 단어장</span></button>
+      <button id="btn-learned" class="nav-card nav-learned"><span class="nav-emoji">⭐</span><span>배운 단어 <b id="learned-count">0</b></span></button>
+      <button id="btn-quiz" class="nav-card nav-quiz"><span class="nav-emoji">🎯</span><span>퀴즈 놀이</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 듣는 중 오버레이 ═══════════ -->
+<div id="listen-overlay" class="overlay hidden">
+  <div class="listen-card">
+    <div class="listen-mic">
+      <svg class="bunny" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g class="bunny-ear-l">
+          <ellipse cx="66" cy="52" rx="20" ry="46" transform="rotate(-14 66 52)" fill="#FF7FAE"/>
+          <ellipse cx="67" cy="58" rx="10" ry="31" transform="rotate(-14 67 58)" fill="#FFDCE9"/>
+        </g>
+        <g class="bunny-ear-r">
+          <ellipse cx="134" cy="52" rx="20" ry="46" transform="rotate(14 134 52)" fill="#FF7FAE"/>
+          <ellipse cx="133" cy="58" rx="10" ry="31" transform="rotate(14 133 58)" fill="#FFDCE9"/>
+        </g>
+        <circle cx="100" cy="128" r="62" fill="#FFA8C8"/>
+        <circle cx="78" cy="116" r="7" fill="#4A2B3A"/><circle cx="122" cy="116" r="7" fill="#4A2B3A"/>
+        <circle cx="80.5" cy="113.5" r="2.4" fill="#FFFFFF"/><circle cx="124.5" cy="113.5" r="2.4" fill="#FFFFFF"/>
+        <circle cx="60" cy="136" r="10" fill="#FF7FA8" opacity="0.5"/><circle cx="140" cy="136" r="10" fill="#FF7FA8" opacity="0.5"/>
+        <ellipse cx="100" cy="131" rx="7" ry="5" fill="#E85C8C"/>
+        <path d="M100 136 Q100 145 91 147 M100 136 Q100 145 109 147" stroke="#B84A6E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M52 128 L34 122 M52 136 L34 138 M148 128 L166 122 M148 136 L166 138" stroke="#E88CB0" stroke-width="3" stroke-linecap="round"/>
+        <g transform="rotate(14 118 172)">
+          <rect x="112" y="158" width="13" height="40" rx="6.5" fill="#5A6078"/>
+          <circle cx="118.5" cy="150" r="17" fill="#8A90A8"/>
+          <path d="M106 144 L131 144 M104 150 L133 150 M106 156 L131 156" stroke="#6E7590" stroke-width="2.5"/>
+        </g>
+        <circle cx="72" cy="186" r="13" fill="#FFA8C8" stroke="#E88CB0" stroke-width="3.5"/>
+        <circle cx="112" cy="188" r="13" fill="#FFA8C8" stroke="#E88CB0" stroke-width="3.5"/>
+      </svg>
+    </div>
+    <div class="listen-waves"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="listen-label">듣고 있어요…</div>
+    <div id="listen-interim" class="listen-interim"></div>
+    <button id="listen-cancel" class="big-btn btn-soft">그만하기</button>
+  </div>
+</div>
+
+<!-- ═══════════ 답변 화면 ═══════════ -->
+<div id="screen-answer" class="screen">
+  <header class="top-bar">
+    <button id="answer-back" class="round-btn" aria-label="뒤로">◀</button>
+    <div class="top-title" id="answer-ko-title"></div>
+    <button id="answer-home" class="round-btn" aria-label="처음으로">🏠</button>
+  </header>
+  <div class="answer-body">
+    <div id="answer-emoji" class="answer-emoji"></div>
+    <div id="answer-en" class="answer-en"></div>
+    <div id="answer-read" class="answer-read"></div>
+    <div class="answer-btns">
+      <button id="btn-again" class="answer-btn"><span>🔁</span><span>다시 듣기</span></button>
+      <button id="btn-slow" class="answer-btn"><span>🐢</span><span>천천히</span></button>
+      <button id="btn-ask-more" class="answer-btn answer-btn-mic"><span><svg class="bunny-mini" viewBox="0 0 100 110" width="1.2em" height="1.3em" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="36" cy="26" rx="10" ry="23" transform="rotate(-14 36 26)" fill="#FFDCE9"/><ellipse cx="64" cy="26" rx="10" ry="23" transform="rotate(14 64 26)" fill="#FFDCE9"/><circle cx="50" cy="68" r="32" fill="#FFFFFF"/><circle cx="39" cy="62" r="4" fill="#4A2B3A"/><circle cx="61" cy="62" r="4" fill="#4A2B3A"/><ellipse cx="50" cy="70" rx="4.5" ry="3.5" fill="#E85C8C"/><path d="M50 73 Q50 79 44 80 M50 73 Q50 79 56 80" stroke="#B84A6E" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></span><span>또 물어보기</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 모르는 단어 화면 ═══════════ -->
+<div id="screen-unknown" class="screen">
+  <header class="top-bar">
+    <button id="unknown-back" class="round-btn" aria-label="뒤로">◀</button>
+    <div class="top-title">🤔</div>
+    <button id="unknown-home" class="round-btn" aria-label="처음으로">🏠</button>
+  </header>
+  <div class="answer-body">
+    <div class="answer-emoji">🐣</div>
+    <div id="unknown-msg" class="unknown-msg">음~ 그 단어는<br>아직 공부하고 있어요!</div>
+    <div id="unknown-heard" class="unknown-heard"></div>
+    <div class="answer-btns">
+      <button id="unknown-retry" class="answer-btn answer-btn-mic"><span><svg class="bunny-mini" viewBox="0 0 100 110" width="1.2em" height="1.3em" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="36" cy="26" rx="10" ry="23" transform="rotate(-14 36 26)" fill="#FFDCE9"/><ellipse cx="64" cy="26" rx="10" ry="23" transform="rotate(14 64 26)" fill="#FFDCE9"/><circle cx="50" cy="68" r="32" fill="#FFFFFF"/><circle cx="39" cy="62" r="4" fill="#4A2B3A"/><circle cx="61" cy="62" r="4" fill="#4A2B3A"/><ellipse cx="50" cy="70" rx="4.5" ry="3.5" fill="#E85C8C"/><path d="M50 73 Q50 79 44 80 M50 73 Q50 79 56 80" stroke="#B84A6E" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></span><span>다시 말하기</span></button>
+      <button id="unknown-dict" class="answer-btn"><span>📖</span><span>단어장 구경</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 단어장: 카테고리 ═══════════ -->
+<div id="screen-cats" class="screen">
+  <header class="top-bar">
+    <button id="cats-home" class="round-btn" aria-label="처음으로">🏠</button>
+    <h1 class="app-title"><span>📖</span> 그림 단어장</h1>
+    <div style="width:56px"></div>
+  </header>
+  <div id="cat-grid" class="cat-grid"></div>
+</div>
+
+<!-- ═══════════ 단어장: 단어 목록 ═══════════ -->
+<div id="screen-words" class="screen">
+  <header class="top-bar">
+    <button id="words-back" class="round-btn" aria-label="뒤로">◀</button>
+    <h1 class="app-title" id="words-title"></h1>
+    <button id="words-home" class="round-btn" aria-label="처음으로">🏠</button>
+  </header>
+  <div id="word-grid" class="word-grid"></div>
+</div>
+
+<!-- ═══════════ 배운 단어 ═══════════ -->
+<div id="screen-learned" class="screen">
+  <header class="top-bar">
+    <button id="learned-home" class="round-btn" aria-label="처음으로">🏠</button>
+    <h1 class="app-title"><span>⭐</span> 배운 단어</h1>
+    <div style="width:56px"></div>
+  </header>
+  <div id="learned-list" class="learned-list"></div>
+</div>
+
+<!-- ═══════════ 퀴즈 ═══════════ -->
+<div id="screen-quiz" class="screen">
+  <header class="top-bar">
+    <button id="quiz-home" class="round-btn" aria-label="처음으로">🏠</button>
+    <div class="top-title">🎯 퀴즈 놀이</div>
+    <div id="quiz-progress" class="quiz-progress"></div>
+  </header>
+  <div class="quiz-body">
+    <div id="quiz-question" class="quiz-question"></div>
+    <button id="quiz-replay" class="answer-btn"><span>🔊</span><span>다시 듣기</span></button>
+    <div id="quiz-choices" class="quiz-choices"></div>
+  </div>
+</div>
+
+<!-- ═══════════ 퀴즈 완료 오버레이 ═══════════ -->
+<div id="quiz-done-overlay" class="overlay hidden">
+  <div id="confetti-box"></div>
+  <div class="done-card">
+    <div class="done-title">참 잘했어요!</div>
+    <div id="quiz-score" class="done-score"></div>
+    <div class="answer-btns">
+      <button id="quiz-again" class="answer-btn answer-btn-mic"><span>🎯</span><span>한 번 더!</span></button>
+      <button id="quiz-done-home" class="answer-btn"><span>🏠</span><span>처음으로</span></button>
+    </div>
+  </div>
+</div>
+
+<script src="js/progress.js"></script>
+<script src="js/speech.js"></script>
+<script src="js/dict/animals.js"></script>
+<script src="js/dict/food.js"></script>
+<script src="js/dict/colors-numbers.js"></script>
+<script src="js/dict/vehicles.js"></script>
+<script src="js/dict/body-family.js"></script>
+<script src="js/dict/nature.js"></script>
+<script src="js/dict/home-things.js"></script>
+<script src="js/dict/clothes-actions.js"></script>
+<script src="js/dict/places.js"></script>
+<script src="js/dict/opposites.js"></script>
+<script src="js/parse.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

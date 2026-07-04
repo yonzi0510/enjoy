@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#FFD93D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>찾기 놀이터</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════════ 홈 화면 ═══════════ -->
+<div id="screen-home" class="screen active">
+  <header class="home-header">
+    <h1 class="app-title"><span class="title-emoji">🔍</span> 찾기 놀이터</h1>
+    <div class="header-btns">
+      <button id="btn-stickers" class="round-btn" aria-label="스티커북">🏅</button>
+      <button id="btn-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
+    </div>
+  </header>
+  <button id="btn-letters" class="letters-banner">
+    <span class="letters-banner-emoji">🔤</span>
+    <span class="letters-banner-text">가나다 글자 찾기</span>
+    <span class="letters-banner-emoji">✏️</span>
+  </button>
+  <div id="theme-grid" class="theme-grid"><!-- 엔진이 테마 카드 생성 --></div>
+</div>
+
+<!-- ═══════════ 글자 찾기: 단계 선택 오버레이 ═══════════ -->
+<div id="letters-overlay" class="overlay hidden">
+  <div class="mode-card">
+    <button class="close-btn" id="letters-close" aria-label="닫기">✕</button>
+    <div class="mode-theme-name">🔤 글자 찾기</div>
+    <div class="letters-level-btns">
+      <button class="letters-level-btn llv-1" data-llevel="1"><b>1단계</b><span>ㄱㄴㄷ · ㅏㅗ<br>자음·모음</span><span class="level-btn-stars"></span></button>
+      <button class="letters-level-btn llv-2" data-llevel="2"><b>2단계</b><span>가 나 다 라<br>글자</span><span class="level-btn-stars"></span></button>
+      <button class="letters-level-btn llv-3" data-llevel="3"><b>3단계</b><span>나비 · 우주<br>쉬운 단어</span><span class="level-btn-stars"></span></button>
+      <button class="letters-level-btn llv-4" data-llevel="4"><b>4단계</b><span>책 · 책상<br>받침 단어</span><span class="level-btn-stars"></span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 글자 찾기 게임 화면 ═══════════ -->
+<div id="screen-letters" class="screen">
+  <header class="game-header">
+    <button id="letters-back" class="round-btn" aria-label="처음으로">🏠</button>
+    <div id="letters-target" class="game-title"></div>
+    <div class="header-btns">
+      <button id="letters-hint" class="round-btn hint-btn" aria-label="힌트">💡</button>
+    </div>
+  </header>
+  <div class="letters-body">
+    <div id="letters-board" class="letters-board"></div>
+    <div id="letters-progress" class="diff-progress"></div>
+  </div>
+</div>
+
+<!-- ═══════════ 스티커 놀이 화면 ═══════════ -->
+<div id="screen-stickerplay" class="screen">
+  <header class="home-header">
+    <button id="stickerplay-back" class="round-btn" aria-label="뒤로">◀</button>
+    <h1 class="app-title"><span class="title-emoji">🎨</span> 스티커 놀이</h1>
+    <div class="header-btns">
+      <button id="stickerplay-bg" class="round-btn" aria-label="배경 바꾸기">🌈</button>
+      <button id="stickerplay-clear" class="round-btn" aria-label="모두 지우기">🗑️</button>
+    </div>
+  </header>
+  <div id="sticker-board" class="sticker-board"></div>
+  <div id="sticker-palette" class="sticker-palette"></div>
+</div>
+
+<!-- ═══════════ 시간제한 잠금 오버레이 ═══════════ -->
+<div id="lock-overlay" class="overlay lock-overlay hidden">
+  <div class="lock-card">
+    <div class="lock-emoji">😴</div>
+    <div class="lock-title">오늘은 많이 놀았어요!</div>
+    <div class="lock-sub">눈도 토끼도 쉬는 시간이에요.<br>내일 또 만나요! 👋</div>
+    <div class="lock-parent">
+      <div class="lock-parent-label">🔒 부모님 확인 (30분 더 놀기)</div>
+      <div id="pin-dots" class="pin-dots"><span></span><span></span><span></span><span></span></div>
+      <div id="pin-pad" class="pin-pad"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 게임 모드 선택 오버레이 ═══════════ -->
+<div id="mode-overlay" class="overlay hidden">
+  <div class="mode-card">
+    <button class="close-btn" id="mode-close" aria-label="닫기">✕</button>
+    <div id="mode-theme-name" class="mode-theme-name"></div>
+    <div class="mode-sections">
+      <div class="mode-section">
+        <div class="mode-section-title"><span class="mode-icon">🔍</span> 숨은그림찾기</div>
+        <div class="level-btns">
+          <button class="level-btn level-1" data-mode="hidden" data-level="1">🌱 쉬움<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-2" data-mode="hidden" data-level="2">🌟 보통<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-3" data-mode="hidden" data-level="3">🔥 어려움<span class="level-btn-stars"></span></button>
+        </div>
+      </div>
+      <div class="mode-section">
+        <div class="mode-section-title"><span class="mode-icon">👀</span> 다른그림찾기</div>
+        <div class="level-btns">
+          <button class="level-btn level-1" data-mode="diff" data-level="1">🌱 쉬움<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-2" data-mode="diff" data-level="2">🌟 보통<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-3" data-mode="diff" data-level="3">🔥 어려움<span class="level-btn-stars"></span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 게임 화면 ═══════════ -->
+<div id="screen-game" class="screen">
+  <header class="game-header">
+    <button id="game-back" class="round-btn" aria-label="뒤로가기">🏠</button>
+    <div id="game-title" class="game-title"></div>
+    <div class="header-btns">
+      <button id="game-hint" class="round-btn hint-btn" aria-label="힌트">💡</button>
+      <button id="game-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
+    </div>
+  </header>
+
+  <!-- 숨은그림찾기 레이아웃 -->
+  <div id="hidden-layout" class="game-body hidden">
+    <div id="hidden-scene" class="scene-wrap"></div>
+    <div id="hidden-tray" class="find-tray"></div>
+  </div>
+
+  <!-- 다른그림찾기 레이아웃 -->
+  <div id="diff-layout" class="game-body hidden">
+    <div class="diff-panels">
+      <div id="diff-scene-a" class="scene-wrap diff-panel"></div>
+      <div id="diff-scene-b" class="scene-wrap diff-panel"></div>
+    </div>
+    <div id="diff-progress" class="diff-progress"></div>
+  </div>
+</div>
+
+<!-- ═══════════ 레벨 완료 오버레이 ═══════════ -->
+<div id="complete-overlay" class="overlay hidden">
+  <div id="confetti-box"></div>
+  <div class="complete-card">
+    <div class="complete-title">참 잘했어요!</div>
+    <div id="complete-stars" class="complete-stars"></div>
+    <div id="sticker-reveal" class="sticker-reveal hidden">
+      <div id="sticker-reveal-label" class="sticker-reveal-label">🎁 새 스티커!</div>
+      <div id="sticker-reveal-art" class="sticker-art"></div>
+      <div id="sticker-reveal-name" class="sticker-name"></div>
+    </div>
+    <div class="complete-btns">
+      <button id="complete-home" class="big-btn btn-soft">🏠</button>
+      <button id="complete-next" class="big-btn btn-primary">다음 놀이 ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 스티커북 화면 ═══════════ -->
+<div id="screen-stickers" class="screen">
+  <header class="home-header">
+    <button id="stickers-back" class="round-btn" aria-label="뒤로가기">🏠</button>
+    <h1 class="app-title"><span class="title-emoji">🏅</span> 내 스티커북</h1>
+    <div style="width:56px"></div>
+  </header>
+  <button id="btn-stickerplay" class="stickerplay-cta">🎨 스티커로 꾸미기 놀이 하러 가기 ▶</button>
+  <div id="sticker-grid" class="sticker-grid"></div>
+</div>
+
+<script src="js/progress.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/scenes/farm.js"></script>
+<script src="js/scenes/ocean.js"></script>
+<script src="js/scenes/forest.js"></script>
+<script src="js/scenes/space.js"></script>
+<script src="js/scenes/dino.js"></script>
+<script src="js/scenes/playground.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/letters.js"></script>
+<script src="js/stickerplay.js"></script>
+<script src="js/timelimit.js"></script>
+</body>
+</html>
