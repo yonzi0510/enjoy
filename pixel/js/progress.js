@@ -1,0 +1,68 @@
+/* 진행상황 저장 — localStorage (서버·로그인 없음)
+ * pics: { heart: { cells: [-1,0,2,...], done: 1, doneAt: '2026-07-04', bomb: 3, wand: 1 } }
+ * cells는 칠한 팔레트 인덱스(-1 = 안 칠함). 길이가 도안과 다르면 무시(도안 변경 방어).
+ */
+window.Progress = (() => {
+  const KEY = 'pixel-playground-v1';
+  const BOMBS = 3, WANDS = 1;
+
+  function load() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(KEY));
+      if (raw && typeof raw === 'object' && raw.pics && typeof raw.pics === 'object') {
+        return { pics: raw.pics };
+      }
+    } catch (e) { /* 손상된 데이터는 초기화 */ }
+    return { pics: {} };
+  }
+
+  let state = load();
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* 저장 불가 환경 무시 */ }
+  }
+
+  function pic(id) {
+    if (!state.pics[id]) state.pics[id] = { cells: null, done: 0, doneAt: '', bomb: BOMBS, wand: WANDS };
+    return state.pics[id];
+  }
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  return {
+    DEFAULT_BOMBS: BOMBS,
+    DEFAULT_WANDS: WANDS,
+    getCells(id, total) {
+      const p = state.pics[id];
+      if (!p || !Array.isArray(p.cells) || p.cells.length !== total) return null;
+      return p.cells.slice();
+    },
+    setCells(id, cells) { pic(id).cells = cells; save(); },
+    getBoosters(id) {
+      const p = pic(id);
+      return { bomb: Number.isInteger(p.bomb) ? p.bomb : BOMBS, wand: Number.isInteger(p.wand) ? p.wand : WANDS };
+    },
+    setBoosters(id, b) { const p = pic(id); p.bomb = b.bomb; p.wand = b.wand; save(); },
+    isDone(id) { return !!(state.pics[id] && state.pics[id].done); },
+    doneAt(id) { return (state.pics[id] && state.pics[id].doneAt) || ''; },
+    markDone(id) {
+      const p = pic(id);
+      if (!p.done) { p.done = 1; p.doneAt = todayStr(); save(); }
+    },
+    reset(id) {
+      state.pics[id] = { cells: null, done: 0, doneAt: '', bomb: BOMBS, wand: WANDS };
+      save();
+    },
+    // 홈 진행률 뱃지용: 올바르게 칠한 칸 수 (target 배열과 비교)
+    correctCount(id, target) {
+      const p = state.pics[id];
+      if (!p || !Array.isArray(p.cells) || p.cells.length !== target.length) return 0;
+      let n = 0;
+      for (let i = 0; i < target.length; i++) if (p.cells[i] === target[i]) n++;
+      return n;
+    }
+  };
+})();
