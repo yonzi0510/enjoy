@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFF3C4">
+<title>가나다 한글 놀이터</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- 홈 -->
+<section class="screen on" id="scr-home">
+  <header class="home-head">
+    <h1>🌟 가나다 한글 놀이터</h1>
+    <div class="stats">
+      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <span class="stat">🃏 <b id="home-cards">0</b></span>
+    </div>
+  </header>
+  <div class="menu">
+    <button type="button" class="menu-card m-learn" data-go="learn">
+      <span class="mc-emoji">📖</span><span class="mc-name">글자 배우기</span>
+      <span class="mc-desc">ㄱㄴㄷ 소리와 낱말</span>
+    </button>
+    <button type="button" class="menu-card m-trace" data-go="trace">
+      <span class="mc-emoji">✏️</span><span class="mc-name">따라쓰기</span>
+      <span class="mc-desc">획순 따라 손가락 쓰기</span>
+    </button>
+    <button type="button" class="menu-card m-play" data-go="scr-games">
+      <span class="mc-emoji">🎮</span><span class="mc-name">한글 놀이</span>
+      <span class="mc-desc">거품·첫소리 게임</span>
+    </button>
+    <button type="button" class="menu-card m-song" data-go="scr-song">
+      <span class="mc-emoji">🎵</span><span class="mc-name">가나다 노래</span>
+      <span class="mc-desc">글자가 반짝반짝</span>
+    </button>
+    <button type="button" class="menu-card m-cards" data-go="scr-cards">
+      <span class="mc-emoji">🃏</span><span class="mc-name">카드책</span>
+      <span class="mc-desc">모은 낱말 카드</span>
+    </button>
+  </div>
+</section>
+
+<!-- 글자 그리드 (배우기/따라쓰기 공용) -->
+<section class="screen" id="scr-letters">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2 id="letters-title">📖 글자 배우기</h2>
+    <div class="tabs">
+      <button type="button" class="tab on" data-tab="consonants">자음</button>
+      <button type="button" class="tab" data-tab="vowels">모음</button>
+    </div>
+  </header>
+  <div class="letters-grid" id="letters-grid"></div>
+</section>
+
+<!-- 글자 상세 -->
+<section class="screen" id="scr-letter">
+  <header class="bar">
+    <button type="button" class="back" data-go="learn">◀</button>
+    <h2 id="letter-name">기역</h2>
+  </header>
+  <div class="letter-hero">
+    <div class="letter-big" id="letter-big">ㄱ</div>
+    <button type="button" class="bigbtn" id="letter-sound">🔊 소리 듣기</button>
+  </div>
+  <div class="letter-words" id="letter-words"></div>
+  <button type="button" class="bigbtn primary" id="letter-trace">✏️ 따라쓰기 하러 가기</button>
+</section>
+
+<!-- 따라쓰기 -->
+<section class="screen" id="scr-trace">
+  <header class="bar">
+    <button type="button" class="back" data-go="trace">◀</button>
+    <h2><span id="trace-ch">ㄱ</span> <small id="trace-name">기역</small></h2>
+    <div class="dots" id="trace-dots"></div>
+  </header>
+  <div class="trace-holder" id="trace-holder">
+    <canvas id="trace-canvas" width="560" height="560"></canvas>
+  </div>
+</section>
+
+<!-- 놀이 메뉴 -->
+<section class="screen" id="scr-games">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2>🎮 한글 놀이</h2>
+  </header>
+  <div class="menu">
+    <button type="button" class="menu-card m-bubble" data-go="scr-bubble">
+      <span class="mc-emoji">🫧</span><span class="mc-name">거품 놀이</span>
+      <span class="mc-desc">글자 거품을 찾아 팡!</span>
+    </button>
+    <button type="button" class="menu-card m-first" data-go="scr-first">
+      <span class="mc-emoji">🔤</span><span class="mc-name">첫소리 놀이</span>
+      <span class="mc-desc">낱말의 첫 자음 찾기</span>
+    </button>
+  </div>
+</section>
+
+<!-- 거품 놀이 -->
+<section class="screen" id="scr-bubble">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-games">◀</button>
+    <h2>🫧 <span id="bubble-target">ㄱ</span> 찾기</h2>
+    <div class="dots" id="bubble-dots"></div>
+  </header>
+  <div class="bubble-area" id="bubble-area"></div>
+</section>
+
+<!-- 첫소리 놀이 -->
+<section class="screen" id="scr-first">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-games">◀</button>
+    <h2>🔤 첫소리 놀이</h2>
+    <div class="dots" id="first-dots"></div>
+  </header>
+  <div class="first-stage">
+    <div class="first-emoji" id="first-emoji">🐘</div>
+    <div class="first-word" id="first-word">코끼리</div>
+    <div class="first-choices" id="first-choices"></div>
+  </div>
+</section>
+
+<!-- 가나다 노래 -->
+<section class="screen" id="scr-song">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2>🎵 가나다 노래</h2>
+    <div class="tabs">
+      <button type="button" class="tab on" data-mode="consonants">가나다</button>
+      <button type="button" class="tab" data-mode="vowels">아야어여</button>
+    </div>
+  </header>
+  <div class="song-grid" id="song-grid"></div>
+  <button type="button" class="bigbtn primary" id="song-play">▶️ 노래 듣기</button>
+</section>
+
+<!-- 카드책 -->
+<section class="screen" id="scr-cards">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2>🃏 낱말 카드책</h2>
+    <span class="stat" id="cards-count">0 / 0</span>
+  </header>
+  <div class="cards-grid" id="cards-grid"></div>
+</section>
+
+<!-- 보상 오버레이 -->
+<div class="reward" id="reward">
+  <div class="reward-card">
+    <div class="reward-title">🎉 낱말 카드 획득!</div>
+    <div class="reward-emoji" id="reward-emoji">🎒</div>
+    <div class="reward-word" id="reward-word">가방</div>
+    <button type="button" class="bigbtn primary" id="reward-close">좋아요!</button>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/trace.js"></script>
+<script src="js/games.js"></script>
+<script src="js/song.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

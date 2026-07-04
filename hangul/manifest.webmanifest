@@ -1,0 +1,16 @@
+{
+  "name": "가나다 한글 놀이터",
+  "short_name": "한글 놀이터",
+  "description": "자음·모음 소리, 따라쓰기, 한글 게임으로 배우는 5세용 한글 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFF7D6",
+  "theme_color": "#FFD84D",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
