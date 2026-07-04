@@ -1,6 +1,6 @@
 /* 소리 — Web Audio 합성 효과음 + 한국어 음성 안내(speechSynthesis). 오디오 파일 없음 */
 window.Sound = (() => {
-  const MUTE_KEY = 'color-muted';
+  const MUTE_KEY = 'pixel-muted';
   let muted = false;
   try { muted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) {}
 
