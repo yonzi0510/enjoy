@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#FF7AA2">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>색칠 놀이터</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════════ 홈(갤러리) 화면 ═══════════ -->
+<div id="screen-home" class="screen active">
+  <header class="home-header">
+    <h1 class="app-title"><span class="title-emoji">🎨</span> 색칠 놀이터</h1>
+    <div class="header-btns">
+      <button id="btn-works" class="round-btn" aria-label="내 작품">🖼️</button>
+      <button id="btn-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
+    </div>
+  </header>
+  <div id="cat-chips" class="cat-chips"><!-- 엔진이 카테고리 칩 생성 --></div>
+  <div id="pic-grid" class="pic-grid"><!-- 엔진이 도안 카드 생성 --></div>
+</div>
+
+<!-- ═══════════ 색칠 화면 ═══════════ -->
+<div id="screen-paint" class="screen">
+  <header class="game-header">
+    <button id="paint-back" class="round-btn" aria-label="뒤로가기">🏠</button>
+    <div id="paint-title" class="game-title"></div>
+    <div class="header-btns">
+      <button id="paint-hint" class="round-btn hint-btn" aria-label="힌트">💡</button>
+      <button id="paint-fit" class="round-btn" aria-label="전체 보기">⛶</button>
+      <button id="paint-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
+    </div>
+  </header>
+
+  <div id="canvas-wrap" class="canvas-wrap"><!-- 엔진이 SVG 생성 --></div>
+
+  <div id="paint-bottom" class="paint-bottom">
+    <div id="progress-label" class="progress-label"></div>
+    <div id="palette-bar" class="palette-bar"><!-- 엔진이 팔레트 버튼 생성 --></div>
+    <div id="viewer-bar" class="viewer-bar hidden">
+      <button id="btn-repaint" class="big-btn btn-primary">🖌️ 다시 색칠하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 완성 오버레이 ═══════════ -->
+<div id="complete-overlay" class="overlay hidden">
+  <div id="confetti-box"></div>
+  <div class="complete-card">
+    <div class="complete-title">🎉 완성!</div>
+    <div id="complete-thumb" class="complete-thumb"></div>
+    <div id="complete-name" class="complete-name"></div>
+    <div class="complete-btns">
+      <button id="complete-home" class="big-btn btn-soft">🏠</button>
+      <button id="complete-works" class="big-btn btn-soft">🖼️ 내 작품</button>
+      <button id="complete-next" class="big-btn btn-primary">다음 그림 ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 다시 색칠 확인 오버레이 ═══════════ -->
+<div id="confirm-overlay" class="overlay hidden">
+  <div class="confirm-card">
+    <div class="confirm-text">완성한 그림을 지우고<br>처음부터 다시 색칠할까요?</div>
+    <div class="complete-btns">
+      <button id="confirm-cancel" class="big-btn btn-soft">아니요</button>
+      <button id="confirm-ok" class="big-btn btn-primary">네, 다시!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 내 작품 화면 ═══════════ -->
+<div id="screen-works" class="screen">
+  <header class="home-header">
+    <button id="works-back" class="round-btn" aria-label="뒤로가기">🏠</button>
+    <h1 class="app-title"><span class="title-emoji">🖼️</span> 내 작품</h1>
+    <div style="width:56px"></div>
+  </header>
+  <div id="works-grid" class="pic-grid"><!-- 엔진이 완성작 카드 생성 --></div>
+</div>
+
+<script src="js/progress.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/pictures/helpers.js"></script>
+<script src="js/pictures/butterfly.js"></script>
+<script src="js/pictures/fish.js"></script>
+<script src="js/pictures/whale.js"></script>
+<script src="js/pictures/flowerpot.js"></script>
+<script src="js/pictures/mushroom.js"></script>
+<script src="js/pictures/rainbowhouse.js"></script>
+<script src="js/pictures/rocket.js"></script>
+<script src="js/pictures/icecream.js"></script>
+<script src="js/engine.js"></script>
+</body>
+</html>
