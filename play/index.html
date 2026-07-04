@@ -50,12 +50,17 @@
 <div id="screen-letters" class="screen">
   <header class="game-header">
     <button id="letters-back" class="round-btn" aria-label="처음으로">🏠</button>
-    <div id="letters-target" class="game-title"></div>
+    <div class="game-title">🔤 글자 찾기</div>
     <div class="header-btns">
       <button id="letters-hint" class="round-btn hint-btn" aria-label="힌트">💡</button>
     </div>
   </header>
   <div class="letters-body">
+    <div class="letters-target-bar">
+      <span class="letters-target-label">찾아라!</span>
+      <span id="letters-target-big" class="letters-target-big"></span>
+      <span id="letters-target-count" class="letters-target-count"></span>
+    </div>
     <div id="letters-board" class="letters-board"></div>
     <div id="letters-progress" class="diff-progress"></div>
   </div>
@@ -183,5 +188,6 @@
 <script src="js/letters.js"></script>
 <script src="js/stickerplay.js"></script>
 <script src="js/timelimit.js"></script>
+<script src="js/nav.js"></script>
 </body>
 </html>

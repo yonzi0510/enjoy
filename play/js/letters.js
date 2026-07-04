@@ -137,7 +137,8 @@
   }
 
   function updateTargetLabel() {
-    $('letters-target').textContent = '🔍 「 ' + st.target + ' 」 ' + (COPIES - st.remain) + ' / ' + COPIES;
+    $('letters-target-big').textContent = st.target;
+    $('letters-target-count').textContent = (COPIES - st.remain) + ' / ' + COPIES;
   }
 
   function tapBubble(b, ch) {

@@ -561,6 +561,38 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .llv-3 { background: linear-gradient(180deg, #C9F0FF, #7DD8FF); box-shadow: 0 5px 0 #3FAEE0; }
 .llv-4 { background: linear-gradient(180deg, #FFC9A8, #FF9A5C); box-shadow: 0 5px 0 #E06A2C; }
 
+.letters-target-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 2.4vmin, 22px);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 0 rgba(0,0,0,.08);
+  padding: clamp(6px, 1.4vmin, 12px);
+}
+.letters-target-label {
+  font-size: clamp(16px, 3.2vmin, 24px);
+  font-weight: 900;
+  color: #8A7B5C;
+}
+.letters-target-big {
+  font-size: clamp(52px, 11vmin, 92px);
+  font-weight: 900;
+  color: #FF5C7C;
+  background: #FFF3B8;
+  border: 4px solid #FFD93D;
+  border-radius: 22px;
+  padding: 2px clamp(18px, 3.5vmin, 32px);
+  line-height: 1.25;
+}
+.letters-target-count {
+  font-size: clamp(18px, 3.6vmin, 28px);
+  font-weight: 900;
+  color: #C9A400;
+}
+
 .letters-body {
   flex: 1;
   display: flex;
@@ -591,7 +623,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   max-width: clamp(84px, 15vmin, 130px);
   aspect-ratio: 1;
   border-radius: 50%;
-  font-size: clamp(28px, 6vmin, 52px);
+  font-size: clamp(34px, 7.5vmin, 62px);
   font-weight: 900;
   color: #4A3F22;
   display: flex;
@@ -601,7 +633,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   transform: translate(var(--jx, 0), var(--jy, 0)) rotate(var(--jr, 0));
   transition: transform .12s;
 }
-.letter-bubble.lb-word { border-radius: 26px; font-size: clamp(20px, 4.4vmin, 38px); aspect-ratio: auto; padding: clamp(10px, 2.4vmin, 20px) 6px; }
+.letter-bubble.lb-word { border-radius: 26px; font-size: clamp(23px, 5vmin, 42px); aspect-ratio: auto; padding: clamp(10px, 2.4vmin, 20px) 6px; }
 .letter-bubble:active { transform: translate(var(--jx, 0), var(--jy, 0)) scale(.9); }
 .lb-c0 { background: #FFE3EE; } .lb-c1 { background: #D8F5C8; } .lb-c2 { background: #C9F0FF; }
 .lb-c3 { background: #FFF3B8; } .lb-c4 { background: #E8DCFA; } .lb-c5 { background: #FFE0CC; }
