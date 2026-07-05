@@ -5,6 +5,7 @@
 'use strict';
 
 global.window = {};
+require('../js/strokes.js');
 require('../js/data.js');
 const D = global.window.KanaData;
 
