@@ -4,7 +4,7 @@
  */
 window.Progress = (() => {
   const KEY = 'pixel-playground-v1';
-  const BOMBS = 3, WANDS = 1;
+  const BOMBS = 3, WANDS = 1; // 기본값 (엔진이 난이도별 기본값을 넘겨줌)
 
   function load() {
     try {
@@ -23,7 +23,7 @@ window.Progress = (() => {
   }
 
   function pic(id) {
-    if (!state.pics[id]) state.pics[id] = { cells: null, done: 0, doneAt: '', bomb: BOMBS, wand: WANDS };
+    if (!state.pics[id]) state.pics[id] = { cells: null, done: 0, doneAt: '' };
     return state.pics[id];
   }
 
@@ -41,9 +41,12 @@ window.Progress = (() => {
       return p.cells.slice();
     },
     setCells(id, cells) { pic(id).cells = cells; save(); },
-    getBoosters(id) {
-      const p = pic(id);
-      return { bomb: Number.isInteger(p.bomb) ? p.bomb : BOMBS, wand: Number.isInteger(p.wand) ? p.wand : WANDS };
+    // def = 도안 난이도별 기본 부스터 (저장된 값이 없으면 기본값)
+    getBoosters(id, def) {
+      const d = def || { bomb: BOMBS, wand: WANDS };
+      const p = state.pics[id];
+      if (!p) return { ...d };
+      return { bomb: Number.isInteger(p.bomb) ? p.bomb : d.bomb, wand: Number.isInteger(p.wand) ? p.wand : d.wand };
     },
     setBoosters(id, b) { const p = pic(id); p.bomb = b.bomb; p.wand = b.wand; save(); },
     isDone(id) { return !!(state.pics[id] && state.pics[id].done); },
@@ -53,7 +56,7 @@ window.Progress = (() => {
       if (!p.done) { p.done = 1; p.doneAt = todayStr(); save(); }
     },
     reset(id) {
-      state.pics[id] = { cells: null, done: 0, doneAt: '', bomb: BOMBS, wand: WANDS };
+      delete state.pics[id]; // 부스터는 getBoosters의 난이도별 기본값으로 복원
       save();
     },
     // 홈 진행률 뱃지용: 올바르게 칠한 칸 수 (target 배열과 비교)

@@ -104,18 +104,30 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .cat-chip:active { transform: translateY(2px); }
 
 /* ─────────── 홈: 도안 카드 ─────────── */
+/* 그리드 트랙 높이 계산이 카드 내용 높이를 무시하는 문제가 있어 flex-wrap 사용 */
 .pic-grid {
   flex: 1;
-  display: grid;
-  gap: clamp(10px, 2vmin, 20px);
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 14px;
   padding: clamp(10px, 2vmin, 24px);
   overflow-y: auto;
-  grid-template-columns: repeat(4, 1fr);
-  align-content: start;
 }
+.pic-grid .pic-card { width: calc(25% - 10.5px); flex: none; }
 @media (orientation: portrait) {
-  .pic-grid { grid-template-columns: repeat(2, 1fr); }
+  .pic-grid .pic-card { width: calc(50% - 7px); }
 }
+
+.level-head {
+  width: 100%;
+  font-size: clamp(16px, 3.2vmin, 24px);
+  font-weight: 900;
+  color: #2E7A50;
+  padding: clamp(6px, 1.4vmin, 12px) 4px 0;
+  text-shadow: 0 2px 0 rgba(255,255,255,.7);
+}
+.level-head:not(:first-child) { margin-top: clamp(6px, 1.6vmin, 14px); }
 
 .pic-card {
   background: #fff;
@@ -128,17 +140,28 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   position: relative;
 }
 .pic-card:active { transform: scale(.95); }
+/* 주의: 그리드 행 높이 계산이 %패딩·aspect-ratio 높이를 0으로 취급해 카드가 납작해짐 —
+ * 뷰포트 단위의 확정 높이로 순환을 끊는다 (4열 ≈ 21vw, 세로 2열 ≈ 43vw) */
 .pic-thumb {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 21vw;
   overflow: hidden;
   pointer-events: none;
   background: #FAFAFA;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
 }
-.pic-thumb canvas { width: 86%; height: 86%; image-rendering: pixelated; border-radius: 8px; }
+@media (orientation: portrait) {
+  .pic-thumb { height: 43vw; }
+}
+.pic-thumb canvas {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  height: 86%;
+  width: auto; /* 캔버스 고유 비율(정사각 격자) 유지 */
+  image-rendering: pixelated;
+  border-radius: 8px;
+}
 .pic-card-label {
   display: flex;
   align-items: center;
@@ -180,7 +203,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   margin-top: -4px;
 }
 .works-empty {
-  grid-column: 1 / -1;
+  width: 100%;
   text-align: center;
   padding: 60px 20px;
   font-size: clamp(16px, 3.2vmin, 24px);
@@ -370,7 +393,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   justify-content: center;
   animation: card-in .5s cubic-bezier(.2,1.6,.4,1);
 }
-.complete-thumb canvas { width: 92%; height: 92%; image-rendering: pixelated; }
+.complete-thumb canvas { width: 92%; height: auto; image-rendering: pixelated; }
 .complete-name {
   font-size: clamp(17px, 3.4vmin, 26px);
   font-weight: 900;
