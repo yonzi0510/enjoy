@@ -215,6 +215,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   min-width: 7mm;
   text-align: right;
 }
+.legend-name {
+  font-size: 5.2mm;
+  font-weight: 800;
+  color: #111;
+  white-space: nowrap;
+}
 .legend-swatch {
   width: 10mm;
   height: 10mm;

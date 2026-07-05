@@ -22,8 +22,61 @@
     picId: PICS.length ? PICS[0].id : null,
     paper: 'A4',
     orient: 'auto',        // auto | portrait | landscape
-    nameDate: true
+    nameDate: true,
+    pencil12: true         // 색연필 12색 모드 (비슷한 색은 합치고 흰색 칸은 비움)
   };
+
+  /* ─────────── 색연필 12색 ─────────── */
+  const PENCILS = [
+    { name: '빨강',   hex: '#E53935' },
+    { name: '주황',   hex: '#F57C00' },
+    { name: '노랑',   hex: '#FDD835' },
+    { name: '연두',   hex: '#8BC34A' },
+    { name: '초록',   hex: '#388E3C' },
+    { name: '하늘색', hex: '#4FC3F7' },
+    { name: '파랑',   hex: '#1976D2' },
+    { name: '보라',   hex: '#7B1FA2' },
+    { name: '분홍',   hex: '#F48FB1' },
+    { name: '살구색', hex: '#FFCC99' },
+    { name: '갈색',   hex: '#6D4C41' },
+    { name: '검정',   hex: '#212121' }
+  ];
+  const WHITE = '#FFFFFF';   // 흰색에 가까우면 "칠하지 않는 칸"
+
+  function hexRgb(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return [n >> 16, (n >> 8) & 255, n & 255];
+  }
+  // redmean 근사 색 거리 — 사람 눈 기준으로 가까운 색을 고른다
+  function colorDist(a, b) {
+    const [r1, g1, b1] = hexRgb(a), [r2, g2, b2] = hexRgb(b);
+    const rm = (r1 + r2) / 2;
+    const dr = r1 - r2, dg = g1 - g2, db = b1 - b2;
+    return (2 + rm / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rm) / 256) * db * db;
+  }
+
+  // 팔레트 → 색연필 매핑. map[i] = 0(칠하지 않음) 또는 새 번호(1..k)
+  function mapPalette(pic) {
+    const map = [], legend = [], byPencil = {};
+    pic.palette.forEach((hex, i) => {
+      let best = 0, bd = Infinity;
+      PENCILS.forEach((p, pi) => {
+        const d = colorDist(hex, p.hex);
+        if (d < bd) { bd = d; best = pi; }
+      });
+      if (colorDist(hex, WHITE) < bd) { map[i] = 0; return; }
+      if (byPencil[best] == null) {
+        byPencil[best] = legend.length + 1;
+        legend.push({ name: PENCILS[best].name, hex: PENCILS[best].hex });
+      }
+      map[i] = byPencil[best];
+    });
+    return { map, legend };
+  }
+
+  function legendCount(pic) {
+    return state.pencil12 ? mapPalette(pic).legend.length : pic.palette.length;
+  }
 
   /* ─────────── 도안 파싱 · 썸네일 (엔진과 동일 규칙) ─────────── */
   function parsePic(pic) {
@@ -89,8 +142,9 @@
   function fixedHeights(pic, innerW) {
     const headH = 11;                                    // 제목/이름·날짜 줄
     const hintH = 8;                                     // 안내 문구
-    const perRow = Math.max(1, Math.floor((innerW + 5) / 24));   // 범례 1개 ≈ 19mm + 간격 5mm
-    const rows = Math.ceil(pic.palette.length / perRow);
+    const itemW = state.pencil12 ? 43 : 24;              // 범례 1개(간격 포함) — 12색은 색 이름 포함
+    const perRow = Math.max(1, Math.floor((innerW + 5) / itemW));
+    const rows = Math.ceil(legendCount(pic) / perRow);
     const legendH = rows * 10 + (rows - 1) * 2.5 + 3;
     const footH = 6.5;
     const gridGap = 3;
@@ -114,7 +168,8 @@
   }
 
   /* ─────────── 숫자 격자 SVG ─────────── */
-  function buildGridSvg(pic, cellMm) {
+  // map: 팔레트 인덱스 → 표시 번호 (null이면 원본 색: 인덱스 + 1, 0이면 숫자 없음)
+  function buildGridSvg(pic, cellMm, map) {
     const { W, H, target } = parsePic(pic);
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
@@ -126,10 +181,12 @@
     bg.setAttribute('fill', '#fff');
     svg.appendChild(bg);
 
-    // 칸 숫자 (팔레트 인덱스 + 1 — 앱과 동일)
+    // 칸 숫자 (원본 색: 팔레트 인덱스 + 1 — 앱과 동일 / 12색: 매핑 번호, 0은 빈 칸)
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
-        const num = target[y * W + x] + 1;
+        const idx = target[y * W + x];
+        const num = map ? map[idx] : idx + 1;
+        if (!num) continue;
         const t = document.createElementNS(SVG_NS, 'text');
         t.setAttribute('x', x + 0.5);
         t.setAttribute('y', y + 0.5);
@@ -198,19 +255,28 @@
     }
     sheet.appendChild(head);
 
+    // 색연필 12색 모드: 비슷한 색은 하나로 합치고, 흰색에 가까운 칸은 비운다
+    const mapping = state.pencil12 ? mapPalette(pic) : null;
+    const hasBlank = mapping && mapping.map.some(n => n === 0);
+
     const hint = document.createElement('div');
     hint.className = 'sheet-hint';
-    hint.textContent = '칸에 적힌 번호와 같은 색을 찾아 칠해 보세요.';
+    hint.textContent = '칸에 적힌 번호와 같은 색을 찾아 칠해 보세요.' +
+      (hasBlank ? ' 숫자가 없는 칸은 칠하지 않아요.' : '');
     sheet.appendChild(hint);
 
-    // 번호별 색 범례
+    // 번호별 색 범례 (12색 모드는 색연필 이름 표시)
     const legend = document.createElement('div');
     legend.className = 'legend';
-    pic.palette.forEach((hex, i) => {
+    const entries = mapping
+      ? mapping.legend
+      : pic.palette.map(hex => ({ hex, name: null }));
+    entries.forEach((en, i) => {
       const item = document.createElement('div');
       item.className = 'legend-item';
       item.innerHTML = '<span class="legend-num">' + (i + 1) + '</span>' +
-        '<span class="legend-swatch" style="background:' + hex + '"></span>';
+        '<span class="legend-swatch" style="background:' + en.hex + '"></span>' +
+        (en.name ? '<span class="legend-name">' + en.name + '</span>' : '');
       legend.appendChild(item);
     });
     sheet.appendChild(legend);
@@ -219,7 +285,7 @@
     const cell = cellSize(pic, pw, ph);
     const box = document.createElement('div');
     box.className = 'grid-box';
-    box.appendChild(buildGridSvg(pic, cell));
+    box.appendChild(buildGridSvg(pic, cell, mapping && mapping.map));
     sheet.appendChild(box);
 
     const foot = document.createElement('div');
@@ -254,6 +320,7 @@
   bindSeg('paper-btns', 'paper', v => { state.paper = v; });
   bindSeg('orient-btns', 'orient', v => { state.orient = v; });
   bindSeg('namedate-btns', 'namedate', v => { state.nameDate = v === 'on'; });
+  bindSeg('color-btns', 'colormode', v => { state.pencil12 = v === 'pencil12'; });
 
   $('btn-print').addEventListener('click', () => window.print());
   window.addEventListener('resize', () => {
