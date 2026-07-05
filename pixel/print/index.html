@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#4DC98F">
+<link rel="icon" type="image/png" href="../icon-192.png">
+<title>픽셀 도안 인쇄 — 픽셀 놀이터</title>
+<link rel="stylesheet" href="print.css">
+<style id="page-style"></style>
+</head>
+<body>
+
+<!-- ═══════════ 화면 UI (인쇄 시 숨김) ═══════════ -->
+<div id="ui" class="no-print">
+  <header class="print-header">
+    <a class="round-btn" href="../" aria-label="픽셀 놀이터로 돌아가기">🏠</a>
+    <h1 class="app-title"><span class="title-emoji">🖨️</span> 픽셀 도안 인쇄</h1>
+    <div style="width:52px"></div>
+  </header>
+
+  <div class="controls">
+    <div class="control-group">
+      <div class="control-label">용지</div>
+      <div id="paper-btns" class="seg">
+        <button data-paper="A4" class="seg-btn sel">A4</button>
+        <button data-paper="A3" class="seg-btn">A3</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">방향</div>
+      <div id="orient-btns" class="seg">
+        <button data-orient="auto" class="seg-btn sel">자동</button>
+        <button data-orient="portrait" class="seg-btn">세로</button>
+        <button data-orient="landscape" class="seg-btn">가로</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">이름·날짜 칸</div>
+      <div id="namedate-btns" class="seg">
+        <button data-namedate="on" class="seg-btn sel">넣기</button>
+        <button data-namedate="off" class="seg-btn">빼기</button>
+      </div>
+    </div>
+    <button id="btn-print" class="big-btn btn-primary">🖨️ 인쇄하기</button>
+  </div>
+
+  <div id="pic-list" class="pic-list"><!-- 스크립트가 난이도별 도안 카드 생성 --></div>
+</div>
+
+<!-- ═══════════ 인쇄되는 종이 (화면에서는 미리보기) ═══════════ -->
+<div id="preview-wrap" class="preview-wrap">
+  <div id="sheet" class="sheet"><!-- 스크립트가 도안·범례 생성 --></div>
+</div>
+
+<script src="../js/pictures/heart.js"></script>
+<script src="../js/pictures/star.js"></script>
+<script src="../js/pictures/ladybug.js"></script>
+<script src="../js/pictures/rabbit.js"></script>
+<script src="../js/pictures/tulip.js"></script>
+<script src="../js/pictures/rainbow.js"></script>
+<script src="../js/pictures/icecream.js"></script>
+<script src="../js/pictures/rocket.js"></script>
+<script src="../js/pictures/butterfly.js"></script>
+<script src="../js/pictures/strawberry.js"></script>
+<script src="../js/pictures/fish.js"></script>
+<script src="../js/pictures/panda.js"></script>
+<script src="../js/pictures/dino.js"></script>
+<script src="../js/pictures/cake.js"></script>
+<script src="print.js"></script>
+</body>
+</html>
