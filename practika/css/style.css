@@ -67,6 +67,32 @@ b { font-weight: 900; }
   content: ''; position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
   border-left: 9px solid transparent; border-right: 9px solid transparent; border-bottom: 10px solid #fff;
 }
+/* 언어 선택 탭 */
+.lang-tabs { display: flex; gap: 8px; justify-content: center; width: 100%; flex-wrap: wrap; }
+.lang-tab {
+  display: flex; align-items: center; gap: 6px; background: #fff; color: #6B5AC8;
+  border-radius: 999px; padding: 8px 16px; font-size: clamp(13px, 3vmin, 17px); font-weight: 900;
+  box-shadow: 0 3px 0 rgba(107,90,200,.18); transition: transform .1s;
+}
+.lang-tab.active { background: #6B5AC8; color: #fff; box-shadow: 0 3px 0 rgba(74,63,140,.4); }
+.lang-tab:active { transform: translateY(2px); }
+.lang-tab .flag { font-size: 1.15em; }
+
+/* 소리 안 남 배너 */
+.sound-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; gap: 10px;
+  background: #FFE9A8; color: #6A4A00; font-weight: 800;
+  font-size: clamp(12px, 2.7vmin, 15px); line-height: 1.4;
+  padding: 10px 14px calc(10px); box-shadow: 0 3px 10px rgba(0,0,0,.15);
+  padding-top: calc(10px + env(safe-area-inset-top));
+}
+.sound-banner b { color: #8A5A00; }
+.sound-banner button {
+  margin-left: auto; flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(0,0,0,.12); color: #6A4A00; font-weight: 900; font-size: 16px;
+}
+
 .track-list { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .track-card {
   display: flex; align-items: center; gap: 14px; background: #fff; border-radius: 22px;

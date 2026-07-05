@@ -1,7 +1,10 @@
-/* 퍼지 매칭 · 정확도 채점
- * 사용자가 말한 텍스트를 레슨의 기대 표현들과 비교해 0~100점으로 환산하고,
- * 모범 답안의 단어별로 "맞음/놓침"을 표시할 정보를 만든다.
- * 실제 발음 평가 엔진이 없으므로, 인식된 텍스트 기준의 관대한(초급자 친화) 채점을 쓴다.
+/* 퍼지 매칭 · 정확도 채점 (다국어)
+ * - 영어(en): 단어 토큰 기준(오타·어순 관대) 채점
+ * - 일본어/중국어(ja·zh): 공백이 없으므로 문자 단위 편집거리 채점
+ * 인식된 텍스트 기준의 관대한(초급자 친화) 채점을 쓴다. (실제 발음 평가 엔진 없음)
+ *
+ * evaluate() 반환: { score, model, said, pass, perfect, segments:[{text, ok}] }
+ *   segments = 모범 답안을 조각(영어=단어, 일·중=문자)으로 나눠 맞음/놓침을 표시한 것.
  */
 window.Match = (() => {
   const CONTRACTIONS = {
@@ -13,19 +16,7 @@ window.Match = (() => {
     "what's": 'what is', "he's": 'he is', "she's": 'she is', "there's": 'there is',
     "wi-fi": 'wifi', "o'clock": 'oclock',
   };
-  // 채점에서 무시해도 되는 사소한 기능어 (놓쳐도 감점 적게)
   const FILLER = new Set(['a', 'an', 'the', 'to', 'please', 'well', 'so', 'um', 'uh', 'oh']);
-
-  function normalize(s) {
-    s = String(s || '').toLowerCase().replace(/[‘’]/g, "'");
-    for (const k in CONTRACTIONS) {
-      s = s.replace(new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g'), CONTRACTIONS[k]);
-    }
-    s = s.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-    return s;
-  }
-
-  function tokens(s) { return normalize(s).split(' ').filter(Boolean); }
 
   function lev(a, b) {
     if (a === b) return 0;
@@ -44,60 +35,96 @@ window.Match = (() => {
     return prev[n];
   }
 
-  // 단어 하나가 대략 일치하는가 (짧은 단어는 정확히, 긴 단어는 오타 1~2 허용)
-  function wordMatch(a, b) {
+  /* ─────────── 영어 채점 ─────────── */
+  function enNorm(s) {
+    s = String(s || '').toLowerCase().replace(/[‘’]/g, "'");
+    for (const k in CONTRACTIONS) {
+      s = s.replace(new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g'), CONTRACTIONS[k]);
+    }
+    return s.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function enTokens(s) { return enNorm(s).split(' ').filter(Boolean); }
+  function enWordMatch(a, b) {
     if (a === b) return true;
     if (b.length >= 6) return lev(a, b) <= 2;
     if (b.length >= 4) return lev(a, b) <= 1;
     return false;
   }
-
-  // 기대 표현 exp 의 단어들이 said 안에 얼마나 있는지 (순서 무관, 중복 소비)
-  function recall(said, exp) {
-    const s = tokens(said), e = tokens(exp);
+  function enRecall(said, exp) {
+    const s = enTokens(said), e = enTokens(exp);
     const pool = s.slice();
-    const matched = [], missed = [];
-    let gotW = 0, totW = 0;
-    for (const w of e) {
-      const weight = FILLER.has(w) ? 0.25 : 1;
-      totW += weight;
-      const idx = pool.findIndex(x => wordMatch(x, w));
-      if (idx >= 0) { pool.splice(idx, 1); matched.push(w); gotW += weight; }
-      else missed.push(w);
-    }
-    return { score: totW ? gotW / totW : 0, matched, missed, expTokens: e };
+    const matched = new Set(); let got = 0, tot = 0;
+    e.forEach((w, i) => {
+      const weight = FILLER.has(w) ? 0.25 : 1; tot += weight;
+      const idx = pool.findIndex(x => enWordMatch(x, w));
+      if (idx >= 0) { pool.splice(idx, 1); matched.add(i); got += weight; }
+    });
+    return { score: tot ? got / tot : 0, matched };
   }
-
-  function stringSim(a, b) {
-    a = normalize(a); b = normalize(b);
-    if (!a || !b) return 0;
-    if (a === b) return 1;
+  function enSim(a, b) {
+    a = enNorm(a); b = enNorm(b);
+    if (!a || !b) return 0; if (a === b) return 1;
     return 1 - lev(a, b) / Math.max(a.length, b.length);
   }
-
-  function variantScore(said, exp) {
-    const r = recall(said, exp);
-    const sim = stringSim(said, exp);
-    return Math.round(100 * (0.7 * r.score + 0.3 * sim));
+  function enScoreVariant(said, exp) {
+    const r = enRecall(said, exp);
+    return Math.round(100 * (0.7 * r.score + 0.3 * enSim(said, exp)));
   }
-
-  /* turn: { model, expect:[...] }  →  { score, model, matched[], missed[], said, perfect, pass } */
-  function evaluate(said, turn) {
+  function enEvaluate(said, turn) {
     const variants = (turn.expect && turn.expect.length) ? turn.expect : [turn.model];
     let best = 0;
-    for (const v of variants) best = Math.max(best, variantScore(said, v));
-    // 단어 하이라이트는 항상 모범 답안(model) 기준 — 무엇을 말해야 했는지 가르쳐 준다
-    const r = recall(said, turn.model);
-    return {
-      score: best,
-      model: turn.model,
-      matched: r.matched,
-      missed: r.missed.filter(w => !FILLER.has(w)),
-      said: said,
-      perfect: best >= 90,
-      pass: best >= 60,
-    };
+    for (const v of variants) best = Math.max(best, enScoreVariant(said, v));
+    // 세그먼트: 모범 답안 단어별 맞음 표시
+    const words = turn.model.split(/\s+/).filter(Boolean);
+    const rec = enRecall(said, turn.model);
+    const modelWords = enTokens(turn.model);
+    // 원본 단어 ↔ 정규화 토큰 인덱스 매핑(대략 1:1; 축약형은 앞 토큰 기준)
+    let ti = 0;
+    const segments = words.map(w => {
+      const subs = enNorm(w).split(' ').filter(Boolean);
+      let ok = subs.length > 0;
+      for (let k = 0; k < subs.length; k++) {
+        const isFiller = FILLER.has(modelWords[ti]);
+        if (!(rec.matched.has(ti) || isFiller)) ok = false;
+        ti++;
+      }
+      return { text: w, ok };
+    });
+    return finalize(best, turn.model, said, segments);
   }
 
-  return { normalize, tokens, evaluate, variantScore, stringSim };
+  /* ─────────── 일본어/중국어(CJK) 채점 ─────────── */
+  function cjkNorm(s) {
+    return String(s || '')
+      .replace(/[、。，．・！？!?.,'"“”‘’（）()「」『』〜~…\-—:;：；\s]/g, '')
+      .toLowerCase();
+  }
+  function cjkSim(a, b) {
+    a = cjkNorm(a); b = cjkNorm(b);
+    if (!a || !b) return 0; if (a === b) return 1;
+    return 1 - lev(a, b) / Math.max(a.length, b.length);
+  }
+  function cjkEvaluate(said, turn) {
+    const variants = (turn.expect && turn.expect.length) ? turn.expect : [turn.model];
+    let best = 0;
+    for (const v of variants) best = Math.max(best, Math.round(100 * cjkSim(said, v)));
+    // 세그먼트: 모범 답안 문자별로, 말한 문자 집합에 있으면 맞음
+    const saidChars = cjkNorm(said);
+    const segments = Array.from(turn.model).map(ch => {
+      if (/\s/.test(ch)) return { text: ch, ok: true };
+      const isPunct = cjkNorm(ch) === '';
+      return { text: ch, ok: isPunct || saidChars.indexOf(ch) >= 0 };
+    });
+    return finalize(best, turn.model, said, segments);
+  }
+
+  function finalize(score, model, said, segments) {
+    return { score, model, said, segments, perfect: score >= 90, pass: score >= 60 };
+  }
+
+  function evaluate(said, turn, lang) {
+    return (lang === 'ja' || lang === 'zh') ? cjkEvaluate(said, turn) : enEvaluate(said, turn);
+  }
+
+  return { evaluate, enNorm, cjkNorm };
 })();

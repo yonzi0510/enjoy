@@ -21,10 +21,11 @@ window.Progress = (() => {
           gems: raw.gems || 0,
           lessons: raw.lessons || {},
           learned: raw.learned || {},
+          lang: raw.lang || 'en',
         };
       }
     } catch (e) { /* 손상 데이터 초기화 */ }
-    return { streak: { count: 0, lastDay: 0 }, xp: 0, gems: 0, lessons: {}, learned: {} };
+    return { streak: { count: 0, lastDay: 0 }, xp: 0, gems: 0, lessons: {}, learned: {}, lang: 'en' };
   }
 
   let state = load();
@@ -74,19 +75,27 @@ window.Progress = (() => {
       return { stars, xpGain, gemGain, streak: state.streak.count };
     },
 
-    // 배운 표현 저장(복습용)
-    learnPhrase(en, ko) {
-      const key = String(en || '').toLowerCase().trim();
-      if (!key) return;
-      const it = state.learned[key] || { en, ko, count: 0, last: 0 };
-      it.en = en; it.ko = ko; it.count += 1; it.last = Date.now();
+    // 선택 언어 유지
+    getLang() { return state.lang || 'en'; },
+    setLang(lang) { state.lang = lang; save(); },
+
+    // 배운 표현 저장(복습용) — 언어별 구분
+    learnPhrase(t, ko, lang) {
+      const key = (lang || 'en') + '::' + String(t || '').trim();
+      if (!String(t || '').trim()) return;
+      const it = state.learned[key] || { t, ko, lang: lang || 'en', count: 0, last: 0 };
+      it.t = t; it.ko = ko; it.lang = lang || 'en'; it.count += 1; it.last = Date.now();
       state.learned[key] = it;
       save();
     },
-    learnedList() {
-      return Object.values(state.learned).sort((a, b) => b.last - a.last);
+    learnedList(lang) {
+      return Object.values(state.learned)
+        .filter(v => !lang || v.lang === lang)
+        .sort((a, b) => b.last - a.last);
     },
-    learnedCount() { return Object.keys(state.learned).length; },
+    learnedCount(lang) {
+      return Object.values(state.learned).filter(v => !lang || v.lang === lang).length;
+    },
 
     // 복습에서 젬 소량 지급
     rewardReview(correct) {

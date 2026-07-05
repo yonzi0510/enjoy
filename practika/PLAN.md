@@ -68,6 +68,17 @@ practika/
   tools/e2e.mjs           Playwright 종단 테스트
 ```
 
+## 4-1. 다국어 확장 (영어 → 영·일·중)
+
+- `window.LANGS` 로 영어(en)·일본어(ja)·중국어(zh) 정의(각 tts/stt 로케일 포함).
+- 레슨 id 는 언어 접두어(예: `ja-travel-airport`)로 전역 유일. 각 언어 3트랙 × 3~4레슨.
+- 홈 상단 **언어 선택 탭**으로 전환(선택은 localStorage 유지). 튜터 인사말도 언어별.
+- 음성: `Speech.setTarget(tts, stt)` 로 TTS·STT 로케일을 언어에 맞춰 전환.
+- 채점(`match.js`): 영어는 단어 토큰, **일·중은 공백이 없어 문자 단위 편집거리**로 채점.
+  피드백은 모범 답안을 조각(단어/문자)으로 나눠 맞음(초록)·놓침(빨강) 표시.
+- **소리 안 남 대응**: 카카오톡 등 인앱 브라우저(userAgent)·TTS 미지원·음성 미설치를 감지해
+  "Chrome·Safari로 열기" 안내 배너 표시.
+
 ## 5. 테스트 계획
 
 - `node tools/validate-data.js` — 트랙·레슨·대본 구조, 각 튜터 턴의 기대 응답 존재,

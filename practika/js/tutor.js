@@ -22,7 +22,7 @@ window.Tutor = (() => {
   function evaluate(said) {
     const t = turn();
     if (!t || t.speaker !== 'user') return null;
-    return window.Match.evaluate(said, t);
+    return window.Match.evaluate(said, t, s.lesson.lang);
   }
 
   // 이 유저 턴을 확정 (통과 시 호출). 결과 누적 + 배운 표현 저장.
