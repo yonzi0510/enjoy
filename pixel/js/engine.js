@@ -20,6 +20,15 @@
     food:    { emoji: '🍦', name: '음식' }
   };
 
+  // 난이도: 격자가 클수록 부스터를 넉넉히
+  const LEVELS = {
+    1: { name: '쉬움', emoji: '🌱', boosters: { bomb: 3, wand: 1 } },
+    2: { name: '보통', emoji: '🌟', boosters: { bomb: 4, wand: 2 } },
+    3: { name: '어려움', emoji: '🔥', boosters: { bomb: 6, wand: 2 } }
+  };
+  const picLevel = pic => LEVELS[pic.level] ? pic.level : 1;
+  const boosterDefaults = pic => ({ ...LEVELS[picLevel(pic)].boosters });
+
   const state = {
     pic: null, W: 0, H: 0, total: 0,
     target: null,     // Uint8Array — 정답 팔레트 인덱스
@@ -120,24 +129,35 @@
     renderChips();
     const grid = $('pic-grid');
     grid.innerHTML = '';
-    PICS.filter(p => curCat === 'all' || p.category === curCat).forEach(pic => {
-      const { W, H, target } = parsePic(pic);
-      const correct = Progress.correctCount(pic.id, Array.from(target));
-      const done = Progress.isDone(pic.id) && correct >= W * H;
-      const pct = Math.round(correct / (W * H) * 100);
-      const card = document.createElement('button');
-      card.className = 'pic-card';
-      const thumbBox = document.createElement('div');
-      thumbBox.className = 'pic-thumb';
-      thumbBox.appendChild(makeThumb(pic)); // 완성 모습 미리보기 (실제 앱과 동일)
-      card.appendChild(thumbBox);
-      card.insertAdjacentHTML('beforeend',
-        '<div class="pic-card-label"><span>' + pic.emoji + '</span><span>' + pic.name + '</span></div>' +
-        '<div class="pic-card-size">' + W + '×' + H + '</div>' +
-        (done ? '<div class="pic-card-badge done-badge">✨ 완성</div>'
-              : pct > 0 ? '<div class="pic-card-badge">' + pct + '%</div>' : ''));
-      card.addEventListener('click', () => openPicture(pic));
-      grid.appendChild(card);
+    // 난이도 단계별 섹션
+    [1, 2, 3].forEach(lv => {
+      const pics = PICS.filter(p => (curCat === 'all' || p.category === curCat) && picLevel(p) === lv);
+      if (!pics.length) return;
+      const head = document.createElement('div');
+      head.className = 'level-head';
+      head.textContent = LEVELS[lv].emoji + ' ' + LEVELS[lv].name;
+      grid.appendChild(head);
+      pics.forEach(pic => {
+        const { W, H, target } = parsePic(pic);
+        const correct = Progress.correctCount(pic.id, Array.from(target));
+        const done = Progress.isDone(pic.id) && correct >= W * H;
+        const pct = Math.round(correct / (W * H) * 100);
+        const card = document.createElement('div');
+        card.className = 'pic-card';
+        card.setAttribute('role', 'button');
+        card.tabIndex = 0;
+        const thumbBox = document.createElement('div');
+        thumbBox.className = 'pic-thumb';
+        thumbBox.appendChild(makeThumb(pic)); // 완성 모습 미리보기 (실제 앱과 동일)
+        card.appendChild(thumbBox);
+        card.insertAdjacentHTML('beforeend',
+          '<div class="pic-card-label"><span>' + pic.emoji + '</span><span>' + pic.name + '</span></div>' +
+          '<div class="pic-card-size">' + W + '×' + H + '</div>' +
+          (done ? '<div class="pic-card-badge done-badge">✨ 완성</div>'
+                : pct > 0 ? '<div class="pic-card-badge">' + pct + '%</div>' : ''));
+        card.addEventListener('click', () => openPicture(pic));
+        grid.appendChild(card);
+      });
     });
   }
 
@@ -366,7 +386,7 @@
     state.correct = 0;
     for (let i = 0; i < state.total; i++) if (state.painted[i] === state.target[i]) state.correct++;
 
-    state.boosters = Progress.getBoosters(pic.id);
+    state.boosters = Progress.getBoosters(pic.id, boosterDefaults(pic));
     state.bombArmed = false;
     Sound.resetFillStep();
 
@@ -705,8 +725,10 @@
       grid.innerHTML = '<div class="works-empty">아직 완성한 그림이 없어요.<br>픽셀을 끝까지 칠하면 여기에 걸려요! 🖼️</div>';
     }
     doneList.forEach(pic => {
-      const card = document.createElement('button');
+      const card = document.createElement('div');
       card.className = 'pic-card';
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
       const thumbBox = document.createElement('div');
       thumbBox.className = 'pic-thumb';
       thumbBox.appendChild(makeThumb(pic));

@@ -58,11 +58,21 @@ const server = http.createServer((req, res) => {
   console.log('■ 홈 갤러리');
   const picIds = await page.evaluate(() => window.__pixel.pics());
   check('도안 카드 수 = 도안 수 (' + picIds.length + ')', await page.locator('#pic-grid .pic-card').count() === picIds.length);
+  check('난이도 섹션 3개 (쉬움·보통·어려움)', await page.locator('#pic-grid .level-head').count() === 3);
+  const animalCount = await page.evaluate(() => window.PIXELS.filter(p => p.category === 'animal').length);
   await page.locator('.cat-chip', { hasText: '동물' }).click();
-  check('카테고리 필터(동물)', await page.locator('#pic-grid .pic-card').count() === 2);
+  check('카테고리 필터(동물 ' + animalCount + '개)', await page.locator('#pic-grid .pic-card').count() === animalCount);
   await page.locator('.cat-chip', { hasText: '전체' }).click();
   check('카테고리 필터(전체 복귀)', await page.locator('#pic-grid .pic-card').count() === picIds.length);
   await shot('01-home');
+
+  console.log('■ 난이도별 부스터 기본값');
+  await page.evaluate(() => window.__pixel.open('panda'));
+  let b = await page.evaluate(() => window.__pixel.boosters());
+  check('어려움(32×32): 폭탄 6 · 마법봉 2', b.bomb === 6 && b.wand === 2, JSON.stringify(b));
+  await page.evaluate(() => window.__pixel.open('butterfly'));
+  b = await page.evaluate(() => window.__pixel.boosters());
+  check('보통(26×26): 폭탄 4 · 마법봉 2', b.bomb === 4 && b.wand === 2, JSON.stringify(b));
 
   console.log('■ 오답은 washed로 표시되고 고칠 수 있다');
   await page.evaluate(() => window.__pixel.open('heart'));
