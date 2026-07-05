@@ -60,6 +60,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   transition: transform .1s;
 }
 .round-btn:active { transform: scale(.9) translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.12); }
+a.round-btn { text-decoration: none; color: inherit; flex: 0 0 auto; }
 
 .game-title {
   font-size: clamp(15px, 3.2vmin, 24px);
