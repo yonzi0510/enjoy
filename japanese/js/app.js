@@ -50,7 +50,7 @@ window.App = (() => {
       b.dataset.ch = k.ch;
       b.innerHTML = '<span class="lc-ch">' + k.ch + '</span><span class="lc-name">' + k.ko + '</span>' +
         (P.hasTraced(k.ch) ? '<span class="lc-star">⭐</span>' : '');
-      b.addEventListener('pointerdown', ev => {
+      b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
         curKana = k;
@@ -73,7 +73,7 @@ window.App = (() => {
       b.type = 'button';
       b.className = 'wordbtn';
       b.innerHTML = '<span class="wb-emoji">' + w.e + '</span><span class="wb-word">' + w.w + '</span><span class="wb-ko">' + w.ko + '</span>';
-      b.addEventListener('pointerdown', ev => {
+      b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
         A.speakSeq([
@@ -121,10 +121,12 @@ window.App = (() => {
           { text: '다 썼어요!' + (isNew ? ' 낱말 카드 선물!' : ''), lang: 'ko', rate: 0.95 },
           { text: w.w, lang: 'ja', rate: 0.8 },
         ]);
-        setTimeout(() => showReward(w, () => {
-          gridPurpose = 'trace';
-          showScreen('scr-letters');
-        }), 600);
+        // 오십음도 순서(あいうえお…)로 다음 글자 자동 진행
+        const nxt = D.all[D.all.indexOf(k) + 1] || null;
+        const toList = () => { gridPurpose = 'trace'; showScreen('scr-letters'); };
+        setTimeout(() => showReward(w,
+          () => { if (nxt) { curKana = nxt; openTrace(); } else toList(); },
+          { nextLabel: nxt ? '다음 글자 ' + nxt.ch + ' ✏️' : '좋아요!', onList: toList }), 600);
       },
     });
   }
@@ -139,18 +141,23 @@ window.App = (() => {
     }
   }
 
-  /* ─────────── 보상 오버레이 ─────────── */
-  let rewardCb = null;
-  function showReward(word, onNext) {
-    rewardCb = onNext;
+  /* ─────────── 보상 오버레이 ───────────
+   * opts.nextLabel: 기본(다음) 버튼 문구, opts.onList: '목록으로' 버튼 콜백(있을 때만 표시)
+   */
+  let rewardNextCb = null, rewardListCb = null;
+  function showReward(word, onNext, opts) {
+    rewardNextCb = onNext;
+    rewardListCb = (opts && opts.onList) || null;
     document.getElementById('reward-emoji').textContent = word.e;
     document.getElementById('reward-word').textContent = word.w + ' · ' + word.ko;
+    document.getElementById('reward-next').textContent = (opts && opts.nextLabel) || '좋아요!';
+    document.getElementById('reward-list').hidden = !rewardListCb;
     document.getElementById('reward').classList.add('on');
   }
-  function closeReward() {
+  function closeReward(which) {
     document.getElementById('reward').classList.remove('on');
-    const cb = rewardCb;
-    rewardCb = null;
+    const cb = which === 'list' ? rewardListCb : rewardNextCb;
+    rewardNextCb = rewardListCb = null;
     if (cb) cb();
   }
 
@@ -158,7 +165,7 @@ window.App = (() => {
   function init() {
     // 홈 메뉴
     document.querySelectorAll('[data-go]').forEach(b => {
-      b.addEventListener('pointerdown', ev => {
+      b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
         const go = b.dataset.go;
@@ -169,7 +176,7 @@ window.App = (() => {
     });
     // あ~な / は~ん 탭
     document.querySelectorAll('#scr-letters .tab').forEach(t => {
-      t.addEventListener('pointerdown', ev => {
+      t.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
         gridTab = t.dataset.tab;
@@ -178,31 +185,36 @@ window.App = (() => {
     });
     // 노래 탭·재생
     document.querySelectorAll('#scr-song .tab').forEach(t => {
-      t.addEventListener('pointerdown', ev => {
+      t.addEventListener('click', ev => {
         ev.preventDefault();
         window.Song.setMode(t.dataset.mode);
       });
     });
-    document.getElementById('song-play').addEventListener('pointerdown', ev => {
+    document.getElementById('song-play').addEventListener('click', ev => {
       ev.preventDefault();
       window.Song.play();
     });
     // 글자 상세 → 소리·따라쓰기
-    document.getElementById('letter-sound').addEventListener('pointerdown', ev => {
+    document.getElementById('letter-sound').addEventListener('click', ev => {
       ev.preventDefault();
       A.sfx.tap();
       A.speakSeq([{ text: curKana.ch, lang: 'ja', rate: 0.7 }, { text: curKana.ko, lang: 'ko', rate: 0.95 }]);
     });
-    document.getElementById('letter-trace').addEventListener('pointerdown', ev => {
+    document.getElementById('letter-trace').addEventListener('click', ev => {
       ev.preventDefault();
       A.sfx.tap();
       openTrace();
     });
-    // 보상 닫기
-    document.getElementById('reward-close').addEventListener('pointerdown', ev => {
+    // 보상 닫기 — 다음 글자 진행 / 목록으로
+    document.getElementById('reward-next').addEventListener('click', ev => {
       ev.preventDefault();
       A.sfx.tap();
-      closeReward();
+      closeReward('next');
+    });
+    document.getElementById('reward-list').addEventListener('click', ev => {
+      ev.preventDefault();
+      A.sfx.tap();
+      closeReward('list');
     });
 
     showScreen('scr-home');

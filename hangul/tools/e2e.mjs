@@ -31,8 +31,12 @@ await page.addInitScript(() => {
 });
 page.on('pageerror', e => fail('페이지 오류 없어야 함', e.message));
 
-// pointerdown 리스너용 탭 헬퍼 (움직이는 요소도 좌표 대기 없이 즉시 발화)
+// 일반 버튼은 click(스크롤 오탭 방지), 게임 요소(거품·보기)만 pointerdown
 async function tap(selector) {
+  await page.$eval(selector, el =>
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+}
+async function tapP(selector) {
   await page.$eval(selector, el =>
     el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true })));
 }
@@ -87,14 +91,19 @@ await check('전 획 드래그 → 완성 + 카드 보상', async () => {
   await page.locator('#reward.on').waitFor({ timeout: 5000 });
   expect(await page.locator('#reward-word').textContent() !== '');
 });
-await check('보상 닫기 → 따라쓰기 그리드에 ⭐ 표시', async () => {
-  await tap('#reward-close');
+await check('보상 → 다음 글자 ㄴ으로 자동 진행 → 그리드 ⭐ 표시', async () => {
+  const label = await page.locator('#reward-next').textContent();
+  expect(label.indexOf('ㄴ') >= 0, '다음 글자 버튼이 ㄴ이 아님: ' + label);
+  await tap('#reward-next');
+  expect(await screen() === 'scr-trace', '다음 글자 따라쓰기로 이동해야 함');
+  expect(await page.locator('#trace-ch').textContent() === 'ㄴ', '가나다 순서 위반');
+  await tap('.back[data-go="trace"]');
   expect(await screen() === 'scr-letters');
   expect(await page.locator('.letter-cell[data-ch="ㄱ"].traced').count() === 1);
 });
 
-/* ── 모음 따라쓰기(ㅣ, 한 획)도 확인 ── */
-await check('모음 ㅣ 따라쓰기 완주', async () => {
+/* ── 모음 따라쓰기(ㅣ, 마지막 글자)도 확인 ── */
+await check('모음 ㅣ(마지막 글자) 따라쓰기 완주 → 목록 복귀', async () => {
   await tap('.tab[data-tab="vowels"]');
   await tap('.letter-cell[data-ch="ㅣ"]');
   const path = await page.evaluate(() => window.__hangulTest.tracePath());
@@ -105,7 +114,8 @@ await check('모음 ㅣ 따라쓰기 완주', async () => {
   const st = await page.evaluate(() => window.__hangulTest.traceState());
   expect(st.done);
   await page.locator('#reward.on').waitFor({ timeout: 5000 });
-  await tap('#reward-close');
+  await tap('#reward-next'); // 마지막 글자라 '좋아요!' → 목록으로
+  expect(await screen() === 'scr-letters');
 });
 
 /* ── 거품 놀이 5라운드 ── */
@@ -121,11 +131,11 @@ await check('거품 놀이 5라운드 → 보상', async () => {
       { timeout: 5000 });
     const target = await page.evaluate(() => window.__hangulTest.bubbleTarget());
     expect((await page.locator('.bubble').count()) === 5, '거품 5개');
-    await tap('.bubble[data-ch="' + target + '"]');
+    await tapP('.bubble[data-ch="' + target + '"]');
     await page.waitForTimeout(1000);
   }
   await page.locator('#reward.on').waitFor({ timeout: 5000 });
-  await tap('#reward-close');
+  await tap('#reward-next');
   expect(await screen() === 'scr-games');
 });
 
@@ -140,11 +150,11 @@ await check('첫소리 놀이 5라운드 → 보상', async () => {
       { timeout: 5000 });
     const t = await page.evaluate(() => window.__hangulTest.firstTarget());
     expect((await page.locator('.choice').count()) === 3, '보기 3개');
-    await tap('.choice[data-ch="' + t + '"]');
+    await tapP('.choice[data-ch="' + t + '"]');
     await page.waitForTimeout(1250);
   }
   await page.locator('#reward.on').waitFor({ timeout: 5000 });
-  await tap('#reward-close');
+  await tap('#reward-next');
 });
 
 /* ── 가나다 노래 ── */

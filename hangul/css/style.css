@@ -358,3 +358,6 @@ h1 {
 .reward-title { font-size: clamp(20px, 4.2vmin, 30px); font-weight: 900; color: #FF6FA5; }
 .reward-emoji { font-size: clamp(70px, 16vmin, 130px); line-height: 1.1; }
 .reward-word { font-size: clamp(24px, 5vmin, 40px); font-weight: 900; color: #4A3F22; }
+
+/* 보상 오버레이 버튼 줄 */
+.reward-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
