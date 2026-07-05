@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#8A7BE0">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>프랙티카 놀이터</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- 재사용 튜터 아바타 (SVG 템플릿) -->
+<template id="tpl-avatar">
+  <svg class="avatar" viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- 헤드셋 밴드 -->
+    <path d="M40 96 A60 60 0 0 1 160 96" fill="none" stroke="#6B5AC8" stroke-width="10" stroke-linecap="round"/>
+    <!-- 얼굴 -->
+    <circle cx="100" cy="112" r="60" fill="#B9A9F5"/>
+    <circle cx="100" cy="112" r="60" fill="none" stroke="#9A87E8" stroke-width="4"/>
+    <!-- 볼 -->
+    <circle cx="66" cy="126" r="11" fill="#FF9FC4" opacity="0.7"/>
+    <circle cx="134" cy="126" r="11" fill="#FF9FC4" opacity="0.7"/>
+    <!-- 눈 -->
+    <g class="av-eyes">
+      <circle cx="80" cy="104" r="8" fill="#3A2E63"/>
+      <circle cx="120" cy="104" r="8" fill="#3A2E63"/>
+      <circle cx="82.5" cy="101.5" r="2.6" fill="#fff"/>
+      <circle cx="122.5" cy="101.5" r="2.6" fill="#fff"/>
+    </g>
+    <!-- 입 (말할 때 커짐) -->
+    <ellipse class="av-mouth" cx="100" cy="132" rx="12" ry="7" fill="#5B3A57"/>
+    <!-- 헤드폰 이어컵 -->
+    <rect x="30" y="96" width="20" height="34" rx="9" fill="#6B5AC8"/>
+    <rect x="150" y="96" width="20" height="34" rx="9" fill="#6B5AC8"/>
+    <!-- 마이크 붐 -->
+    <path d="M40 128 Q40 158 74 160" fill="none" stroke="#6B5AC8" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="78" cy="160" r="7" fill="#FF7FA8"/>
+  </svg>
+</template>
+
+<!-- ═══════════ 홈 ═══════════ -->
+<div id="screen-home" class="screen active">
+  <header class="stat-bar">
+    <div class="stat"><span class="stat-emoji">🔥</span><b id="stat-streak">0</b></div>
+    <div class="stat"><span class="stat-emoji">⭐</span><b id="stat-xp">0</b></div>
+    <div class="stat"><span class="stat-emoji">💎</span><b id="stat-gems">0</b></div>
+  </header>
+  <div class="home-body">
+    <div class="home-hero">
+      <div class="avatar-slot" id="home-avatar"></div>
+      <div class="hero-bubble" id="home-bubble">Hi! Let's practice English together!</div>
+    </div>
+    <h1 class="app-title"><span>🎙️</span> 프랙티카 놀이터</h1>
+    <div id="track-list" class="track-list"></div>
+    <button id="btn-review" class="review-btn"><span>🗂️</span> 어휘 복습 <b id="review-count">0</b></button>
+  </div>
+</div>
+
+<!-- ═══════════ 코스맵 (레슨 목록) ═══════════ -->
+<div id="screen-map" class="screen">
+  <header class="top-bar">
+    <button id="map-home" class="round-btn" aria-label="처음으로">🏠</button>
+    <h1 class="app-title" id="map-title"></h1>
+    <div style="width:56px"></div>
+  </header>
+  <div id="lesson-list" class="lesson-list"></div>
+</div>
+
+<!-- ═══════════ 대화 세션 ═══════════ -->
+<div id="screen-session" class="screen">
+  <header class="top-bar">
+    <button id="session-back" class="round-btn" aria-label="뒤로">◀</button>
+    <div class="session-progress"><div id="session-bar" class="session-bar-fill"></div></div>
+    <button id="session-home" class="round-btn" aria-label="처음으로">🏠</button>
+  </header>
+  <div class="session-body">
+    <div class="avatar-slot session-avatar" id="session-avatar"></div>
+    <!-- 튜터 대사 -->
+    <div id="tutor-panel" class="tutor-panel hidden">
+      <div id="tutor-en" class="tutor-en"></div>
+      <div id="tutor-ko" class="tutor-ko"></div>
+      <div class="tutor-btns">
+        <button id="tutor-replay" class="pill-btn"><span>🔊</span> 다시 듣기</button>
+        <button id="tutor-next" class="pill-btn pill-primary">다음 ▶</button>
+      </div>
+    </div>
+    <!-- 유저 말하기 -->
+    <div id="user-panel" class="user-panel hidden">
+      <div id="user-ask" class="user-ask"></div>
+      <button id="user-hint" class="hint-btn">💡 힌트 보기</button>
+      <div id="user-model" class="user-model hidden"></div>
+      <button id="mic-btn" class="mic-btn" aria-label="마이크로 말하기">
+        <span id="mic-icon">🎤</span>
+        <div id="mic-waves" class="mic-waves hidden"><span></span><span></span><span></span><span></span><span></span></div>
+      </button>
+      <div id="mic-label" class="mic-label">버튼을 누르고 영어로 말해보세요</div>
+      <div id="mic-interim" class="mic-interim"></div>
+    </div>
+    <!-- 피드백 -->
+    <div id="fb-panel" class="fb-panel hidden">
+      <div id="fb-ring" class="fb-ring"><span id="fb-score">0</span></div>
+      <div id="fb-title" class="fb-title"></div>
+      <div id="fb-model" class="fb-model"></div>
+      <div id="fb-heard" class="fb-heard"></div>
+      <div class="fb-btns">
+        <button id="fb-hear" class="pill-btn"><span>🔊</span> 모범 듣기</button>
+        <button id="fb-retry" class="pill-btn"><span>🎤</span> 다시 말하기</button>
+        <button id="fb-next" class="pill-btn pill-primary">다음 ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 레슨 결과 ═══════════ -->
+<div id="screen-result" class="screen">
+  <div id="result-confetti" class="confetti-box"></div>
+  <div class="result-card">
+    <div class="result-stars" id="result-stars"></div>
+    <div class="result-title" id="result-title">잘했어요!</div>
+    <div class="result-acc" id="result-acc"></div>
+    <div class="result-rewards">
+      <div class="reward"><span>⭐</span><b id="result-xp">+0</b><small>XP</small></div>
+      <div class="reward"><span>💎</span><b id="result-gems">+0</b><small>젬</small></div>
+      <div class="reward"><span>🔥</span><b id="result-streak">0</b><small>연속</small></div>
+    </div>
+    <div class="result-btns">
+      <button id="result-next" class="pill-btn pill-primary">다음 레슨 ▶</button>
+      <button id="result-review" class="pill-btn"><span>🗂️</span> 어휘 복습</button>
+      <button id="result-map" class="pill-btn"><span>🏠</span> 코스로</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 어휘 복습 ═══════════ -->
+<div id="screen-review" class="screen">
+  <header class="top-bar">
+    <button id="review-home" class="round-btn" aria-label="처음으로">🏠</button>
+    <div class="session-progress"><div id="review-bar" class="session-bar-fill"></div></div>
+    <div style="width:56px"></div>
+  </header>
+  <div class="session-body">
+    <div class="review-card-face" id="review-face">
+      <div class="review-ko" id="review-ko"></div>
+      <div class="review-sub">이 말을 영어로 해보세요</div>
+    </div>
+    <button id="review-mic" class="mic-btn" aria-label="마이크로 말하기">
+      <span id="review-mic-icon">🎤</span>
+      <div id="review-waves" class="mic-waves hidden"><span></span><span></span><span></span><span></span><span></span></div>
+    </button>
+    <div id="review-mic-label" class="mic-label">버튼을 누르고 영어로 말해보세요</div>
+    <div id="review-fb" class="review-fb hidden">
+      <div id="review-fb-title" class="fb-title"></div>
+      <div id="review-fb-model" class="fb-model"></div>
+      <div class="fb-btns">
+        <button id="review-hear" class="pill-btn"><span>🔊</span> 듣기</button>
+        <button id="review-next" class="pill-btn pill-primary">다음 ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 복습 완료 오버레이 -->
+<div id="review-done" class="overlay hidden">
+  <div class="result-card">
+    <div class="result-title">복습 끝!</div>
+    <div class="result-acc" id="review-score"></div>
+    <div class="result-btns">
+      <button id="review-again" class="pill-btn pill-primary">한 번 더 🗂️</button>
+      <button id="review-done-home" class="pill-btn"><span>🏠</span> 처음으로</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data/lessons.js"></script>
+<script src="js/match.js"></script>
+<script src="js/speech.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/tutor.js"></script>
+<script src="js/review.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
