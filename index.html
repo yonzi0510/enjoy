@@ -7,16 +7,24 @@
 <title>은아의 놀이터</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; }
+html { height: 100%; }
 body {
+  /* height 고정 + 세로 중앙 정렬은 내용이 화면보다 길어지면 위아래가 잘리고
+     스크롤이 막힌다. min-height + .wrap의 margin:auto 로 스크롤 가능한 중앙 정렬. */
+  min-height: 100%;
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
   background: linear-gradient(160deg, #FFE3EE 0%, #EFE4FC 50%, #D8F4FF 100%);
+  display: flex;
+  user-select: none;
+}
+.wrap {
+  margin: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: clamp(18px, 4vmin, 40px);
-  padding: 20px;
-  user-select: none;
+  padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+  width: 100%;
 }
 h1 {
   font-size: clamp(28px, 6.5vmin, 52px);
@@ -25,14 +33,22 @@ h1 {
   text-shadow: 0 2px 0 rgba(255,255,255,.8);
   text-align: center;
 }
-.apps { display: flex; gap: clamp(14px, 3.5vmin, 36px); flex-wrap: wrap; justify-content: center; }
+.apps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(12px, 3vmin, 36px);
+  width: 100%;
+  max-width: 1040px;
+}
 .app-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  width: clamp(220px, 40vmin, 320px);
-  padding: clamp(20px, 4vmin, 36px);
+  /* 폰에서는 42vw로 두 장씩, 넓은 화면에서는 최대 300px */
+  width: clamp(150px, 42vw, 300px);
+  padding: clamp(14px, 3.4vmin, 32px) clamp(10px, 2.4vmin, 28px);
   border-radius: 32px;
   background: #fff;
   box-shadow: 0 10px 0 rgba(0,0,0,.1);
@@ -41,11 +57,12 @@ h1 {
 }
 .app-card:active { transform: scale(.95); }
 .app-card img { width: 70%; border-radius: 26%; }
-.app-name { font-size: clamp(20px, 4vmin, 30px); font-weight: 900; color: #4A3F22; }
-.app-desc { font-size: clamp(13px, 2.6vmin, 17px); font-weight: 700; color: #9C8FB8; text-align: center; line-height: 1.5; }
+.app-name { font-size: clamp(16px, 4vmin, 28px); font-weight: 900; color: #4A3F22; white-space: nowrap; }
+.app-desc { font-size: clamp(11px, 2.6vmin, 16px); font-weight: 700; color: #9C8FB8; text-align: center; line-height: 1.5; }
 </style>
 </head>
 <body>
+<div class="wrap">
 <h1>🌈 은아의 놀이터</h1>
 <div class="apps">
   <a class="app-card" href="./play/">
@@ -73,6 +90,7 @@ h1 {
     <span class="app-name">🌸 일본어 놀이터</span>
     <span class="app-desc">あいうえお 소리 · 따라쓰기<br>히라가나 게임 · 낱말 카드</span>
   </a>
+</div>
 </div>
 </body>
 </html>
