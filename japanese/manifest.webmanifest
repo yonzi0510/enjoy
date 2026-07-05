@@ -1,0 +1,16 @@
+{
+  "name": "あいうえお 일본어 놀이터",
+  "short_name": "일본어 놀이터",
+  "description": "히라가나 46자 소리, 따라쓰기, 게임으로 배우는 5세용 일본어 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFE9F0",
+  "theme_color": "#FF9FBE",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

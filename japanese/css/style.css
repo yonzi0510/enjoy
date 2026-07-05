@@ -1,0 +1,371 @@
+/* 가나다 한글 놀이터 — 5세용 큰 버튼, 파스텔 톤 */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background: linear-gradient(160deg, #FFF7D6 0%, #FFE3EE 55%, #E3F4FF 100%);
+  user-select: none;
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+/* ─────────── 화면 ─────────── */
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(10px, 2.5vmin, 24px);
+  gap: clamp(10px, 2vmin, 20px);
+  overflow-y: auto;
+}
+.screen.on { display: flex; }
+
+/* ─────────── 홈 ─────────── */
+.home-head { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 2vmin; }
+h1 {
+  font-size: clamp(26px, 6vmin, 48px);
+  font-weight: 900;
+  color: #B8860B;
+  text-shadow: 0 2px 0 rgba(255,255,255,.8);
+  text-align: center;
+}
+.stats { display: flex; gap: 14px; }
+.stat {
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: clamp(15px, 3vmin, 20px);
+  font-weight: 800;
+  color: #7A5C00;
+  box-shadow: 0 3px 0 rgba(0,0,0,.08);
+}
+.menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(12px, 2.5vmin, 24px);
+  max-width: 900px;
+}
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: clamp(140px, 26vmin, 220px);
+  padding: clamp(14px, 3vmin, 26px);
+  border: none;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 8px 0 rgba(0,0,0,.1);
+  cursor: pointer;
+  transition: transform .12s;
+  font-family: inherit;
+}
+.menu-card:active { transform: scale(.94); }
+.mc-emoji { font-size: clamp(38px, 8vmin, 64px); }
+.mc-name { font-size: clamp(18px, 3.6vmin, 26px); font-weight: 900; color: #4A3F22; }
+.mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #A99B77; }
+.m-learn  { background: #FFF3C4; }
+.m-trace  { background: #FFE0EC; }
+.m-play   { background: #E0F4FF; }
+.m-song   { background: #EDE4FF; }
+.m-cards  { background: #E4FFE9; }
+.m-bubble { background: #E0F4FF; }
+.m-first  { background: #FFF3C4; }
+
+/* ─────────── 상단 바 ─────────── */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 860px;
+}
+.bar h2 { font-size: clamp(20px, 4.5vmin, 32px); font-weight: 900; color: #6E4A8C; flex: 1; }
+.bar h2 small { font-size: .6em; color: #A98FC7; }
+.back {
+  width: clamp(44px, 8vmin, 60px);
+  height: clamp(44px, 8vmin, 60px);
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  font-size: clamp(18px, 3.6vmin, 26px);
+  font-weight: 900;
+  color: #6E4A8C;
+  box-shadow: 0 4px 0 rgba(0,0,0,.1);
+  cursor: pointer;
+}
+.back:active { transform: scale(.92); }
+.tabs { display: flex; gap: 8px; }
+.tab {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: clamp(14px, 2.8vmin, 19px);
+  font-weight: 800;
+  font-family: inherit;
+  background: #fff;
+  color: #A98FC7;
+  box-shadow: 0 3px 0 rgba(0,0,0,.08);
+  cursor: pointer;
+}
+.tab.on { background: #8E6FC0; color: #fff; }
+
+/* 라운드/획 진행 점 */
+.dots { display: flex; gap: 6px; }
+.dot {
+  width: clamp(12px, 2.2vmin, 16px);
+  height: clamp(12px, 2.2vmin, 16px);
+  border-radius: 50%;
+  background: #E0D6EE;
+}
+.dot.on { background: #FFB300; }
+
+/* ─────────── 글자 그리드 ─────────── */
+.letters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(90px, 17vmin, 140px), 1fr));
+  gap: clamp(10px, 2vmin, 18px);
+  width: 100%;
+  max-width: 860px;
+  padding-bottom: 20px;
+}
+.letter-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: clamp(12px, 2.4vmin, 22px) 6px;
+  border: none;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 6px 0 rgba(0,0,0,.09);
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform .1s;
+}
+.letter-cell:active { transform: scale(.93); }
+.letter-cell.traced { background: #FFFBEA; }
+.lc-ch { font-size: clamp(34px, 7vmin, 56px); font-weight: 900; color: #FF6FA5; }
+.lc-name { font-size: clamp(13px, 2.4vmin, 17px); font-weight: 800; color: #B29ACB; }
+.lc-star { position: absolute; top: 6px; right: 8px; font-size: clamp(14px, 2.6vmin, 20px); }
+
+/* ─────────── 글자 상세 ─────────── */
+.letter-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.letter-big {
+  font-size: clamp(90px, 24vmin, 190px);
+  font-weight: 900;
+  color: #FF6FA5;
+  line-height: 1.1;
+  text-shadow: 0 4px 0 rgba(0,0,0,.07);
+}
+.letter-words { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(10px, 2vmin, 18px); }
+.wordbtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: clamp(12px, 2.4vmin, 20px);
+  min-width: clamp(96px, 18vmin, 150px);
+  border: none;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 6px 0 rgba(0,0,0,.09);
+  cursor: pointer;
+  font-family: inherit;
+}
+.wordbtn:active { transform: scale(.93); }
+.wb-emoji { font-size: clamp(36px, 7.5vmin, 60px); }
+.wb-word { font-size: clamp(16px, 3.2vmin, 23px); font-weight: 900; color: #4A3F22; }
+
+.bigbtn {
+  border: none;
+  border-radius: 999px;
+  padding: clamp(12px, 2.4vmin, 18px) clamp(22px, 5vmin, 40px);
+  font-size: clamp(17px, 3.4vmin, 24px);
+  font-weight: 900;
+  font-family: inherit;
+  background: #fff;
+  color: #6E4A8C;
+  box-shadow: 0 6px 0 rgba(0,0,0,.1);
+  cursor: pointer;
+}
+.bigbtn:active { transform: scale(.95); }
+.bigbtn.primary { background: #FF6FA5; color: #fff; }
+
+/* ─────────── 따라쓰기 ─────────── */
+.trace-holder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 300px;
+}
+#trace-canvas {
+  background: #fff;
+  border-radius: 30px;
+  box-shadow: 0 10px 0 rgba(0,0,0,.08);
+  touch-action: none;
+  cursor: pointer;
+}
+
+/* ─────────── 거품 놀이 ─────────── */
+.bubble-area {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: 860px;
+  min-height: 320px;
+  border-radius: 30px;
+  background: linear-gradient(180deg, #D6F0FF 0%, #A8DFFF 100%);
+  box-shadow: inset 0 0 0 6px #fff;
+  overflow: hidden;
+}
+.bubble {
+  position: absolute;
+  left: 0; top: 0;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.95), rgba(255,255,255,.35) 45%, rgba(140,205,255,.55));
+  box-shadow: inset 0 0 12px rgba(255,255,255,.8), 0 4px 10px rgba(0,60,120,.15);
+  font-size: clamp(28px, 6vmin, 44px);
+  font-weight: 900;
+  font-family: inherit;
+  color: #2E7EB8;
+  cursor: pointer;
+  will-change: transform;
+}
+.bubble.popped { animation: pop .35s forwards; }
+@keyframes pop {
+  40% { scale: 1.25; opacity: .9; }
+  100% { scale: 0; opacity: 0; }
+}
+.shake { animation: shake .35s; }
+@keyframes shake {
+  0%, 100% { margin-left: 0; }
+  25% { margin-left: -8px; }
+  75% { margin-left: 8px; }
+}
+
+/* ─────────── 첫소리 놀이 ─────────── */
+.first-stage { display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 2.4vmin, 22px); flex: 1; justify-content: center; }
+.first-emoji { font-size: clamp(80px, 20vmin, 160px); line-height: 1.1; }
+.first-word { font-size: clamp(26px, 5.5vmin, 44px); font-weight: 900; color: #4A3F22; }
+.first-choices { display: flex; gap: clamp(12px, 3vmin, 26px); }
+.choice {
+  width: clamp(80px, 16vmin, 130px);
+  height: clamp(80px, 16vmin, 130px);
+  border: none;
+  border-radius: 26px;
+  background: #fff;
+  font-size: clamp(40px, 8.5vmin, 68px);
+  font-weight: 900;
+  font-family: inherit;
+  color: #FF6FA5;
+  box-shadow: 0 8px 0 rgba(0,0,0,.1);
+  cursor: pointer;
+}
+.choice:active { transform: scale(.93); }
+.choice.right { background: #D9FFE3; }
+
+/* ─────────── 가나다 노래 ─────────── */
+.song-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(70px, 13vmin, 110px), 1fr));
+  gap: clamp(8px, 1.8vmin, 16px);
+  width: 100%;
+  max-width: 760px;
+  flex: 1;
+  align-content: center;
+}
+.song-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border-radius: 20px;
+  background: #fff;
+  font-size: clamp(30px, 6.5vmin, 52px);
+  font-weight: 900;
+  color: #C4B3D9;
+  box-shadow: 0 5px 0 rgba(0,0,0,.08);
+  transition: transform .15s, background .15s, color .15s;
+}
+.song-cell.lit {
+  background: #FFD84D;
+  color: #7A5C00;
+  transform: scale(1.15);
+}
+
+/* ─────────── 카드책 ─────────── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(96px, 18vmin, 150px), 1fr));
+  gap: clamp(10px, 2vmin, 18px);
+  width: 100%;
+  max-width: 860px;
+  padding-bottom: 20px;
+}
+.wordcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: clamp(12px, 2.4vmin, 20px) 6px;
+  border: none;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #FFF9E8, #FFEFF6);
+  box-shadow: 0 6px 0 rgba(0,0,0,.09);
+  cursor: pointer;
+  font-family: inherit;
+}
+.wordcard:active { transform: scale(.94); }
+.wordcard.locked { background: #EFEAF5; opacity: .65; cursor: default; }
+.wc-emoji { font-size: clamp(34px, 7vmin, 56px); }
+.wc-word { font-size: clamp(14px, 2.8vmin, 20px); font-weight: 900; color: #4A3F22; }
+
+/* ─────────── 보상 오버레이 ─────────── */
+.reward {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(80, 50, 110, .45);
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.reward.on { display: flex; }
+.reward-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 32px;
+  padding: clamp(24px, 5vmin, 44px) clamp(30px, 7vmin, 60px);
+  box-shadow: 0 14px 0 rgba(0,0,0,.18);
+  animation: bounceIn .45s;
+}
+@keyframes bounceIn {
+  0% { transform: scale(.3); }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+.reward-title { font-size: clamp(20px, 4.2vmin, 30px); font-weight: 900; color: #FF6FA5; }
+.reward-emoji { font-size: clamp(70px, 16vmin, 130px); line-height: 1.1; }
+.reward-word { font-size: clamp(24px, 5vmin, 40px); font-weight: 900; color: #4A3F22; }
+
+/* ─────────── 일본어 앱 전용 — 한국어 뜻 표기 ─────────── */
+.wb-ko, .wc-ko {
+  font-size: clamp(12px, 2.2vmin, 16px);
+  font-weight: 700;
+  color: #A99B77;
+}
+body {
+  background: linear-gradient(160deg, #FFE9F0 0%, #FFF3D9 55%, #E8F4FF 100%);
+}
+h1 { color: #C25B7C; }
