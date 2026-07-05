@@ -31,8 +31,12 @@ await page.addInitScript(() => {
 });
 page.on('pageerror', e => fail('페이지 오류 없어야 함', e.message));
 
-// pointerdown 리스너용 탭 헬퍼 (움직이는 요소도 좌표 대기 없이 즉시 발화)
+// 일반 버튼은 click(스크롤 오탭 방지), 게임 요소(거품·보기)만 pointerdown
 async function tap(selector) {
+  await page.$eval(selector, el =>
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+}
+async function tapP(selector) {
   await page.$eval(selector, el =>
     el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true })));
 }
@@ -79,39 +83,40 @@ await check('あ 상세: 이름·낱말 2개', async () => {
   expect(await page.locator('.wordbtn').count() === 2);
 });
 
-/* ── 따라쓰기: あ 완주 ── */
-await check('따라쓰기 화면 진입 + あ 완주 → 카드 보상', async () => {
+/* ── 따라쓰기: あ 완주 → 다음 글자는 반드시 い ── */
+await check('따라쓰기 あ 완주 → 보상 → 다음 글자 い로 자동 진행', async () => {
   await tap('#letter-trace');
   expect(await screen() === 'scr-trace');
   const st = await traceCurrent();
   expect(st.done, '완성되지 않음: ' + JSON.stringify(st));
   await page.locator('#reward.on').waitFor({ timeout: 5000 });
-  await tap('#reward-close');
+  const label = await page.locator('#reward-next').textContent();
+  expect(label.indexOf('い') >= 0, '다음 글자 버튼이 い가 아님: ' + label);
+  await tap('#reward-next');
+  expect(await screen() === 'scr-trace', '다음 글자 따라쓰기로 이동해야 함');
+  expect(await page.locator('#trace-ch').textContent() === 'い', '오십음도 순서 위반');
+  await tap('.back[data-go="trace"]');
   expect(await screen() === 'scr-letters');
   expect(await page.locator('.letter-cell[data-ch="あ"].traced').count() === 1);
 });
 
-/* ── 전체 46자 따라쓰기 완주 (획 데이터가 모두 추적 가능한지) ── */
-await check('히라가나 46자 전부 따라쓰기 완주 가능', async () => {
-  const chs = await page.evaluate(() => {
-    const out = [];
-    window.KanaData.rows.forEach(r => r.kana.forEach(k => out.push(k.ch)));
-    return out;
-  });
-  const failed = [];
-  for (const tab of ['a', 'b']) {
-    await tap('.tab[data-tab="' + tab + '"]');
-    const cells = await page.$$eval('.letter-cell', els => els.map(e => e.dataset.ch));
-    for (const ch of cells) {
-      await tap('.letter-cell[data-ch="' + ch + '"]');
-      const st = await traceCurrent();
-      if (!st.done) failed.push(ch + '(' + st.cur + '/' + st.total + '획)');
-      await page.locator('#reward.on').waitFor({ timeout: 5000 }).catch(() => failed.push(ch + ':보상 없음'));
-      await tap('#reward-close');
-    }
+/* ── 전체 46자: 오십음도 순서로 자동 진행하며 전부 완주 ── */
+await check('46자 오십음도 순서(あいうえお…)로 자동 진행 완주', async () => {
+  const order = await page.evaluate(() => window.KanaData.all.map(k => k.ch));
+  expect(order.length === 46);
+  await tap('.tab[data-tab="a"]');
+  await tap('.letter-cell[data-ch="あ"]');
+  const visited = [];
+  for (let i = 0; i < 46; i++) {
+    expect(await screen() === 'scr-trace', i + '번째에서 따라쓰기 화면 이탈');
+    visited.push(await page.locator('#trace-ch').textContent());
+    const st = await traceCurrent();
+    if (!st.done) throw new Error(visited[visited.length - 1] + ' 완주 실패: ' + JSON.stringify(st));
+    await page.locator('#reward.on').waitFor({ timeout: 5000 });
+    await tap('#reward-next');
   }
-  expect(failed.length === 0, '실패: ' + failed.join(', '));
-  expect(chs.length === 46);
+  expect(visited.join('') === order.join(''), '순서 불일치: ' + visited.join(''));
+  expect(await screen() === 'scr-letters', '마지막 글자(ん) 후 목록 복귀');
 });
 
 /* ── 거품 놀이 5라운드 ── */
@@ -127,11 +132,11 @@ await check('거품 놀이 5라운드 → 보상', async () => {
       { timeout: 5000 });
     const target = await page.evaluate(() => window.__kanaTest.bubbleTarget());
     expect((await page.locator('.bubble').count()) === 5, '거품 5개');
-    await tap('.bubble[data-ch="' + target + '"]');
+    await tapP('.bubble[data-ch="' + target + '"]');
     await page.waitForTimeout(1000);
   }
   await page.locator('#reward.on').waitFor({ timeout: 5000 });
-  await tap('#reward-close');
+  await tap('#reward-next');
   expect(await screen() === 'scr-games');
 });
 
@@ -146,11 +151,11 @@ await check('첫소리 놀이 5라운드 → 보상', async () => {
       { timeout: 5000 });
     const t = await page.evaluate(() => window.__kanaTest.firstTarget());
     expect((await page.locator('.choice').count()) === 3, '보기 3개');
-    await tap('.choice[data-ch="' + t + '"]');
+    await tapP('.choice[data-ch="' + t + '"]');
     await page.waitForTimeout(1250);
   }
   await page.locator('#reward.on').waitFor({ timeout: 5000 });
-  await tap('#reward-close');
+  await tap('#reward-next');
 });
 
 /* ── あいうえお 노래 ── */

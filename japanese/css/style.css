@@ -369,3 +369,6 @@ body {
   background: linear-gradient(160deg, #FFE9F0 0%, #FFF3D9 55%, #E8F4FF 100%);
 }
 h1 { color: #C25B7C; }
+
+/* 보상 오버레이 버튼 줄 */
+.reward-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }

@@ -28,7 +28,7 @@ window.Cards = (() => {
         ? '<span class="wc-emoji">' + w.e + '</span><span class="wc-word">' + w.w + '</span>'
         : '<span class="wc-emoji">❓</span><span class="wc-word">???</span>';
       if (has) {
-        el.addEventListener('pointerdown', ev => {
+        el.addEventListener('click', ev => {
           ev.preventDefault();
           A.sfx.tap();
           A.speak(w.w);
