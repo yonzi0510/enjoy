@@ -1,9 +1,10 @@
-/* 음성 — 인식(STT en-US) + 합성(TTS en/ko) + Web Audio 효과음
- * 사용자는 영어로 말하므로 인식 언어는 en-US.
- * 테스트 훅: window.__simulateSpeech('a coffee please') — 마이크 없이 인식 결과 주입
+/* 음성 — 인식(STT) + 합성(TTS) + Web Audio 효과음 (다국어)
+ * 목표 언어(영어·일본어·중국어)는 Speech.setTarget(tts, stt) 로 전환한다.
+ * 튜터 대사는 목표 언어, 힌트는 한국어로 읽는다.
+ * 테스트 훅: window.__simulateSpeech('...') — 마이크 없이 인식 결과 주입
  */
 window.Speech = (() => {
-  /* ─────────── 효과음 (Web Audio 합성) ─────────── */
+  /* ─────────── 효과음 (Web Audio) ─────────── */
   let ctx = null;
   function ac() {
     if (!ctx) {
@@ -29,24 +30,36 @@ window.Speech = (() => {
     osc.stop(t + dur + 0.05);
   }
 
-  /* ─────────── TTS ─────────── */
-  let koVoice, enVoice;
-  function pickVoices() {
-    if (!window.speechSynthesis) return;
-    const vs = speechSynthesis.getVoices();
-    if (!koVoice) koVoice = vs.find(v => v.lang && v.lang.indexOf('ko') === 0) || null;
-    if (!enVoice) {
-      enVoice = vs.find(v => v.lang === 'en-US') ||
-        vs.find(v => v.lang && v.lang.indexOf('en') === 0) || null;
-    }
-  }
-  if (window.speechSynthesis) speechSynthesis.onvoiceschanged = pickVoices;
+  /* ─────────── 목표 언어 ─────────── */
+  let targetTts = 'en-US', targetStt = 'en-US';
+  function setTarget(tts, stt) { targetTts = tts || 'en-US'; targetStt = stt || targetTts; }
 
-  // 순차 재생: items = [{lang:'en'|'ko', text, rate?}], onDone?
+  /* ─────────── TTS ─────────── */
+  const voiceCache = {};
+  function refreshVoices() {
+    if (!window.speechSynthesis) return [];
+    return speechSynthesis.getVoices() || [];
+  }
+  function voiceFor(langCode) {
+    const pref = (langCode || 'en').slice(0, 2);
+    if (voiceCache[pref]) return voiceCache[pref];
+    const vs = refreshVoices();
+    const v = vs.find(x => x.lang && x.lang.toLowerCase().replace('_', '-') === langCode.toLowerCase()) ||
+      vs.find(x => x.lang && x.lang.slice(0, 2).toLowerCase() === pref) || null;
+    if (v) voiceCache[pref] = v;
+    return v;
+  }
+  if (window.speechSynthesis) {
+    speechSynthesis.onvoiceschanged = () => { for (const k in voiceCache) delete voiceCache[k]; };
+  }
+
+  function ttsSupported() { return !!window.speechSynthesis; }
+  function hasVoices() { return refreshVoices().length > 0; }
+
+  // items = [{lang:'ko'|'target', text, rate?}]
   function speakSeq(items, onDone) {
     if (!window.speechSynthesis) { if (onDone) onDone(); return; }
     speechSynthesis.cancel();
-    pickVoices();
     let i = 0;
     function next() {
       if (i >= items.length) { if (onDone) onDone(); return; }
@@ -55,14 +68,12 @@ window.Speech = (() => {
         const u = new SpeechSynthesisUtterance(it.text);
         if (it.lang === 'ko') {
           u.lang = 'ko-KR';
-          if (koVoice) u.voice = koVoice;
-          u.rate = it.rate || 0.98;
-          u.pitch = 1.05;
+          const v = voiceFor('ko-KR'); if (v) u.voice = v;
+          u.rate = it.rate || 0.98; u.pitch = 1.05;
         } else {
-          u.lang = 'en-US';
-          if (enVoice) u.voice = enVoice;
-          u.rate = it.rate || 0.9;
-          u.pitch = 1.0;
+          u.lang = targetTts;
+          const v = voiceFor(targetTts); if (v) u.voice = v;
+          u.rate = it.rate || 0.9; u.pitch = 1.0;
         }
         u.onend = next;
         u.onerror = next;
@@ -72,15 +83,10 @@ window.Speech = (() => {
     next();
   }
 
-  /* ─────────── STT ───────────
-   * 생각할 시간을 주기 위해, 짧은 무음(no-speech) 타임아웃이 와도 실패로 보지 않고
-   * 조용히 재시작해 총 LISTEN_TOTAL_MS 까지 기다린다.
-   */
+  /* ─────────── STT ─────────── */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const LISTEN_TOTAL_MS = 15000;
-  let rec = null;
-  let cb = null;      // { onResult(alts[]), onInterim(text), onWaiting(), onFail(kind), onEnd() }
-  let session = null; // { start, done }
+  let rec = null, cb = null, session = null;
 
   function sttSupported() { return !!SR; }
 
@@ -91,14 +97,12 @@ window.Speech = (() => {
     else if (cb.onFail) cb.onFail(kind);
     if (cb.onEnd) cb.onEnd();
   }
-
   function startRec() {
     if (!session || session.done) return;
-    let sawSpeech = false;
-    let hardError = null;
+    let sawSpeech = false, hardError = null;
     try {
       rec = new SR();
-      rec.lang = 'en-US';
+      rec.lang = targetStt;
       rec.interimResults = true;
       rec.maxAlternatives = 3;
       rec.onresult = e => {
@@ -108,9 +112,7 @@ window.Speech = (() => {
           const alts = [];
           for (let i = 0; i < res.length; i++) alts.push(res[i].transcript);
           finishSession('result', alts);
-        } else if (cb.onInterim) {
-          cb.onInterim(res[0].transcript);
-        }
+        } else if (cb.onInterim) cb.onInterim(res[0].transcript);
       };
       rec.onerror = e => {
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') hardError = 'denied';
@@ -122,16 +124,11 @@ window.Speech = (() => {
         if (Date.now() - session.start < LISTEN_TOTAL_MS) {
           if (cb.onWaiting && !sawSpeech) cb.onWaiting();
           startRec();
-        } else {
-          finishSession('nospeech');
-        }
+        } else finishSession('nospeech');
       };
       rec.start();
-    } catch (e) {
-      finishSession('error');
-    }
+    } catch (e) { finishSession('error'); }
   }
-
   function startListen(callbacks) {
     cb = callbacks || {};
     if (!SR) { if (cb.onFail) cb.onFail('unsupported'); return false; }
@@ -139,13 +136,11 @@ window.Speech = (() => {
     startRec();
     return true;
   }
-
   function stopListen() {
     if (session) session.done = true;
     try { if (rec) rec.abort(); } catch (e) {}
   }
 
-  // 테스트 훅: 인식 결과를 코드로 주입
   window.__simulateSpeech = text => {
     if (cb && session && !session.done) {
       try { if (rec) rec.abort(); } catch (e) {}
@@ -155,16 +150,21 @@ window.Speech = (() => {
     }
   };
 
+  /* ─────────── 인앱 브라우저 감지 (소리가 안 나는 흔한 원인) ─────────── */
+  function inAppBrowser() {
+    const ua = (navigator.userAgent || '').toLowerCase();
+    const hints = ['kakaotalk', 'instagram', 'fban', 'fbav', 'line/', ' naver', 'daumapps', 'everytimeapp', 'trill', 'snapchat'];
+    return hints.some(h => ua.indexOf(h.trim()) >= 0);
+  }
+
   return {
-    unlock() { ac(); },
-    sttSupported,
-    startListen,
-    stopListen,
-    speakSeq,
+    unlock() { ac(); refreshVoices(); },
+    setTarget,
+    sttSupported, ttsSupported, hasVoices, inAppBrowser,
+    startListen, stopListen, speakSeq,
     speakKo(text, onDone) { speakSeq([{ lang: 'ko', text }], onDone); },
-    speakEn(text, rate, onDone) { speakSeq([{ lang: 'en', text, rate }], onDone); },
+    speakTarget(text, rate, onDone) { speakSeq([{ lang: 'target', text, rate }], onDone); },
     stopSpeak() { if (window.speechSynthesis) speechSynthesis.cancel(); },
-    /* 효과음 */
     ding() { tone(784, 0, 0.18, 0.25, 'triangle'); tone(1175, 0.09, 0.3, 0.25, 'triangle'); },
     pop() { tone(330, 0, 0.12, 0.12, 'sine'); },
     listenStart() { tone(660, 0, 0.1, 0.18, 'sine'); tone(880, 0.1, 0.14, 0.18, 'sine'); },
