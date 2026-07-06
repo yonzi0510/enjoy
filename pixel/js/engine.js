@@ -17,7 +17,8 @@
     animal:  { emoji: '🐾', name: '동물' },
     nature:  { emoji: '🌿', name: '자연' },
     vehicle: { emoji: '🚀', name: '탈것' },
-    food:    { emoji: '🍦', name: '음식' }
+    food:    { emoji: '🍦', name: '음식' },
+    work:    { emoji: '🖍️', name: '활동지' }
   };
 
   // 난이도: 격자가 클수록 부스터를 넉넉히
