@@ -58,8 +58,9 @@ window.Speech = (() => {
           u.rate = it.rate || 0.85;
         } else {
           u.lang = 'ko-KR';
-          if (koVoice) u.voice = koVoice;
-          u.rate = it.rate || 0.95;
+          const sel = (window.VoiceSettings && VoiceSettings.koVoice()) || koVoice;
+          if (sel) u.voice = sel;
+          u.rate = (it.rate || 0.95) * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
         }
         u.pitch = 1.1;
         u.onend = next;

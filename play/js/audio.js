@@ -60,9 +60,9 @@ window.Sound = (() => {
         speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'ko-KR';
-        u.rate = 0.9;
+        u.rate = 0.9 * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
         u.pitch = 1.15;
-        const v = pickVoice();
+        const v = (window.VoiceSettings && VoiceSettings.koVoice()) || pickVoice();
         if (v) u.voice = v;
         speechSynthesis.speak(u);
       } catch (e) {}

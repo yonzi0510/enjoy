@@ -63,12 +63,14 @@ window.Audio2 = (() => {
         const u = new SpeechSynthesisUtterance(it.text);
         if (it.lang === 'ko') {
           u.lang = 'ko-KR';
-          if (koVoice) u.voice = koVoice;
+          const sel = (window.VoiceSettings && VoiceSettings.koVoice()) || koVoice;
+          if (sel) u.voice = sel;
+          u.rate = (it.rate || 0.85) * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
         } else {
           u.lang = 'ja-JP';
           if (jaVoice) u.voice = jaVoice;
+          u.rate = it.rate || 0.85;
         }
-        u.rate = it.rate || 0.85;
         u.pitch = it.pitch || 1.15;
         // 음성 엔진이 없거나 멈춰도 흐름이 끊기지 않게 워치독으로 강제 진행
         let advanced = false;

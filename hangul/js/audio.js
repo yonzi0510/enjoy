@@ -61,8 +61,9 @@ window.Audio2 = (() => {
       try {
         const u = new SpeechSynthesisUtterance(it.text);
         u.lang = 'ko-KR';
-        if (koVoice) u.voice = koVoice;
-        u.rate = it.rate || 0.9;
+        const sel = (window.VoiceSettings && VoiceSettings.koVoice()) || koVoice;
+        if (sel) u.voice = sel;
+        u.rate = (it.rate || 0.9) * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
         u.pitch = it.pitch || 1.15;
         // 음성 엔진이 없거나 멈춰도 흐름이 끊기지 않게 워치독으로 강제 진행
         let advanced = false;

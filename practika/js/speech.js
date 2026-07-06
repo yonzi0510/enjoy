@@ -68,8 +68,8 @@ window.Speech = (() => {
         const u = new SpeechSynthesisUtterance(it.text);
         if (it.lang === 'ko') {
           u.lang = 'ko-KR';
-          const v = voiceFor('ko-KR'); if (v) u.voice = v;
-          u.rate = it.rate || 0.98; u.pitch = 1.05;
+          const v = (window.VoiceSettings && VoiceSettings.koVoice()) || voiceFor('ko-KR'); if (v) u.voice = v;
+          u.rate = (it.rate || 0.98) * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1); u.pitch = 1.05;
         } else {
           u.lang = targetTts;
           const v = voiceFor(targetTts); if (v) u.voice = v;

@@ -1,14 +1,8 @@
 /* 소리 — Web Audio 합성 효과음 + 한국어 음성 안내(speechSynthesis). 오디오 파일 없음 */
 window.Sound = (() => {
   const MUTE_KEY = 'pixel-muted';
-  const VOICE_KEY = 'pixel-voice';
-  const RATE_KEY = 'pixel-rate';
   let muted = false;
-  let voiceURI = null;       // 선택한 목소리 (voiceURI)
-  let rate = 0.95;           // 말 빠르기
   try { muted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) {}
-  try { voiceURI = localStorage.getItem(VOICE_KEY) || null; } catch (e) {}
-  try { rate = parseFloat(localStorage.getItem(RATE_KEY)) || 0.95; } catch (e) {}
 
   let ctx = null;
   function ac() {
@@ -39,21 +33,13 @@ window.Sound = (() => {
   const colorPraises = ['좋아요!', '한 가지 색을 다 칠했어요!', '멋져요!', '잘하고 있어요!'];
   const donePraises = ['와, 그림을 완성했어요! 정말 멋져요!', '참 잘했어요! 완성이에요!', '우와, 다 칠했네요! 대단해요!'];
 
-  // 기기에 설치된 한국어 목소리 목록
-  function koVoices() {
-    if (!window.speechSynthesis) return [];
-    return speechSynthesis.getVoices()
-      .filter(v => v.lang && v.lang.replace('_', '-').toLowerCase().indexOf('ko') === 0);
-  }
-  // 선택한 목소리(없으면 첫 번째 한국어 목소리)
+  // 목소리는 공용 설정(shared/voice-settings.js)을 따른다
   function pickVoice() {
-    const vs = koVoices();
-    if (!vs.length) return null;
-    return vs.find(v => v.voiceURI === voiceURI) || vs[0];
+    if (window.VoiceSettings) return VoiceSettings.koVoice();
+    if (!window.speechSynthesis) return null;
+    const vs = speechSynthesis.getVoices();
+    return vs.find(v => v.lang && v.lang.indexOf('ko') === 0) || null;
   }
-  let voicesCb = null; // 목소리 목록이 늦게 로드될 때 UI 갱신용
-  if (window.speechSynthesis)
-    speechSynthesis.onvoiceschanged = () => { if (voicesCb) voicesCb(); };
 
   let fillStep = 0;
   const FILL_NOTES = [523, 587, 659, 698, 784]; // C5 D5 E5 F5 G5 — 칠할 때마다 올라가는 느낌
@@ -75,35 +61,7 @@ window.Sound = (() => {
         speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'ko-KR';
-        u.rate = rate;
-        u.pitch = 1.1;
-        const v = pickVoice();
-        if (v) u.voice = v;
-        speechSynthesis.speak(u);
-      } catch (e) {}
-    },
-
-    /* ─── 목소리 설정 ─── */
-    getKoVoices() { return koVoices(); },
-    getVoiceURI() { const v = pickVoice(); return v ? v.voiceURI : null; },
-    setVoice(uri) {
-      voiceURI = uri;
-      try { localStorage.setItem(VOICE_KEY, uri); } catch (e) {}
-    },
-    getRate() { return rate; },
-    setRate(r) {
-      rate = r;
-      try { localStorage.setItem(RATE_KEY, String(r)); } catch (e) {}
-    },
-    onVoicesChanged(fn) { voicesCb = fn; },
-    // 미리 듣기 — 음소거 상태여도 들리게 (설정 확인용)
-    preview() {
-      if (!window.speechSynthesis) return;
-      try {
-        speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance('안녕하세요! 이 목소리로 칭찬해 드릴게요.');
-        u.lang = 'ko-KR';
-        u.rate = rate;
+        u.rate = 0.95 * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
         u.pitch = 1.1;
         const v = pickVoice();
         if (v) u.voice = v;
