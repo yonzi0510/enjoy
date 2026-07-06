@@ -9,7 +9,7 @@ fs.readdirSync(picDir).filter(f => f.endsWith('.js')).sort()
 
 const PICS = globalThis.PIXELS || [];
 const only = process.argv[2];
-const CATS = ['shape', 'animal', 'nature', 'vehicle', 'food'];
+const CATS = ['shape', 'animal', 'nature', 'vehicle', 'food', 'work'];
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 let failed = false;
 
