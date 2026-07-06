@@ -10,7 +10,7 @@ const http = require('http');
 const fs = require('fs');
 const pw = require(process.env.PW_MODULE || 'playwright-core');
 
-const ROOT = path.join(__dirname, '..');
+const ROOT = path.join(__dirname, '..', '..'); // 저장소 루트 (공용 shared/ 포함)
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.md': 'text/markdown' };
 
 let pass = 0, fail = 0;
@@ -32,7 +32,7 @@ const server = http.createServer((req, res) => {
 
 (async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
-  const url = 'http://127.0.0.1:' + server.address().port + '/';
+  const url = 'http://127.0.0.1:' + server.address().port + '/pixel/';
   const browser = await pw.chromium.launch({
     executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium',
     headless: true
