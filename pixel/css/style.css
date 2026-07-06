@@ -437,3 +437,70 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 @keyframes confetti-fall {
   to { transform: translateY(110vh) rotate(720deg); }
 }
+
+/* ─────────── 목소리 설정 ─────────── */
+.voice-card { width: min(440px, 92vw); text-align: left; }
+.voice-title {
+  font-size: clamp(20px, 4vmin, 26px);
+  font-weight: 900;
+  color: #333;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.voice-label {
+  font-size: clamp(13px, 2.6vmin, 16px);
+  font-weight: 800;
+  color: #7A9A84;
+  margin: 14px 2px 6px;
+}
+.voice-note { font-weight: 700; color: #B4C8BB; font-size: 0.85em; }
+.voice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.voice-btn {
+  padding: 13px 14px;
+  border-radius: 14px;
+  background: #F2F6F3;
+  font-size: clamp(15px, 3vmin, 18px);
+  font-weight: 800;
+  color: #444;
+  text-align: left;
+  transition: transform .1s;
+}
+.voice-btn:active { transform: scale(.98); }
+.voice-btn.sel {
+  background: linear-gradient(180deg, #6FDCA8, #3DBB7F);
+  color: #fff;
+  box-shadow: 0 3px 0 #2B9663;
+}
+.voice-empty {
+  padding: 16px 10px;
+  color: #9FB8A6;
+  font-weight: 700;
+  font-size: clamp(13px, 2.6vmin, 15px);
+  text-align: center;
+  line-height: 1.6;
+}
+.voice-rates { display: flex; gap: 8px; }
+.rate-btn {
+  flex: 1;
+  padding: 13px 6px;
+  border-radius: 14px;
+  background: #F2F6F3;
+  font-weight: 800;
+  font-size: clamp(14px, 2.8vmin, 17px);
+  color: #444;
+  text-align: center;
+  transition: transform .1s;
+}
+.rate-btn:active { transform: scale(.97); }
+.rate-btn.sel {
+  background: linear-gradient(180deg, #6FDCA8, #3DBB7F);
+  color: #fff;
+  box-shadow: 0 3px 0 #2B9663;
+}
+.voice-card .complete-btns { margin-top: 16px; }

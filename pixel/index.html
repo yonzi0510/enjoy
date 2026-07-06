@@ -20,6 +20,7 @@
   <header class="home-header">
     <h1 class="app-title"><span class="title-emoji">🧩</span> 픽셀 놀이터</h1>
     <div class="header-btns">
+      <button id="btn-voice" class="round-btn" aria-label="목소리 설정">🗣️</button>
       <button id="btn-works" class="round-btn" aria-label="내 작품">🖼️</button>
       <button id="btn-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
     </div>
@@ -81,6 +82,25 @@
     <div class="complete-btns">
       <button id="confirm-cancel" class="big-btn btn-soft">아니요</button>
       <button id="confirm-ok" class="big-btn btn-primary">네, 다시!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 목소리 설정 오버레이 ═══════════ -->
+<div id="voice-overlay" class="overlay hidden">
+  <div class="confirm-card voice-card">
+    <div class="voice-title">🗣️ 목소리 설정</div>
+    <div class="voice-label">목소리 고르기 <span class="voice-note">(누르면 바로 들려요)</span></div>
+    <div id="voice-list" class="voice-list"><!-- 엔진이 목소리 목록 생성 --></div>
+    <div class="voice-label">말 빠르기</div>
+    <div id="rate-list" class="voice-rates">
+      <button data-rate="0.75" class="rate-btn">🐢 천천히</button>
+      <button data-rate="0.95" class="rate-btn">보통</button>
+      <button data-rate="1.15" class="rate-btn">🐇 빠르게</button>
+    </div>
+    <div class="complete-btns">
+      <button id="voice-preview" class="big-btn btn-soft">🔊 들어보기</button>
+      <button id="voice-close" class="big-btn btn-primary">확인</button>
     </div>
   </div>
 </div>
