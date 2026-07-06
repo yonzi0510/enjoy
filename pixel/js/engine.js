@@ -65,6 +65,55 @@
   $('paint-mute').addEventListener('click', toggleMute);
   document.addEventListener('pointerdown', () => Sound.unlock(), { once: true });
 
+  /* ─────────── 목소리 설정 ─────────── */
+  const voiceOverlay = $('voice-overlay');
+
+  function renderVoiceSettings() {
+    const box = $('voice-list');
+    box.innerHTML = '';
+    const voices = Sound.getKoVoices();
+    if (!voices.length) {
+      box.innerHTML = '<div class="voice-empty">이 기기에는 한국어 목소리가 없어요.<br>기기 설정에서 한국어 음성을 설치하면 나타나요.</div>';
+    } else {
+      const cur = Sound.getVoiceURI();
+      voices.forEach(v => {
+        const btn = document.createElement('button');
+        btn.className = 'voice-btn' + (v.voiceURI === cur ? ' sel' : '');
+        // "Microsoft Heami - Korean (Korean)" 같은 긴 이름을 보기 좋게
+        btn.textContent = '🗣️ ' + v.name.replace(/^(Microsoft|Google|Apple)\s*/i, '').replace(/\s*[-(].*$/, '');
+        btn.addEventListener('click', () => {
+          Sound.setVoice(v.voiceURI);
+          renderVoiceSettings();
+          Sound.preview();
+        });
+        box.appendChild(btn);
+      });
+    }
+    const r = Sound.getRate();
+    document.querySelectorAll('#rate-list .rate-btn').forEach(b =>
+      b.classList.toggle('sel', Math.abs(parseFloat(b.dataset.rate) - r) < 0.01));
+  }
+
+  $('btn-voice').addEventListener('click', () => {
+    renderVoiceSettings();
+    voiceOverlay.classList.remove('hidden');
+  });
+  $('voice-close').addEventListener('click', () => {
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    voiceOverlay.classList.add('hidden');
+  });
+  $('voice-preview').addEventListener('click', () => Sound.preview());
+  document.querySelectorAll('#rate-list .rate-btn').forEach(b =>
+    b.addEventListener('click', () => {
+      Sound.setRate(parseFloat(b.dataset.rate));
+      renderVoiceSettings();
+      Sound.preview();
+    }));
+  // 목소리 목록이 늦게 로드되면(브라우저 특성) 열려 있는 설정 화면 갱신
+  Sound.onVoicesChanged(() => {
+    if (!voiceOverlay.classList.contains('hidden')) renderVoiceSettings();
+  });
+
   /* ─────────── 색 유틸 ─────────── */
   function hexRgb(hex) {
     const n = parseInt(hex.slice(1), 16);
