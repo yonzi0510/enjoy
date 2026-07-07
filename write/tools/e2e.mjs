@@ -49,10 +49,10 @@ function zigzag() {
 }
 const squiggle = [[0.2, 0.35], [0.3, 0.72], [0.4, 0.35], [0.5, 0.72], [0.6, 0.35], [0.7, 0.72]];
 
-async function completePage(page) { // 현재 필사 페이지를 다 쓰고 보상까지 진행
+async function completePage(page) { // 현재 필사 페이지를 다 쓰고 ▶ 로 보상까지 진행
   await stroke(page, '#ink-trace', zigzag(), 'pen');
   await stroke(page, '#ink-free', squiggle, 'pen');
-  await page.click('#btn-done');
+  await page.click('#btn-next');
   await page.waitForSelector('#reward.on', { timeout: 3000 });
 }
 
@@ -103,14 +103,17 @@ await check('펜 따라쓰기: 획 기록 + 겹침 판정 통과', async () => {
   expect(d.coverage >= 0.5, '겹침 ' + d.coverage.toFixed(2));
 });
 
-await check('아랫줄 없이 완료 시도 → 통과 안 됨', async () => {
-  await page.click('#btn-done');
+await check('아랫줄 없이 ▶ → 안내만 하고 머문다', async () => {
+  await page.click('#btn-next');
   expect(!(await page.locator('#reward.on').count()), '보상이 떠버림');
+  const onIdx = await page.evaluate(() =>
+    [...document.querySelectorAll('#write-dots .dot')].findIndex(d => d.classList.contains('on')));
+  expect(onIdx === 0, '판정 실패인데 넘어감: ' + onIdx);
 });
 
-await check('혼자 쓰기 후 완료 → 별 + 다음 장', async () => {
+await check('혼자 쓰기 후 ▶ → 별 + 다음 장', async () => {
   await stroke(page, '#ink-free', squiggle, 'pen');
-  await page.click('#btn-done');
+  await page.click('#btn-next');
   await page.waitForSelector('#reward.on', { timeout: 3000 });
   await page.click('#reward-next');
   await page.waitForFunction(() => !document.getElementById('reward').classList.contains('on'));
@@ -118,6 +121,13 @@ await check('혼자 쓰기 후 완료 → 별 + 다음 장', async () => {
     [...document.querySelectorAll('#write-dots .dot')].findIndex(d => d.classList.contains('on')));
   expect(onIdx === 1, '2번째 장으로 안 넘어감: ' + onIdx);
   expect(await page.locator('#write-dots .dot.done').count() === 1, '완료 점 표시');
+});
+
+await check('안 쓰고 ▶ → 판정 없이 그냥 다음 장(구경)', async () => {
+  await page.click('#btn-next');
+  const onIdx = await page.evaluate(() =>
+    [...document.querySelectorAll('#write-dots .dot')].findIndex(d => d.classList.contains('on')));
+  expect(onIdx === 2, '빈 장 넘기기 실패: ' + onIdx);
 });
 
 await check('홈으로: 별·진행도 반영', async () => {
@@ -202,18 +212,23 @@ await check('받아쓰기: 7단계 목록 (정답 유출 ▶️ 없음)', async 
   expect(await page.locator('.item-play').count() === 0, '전체 듣기 버튼이 있으면 안 됨');
 });
 
-await check('받아쓰기: 빈 칸 쓰기 → 정답 공개 → ⭕ → 별', async () => {
+await check('받아쓰기: 짧은 항목은 한 줄 + 빈 ▶ 는 그냥 다음 장', async () => {
   await page.locator('.item-main').first().click();
   await page.waitForSelector('#scr-write.on');
-  let d = await page.evaluate(() => App.debug());
+  const d = await page.evaluate(() => App.debug());
   expect(d.dict === true, '받아쓰기 모드');
   expect(!d.revealed, '정답이 미리 보이면 안 됨');
-  await page.click('#btn-done'); // 안 쓰고 완료 → 안내만
-  expect(!(await page.locator('#dict-check.on').count()), '빈손 완료가 통과됨');
+  expect(await page.locator('#line-free').isHidden(), '짧은 받아쓰기는 한 줄이어야 함');
+  await page.click('#btn-next'); // 안 쓰고 ▶ → 구경만
+  const count = await page.locator('#write-dots .page-count').textContent();
+  expect(count.trim() === '2 / 34', '빈 장 넘기기: ' + count);
+});
+
+await check('받아쓰기: 빈 칸 쓰기 → ▶ → 정답 공개 → ⭕ → 별', async () => {
   await stroke(page, '#ink-trace', squiggle, 'pen');
-  await page.click('#btn-done');
+  await page.click('#btn-next');
   await page.waitForSelector('#dict-check.on', { timeout: 3000 });
-  d = await page.evaluate(() => App.debug());
+  const d = await page.evaluate(() => App.debug());
   expect(d.revealed === true, '정답 공개');
   await page.click('#dict-ok');
   await page.waitForSelector('#reward.on');

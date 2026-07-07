@@ -19,6 +19,7 @@
     <h1>✍️ 글씨 놀이터</h1>
     <div class="stats">
       <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
       <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
     </div>
   </header>
@@ -57,12 +58,11 @@
   <header class="bar">
     <button type="button" class="back" id="btn-write-back">◀</button>
     <h2 id="write-title">✏️ 자음 쓰기</h2>
-    <div class="pagenav">
-      <button type="button" class="navbtn" id="btn-prev">◀</button>
-      <span class="dots" id="write-dots"></span>
-      <button type="button" class="navbtn" id="btn-next">▶</button>
-    </div>
+    <span class="dots" id="write-dots"></span>
   </header>
+  <!-- 글자를 다 쓰고 ▶ 를 누르면 확인·보상까지 이어진다 (글 모르는 아이용 직관 UI) -->
+  <button type="button" class="side-nav prev" id="btn-prev" aria-label="이전 장">◀</button>
+  <button type="button" class="side-nav next" id="btn-next" aria-label="다 쓰고 다음 장">▶</button>
   <div class="write-stage">
     <div class="page-head">
       <span class="page-emoji" id="write-emoji">✏️</span>
@@ -90,7 +90,6 @@
       <div class="swatches" id="swatches"></div>
       <button type="button" class="bigbtn" id="btn-eraser">🧼 지우개</button>
       <button type="button" class="bigbtn" id="btn-undo">↩️ 한 획</button>
-      <button type="button" class="bigbtn primary" id="btn-done">✅ 다 썼어요!</button>
     </div>
   </div>
 </section>

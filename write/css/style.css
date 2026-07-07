@@ -153,7 +153,36 @@ h1 {
   align-items: center;
   gap: clamp(8px, 1.6vmin, 14px);
   width: 100%;
-  max-width: 860px; /* 도구까지 한 화면에 들어오게 */
+  max-width: 990px;
+  padding: 0 clamp(58px, 9vw, 96px); /* 양옆 큰 화살표 자리 */
+}
+
+/* 양쪽 가운데 큰 이전/다음 화살표 — ▶ 는 "다 썼어요 + 다음" 역할 */
+.side-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(54px, 10vmin, 84px);
+  height: clamp(54px, 10vmin, 84px);
+  border: none;
+  border-radius: 50%;
+  background: #8E6FC0;
+  color: #fff;
+  font-size: clamp(22px, 4.4vmin, 36px);
+  font-weight: 900;
+  box-shadow: 0 6px 0 rgba(0,0,0,.18);
+  cursor: pointer;
+  z-index: 15;
+}
+.side-nav.prev { left: clamp(6px, 1.4vw, 18px); background: #fff; color: #8E6FC0; }
+.side-nav.next { right: clamp(6px, 1.4vw, 18px); }
+.side-nav:disabled { opacity: .25; }
+.side-nav:not(:disabled):active { transform: translateY(-50%) scale(.9); }
+/* 폰(좁은 화면): 필기 칸을 넓게 쓰고 화살표는 아래 양쪽 구석으로 */
+@media (max-width: 640px) {
+  .write-stage { padding: 0 6px; }
+  .side-nav { top: auto; bottom: calc(12px + env(safe-area-inset-bottom)); transform: none; }
+  .side-nav:not(:disabled):active { transform: scale(.9); }
 }
 .page-head { position: relative; display: flex; align-items: center; gap: 14px; }
 .page-emoji { font-size: clamp(30px, 6vmin, 48px); }
@@ -188,6 +217,10 @@ h1 {
   box-shadow: 0 8px 0 rgba(0,0,0,.08);
 }
 .note-line { position: relative; }
+/* 받아쓰기: 두 줄을 상자 나눔 없이 한 장처럼 이어지게 */
+.note.merged { gap: 0; }
+.note.merged .note-line canvas { box-shadow: none; border-radius: 0; }
+.note.merged #tag-free { display: none; }
 .note-line canvas {
   display: block;
   width: 100%;

@@ -177,6 +177,11 @@ window.Ink = (() => {
     }
     function finish(e) {
       if (!cur || e.pointerId !== pid) return;
+      forceFinish();
+    }
+    // 펜이 캔버스 밖에서 떨어지는 등 up 이벤트를 놓쳐도 획을 잃지 않고 마무리한다
+    function forceFinish() {
+      if (!cur) { pid = null; return; }
       if (cur.p.length >= 2) items.push(cur);
       cur = null; pid = null;
       redraw();
@@ -186,6 +191,7 @@ window.Ink = (() => {
     canvas.addEventListener('pointerdown', e => {
       if (e.pointerType === 'touch') { if (opts.onTouchReject) opts.onTouchReject(); return; }
       e.preventDefault();
+      if (cur) forceFinish(); // 이전 획이 덜 끝났으면 살려서 마무리 (안 하면 새 획이 무시됨)
       const tool = opts.tool ? opts.tool() : 'pen';
       const [x, y] = toLogical(e);
       if (tool === 'erase') { pid = e.pointerId; eraseAt(x, y); return; }
@@ -195,7 +201,6 @@ window.Ink = (() => {
         if (opts.onChange) opts.onChange();
         return;
       }
-      if (cur) return;
       pid = e.pointerId;
       try { canvas.setPointerCapture(pid); } catch (err) { /* 합성 이벤트는 캡처 불가 */ }
       const pen = opts.pen ? opts.pen() : { w: INK_W, a: 1 };
@@ -205,11 +210,21 @@ window.Ink = (() => {
     });
     canvas.addEventListener('pointermove', e => {
       if (e.pointerId !== pid) return;
-      if (cur) { e.preventDefault(); addPoint(e); }
-      else if (opts.tool && opts.tool() === 'erase') { e.preventDefault(); const [x, y] = toLogical(e); eraseAt(x, y); }
+      if (cur) {
+        e.preventDefault();
+        // 빠른 필기에서 브라우저가 합쳐 버린 중간 좌표까지 모두 살린다
+        const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+        if (evs && evs.length) evs.forEach(addPoint);
+        else addPoint(e);
+      } else if (opts.tool && opts.tool() === 'erase') {
+        e.preventDefault();
+        const [x, y] = toLogical(e);
+        eraseAt(x, y);
+      }
     });
     canvas.addEventListener('pointerup', e => { if (cur) finish(e); else if (e.pointerId === pid) pid = null; });
     canvas.addEventListener('pointercancel', e => { if (cur) finish(e); else if (e.pointerId === pid) pid = null; });
+    canvas.addEventListener('lostpointercapture', () => { if (cur) forceFinish(); });
     window.addEventListener('resize', resize);
     resize();
 
