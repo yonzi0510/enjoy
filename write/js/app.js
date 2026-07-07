@@ -226,7 +226,10 @@ window.App = (() => {
 
   function initLines() {
     const hint = penHint();
-    const opts = { color: () => writeColor, tool: () => writeTool, onTouchReject: hint };
+    const opts = {
+      color: () => writeColor, tool: () => writeTool, onTouchReject: hint,
+      onChange: () => { if (cur) cur.dirty = true; }, // ▶ 판정은 새로 쓴 게 있을 때만
+    };
     traceLine = Ink.InkLine(document.getElementById('ink-trace'), opts);
     freeLine = Ink.InkLine(document.getElementById('ink-free'), opts);
   }
@@ -267,7 +270,6 @@ window.App = (() => {
 
     document.getElementById('write-emoji').textContent = page.e || scope.e || '✏️';
     document.getElementById('btn-prev').disabled = idx === 0;
-    document.getElementById('btn-next').disabled = idx >= scope.pages.length - 1;
     const dots = document.getElementById('write-dots');
     dots.innerHTML = '';
     if (scope.pages.length <= 12) {
@@ -285,21 +287,31 @@ window.App = (() => {
 
     document.getElementById('dict-check').classList.remove('on');
     cur.revealed = false;
+    cur.dirty = false;
+    cur.failStamp = null;
 
+    const note = document.querySelector('.note');
+    const lineFree = document.getElementById('line-free');
     if (cur.dict) {
+      // 받아쓰기: 정답을 숨긴 빈 칸. 긴 문장만 한 장처럼 이어지는 두 줄로, 짧으면 한 줄만
       const parts = splitText(page.text);
       cur.l1 = parts[0];
       cur.l2 = parts[1];
+      note.classList.add('merged');
+      lineFree.style.display = cur.l2 ? '' : 'none';
       traceLine.setText(cur.l1, 'hide');
-      freeLine.setText(cur.l2 || cur.l1, 'hide');
+      freeLine.setText(cur.l2 || '', 'hide');
+      if (cur.l2) freeLine.resize();
       document.getElementById('tag-trace').textContent = '받아쓰기';
-      document.getElementById('tag-free').textContent = cur.l2 ? '이어서 써요' : '한 번 더 써요';
       setTimeout(() => A.speak('받아쓰기! ' + say), 350);
     } else {
       cur.l1 = page.text;
       cur.l2 = null;
+      note.classList.remove('merged');
+      lineFree.style.display = '';
       traceLine.setText(page.text, 'show');
       freeLine.setText(page.text, 'hide');
+      freeLine.resize();
       document.getElementById('tag-trace').textContent = '따라 써요';
       document.getElementById('tag-free').textContent = '혼자 써요';
       const art = P.artOf(pageId(scope, idx));
@@ -307,21 +319,38 @@ window.App = (() => {
         traceLine.setStrokes(art.tr);
         freeLine.setStrokes(art.fr);
       }
+      cur.dirty = false; // 복원한 획은 새로 쓴 게 아님
       setTimeout(() => A.speak(say), 350);
     }
   }
 
-  function checkDone() {
-    const scope = cur.scope, idx = cur.idx;
-    const page = scope.pages[idx];
+  /* ▶ 화살표 = 다 썼어요 + 다음. 안 썼으면 그냥 넘기고, 썼으면 확인까지 이어진다.
+   * 같은 상태로 두 번 누르면(고치지 않고 고집하면) 좌절하지 않게 그냥 보내 준다. */
+  function inkStamp() {
+    return traceLine.strokeCount() + ':' + freeLine.strokeCount() + ':' +
+      Math.round(traceLine.inkLength() + freeLine.inkLength());
+  }
+  function navNext() {
+    if (cur.idx < cur.scope.pages.length - 1) openPage(cur.idx + 1);
+  }
+  function stayWithHint(lineId, msg) {
+    if (cur.failStamp === inkStamp()) { navNext(); return; } // 두 번째 누름 → 보내주기
+    cur.failStamp = inkStamp();
+    A.sfx.tap();
+    wiggle(lineId);
+    A.speak(msg);
+  }
+  function arrowNext() {
+    if (!cur) return;
+    const page = cur.scope.pages[cur.idx];
     const say = page.say || page.text;
+    const empty = traceLine.strokeCount() === 0 && freeLine.strokeCount() === 0;
 
     if (cur.dict) {
-      if (cur.revealed) return; // 정답 공개 후에는 ⭕/다시 쓰기로 진행
+      if (cur.revealed) { A.sfx.tap(); navNext(); return; } // 정답 확인 후 넘어가기
+      if (!cur.dirty || empty) { A.sfx.tap(); navNext(); return; } // 안 썼으면 구경만
       if (traceLine.strokeCount() < 1 || (cur.l2 && freeLine.strokeCount() < 1)) {
-        A.sfx.tap();
-        wiggle(traceLine.strokeCount() < 1 ? 'line-trace' : 'line-free');
-        A.speak('들은 말을 빈 칸에 써 볼까?');
+        stayWithHint(traceLine.strokeCount() < 1 ? 'line-trace' : 'line-free', '들은 말을 빈 칸에 써 볼까?');
         return;
       }
       cur.revealed = true;
@@ -333,16 +362,13 @@ window.App = (() => {
       return;
     }
 
+    if (!cur.dirty || empty) { A.sfx.tap(); navNext(); return; } // 새로 쓴 게 없으면 그냥 넘기기
     if (traceLine.coverage() < 0.5) {
-      A.sfx.tap();
-      wiggle('line-trace');
-      A.speak('회색 글자 위를 따라 써 볼까?');
+      stayWithHint('line-trace', '회색 글자 위를 따라 써 볼까?');
       return;
     }
     if (freeLine.strokeCount() < 1 || freeLine.inkLength() < 200) {
-      A.sfx.tap();
-      wiggle('line-free');
-      A.speak('아래 줄에도 혼자 써 보자!');
+      stayWithHint('line-free', '아래 줄에도 혼자 써 보자!');
       return;
     }
     finishPage();
@@ -370,8 +396,10 @@ window.App = (() => {
   function dictRetry() {
     document.getElementById('dict-check').classList.remove('on');
     cur.revealed = false;
+    cur.dirty = false;
+    cur.failStamp = null;
     traceLine.setText(cur.l1, 'hide');
-    freeLine.setText(cur.l2 || cur.l1, 'hide');
+    freeLine.setText(cur.l2 || '', 'hide');
     const page = cur.scope.pages[cur.idx];
     A.speak(page.say || page.text);
   }
@@ -557,8 +585,7 @@ window.App = (() => {
       ev.preventDefault(); A.sfx.tap(); if (cur.idx > 0) openPage(cur.idx - 1);
     });
     document.getElementById('btn-next').addEventListener('click', ev => {
-      ev.preventDefault(); A.sfx.tap();
-      if (cur.idx < cur.scope.pages.length - 1) openPage(cur.idx + 1);
+      ev.preventDefault(); arrowNext();
     });
     document.getElementById('btn-listen').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap();
@@ -580,9 +607,6 @@ window.App = (() => {
     document.getElementById('clear-free').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.pop(); freeLine.clear();
     });
-    document.getElementById('btn-done').addEventListener('click', ev => {
-      ev.preventDefault(); checkDone();
-    });
     document.getElementById('dict-ok').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap();
       document.getElementById('dict-check').classList.remove('on');
@@ -598,6 +622,8 @@ window.App = (() => {
       ev.preventDefault(); A.sfx.tap();
       document.getElementById('reward').classList.remove('on');
       if (cur.dict) { dictRetry(); return; }
+      cur.dirty = false;
+      cur.failStamp = null;
       traceLine.setText(cur.l1, 'show');
       freeLine.setText(cur.scope.pages[cur.idx].text, 'hide');
     });
