@@ -82,6 +82,7 @@ h1 {
 .c-word    { background: #E4FFE9; }
 .c-song    { background: #FFE9D6; }
 .c-tale    { background: #E3EEFF; }
+.c-ask     { background: #FFF0F0; }
 .c-gallery { background: #F4E8FF; }
 
 /* ─────────── 상단 바 ─────────── */
@@ -254,6 +255,77 @@ h1 {
 }
 .bigbtn:active { transform: scale(.95); }
 .bigbtn.primary { background: #8E6FC0; color: #fff; }
+
+/* ─────────── 물어보고 쓰기 ─────────── */
+.ask-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 3vmin, 26px);
+  width: 100%;
+  max-width: 720px;
+  margin-top: 2vmin;
+}
+.ask-mic {
+  width: clamp(110px, 22vmin, 170px);
+  height: clamp(110px, 22vmin, 170px);
+  border: none;
+  border-radius: 50%;
+  background: #FF7FA8;
+  font-size: clamp(48px, 10vmin, 80px);
+  box-shadow: 0 10px 0 rgba(0,0,0,.12);
+  cursor: pointer;
+  transition: transform .12s;
+}
+.ask-mic:active { transform: scale(.93); }
+.ask-mic.listening { animation: mic-pulse 1s infinite; background: #FF5C93; }
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 10px 0 rgba(0,0,0,.12), 0 0 0 0 rgba(255,92,147,.5); }
+  60% { box-shadow: 0 10px 0 rgba(0,0,0,.12), 0 0 0 26px rgba(255,92,147,0); }
+}
+.ask-status {
+  font-size: clamp(16px, 3.4vmin, 24px);
+  font-weight: 800;
+  color: #8C5A6E;
+  text-align: center;
+  line-height: 1.6;
+  min-height: 2.2em;
+  padding: 0 12px;
+}
+.ask-recent {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 640px;
+}
+.ask-chip {
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  padding: clamp(8px, 1.8vmin, 13px) clamp(16px, 3vmin, 24px);
+  font-size: clamp(16px, 3.2vmin, 23px);
+  font-weight: 900;
+  font-family: inherit;
+  color: #6E4A8C;
+  box-shadow: 0 4px 0 rgba(0,0,0,.1);
+  cursor: pointer;
+}
+.ask-chip:active { transform: scale(.93); }
+.ask-typebox { display: flex; gap: 10px; align-items: center; }
+.ask-typebox input {
+  width: clamp(160px, 40vmin, 260px);
+  border: 3px solid #EAD9F2;
+  border-radius: 999px;
+  background: #fff;
+  padding: clamp(9px, 1.8vmin, 14px) clamp(14px, 2.6vmin, 22px);
+  font-size: clamp(16px, 3.2vmin, 22px);
+  font-weight: 800;
+  font-family: inherit;
+  color: #4A3F22;
+  outline: none;
+}
+.ask-typebox input:focus { border-color: #C99BD8; }
 
 /* ─────────── 동요·동화 목록 ─────────── */
 .items-list {

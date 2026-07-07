@@ -27,6 +27,7 @@ window.App = (() => {
   /* ─────────── 화면 전환 ─────────── */
   function showScreen(id) {
     A.stop();
+    stopAsk();
     document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
     if (id === 'scr-home') renderHome();
     if (id === 'scr-gallery') renderGallery();
@@ -55,6 +56,17 @@ window.App = (() => {
       });
       menu.appendChild(b);
     });
+    const ask = document.createElement('button');
+    ask.type = 'button';
+    ask.className = 'menu-card c-ask';
+    const askedN = P.askedList().length;
+    ask.innerHTML =
+      '<span class="mc-icon">🎤</span><span class="mc-name">물어보고 쓰기</span>' +
+      '<span class="mc-desc">"토끼는 어떻게 써?"</span>' +
+      '<span class="mc-prog">' + (askedN ? '💬 ' + askedN + ' 낱말' : '뭐든 물어봐!') + '</span>';
+    ask.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openAsk(); });
+    menu.appendChild(ask);
+
     const g = document.createElement('button');
     g.type = 'button';
     g.className = 'menu-card c-gallery';
@@ -109,6 +121,74 @@ window.App = (() => {
       list.appendChild(row);
     });
     showScreen('scr-items');
+  }
+
+  /* ─────────── 물어보고 쓰기 ─────────── */
+  let listening = false;
+  function askStatus(msg) { document.getElementById('ask-status').textContent = msg; }
+
+  function openAsk() {
+    stopAsk();
+    document.getElementById('ask-mic').style.display = Ask.sttSupported() ? '' : 'none';
+    askStatus(Ask.sttSupported()
+      ? '마이크를 누르고 "토끼는 어떻게 써?" 하고 물어보세요'
+      : '이 브라우저는 마이크 듣기가 안 돼요. 아래에 낱말을 적어 주세요');
+    renderAskRecent();
+    showScreen('scr-ask');
+  }
+  function renderAskRecent() {
+    const box = document.getElementById('ask-recent');
+    box.innerHTML = '';
+    P.askedList().forEach(w => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ask-chip';
+      b.textContent = w;
+      b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); askWord(w); });
+      box.appendChild(b);
+    });
+  }
+  function stopAsk() {
+    if (!listening) return;
+    listening = false;
+    Ask.stopListen();
+    document.getElementById('ask-mic').classList.remove('listening');
+  }
+  function startAsk() {
+    if (listening) { stopAsk(); askStatus('다시 마이크를 누르고 물어보세요'); return; }
+    listening = true;
+    A.stop(); // 듣는 동안 TTS 정지
+    document.getElementById('ask-mic').classList.add('listening');
+    askStatus('👂 듣고 있어요…');
+    Ask.startListen({
+      onInterim(t) { askStatus('👂 ' + t); },
+      onResult(alts) {
+        listening = false;
+        document.getElementById('ask-mic').classList.remove('listening');
+        const w = Ask.parseAlts(alts);
+        if (w) askWord(w);
+        else {
+          askStatus('무슨 낱말인지 잘 못 들었어요');
+          A.speak('무슨 낱말인지 잘 못 들었어요. 다시 물어볼까?');
+        }
+      },
+      onFail(kind) {
+        listening = false;
+        document.getElementById('ask-mic').classList.remove('listening');
+        if (kind === 'denied') askStatus('마이크 사용을 허용해 주세요');
+        else if (kind === 'nospeech') askStatus('아무 말도 안 들렸어요. 다시 눌러 보세요');
+        else askStatus('마이크가 잘 안 돼요. 아래에 낱말을 적어 주세요');
+      },
+    });
+  }
+  // 물어본 낱말로 필사 페이지 열기 (음성·최근·직접 입력 공용)
+  function askWord(word) {
+    stopAsk();
+    P.addAsked(word);
+    openWrite({
+      id: 'ask-' + word, icon: '🎤', name: '물어보고 쓰기', e: '💬', _back: 'scr-ask',
+      pages: [{ text: word, say: word + '! 이렇게 써요.' }],
+    }, null, 0);
   }
 
   /* ─────────── 필사 화면 ─────────── */
@@ -212,9 +292,11 @@ window.App = (() => {
     document.getElementById('reward').classList.remove('on');
     const scope = cur.scope;
     if (cur.idx < scope.pages.length - 1) { openPage(cur.idx + 1); return; }
-    A.speak(scope.name + ' 다 썼다! 정말 대단해요!');
-    showScreen(cur.parent ? 'scr-items' : 'scr-home');
+    // 화면 전환이 A.stop()으로 말을 끊으므로, 전환을 먼저 하고 말한다
+    if (scope._back) { openAsk(); A.speak('다 썼다! 또 물어봐도 돼요!'); return; }
     if (cur.parent) openItems(cur.parent);
+    else showScreen('scr-home');
+    A.speak(scope.name + ' 다 썼다! 정말 대단해요!');
   }
 
   /* ─────────── 갤러리 ─────────── */
@@ -265,7 +347,8 @@ window.App = (() => {
     document.getElementById('btn-write-back').addEventListener('click', ev => {
       ev.preventDefault();
       A.sfx.tap();
-      if (cur && cur.parent) openItems(cur.parent);
+      if (cur && cur.scope._back) openAsk();
+      else if (cur && cur.parent) openItems(cur.parent);
       else showScreen('scr-home');
     });
     document.getElementById('btn-prev').addEventListener('click', ev => {
@@ -303,6 +386,17 @@ window.App = (() => {
       traceLine.setGuide(cur.scope.pages[cur.idx].text);
       freeLine.setGuide(null);
     });
+    document.getElementById('ask-mic').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); startAsk();
+    });
+    document.getElementById('ask-type-go').addEventListener('click', ev => {
+      ev.preventDefault();
+      const input = document.getElementById('ask-type');
+      const w = Ask.parseWord(input.value);
+      if (w) { A.sfx.tap(); input.value = ''; askWord(w); }
+      else { A.sfx.tap(); askStatus('한글 낱말을 1~8글자로 적어 주세요'); }
+    });
+
     document.querySelectorAll('.swatch').forEach((b, i) => {
       b.style.background = COLORS[i];
       b.addEventListener('click', ev => {
@@ -325,8 +419,9 @@ window.App = (() => {
       freeStrokes: freeLine.strokeCount(),
       coverage: traceLine.coverage(),
       stars: P.stars(),
+      pageText: cur ? cur.scope.pages[cur.idx].text : null,
     };
   }
 
-  return { showScreen, debug };
+  return { showScreen, askWord, debug };
 })();

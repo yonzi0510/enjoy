@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* 종단 테스트 — node write/tools/e2e.mjs
  * 실제 Chromium으로 홈 → 자음 필사(펜 스트로크 합성) → 손가락 리젝션 → 완료·별 →
- * 동요 목록 → 동요 한 줄 필사 → 갤러리 → 새로고침 후 진행도 유지까지 검증한다.
+ * 동요 목록 → 동요 한 줄 필사 → 물어보고 쓰기(낱말 추출·직접 입력·인식 주입) →
+ * 갤러리 → 새로고침 후 진행도 유지까지 검증한다.
  * 저장소 루트에서 정적 서버를 띄운 뒤 실행 (예: python3 -m http.server 8777)
  */
 import { createRequire } from 'node:module';
@@ -62,9 +63,9 @@ page.on('pageerror', e => consoleErrors.push(String(e)));
 
 await page.goto(BASE);
 
-await check('홈: 챕터 7개 + 갤러리 카드', async () => {
+await check('홈: 챕터 7개 + 물어보기·갤러리 카드', async () => {
   await page.waitForSelector('#scr-home.on');
-  expect(await page.locator('#menu .menu-card').count() === 8, '메뉴 카드 수');
+  expect(await page.locator('#menu .menu-card').count() === 9, '메뉴 카드 수');
 });
 
 await check('자음 쓰기 진입: 줄노트 2줄 + 점 4개', async () => {
@@ -130,20 +131,61 @@ await check('뒤로 가면 동요 목록으로 돌아온다', async () => {
   expect(prog.includes('1 / 4'), '항목 진행도: ' + prog);
 });
 
-await check('갤러리: 작품 2장', async () => {
+await check('낱말 추출: 여러 말투에서 낱말만 뽑는다', async () => {
+  const got = await page.evaluate(() => [
+    Ask.parseWord('토끼는 어떻게 써?'),
+    Ask.parseWord('구름 어떻게 쓰는 거야'),
+    Ask.parseWord('별'),
+    Ask.parseWord('어떻게 써'),
+  ]);
+  expect(got[0] === '토끼', '토끼: ' + got[0]);
+  expect(got[1] === '구름', '구름: ' + got[1]);
+  expect(got[2] === '별', '별: ' + got[2]);
+  expect(got[3] === null, '낱말 없는 질문: ' + got[3]);
+});
+
+await check('물어보고 쓰기: 직접 입력 → 필사 → 최근 낱말', async () => {
   await page.click('#scr-items .back');
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-ask');
+  await page.waitForSelector('#scr-ask.on');
+  await page.fill('#ask-type', '토끼');
+  await page.click('#ask-type-go');
+  await page.waitForSelector('#scr-write.on');
+  const d = await page.evaluate(() => App.debug());
+  expect(d.pageText === '토끼', '페이지 글: ' + d.pageText);
+  await completePage(page);
+  await page.click('#reward-next');
+  await page.waitForSelector('#scr-ask.on');
+  const chip = await page.locator('.ask-chip').first().textContent();
+  expect(chip === '토끼', '최근 낱말: ' + chip);
+});
+
+await check('인식 결과 주입("구름은 어떻게 써") → 필사 페이지', async () => {
+  await page.evaluate(() => window.__simulateAsk('구름은 어떻게 써'));
+  await page.waitForSelector('#scr-write.on');
+  const d = await page.evaluate(() => App.debug());
+  expect(d.pageText === '구름', '페이지 글: ' + d.pageText);
+  await page.click('#btn-write-back');
+  await page.waitForSelector('#scr-ask.on');
+});
+
+await check('갤러리: 작품 3장', async () => {
+  await page.click('#scr-ask .back');
   await page.waitForSelector('#scr-home.on');
   await page.click('.menu-card.c-gallery');
   await page.waitForSelector('#scr-gallery.on');
-  expect(await page.locator('.art-card').count() === 2, '작품 수');
+  expect(await page.locator('.art-card').count() === 3, '작품 수');
 });
 
-await check('새로고침 후 진행도·갤러리 유지', async () => {
+await check('새로고침 후 진행도·갤러리·물어본 낱말 유지', async () => {
   await page.goto(BASE);
   await page.waitForSelector('#scr-home.on');
-  expect((await page.locator('#home-stars').textContent()) === '2', '별 수');
+  expect((await page.locator('#home-stars').textContent()) === '3', '별 수');
   const g = await page.locator('.menu-card.c-gallery .mc-prog').textContent();
-  expect(g.trim() === '2장', '갤러리 수: ' + g);
+  expect(g.trim() === '3장', '갤러리 수: ' + g);
+  const a = await page.locator('.menu-card.c-ask .mc-prog').textContent();
+  expect(a.includes('2 낱말'), '물어본 낱말 수: ' + a);
 });
 
 await check('콘솔 오류 0', async () => {

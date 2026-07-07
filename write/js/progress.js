@@ -1,6 +1,7 @@
 /* 진행도 + 작품 갤러리 — localStorage (서버·로그인 없음)
  * { stars: 숫자, done: { 페이지id: 완료 횟수 },
- *   gallery: { 페이지id: { t 글, e 이모지, tr 따라쓴 획, fr 혼자 쓴 획, at } } }
+ *   gallery: { 페이지id: { t 글, e 이모지, tr 따라쓴 획, fr 혼자 쓴 획, at } },
+ *   asked: [ 물어본 낱말, 최신순 최대 12개 ] }
  * 획은 [{c:색, p:[x,y,x,y,...]}] 논리 좌표(정수) — 이미지 대신 선 데이터로 저장해 용량을 아낀다.
  * 페이지마다 최신 작품 1개만 보관하므로 저장 용량이 페이지 수로 한정된다.
  */
@@ -11,10 +12,10 @@ window.Progress = (() => {
     try {
       const raw = JSON.parse(localStorage.getItem(KEY));
       if (raw && typeof raw === 'object') {
-        return { stars: raw.stars || 0, done: raw.done || {}, gallery: raw.gallery || {} };
+        return { stars: raw.stars || 0, done: raw.done || {}, gallery: raw.gallery || {}, asked: raw.asked || [] };
       }
     } catch (e) { /* 손상 데이터 초기화 */ }
-    return { stars: 0, done: {}, gallery: {} };
+    return { stars: 0, done: {}, gallery: {}, asked: [] };
   }
 
   let state = load();
@@ -51,5 +52,11 @@ window.Progress = (() => {
         .sort((a, b) => b.at - a.at);
     },
     galleryCount() { return Object.keys(state.gallery).length; },
+
+    addAsked(word) {
+      state.asked = [word].concat(state.asked.filter(w => w !== word)).slice(0, 12);
+      save();
+    },
+    askedList() { return state.asked.slice(); },
   };
 })();

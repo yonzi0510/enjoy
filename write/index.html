@@ -34,6 +34,23 @@
   <div class="items-list" id="items-list"></div>
 </section>
 
+<!-- 물어보고 쓰기 -->
+<section class="screen" id="scr-ask">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2>🎤 물어보고 쓰기</h2>
+  </header>
+  <div class="ask-stage">
+    <button type="button" class="ask-mic" id="ask-mic">🎤</button>
+    <p class="ask-status" id="ask-status">마이크를 누르고 "토끼는 어떻게 써?" 하고 물어보세요</p>
+    <div class="ask-recent" id="ask-recent"></div>
+    <div class="ask-typebox">
+      <input type="text" id="ask-type" maxlength="8" placeholder="낱말 직접 쓰기" autocomplete="off">
+      <button type="button" class="bigbtn primary" id="ask-type-go">써 볼래! ✏️</button>
+    </div>
+  </div>
+</section>
+
 <!-- 필사 -->
 <section class="screen" id="scr-write">
   <header class="bar">
@@ -100,6 +117,7 @@
 <script src="js/data.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/progress.js"></script>
+<script src="js/ask.js"></script>
 <script src="js/ink.js"></script>
 <script src="js/app.js"></script>
 <script src="../shared/voice-settings.js"></script>
