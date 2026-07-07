@@ -24,7 +24,7 @@ const chapterIds = new Set();
 const scopeIds = new Set();
 let pageCount = 0;
 
-function checkPages(scope, label, needEmoji) {
+function checkPages(scope, label, needEmoji, maxUnits) {
   if (!Array.isArray(scope.pages) || !scope.pages.length) { err(label + ': pages 없음'); return; }
   scope.pages.forEach((p, i) => {
     pageCount++;
@@ -32,7 +32,7 @@ function checkPages(scope, label, needEmoji) {
     if (!p.text || typeof p.text !== 'string') { err(at + ': text 없음'); return; }
     if (p.text !== p.text.trim()) err(at + ': text 앞뒤 공백 — "' + p.text + '"');
     const u = units(p.text);
-    if (u > 11) err(at + ': 한 줄에 너무 김 (' + u + '칸) — "' + p.text + '"');
+    if (u > maxUnits) err(at + ': 너무 김 (' + u + '칸, 최대 ' + maxUnits + ') — "' + p.text + '"');
     if (needEmoji && !p.e) err(at + ': 낱말 이모지(e) 없음 — "' + p.text + '"');
   });
 }
@@ -48,7 +48,7 @@ D.chapters.forEach(ch => {
   if (ch.pages) {
     if (scopeIds.has(ch.id)) err(at + ': 페이지 id 접두사 중복');
     scopeIds.add(ch.id);
-    checkPages(ch, at, ch.id === 'word');
+    checkPages(ch, at, ch.id === 'word', 11);
   } else {
     ch.items.forEach(it => {
       const iat = at + ' > ' + (it.id || '?');
@@ -56,8 +56,16 @@ D.chapters.forEach(ch => {
       if (scopeIds.has(it.id)) err(iat + ': 항목 id 중복 (페이지 id 가 겹침)');
       scopeIds.add(it.id);
       if (!it.e || !it.name || !it.kind) err(iat + ': e/name/kind 필요');
-      if (!Array.isArray(it.full) || !it.full.length) err(iat + ': 전체 듣기(full) 없음');
-      checkPages(it, iat, ch.id === 'word');
+      if (ch.dict) {
+        // 받아쓰기: 정답을 미리 들려주면 안 되므로 full 없음, 단계당 30개 이상,
+        // 두 줄로 나눠 쓰므로 최대 20칸까지 허용
+        if (it.full) err(iat + ': 받아쓰기 단계에 full(전체 듣기)이 있으면 정답이 새어 나감');
+        if (it.pages && it.pages.length < 30) err(iat + ': 받아쓰기 단계는 30개 이상이어야 함 (현재 ' + it.pages.length + ')');
+        checkPages(it, iat, false, 20);
+      } else {
+        if (!Array.isArray(it.full) || !it.full.length) err(iat + ': 전체 듣기(full) 없음');
+        checkPages(it, iat, ch.id === 'word', 11);
+      }
     });
   }
 });

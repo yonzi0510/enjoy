@@ -1,14 +1,17 @@
-/* 앱 셸 — 홈/목록/필사/갤러리 화면 전환과 필사 흐름 */
+/* 앱 셸 — 홈/목록/필사/받아쓰기/자유 낙서장/물어보기/갤러리 화면 전환과 흐름 */
 window.App = (() => {
   const D = window.WriteData;
   const A = window.Audio2;
   const P = window.Progress;
 
-  const COLORS = ['#F25CA2', '#4E8DF5', '#3FBF77']; // 분홍·파랑·초록 크레용
-  let color = COLORS[0];
+  /* 크레용 색 (rb = 무지개) */
+  const COLORS = ['#E8354D', '#F2762E', '#E5A800', '#3FBF77', '#31B7D8', '#4E6FE3', '#8B5BD6', '#F25CA2', '#8A5A3B', '#3B3B4A', 'rb'];
+  const PENS = { thin: { w: 6, a: 1 }, mid: { w: 11, a: 1 }, thick: { w: 20, a: 1 }, hl: { w: 36, a: 0.45 } };
+  const STICKERS = ['⭐', '🌈', '❤️', '🌸', '🦋', '🐰', '🐶', '🍓', '👑', '🚗', '🎈', '😊'];
+  let writeColor = COLORS[7]; // 분홍
+  let writeTool = 'pen';      // 'pen' | 'erase'
 
   /* 페이지 좌표: scope = pages를 가진 챕터 또는 items의 항목 */
-  function pagesOf(scope) { return scope.pages; }
   function pageId(scope, i) { return scope.id + '-' + i; }
   function doneIn(scope) {
     let n = 0;
@@ -23,6 +26,17 @@ window.App = (() => {
     if (ch.pages) return ch.pages.length;
     return ch.items.reduce((n, it) => n + it.pages.length, 0);
   }
+  // 긴 받아쓰기 문장은 가운데에 가까운 공백에서 두 줄로 나눈다
+  function splitText(text) {
+    const chars = Array.from(text);
+    if (chars.length <= 8) return [text, null];
+    let best = -1, mid = chars.length / 2;
+    chars.forEach((ch, i) => {
+      if (ch === ' ' && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) best = i;
+    });
+    if (best < 0) return [text, null];
+    return [chars.slice(0, best).join(''), chars.slice(best + 1).join('')];
+  }
 
   /* ─────────── 화면 전환 ─────────── */
   function showScreen(id) {
@@ -34,6 +48,7 @@ window.App = (() => {
   }
 
   /* ─────────── 홈 ─────────── */
+  function drawCount() { return P.galleryList().filter(a => a.id.indexOf('draw-') === 0).length; }
   function renderHome() {
     document.getElementById('home-stars').textContent = P.stars();
     const menu = document.getElementById('menu');
@@ -56,6 +71,17 @@ window.App = (() => {
       });
       menu.appendChild(b);
     });
+
+    const draw = document.createElement('button');
+    draw.type = 'button';
+    draw.className = 'menu-card c-draw';
+    draw.innerHTML =
+      '<span class="mc-icon">🎨</span><span class="mc-name">자유 낙서장</span>' +
+      '<span class="mc-desc">마음껏 그리고 꾸며요</span>' +
+      '<span class="mc-prog">' + drawCount() + '장</span>';
+    draw.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openDraw(); });
+    menu.appendChild(draw);
+
     const ask = document.createElement('button');
     ask.type = 'button';
     ask.className = 'menu-card c-ask';
@@ -82,7 +108,7 @@ window.App = (() => {
     return 0;
   }
 
-  /* ─────────── 동요·동화 목록 ─────────── */
+  /* ─────────── 항목 목록 (동요·동화·글자 줄·낱말·받아쓰기) ─────────── */
   let curChapter = null;
   function openItems(ch) {
     curChapter = ch;
@@ -106,18 +132,20 @@ window.App = (() => {
         A.sfx.tap();
         openWrite(it, ch, firstTodo(it));
       });
-      const play = document.createElement('button');
-      play.type = 'button';
-      play.className = 'item-play';
-      play.textContent = '▶️';
-      play.setAttribute('aria-label', it.name + ' 전체 듣기');
-      play.addEventListener('click', ev => {
-        ev.preventDefault();
-        A.sfx.tap();
-        A.speakSeq(it.full.map(t => ({ text: t, rate: 0.85 })));
-      });
       row.appendChild(b);
-      row.appendChild(play);
+      if (it.full) { // 전체 듣기 (받아쓰기는 정답이라 없음)
+        const play = document.createElement('button');
+        play.type = 'button';
+        play.className = 'item-play';
+        play.textContent = '▶️';
+        play.setAttribute('aria-label', it.name + ' 전체 듣기');
+        play.addEventListener('click', ev => {
+          ev.preventDefault();
+          A.sfx.tap();
+          A.speakSeq(it.full.map(t => ({ text: t, rate: 0.85 })));
+        });
+        row.appendChild(play);
+      }
       list.appendChild(row);
     });
     showScreen('scr-items');
@@ -147,6 +175,7 @@ window.App = (() => {
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); askWord(w); });
       box.appendChild(b);
     });
+    document.getElementById('ask-clear').hidden = !P.askedList().length;
   }
   function stopAsk() {
     if (!listening) return;
@@ -191,18 +220,15 @@ window.App = (() => {
     }, null, 0);
   }
 
-  /* ─────────── 필사 화면 ─────────── */
+  /* ─────────── 필사·받아쓰기 화면 ─────────── */
   let traceLine = null, freeLine = null;
-  let cur = null; // { scope, parent, idx }
+  let cur = null; // { scope, parent, idx, dict, l1, l2, revealed }
 
   function initLines() {
     const hint = penHint();
-    traceLine = Ink.InkLine(document.getElementById('ink-trace'), {
-      guide: '', color: () => color, onTouchReject: hint,
-    });
-    freeLine = Ink.InkLine(document.getElementById('ink-free'), {
-      guide: null, color: () => color, onTouchReject: hint,
-    });
+    const opts = { color: () => writeColor, tool: () => writeTool, onTouchReject: hint };
+    traceLine = Ink.InkLine(document.getElementById('ink-trace'), opts);
+    freeLine = Ink.InkLine(document.getElementById('ink-free'), opts);
   }
 
   // 손가락 필기 시도 안내 (펜슬 전용) — 말은 가끔만
@@ -218,9 +244,15 @@ window.App = (() => {
     };
   }
 
+  function setWriteTool(tool) {
+    writeTool = tool;
+    document.getElementById('btn-eraser').classList.toggle('on', tool === 'erase');
+  }
+
   function openWrite(scope, parent, idx) {
-    cur = { scope, parent, idx };
+    cur = { scope, parent, idx, dict: !!(parent && parent.dict) };
     document.getElementById('write-title').textContent = (scope.icon || scope.e) + ' ' + scope.name;
+    setWriteTool('pen');
     showScreen('scr-write');
     traceLine.resize();
     freeLine.resize();
@@ -238,25 +270,69 @@ window.App = (() => {
     document.getElementById('btn-next').disabled = idx >= scope.pages.length - 1;
     const dots = document.getElementById('write-dots');
     dots.innerHTML = '';
-    scope.pages.forEach((_, i) => {
-      const d = document.createElement('span');
-      d.className = 'dot' + (i === idx ? ' on' : '') + (P.isDone(pageId(scope, i)) ? ' done' : '');
-      dots.appendChild(d);
-    });
-
-    traceLine.setGuide(page.text);
-    freeLine.setGuide(null);
-    const art = P.artOf(pageId(scope, idx));
-    if (art) { // 전에 쓴 작품 다시 보여주기
-      traceLine.setStrokes(art.tr);
-      freeLine.setStrokes(art.fr);
+    if (scope.pages.length <= 12) {
+      scope.pages.forEach((_, i) => {
+        const d = document.createElement('span');
+        d.className = 'dot' + (i === idx ? ' on' : '') + (P.isDone(pageId(scope, i)) ? ' done' : '');
+        dots.appendChild(d);
+      });
+    } else { // 받아쓰기처럼 장수가 많으면 숫자로
+      const t = document.createElement('span');
+      t.className = 'page-count';
+      t.textContent = (idx + 1) + ' / ' + scope.pages.length;
+      dots.appendChild(t);
     }
-    setTimeout(() => A.speak(say), 350);
+
+    document.getElementById('dict-check').classList.remove('on');
+    cur.revealed = false;
+
+    if (cur.dict) {
+      const parts = splitText(page.text);
+      cur.l1 = parts[0];
+      cur.l2 = parts[1];
+      traceLine.setText(cur.l1, 'hide');
+      freeLine.setText(cur.l2 || cur.l1, 'hide');
+      document.getElementById('tag-trace').textContent = '받아쓰기';
+      document.getElementById('tag-free').textContent = cur.l2 ? '이어서 써요' : '한 번 더 써요';
+      setTimeout(() => A.speak('받아쓰기! ' + say), 350);
+    } else {
+      cur.l1 = page.text;
+      cur.l2 = null;
+      traceLine.setText(page.text, 'show');
+      freeLine.setText(page.text, 'hide');
+      document.getElementById('tag-trace').textContent = '따라 써요';
+      document.getElementById('tag-free').textContent = '혼자 써요';
+      const art = P.artOf(pageId(scope, idx));
+      if (art) { // 전에 쓴 작품 다시 보여주기
+        traceLine.setStrokes(art.tr);
+        freeLine.setStrokes(art.fr);
+      }
+      setTimeout(() => A.speak(say), 350);
+    }
   }
 
   function checkDone() {
     const scope = cur.scope, idx = cur.idx;
     const page = scope.pages[idx];
+    const say = page.say || page.text;
+
+    if (cur.dict) {
+      if (cur.revealed) return; // 정답 공개 후에는 ⭕/다시 쓰기로 진행
+      if (traceLine.strokeCount() < 1 || (cur.l2 && freeLine.strokeCount() < 1)) {
+        A.sfx.tap();
+        wiggle(traceLine.strokeCount() < 1 ? 'line-trace' : 'line-free');
+        A.speak('들은 말을 빈 칸에 써 볼까?');
+        return;
+      }
+      cur.revealed = true;
+      traceLine.reveal();
+      freeLine.reveal();
+      document.getElementById('dict-check').classList.add('on');
+      A.sfx.pop();
+      A.speak('정답은, ' + say + '! 내 글씨랑 비교해 보자.');
+      return;
+    }
+
     if (traceLine.coverage() < 0.5) {
       A.sfx.tap();
       wiggle('line-trace');
@@ -269,10 +345,19 @@ window.App = (() => {
       A.speak('아래 줄에도 혼자 써 보자!');
       return;
     }
-    P.completePage(pageId(scope, idx), {
-      t: page.text, e: page.e || scope.e || '',
+    finishPage();
+  }
+
+  function finishPage() {
+    const scope = cur.scope, idx = cur.idx;
+    const page = scope.pages[idx];
+    const art = {
+      t: cur.l1, e: page.e || scope.e || '',
       tr: traceLine.strokes(), fr: freeLine.strokes(),
-    });
+    };
+    if (cur.dict && cur.l2) art.t2 = cur.l2;
+    else if (!cur.dict) art.c2 = page.text; // 혼자 쓴 줄의 빈 칸 배치 보존
+    P.completePage(pageId(scope, idx), art);
     A.sfx.fanfare();
     const praise = D.praises[Math.floor(Math.random() * D.praises.length)];
     const isLast = idx >= scope.pages.length - 1;
@@ -281,6 +366,16 @@ window.App = (() => {
     document.getElementById('reward').classList.add('on');
     A.speak(praise);
   }
+
+  function dictRetry() {
+    document.getElementById('dict-check').classList.remove('on');
+    cur.revealed = false;
+    traceLine.setText(cur.l1, 'hide');
+    freeLine.setText(cur.l2 || cur.l1, 'hide');
+    const page = cur.scope.pages[cur.idx];
+    A.speak(page.say || page.text);
+  }
+
   function wiggle(id) {
     const el = document.getElementById(id);
     el.classList.remove('wiggle');
@@ -297,6 +392,86 @@ window.App = (() => {
     if (cur.parent) openItems(cur.parent);
     else showScreen('scr-home');
     A.speak(scope.name + ' 다 썼다! 정말 대단해요!');
+  }
+
+  /* ─────────── 자유 낙서장 ─────────── */
+  let pad = null;
+  let drawColor = COLORS[5]; // 파랑
+  let drawTool = 'pen';      // 'pen' | 'erase' | 'sticker'
+  let drawPen = 'mid';
+  let drawSticker = STICKERS[0];
+
+  function initDraw() {
+    pad = Ink.FreePad(document.getElementById('draw-pad'), {
+      color: () => drawColor,
+      tool: () => drawTool,
+      pen: () => PENS[drawPen],
+      sticker: () => drawSticker,
+      onTouchReject: penHint(),
+    });
+    makeSwatches(document.getElementById('draw-swatches'), drawColor, c => {
+      drawColor = c;
+      setDrawTool('pen');
+    });
+    const stickerRow = document.getElementById('sticker-row');
+    STICKERS.forEach(s => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sticker-btn';
+      b.textContent = s;
+      b.addEventListener('click', ev => {
+        ev.preventDefault();
+        A.sfx.pop();
+        drawSticker = s;
+        setDrawTool('sticker');
+        stickerRow.querySelectorAll('.sticker-btn').forEach(x => x.classList.toggle('on', x === b));
+      });
+      stickerRow.appendChild(b);
+    });
+    document.querySelectorAll('.pen-btn').forEach(b => {
+      b.addEventListener('click', ev => {
+        ev.preventDefault();
+        A.sfx.tap();
+        drawPen = b.dataset.pen;
+        setDrawTool('pen');
+        document.querySelectorAll('.pen-btn').forEach(x => x.classList.toggle('on', x === b));
+      });
+    });
+    document.getElementById('btn-draw-eraser').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      setDrawTool(drawTool === 'erase' ? 'pen' : 'erase');
+    });
+    document.getElementById('btn-draw-sticker').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      setDrawTool(drawTool === 'sticker' ? 'pen' : 'sticker');
+    });
+    document.getElementById('btn-draw-undo').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); pad.undo();
+    });
+    document.getElementById('btn-draw-clear').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.pop(); pad.clear();
+    });
+    document.getElementById('btn-draw-save').addEventListener('click', ev => {
+      ev.preventDefault();
+      if (!pad.count()) { A.sfx.tap(); A.speak('먼저 마음껏 그려 보자!'); return; }
+      P.completePage('draw-' + Date.now(), { t: '자유 그림', e: '🎨', k: 'free', items: pad.items() });
+      A.sfx.fanfare();
+      A.speak('멋진 그림을 보관했어요!');
+      const btn = ev.currentTarget;
+      btn.classList.remove('pulse');
+      void btn.offsetWidth;
+      btn.classList.add('pulse');
+    });
+  }
+  function setDrawTool(tool) {
+    drawTool = tool;
+    document.getElementById('btn-draw-eraser').classList.toggle('on', tool === 'erase');
+    document.getElementById('btn-draw-sticker').classList.toggle('on', tool === 'sticker');
+    document.getElementById('sticker-row').hidden = tool !== 'sticker';
+  }
+  function openDraw() {
+    showScreen('scr-draw');
+    pad.resize();
   }
 
   /* ─────────── 갤러리 ─────────── */
@@ -317,13 +492,13 @@ window.App = (() => {
       cv.className = 'art-canvas';
       const cap = document.createElement('span');
       cap.className = 'art-cap';
-      cap.textContent = (art.e ? art.e + ' ' : '') + art.t;
+      cap.textContent = (art.e ? art.e + ' ' : '') + art.t + (art.t2 ? ' ' + art.t2 : '');
       card.appendChild(cv);
       card.appendChild(cap);
       card.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.pop();
-        A.speak(art.t);
+        if (art.k !== 'free') A.speak(art.t + (art.t2 ? ' ' + art.t2 : ''));
         card.classList.remove('pulse');
         void card.offsetWidth;
         card.classList.add('pulse');
@@ -333,9 +508,36 @@ window.App = (() => {
     });
   }
 
+  /* ─────────── 색 견본 버튼 ─────────── */
+  function makeSwatches(container, initial, onPick) {
+    COLORS.forEach(c => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch' + (c === 'rb' ? ' sw-rb' : '') + (c === initial ? ' on' : '');
+      if (c !== 'rb') b.style.background = c;
+      b.setAttribute('aria-label', c === 'rb' ? '무지개 크레용' : '크레용 색');
+      b.addEventListener('click', ev => {
+        ev.preventDefault();
+        A.sfx.tap();
+        onPick(c);
+        container.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s === b));
+      });
+      container.appendChild(b);
+    });
+  }
+
   /* ─────────── 초기화 ─────────── */
   function init() {
+    // 길게 눌러도 복사·전체선택 메뉴가 뜨지 않게 (직접 입력창은 예외)
+    document.addEventListener('contextmenu', e => { if (e.target.id !== 'ask-type') e.preventDefault(); });
+    document.addEventListener('selectstart', e => { if (e.target.id !== 'ask-type') e.preventDefault(); });
+
     initLines();
+    initDraw();
+    makeSwatches(document.getElementById('swatches'), writeColor, c => {
+      writeColor = c;
+      setWriteTool('pen');
+    });
 
     document.querySelectorAll('[data-go]').forEach(b => {
       b.addEventListener('click', ev => {
@@ -363,6 +565,10 @@ window.App = (() => {
       const p = cur.scope.pages[cur.idx];
       A.speak(p.say || p.text);
     });
+    document.getElementById('btn-eraser').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      setWriteTool(writeTool === 'erase' ? 'pen' : 'erase');
+    });
     document.getElementById('btn-undo').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap();
       if (freeLine.strokeCount()) freeLine.undo();
@@ -377,17 +583,33 @@ window.App = (() => {
     document.getElementById('btn-done').addEventListener('click', ev => {
       ev.preventDefault(); checkDone();
     });
+    document.getElementById('dict-ok').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      document.getElementById('dict-check').classList.remove('on');
+      finishPage();
+    });
+    document.getElementById('dict-retry').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); dictRetry();
+    });
     document.getElementById('reward-next').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); rewardNext();
     });
     document.getElementById('reward-again').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap();
       document.getElementById('reward').classList.remove('on');
-      traceLine.setGuide(cur.scope.pages[cur.idx].text);
-      freeLine.setGuide(null);
+      if (cur.dict) { dictRetry(); return; }
+      traceLine.setText(cur.l1, 'show');
+      freeLine.setText(cur.scope.pages[cur.idx].text, 'hide');
     });
+
     document.getElementById('ask-mic').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); startAsk();
+    });
+    document.getElementById('ask-clear').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.pop();
+      P.clearAsked();
+      renderAskRecent();
+      A.speak('물어본 낱말을 깨끗이 지웠어요.');
     });
     document.getElementById('ask-type-go').addEventListener('click', ev => {
       ev.preventDefault();
@@ -396,17 +618,6 @@ window.App = (() => {
       if (w) { A.sfx.tap(); input.value = ''; askWord(w); }
       else { A.sfx.tap(); askStatus('한글 낱말을 1~8글자로 적어 주세요'); }
     });
-
-    document.querySelectorAll('.swatch').forEach((b, i) => {
-      b.style.background = COLORS[i];
-      b.addEventListener('click', ev => {
-        ev.preventDefault();
-        A.sfx.tap();
-        color = COLORS[i];
-        document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s === b));
-      });
-    });
-    document.querySelector('.swatch').classList.add('on');
 
     renderHome();
   }
@@ -420,6 +631,10 @@ window.App = (() => {
       coverage: traceLine.coverage(),
       stars: P.stars(),
       pageText: cur ? cur.scope.pages[cur.idx].text : null,
+      tool: writeTool,
+      dict: cur ? cur.dict : false,
+      revealed: cur ? !!cur.revealed : false,
+      padItems: pad ? pad.count() : 0,
     };
   }
 
