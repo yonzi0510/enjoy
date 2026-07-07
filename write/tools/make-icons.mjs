@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* 아이콘 생성 — node write/tools/make-icons.mjs
- * 연필 든 노랑 토끼 SVG 를 Chromium 으로 래스터화해 icon-192.png / icon-512.png 를 만든다.
+ * 연필 든 파란 토끼 SVG 를 Chromium 으로 래스터화해 icon-192.png / icon-512.png 를 만든다.
  */
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
@@ -15,23 +15,23 @@ function svg(size) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   html,body{margin:0;padding:0}
   .box{width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(160deg,#FFD98A,#F5A94E)}
+    background:linear-gradient(160deg,#7FB8FF,#3D7BE8)}
   svg{width:78%;height:78%}
   </style></head><body>
   <div class="box"><svg viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg">
     <!-- 귀 -->
-    <ellipse cx="70" cy="46" rx="16" ry="40" fill="#FFF6E0" transform="rotate(-12 70 46)"/>
-    <ellipse cx="130" cy="46" rx="16" ry="40" fill="#FFF6E0" transform="rotate(12 130 46)"/>
-    <ellipse cx="70" cy="50" rx="8" ry="26" fill="#FFC9DC" transform="rotate(-12 70 50)"/>
-    <ellipse cx="130" cy="50" rx="8" ry="26" fill="#FFC9DC" transform="rotate(12 130 50)"/>
+    <ellipse cx="70" cy="46" rx="16" ry="40" fill="#CFE5FF" transform="rotate(-12 70 46)"/>
+    <ellipse cx="130" cy="46" rx="16" ry="40" fill="#CFE5FF" transform="rotate(12 130 46)"/>
+    <ellipse cx="70" cy="50" rx="8" ry="26" fill="#8FBDF7" transform="rotate(-12 70 50)"/>
+    <ellipse cx="130" cy="50" rx="8" ry="26" fill="#8FBDF7" transform="rotate(12 130 50)"/>
     <!-- 얼굴 -->
-    <circle cx="100" cy="112" r="58" fill="#FFF6E0"/>
-    <circle cx="70" cy="126" r="10" fill="#FFB3CC" opacity="0.8"/>
-    <circle cx="130" cy="126" r="10" fill="#FFB3CC" opacity="0.8"/>
-    <circle cx="82" cy="104" r="7.5" fill="#5A4632"/><circle cx="118" cy="104" r="7.5" fill="#5A4632"/>
+    <circle cx="100" cy="112" r="58" fill="#CFE5FF"/>
+    <circle cx="70" cy="126" r="10" fill="#FFAECB" opacity="0.85"/>
+    <circle cx="130" cy="126" r="10" fill="#FFAECB" opacity="0.85"/>
+    <circle cx="82" cy="104" r="7.5" fill="#23406E"/><circle cx="118" cy="104" r="7.5" fill="#23406E"/>
     <circle cx="84.4" cy="101.6" r="2.4" fill="#fff"/><circle cx="120.4" cy="101.6" r="2.4" fill="#fff"/>
     <ellipse cx="100" cy="122" rx="7" ry="5" fill="#F08CAE"/>
-    <path d="M100 127 Q94 136 87 132 M100 127 Q106 136 113 132" fill="none" stroke="#B98A66" stroke-width="4" stroke-linecap="round"/>
+    <path d="M100 127 Q94 136 87 132 M100 127 Q106 136 113 132" fill="none" stroke="#5D86C4" stroke-width="4" stroke-linecap="round"/>
     <!-- 연필 -->
     <g transform="rotate(38 150 158)">
       <rect x="136" y="118" width="26" height="62" rx="4" fill="#F5C542"/>
@@ -40,7 +40,7 @@ function svg(size) {
       <path d="M144 193 L149 202 L154 193 Z" fill="#5A4632"/>
     </g>
     <!-- 글씨 획 -->
-    <path d="M28 186 Q48 172 66 186 Q84 200 100 188" fill="none" stroke="#FFF6E0" stroke-width="8" stroke-linecap="round"/>
+    <path d="M28 186 Q48 172 66 186 Q84 200 100 188" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
   </svg></div></body></html>`;
 }
 
