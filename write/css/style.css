@@ -1,10 +1,19 @@
-/* 글씨 놀이터 — 5세용 줄노트 필사, 파스텔 톤 */
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* 글씨 놀이터 — 5세용 깍두기노트 필사, 파스텔 톤 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  /* 길게 눌러도 복사·전체선택 풍선이 뜨지 않게 */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+#ask-type { -webkit-user-select: text; user-select: text; } /* 직접 입력창만 예외 */
 html, body { height: 100%; }
 body {
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
   background: linear-gradient(160deg, #FFF3D6 0%, #FFE6EF 55%, #E2F6EC 100%);
-  user-select: none;
   touch-action: manipulation;
   overflow: hidden;
 }
@@ -81,6 +90,8 @@ h1 {
 .c-word    { background: #E4FFE9; }
 .c-song    { background: #FFE9D6; }
 .c-tale    { background: #E3EEFF; }
+.c-dict    { background: #FFF0DA; }
+.c-draw    { background: #EAF7DC; }
 .c-ask     { background: #FFF0F0; }
 .c-gallery { background: #F4E8FF; }
 
@@ -140,12 +151,12 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(8px, 1.8vmin, 16px);
+  gap: clamp(8px, 1.6vmin, 14px);
   width: 100%;
-  max-width: 980px;
+  max-width: 860px; /* 도구까지 한 화면에 들어오게 */
 }
-.page-head { position: relative; display: flex; align-items: center; gap: 16px; }
-.page-emoji { font-size: clamp(36px, 8vmin, 64px); }
+.page-head { position: relative; display: flex; align-items: center; gap: 14px; }
+.page-emoji { font-size: clamp(30px, 6vmin, 48px); }
 .pen-hint {
   position: absolute;
   left: 50%;
@@ -169,11 +180,11 @@ h1 {
 .note {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.6vmin, 14px);
+  gap: clamp(6px, 1.2vmin, 10px);
   width: 100%;
   background: #FFFDF6;
   border-radius: 24px;
-  padding: clamp(10px, 2vmin, 20px);
+  padding: clamp(8px, 1.6vmin, 14px);
   box-shadow: 0 8px 0 rgba(0,0,0,.08);
 }
 .note-line { position: relative; }
@@ -227,19 +238,102 @@ h1 {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: clamp(10px, 2.2vmin, 20px);
+  gap: clamp(8px, 1.8vmin, 16px);
   width: 100%;
 }
-.swatches { display: flex; gap: 10px; }
+.swatches { display: flex; gap: clamp(5px, 1vmin, 9px); flex-wrap: wrap; justify-content: center; }
 .swatch {
-  width: clamp(38px, 7vmin, 52px);
-  height: clamp(38px, 7vmin, 52px);
-  border: 4px solid #fff;
+  width: clamp(30px, 5.6vmin, 44px);
+  height: clamp(30px, 5.6vmin, 44px);
+  border: 3px solid #fff;
   border-radius: 50%;
-  box-shadow: 0 4px 0 rgba(0,0,0,.12);
+  box-shadow: 0 3px 0 rgba(0,0,0,.12);
   cursor: pointer;
 }
-.swatch.on { border-color: #6E4A8C; transform: scale(1.12); }
+.swatch.on { border-color: #6E4A8C; transform: scale(1.15); }
+.sw-rb { background: conic-gradient(#E8354D, #F2762E, #E5A800, #3FBF77, #31B7D8, #4E6FE3, #8B5BD6, #F25CA2, #E8354D); }
+.bigbtn.on { background: #6E4A8C; color: #fff; }
+
+/* 받아쓰기 확인 패널 */
+.dict-check {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(8px, 2vmin, 16px);
+  width: 100%;
+  background: #FFF6DE;
+  border-radius: 18px;
+  padding: clamp(8px, 1.8vmin, 14px);
+  box-shadow: 0 5px 0 rgba(0,0,0,.08);
+}
+.dict-check.on { display: flex; }
+.dc-msg { font-size: clamp(14px, 2.8vmin, 19px); font-weight: 800; color: #8A6430; }
+
+/* ─────────── 자유 낙서장 ─────────── */
+.draw-tools {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(8px, 1.8vmin, 14px);
+  width: 100%;
+  max-width: 1100px;
+}
+.pens { display: flex; gap: 6px; }
+.pen-btn {
+  width: clamp(40px, 7vmin, 54px);
+  height: clamp(40px, 7vmin, 54px);
+  border: none;
+  border-radius: 14px;
+  background: #fff;
+  font-size: clamp(18px, 3.4vmin, 26px);
+  box-shadow: 0 4px 0 rgba(0,0,0,.1);
+  cursor: pointer;
+}
+.pen-btn.on { background: #6E4A8C; }
+.sticker-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  box-shadow: 0 4px 0 rgba(0,0,0,.08);
+}
+.sticker-btn {
+  width: clamp(38px, 6.6vmin, 52px);
+  height: clamp(38px, 6.6vmin, 52px);
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  font-size: clamp(20px, 4vmin, 30px);
+  cursor: pointer;
+}
+.sticker-btn.on { background: #EDE4FF; }
+.draw-holder { width: 100%; max-width: 1100px; flex: 1; min-height: 0; }
+#draw-pad {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1000 / 620;
+  max-height: 100%;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 8px 0 rgba(0,0,0,.08);
+  touch-action: none;
+  cursor: crosshair;
+}
+#btn-draw-save.pulse { animation: pulse .4s; }
+.page-count {
+  font-size: clamp(13px, 2.6vmin, 18px);
+  font-weight: 900;
+  color: #6E4A8C;
+  background: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+  box-shadow: 0 3px 0 rgba(0,0,0,.08);
+}
 .bigbtn {
   border: none;
   border-radius: 999px;

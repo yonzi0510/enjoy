@@ -34,11 +34,17 @@ window.Progress = (() => {
 
   return {
     // 페이지 완료 — 별 지급 + 작품 보관. 처음 완료면 true
+    // art: { t, e, tr, fr } (필사·받아쓰기) 또는 { t, e, k:'free', items } (자유 그림)
     completePage(pageId, art) {
       const isFirst = !state.done[pageId];
       state.done[pageId] = (state.done[pageId] || 0) + 1;
       state.stars += 1;
-      state.gallery[pageId] = { t: art.t, e: art.e || '', tr: art.tr, fr: art.fr, at: Date.now() };
+      state.gallery[pageId] = Object.assign({}, art, { at: Date.now() });
+      // 자유 그림은 저장마다 새 항목이므로 최신 12장만 보관
+      const draws = Object.keys(state.gallery)
+        .filter(id => id.indexOf('draw-') === 0)
+        .sort((a, b) => state.gallery[a].at - state.gallery[b].at);
+      while (draws.length > 12) delete state.gallery[draws.shift()];
       save();
       return isFirst;
     },
@@ -48,7 +54,7 @@ window.Progress = (() => {
     artOf(pageId) { return state.gallery[pageId] || null; },
     galleryList() {
       return Object.entries(state.gallery)
-        .map(([id, v]) => ({ id, t: v.t, e: v.e, tr: v.tr, fr: v.fr, at: v.at }))
+        .map(([id, v]) => Object.assign({ id }, v))
         .sort((a, b) => b.at - a.at);
     },
     galleryCount() { return Object.keys(state.gallery).length; },
@@ -58,5 +64,6 @@ window.Progress = (() => {
       save();
     },
     askedList() { return state.asked.slice(); },
+    clearAsked() { state.asked = []; save(); },
   };
 })();

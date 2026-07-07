@@ -39,6 +39,7 @@
   <header class="bar">
     <button type="button" class="back" data-go="scr-home">◀</button>
     <h2>🎤 물어보고 쓰기</h2>
+    <button type="button" class="navbtn" id="ask-clear" aria-label="물어본 낱말 지우기" hidden>🧹</button>
   </header>
   <div class="ask-stage">
     <button type="button" class="ask-mic" id="ask-mic">🎤</button>
@@ -70,25 +71,53 @@
     </div>
     <div class="note">
       <div class="note-line" id="line-trace">
-        <span class="line-tag">따라 써요</span>
+        <span class="line-tag" id="tag-trace">따라 써요</span>
         <canvas id="ink-trace"></canvas>
-        <button type="button" class="line-clear" id="clear-trace" aria-label="따라 쓰기 지우기">🧽</button>
+        <button type="button" class="line-clear" id="clear-trace" aria-label="윗줄 지우기">🧽</button>
       </div>
       <div class="note-line" id="line-free">
-        <span class="line-tag free">혼자 써요</span>
+        <span class="line-tag free" id="tag-free">혼자 써요</span>
         <canvas id="ink-free"></canvas>
-        <button type="button" class="line-clear" id="clear-free" aria-label="혼자 쓰기 지우기">🧽</button>
+        <button type="button" class="line-clear" id="clear-free" aria-label="아랫줄 지우기">🧽</button>
       </div>
+    </div>
+    <div class="dict-check" id="dict-check">
+      <span class="dc-msg">정답이랑 똑같이 썼는지 비교해 보세요!</span>
+      <button type="button" class="bigbtn" id="dict-retry">✏️ 다시 쓸래</button>
+      <button type="button" class="bigbtn primary" id="dict-ok">⭕ 맞았어요!</button>
     </div>
     <div class="toolbar">
-      <div class="swatches">
-        <button type="button" class="swatch" aria-label="분홍 크레용"></button>
-        <button type="button" class="swatch" aria-label="파랑 크레용"></button>
-        <button type="button" class="swatch" aria-label="초록 크레용"></button>
-      </div>
-      <button type="button" class="bigbtn" id="btn-undo">↩️ 한 획 지우기</button>
+      <div class="swatches" id="swatches"></div>
+      <button type="button" class="bigbtn" id="btn-eraser">🧼 지우개</button>
+      <button type="button" class="bigbtn" id="btn-undo">↩️ 한 획</button>
       <button type="button" class="bigbtn primary" id="btn-done">✅ 다 썼어요!</button>
     </div>
+  </div>
+</section>
+
+<!-- 자유 낙서장 -->
+<section class="screen" id="scr-draw">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2>🎨 자유 낙서장</h2>
+    <button type="button" class="bigbtn primary" id="btn-draw-save">💾 보관하기</button>
+  </header>
+  <div class="draw-tools">
+    <div class="swatches" id="draw-swatches"></div>
+    <div class="pens">
+      <button type="button" class="pen-btn" data-pen="thin" aria-label="가는 펜">✏️</button>
+      <button type="button" class="pen-btn on" data-pen="mid" aria-label="보통 펜">🖊️</button>
+      <button type="button" class="pen-btn" data-pen="thick" aria-label="굵은 크레용">🖍️</button>
+      <button type="button" class="pen-btn" data-pen="hl" aria-label="형광펜">🖌️</button>
+    </div>
+    <button type="button" class="bigbtn" id="btn-draw-sticker">🌟 스티커</button>
+    <button type="button" class="bigbtn" id="btn-draw-eraser">🧼 지우개</button>
+    <button type="button" class="bigbtn" id="btn-draw-undo">↩️</button>
+    <button type="button" class="bigbtn" id="btn-draw-clear">🗑️</button>
+  </div>
+  <div class="sticker-row" id="sticker-row" hidden></div>
+  <div class="draw-holder">
+    <canvas id="draw-pad"></canvas>
   </div>
 </section>
 
