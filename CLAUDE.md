@@ -16,6 +16,7 @@
 | `hangul/` | 🌟 한글 놀이터 | 설계 배경은 `hangul/PLAN.md` |
 | `japanese/` | 🌸 일본어 놀이터 | 한글 놀이터와 같은 구성, 획순은 KanjiVG 변환(`js/strokes.js`) |
 | `practika/` | 🎙️ 프랙티카 놀이터 | 영·일·중 회화, 설계 배경은 `practika/PLAN.md` |
+| `write/` | ✍️ 글씨 놀이터 | 패드+펜슬 줄노트 필사, 펜 전용 입력(`js/ink.js`) |
 | `color/` | (리다이렉트) | 픽셀 놀이터로 이동만 함 — 수정할 일 없음 |
 | `shared/` | 공용 목소리 설정 | 모든 앱이 같은 한국어 목소리·빠르기를 쓰게 하는 모듈 |
 
@@ -35,7 +36,7 @@
   (선례: `shared/voice-settings.js`가 옛 `pixel-voice` 키를 이어받는 방식).
 - 사용 중인 키: `chatgi-playground-v1`·`chatgi-stickerboard-v1`·`chatgi-timelimit-v1`·`chatgi-muted`(play),
   `english-playground-v1`, `pixel-playground-v1`·`pixel-muted`, `hangul-playground-v1`,
-  `japanese-playground-v1`, `practika-playground-v1`, `enjoy-voice-ko`·`enjoy-rate-factor`(공용).
+  `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`, `enjoy-voice-ko`·`enjoy-rate-factor`(공용).
 - e2e 테스트의 "새로고침 후 진행도 유지" 검사를 지우거나 약화하지 않는다.
 
 ## 5세 UX 원칙
@@ -58,10 +59,11 @@ node play/tools/validate-scene.js <themeId>
 node hangul/tools/validate-data.js
 node japanese/tools/validate-data.js
 node practika/tools/validate-data.js
+node write/tools/validate-data.js
 
 # 2) e2e (저장소 루트에서 정적 서버를 띄운 뒤 실행)
 python3 -m http.server 8777 &
-node hangul/tools/e2e.mjs                 # japanese도 같은 포트
+node hangul/tools/e2e.mjs                 # japanese·write도 같은 포트
 BASE_URL=http://127.0.0.1:8777/practika/ node practika/tools/e2e.mjs   # 기본값은 8788 포트
 PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
 ```

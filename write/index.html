@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFF3D6">
+<title>글씨 놀이터</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../shared/voice-settings.css">
+</head>
+<body>
+
+<!-- 홈 -->
+<section class="screen on" id="scr-home">
+  <header class="home-head">
+    <h1>✍️ 글씨 놀이터</h1>
+    <div class="stats">
+      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+    </div>
+  </header>
+  <div class="menu" id="menu"></div>
+</section>
+
+<!-- 동요·동화 목록 -->
+<section class="screen" id="scr-items">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2 id="items-title">🎵 동요 필사</h2>
+  </header>
+  <div class="items-list" id="items-list"></div>
+</section>
+
+<!-- 필사 -->
+<section class="screen" id="scr-write">
+  <header class="bar">
+    <button type="button" class="back" id="btn-write-back">◀</button>
+    <h2 id="write-title">✏️ 자음 쓰기</h2>
+    <div class="pagenav">
+      <button type="button" class="navbtn" id="btn-prev">◀</button>
+      <span class="dots" id="write-dots"></span>
+      <button type="button" class="navbtn" id="btn-next">▶</button>
+    </div>
+  </header>
+  <div class="write-stage">
+    <div class="page-head">
+      <span class="page-emoji" id="write-emoji">✏️</span>
+      <button type="button" class="bigbtn" id="btn-listen">🔊 듣기</button>
+      <div class="pen-hint" id="pen-hint">✏️ 펜슬로 써 보세요!</div>
+    </div>
+    <div class="note">
+      <div class="note-line" id="line-trace">
+        <span class="line-tag">따라 써요</span>
+        <canvas id="ink-trace"></canvas>
+        <button type="button" class="line-clear" id="clear-trace" aria-label="따라 쓰기 지우기">🧽</button>
+      </div>
+      <div class="note-line" id="line-free">
+        <span class="line-tag free">혼자 써요</span>
+        <canvas id="ink-free"></canvas>
+        <button type="button" class="line-clear" id="clear-free" aria-label="혼자 쓰기 지우기">🧽</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="swatches">
+        <button type="button" class="swatch" aria-label="분홍 크레용"></button>
+        <button type="button" class="swatch" aria-label="파랑 크레용"></button>
+        <button type="button" class="swatch" aria-label="초록 크레용"></button>
+      </div>
+      <button type="button" class="bigbtn" id="btn-undo">↩️ 한 획 지우기</button>
+      <button type="button" class="bigbtn primary" id="btn-done">✅ 다 썼어요!</button>
+    </div>
+  </div>
+</section>
+
+<!-- 갤러리 -->
+<section class="screen" id="scr-gallery">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2>🖼️ 내 글씨</h2>
+    <span class="stat" id="gallery-count">0장</span>
+  </header>
+  <div class="gallery-grid" id="gallery-grid"></div>
+</section>
+
+<!-- 보상 오버레이 -->
+<div class="reward" id="reward">
+  <div class="reward-card">
+    <div class="reward-stars">⭐</div>
+    <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
+    <div class="reward-btns">
+      <button type="button" class="bigbtn" id="reward-again">한 번 더 ✏️</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 ▶</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/ink.js"></script>
+<script src="js/app.js"></script>
+<script src="../shared/voice-settings.js"></script>
+</body>
+</html>
