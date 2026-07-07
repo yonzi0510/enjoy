@@ -1,0 +1,16 @@
+{
+  "name": "은아의 놀이터",
+  "short_name": "은아 놀이터",
+  "description": "5세 아이를 위한 놀이 앱 모음 — 찾기·영어·픽셀·한글·일본어·회화·글씨 놀이터",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E6F4FF",
+  "theme_color": "#FFD9E6",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
