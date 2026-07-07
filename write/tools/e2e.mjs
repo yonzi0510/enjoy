@@ -63,9 +63,22 @@ page.on('pageerror', e => consoleErrors.push(String(e)));
 
 await page.goto(BASE);
 
-await check('홈: 챕터 7개 + 물어보기·갤러리 카드', async () => {
+await check('홈: 챕터 6개 + 물어보기·갤러리 카드', async () => {
   await page.waitForSelector('#scr-home.on');
-  expect(await page.locator('#menu .menu-card').count() === 9, '메뉴 카드 수');
+  expect(await page.locator('#menu .menu-card').count() === 8, '메뉴 카드 수');
+});
+
+await check('가나다라: ㅏㅓㅗㅜㅡㅣ 여섯 줄 / 낱말: 묶음 여섯 개', async () => {
+  await page.click('.menu-card.c-rows');
+  await page.waitForSelector('#scr-items.on');
+  const rows = await page.locator('.item-main .it-name').allTextContents();
+  expect(rows.join(',') === '가나다라,거너더러,고노도로,구누두루,그느드르,기니디리', '글자 줄: ' + rows);
+  await page.click('#scr-items .back');
+  await page.click('.menu-card.c-word');
+  await page.waitForSelector('#scr-items.on');
+  expect(await page.locator('.item-row').count() === 6, '낱말 묶음 수');
+  await page.click('#scr-items .back');
+  await page.waitForSelector('#scr-home.on');
 });
 
 await check('자음 쓰기 진입: 줄노트 2줄 + 점 4개', async () => {

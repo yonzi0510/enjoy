@@ -57,7 +57,7 @@ D.chapters.forEach(ch => {
       scopeIds.add(it.id);
       if (!it.e || !it.name || !it.kind) err(iat + ': e/name/kind 필요');
       if (!Array.isArray(it.full) || !it.full.length) err(iat + ': 전체 듣기(full) 없음');
-      checkPages(it, iat, false);
+      checkPages(it, iat, ch.id === 'word');
     });
   }
 });
