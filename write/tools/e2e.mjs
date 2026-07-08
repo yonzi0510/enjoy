@@ -205,6 +205,20 @@ await check('부분 지우개: 닿은 획만 지운다', async () => {
   await page.waitForSelector('#scr-home.on');
 });
 
+await check('쓰다 만 글씨 자동 저장: 나갔다 와도 그대로', async () => {
+  await page.click('.menu-card.c-ask');
+  await page.waitForSelector('#scr-ask.on');
+  await page.locator('.ask-chip').first().click(); // 최근 낱말 '구름' 다시 열기
+  await page.waitForSelector('#scr-write.on');
+  const d = await page.evaluate(() => App.debug());
+  expect(d.pageText === '구름', '페이지 글: ' + d.pageText);
+  expect(d.freeStrokes === 1, '지우개 후 남긴 획이 복원돼야 함: ' + d.freeStrokes);
+  await page.click('#btn-write-back');
+  await page.waitForSelector('#scr-ask.on');
+  await page.click('#scr-ask .back');
+  await page.waitForSelector('#scr-home.on');
+});
+
 await check('받아쓰기: 7단계 목록 (정답 유출 ▶️ 없음)', async () => {
   await page.click('.menu-card.c-dict');
   await page.waitForSelector('#scr-items.on');
@@ -259,10 +273,10 @@ await check('자유 낙서장: 무지개 펜 + 스티커 + 보관', async () => 
   expect(prog.trim() === '1장', '낙서장 보관 수: ' + prog);
 });
 
-await check('갤러리: 작품 5장 (필사 3 + 받아쓰기 1 + 그림 1)', async () => {
+await check('갤러리: 작품 6장 (완성 4 + 쓰던 글 1 + 그림 1)', async () => {
   await page.click('.menu-card.c-gallery');
   await page.waitForSelector('#scr-gallery.on');
-  expect(await page.locator('.art-card').count() === 5, '작품 수');
+  expect(await page.locator('.art-card').count() === 6, '작품 수');
 });
 
 await check('새로고침 후 진행도·갤러리·물어본 낱말 유지', async () => {
@@ -270,7 +284,7 @@ await check('새로고침 후 진행도·갤러리·물어본 낱말 유지', as
   await page.waitForSelector('#scr-home.on');
   expect((await page.locator('#home-stars').textContent()) === '5', '별 수');
   const g = await page.locator('.menu-card.c-gallery .mc-prog').textContent();
-  expect(g.trim() === '5장', '갤러리 수: ' + g);
+  expect(g.trim() === '6장', '갤러리 수: ' + g);
   const a = await page.locator('.menu-card.c-ask .mc-prog').textContent();
   expect(a.includes('2 낱말'), '물어본 낱말 수: ' + a);
 });
