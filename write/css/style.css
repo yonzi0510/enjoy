@@ -329,11 +329,17 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-content: flex-start;
   gap: 6px;
+  width: 100%;
+  max-width: 1100px;
+  max-height: clamp(90px, 17vmin, 150px);
+  overflow-y: auto;
   background: #fff;
-  border-radius: 999px;
-  padding: 6px 14px;
+  border-radius: 22px;
+  padding: 8px 14px;
   box-shadow: 0 4px 0 rgba(0,0,0,.08);
+  -webkit-overflow-scrolling: touch;
 }
 .sticker-btn {
   width: clamp(38px, 6.6vmin, 52px);
