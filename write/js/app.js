@@ -228,7 +228,7 @@ window.App = (() => {
     const hint = penHint();
     const opts = {
       color: () => writeColor, tool: () => writeTool, onTouchReject: hint,
-      onChange: () => { if (cur) cur.dirty = true; }, // ▶ 판정은 새로 쓴 게 있을 때만
+      onChange: () => { if (cur) { cur.dirty = true; scheduleDraft(); } },
     };
     traceLine = Ink.InkLine(document.getElementById('ink-trace'), opts);
     freeLine = Ink.InkLine(document.getElementById('ink-free'), opts);
@@ -252,7 +252,38 @@ window.App = (() => {
     document.getElementById('btn-eraser').classList.toggle('on', tool === 'erase');
   }
 
+  /* 쓰는 중 자동 저장 — 완성하지 않아도 쓴 글씨가 남고, 다시 열면 그대로 보인다 */
+  let draftTimer = null;
+  function pageArt() {
+    const page = cur.scope.pages[cur.idx];
+    const art = {
+      t: cur.l1, e: page.e || cur.scope.e || '',
+      tr: traceLine.strokes(), fr: freeLine.strokes(),
+    };
+    if (cur.dict) { if (cur.l2) art.t2 = cur.l2; }
+    else art.c2 = page.text;
+    return art;
+  }
+  function saveDraftNow() {
+    if (!cur || cur.dict) return; // 받아쓰기는 정답 확인으로만 저장 (정답 유출 방지)
+    const pid = pageId(cur.scope, cur.idx);
+    if (traceLine.strokeCount() + freeLine.strokeCount() === 0) {
+      if (!P.isDone(pid)) P.removeArt(pid); // 다 지우고 나가면 빈 장으로 되돌리기
+      return;
+    }
+    P.saveArt(pid, pageArt());
+  }
+  function scheduleDraft() {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveDraftNow, 900);
+  }
+  function flushDraft() {
+    clearTimeout(draftTimer);
+    if (cur && cur.dirty) saveDraftNow();
+  }
+
   function openWrite(scope, parent, idx) {
+    flushDraft(); // 직전에 쓰던 장 저장
     cur = { scope, parent, idx, dict: !!(parent && parent.dict) };
     document.getElementById('write-title').textContent = (scope.icon || scope.e) + ' ' + scope.name;
     setWriteTool('pen');
@@ -263,6 +294,7 @@ window.App = (() => {
   }
 
   function openPage(idx) {
+    if (cur.idx !== idx) flushDraft(); // 장을 넘길 때 쓰던 글 저장 (cur.idx는 아직 이전 장)
     const scope = cur.scope;
     cur.idx = idx;
     const page = scope.pages[idx];
@@ -362,7 +394,9 @@ window.App = (() => {
       return;
     }
 
-    if (!cur.dirty || empty) { A.sfx.tap(); navNext(); return; } // 새로 쓴 게 없으면 그냥 넘기기
+    if (empty) { A.sfx.tap(); navNext(); return; } // 안 썼으면 그냥 넘기기
+    // 이미 완성한 장을 구경만 할 때는 다시 판정하지 않는다 (저장된 초안은 판정해서 별을 줌)
+    if (!cur.dirty && P.isDone(pageId(cur.scope, cur.idx))) { A.sfx.tap(); navNext(); return; }
     if (traceLine.coverage() < 0.5) {
       stayWithHint('line-trace', '회색 글자 위를 따라 써 볼까?');
       return;
@@ -376,14 +410,8 @@ window.App = (() => {
 
   function finishPage() {
     const scope = cur.scope, idx = cur.idx;
-    const page = scope.pages[idx];
-    const art = {
-      t: cur.l1, e: page.e || scope.e || '',
-      tr: traceLine.strokes(), fr: freeLine.strokes(),
-    };
-    if (cur.dict && cur.l2) art.t2 = cur.l2;
-    else if (!cur.dict) art.c2 = page.text; // 혼자 쓴 줄의 빈 칸 배치 보존
-    P.completePage(pageId(scope, idx), art);
+    clearTimeout(draftTimer); // 완료 저장이 초안 저장을 대신한다
+    P.completePage(pageId(scope, idx), pageArt());
     A.sfx.fanfare();
     const praise = D.praises[Math.floor(Math.random() * D.praises.length)];
     const isLast = idx >= scope.pages.length - 1;
@@ -577,6 +605,7 @@ window.App = (() => {
     document.getElementById('btn-write-back').addEventListener('click', ev => {
       ev.preventDefault();
       A.sfx.tap();
+      flushDraft(); // 나가기 전에 쓰던 글 저장
       if (cur && cur.scope._back) openAsk();
       else if (cur && cur.parent) openItems(cur.parent);
       else showScreen('scr-home');

@@ -51,6 +51,15 @@ window.Progress = (() => {
     isDone(pageId) { return !!state.done[pageId]; },
     stars() { return state.stars; },
 
+    // 쓰는 중 자동 저장 — 완료(별)와 무관하게 최신 글씨만 보관한다
+    saveArt(pageId, art) {
+      state.gallery[pageId] = Object.assign({}, art, { at: Date.now() });
+      save();
+    },
+    removeArt(pageId) {
+      if (state.gallery[pageId]) { delete state.gallery[pageId]; save(); }
+    },
+
     artOf(pageId) { return state.gallery[pageId] || null; },
     galleryList() {
       return Object.entries(state.gallery)
