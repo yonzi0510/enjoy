@@ -1,7 +1,7 @@
 /* E2E 자동 플레이 검증 — 사용법:
  *   PW_MODULE=<playwright-core 경로> node pixel/tools/e2e.js
  * Chromium이 실제 클릭·드래그로 도안을 처음부터 끝까지 칠한다.
- * 검사: 갤러리·필터 / 오답 washed·고치기 / 전체 플레이스루→완성 / 드래그 채색 /
+ * 검사: 갤러리·필터 / 번호 불일치 칸 채색 차단 / 전체 플레이스루→완성 / 드래그 채색 /
  *       폭탄·마법봉 부스터 / 새로고침 이어하기(칸·부스터) / 줌 후 좌표 정확도 /
  *       완성작 감상·다시 색칠 / 콘솔 오류 0
  */
@@ -74,7 +74,7 @@ const server = http.createServer((req, res) => {
   b = await page.evaluate(() => window.__pixel.boosters());
   check('보통(26×26): 폭탄 4 · 마법봉 2', b.bomb === 4 && b.wand === 2, JSON.stringify(b));
 
-  console.log('■ 오답은 washed로 표시되고 고칠 수 있다');
+  console.log('■ 선택한 색의 번호가 아닌 칸은 칠해지지 않는다');
   await page.evaluate(() => window.__pixel.open('heart'));
   const wrongCell = await page.evaluate(() => {
     const { W, H } = window.__pixel.size();
@@ -86,12 +86,12 @@ const server = http.createServer((req, res) => {
   let pt = await page.evaluate(c => window.__pixel.cellToClient(c.x, c.y), wrongCell);
   await page.mouse.click(pt.x, pt.y);
   let s = await px();
-  check('오답 1개 기록·정답 아님', s.mistakes === 1 && s.correct === 0);
+  check('번호 불일치 탭은 무시됨 (오답 0·정답 0)', s.mistakes === 0 && s.correct === 0);
   await page.locator('.pal-btn[data-c="' + wrongCell.t + '"]').click();
   pt = await page.evaluate(c => window.__pixel.cellToClient(c.x, c.y), wrongCell);
   await page.mouse.click(pt.x, pt.y);
   s = await px();
-  check('올바른 색으로 고치기', s.mistakes === 0 && s.correct === 1);
+  check('올바른 번호로는 정상 채색', s.mistakes === 0 && s.correct === 1);
 
   console.log('■ 전체 플레이스루: heart (12×12)');
   const palLen = await page.evaluate(() => window.PIXELS.find(p => p.id === 'heart').palette.length);

@@ -418,6 +418,11 @@
     const now = performance.now();
     if (now - lastFillSound > 60) { Sound.fill(); lastFillSound = now; }
   }
+  let lastRejectSound = 0;
+  function rejectSound() {
+    const now = performance.now();
+    if (now - lastRejectSound > 90) { Sound.pop(); lastRejectSound = now; }
+  }
 
   function cellAtClient(cx, cy) {
     const rect = wrap.getBoundingClientRect();
@@ -428,18 +433,17 @@
     return { x, y };
   }
 
-  // 한 칸 칠하기. 반환: 상태가 바뀌었으면 true
+  // 한 칸 칠하기. 선택한 색 번호가 그 칸의 정답 번호가 아니면 칠해지지 않는다
+  // (아이가 다른 번호 칸을 실수로 건드려도 그림이 망가지지 않게).
+  // 반환: 상태가 바뀌었으면 true
   function paintCell(x, y, c) {
     const i = y * state.W + x;
     if (state.painted[i] === state.target[i]) return false; // 맞게 칠한 칸은 고정
+    if (c !== state.target[i]) { rejectSound(); return false; } // 번호가 다르면 무시
     if (state.painted[i] === c) return false;
     state.painted[i] = c;
-    if (c === state.target[i]) {
-      state.correct++;
-      fillSound();
-    } else {
-      Sound.pop();
-    }
+    state.correct++;
+    fillSound();
     return true;
   }
 
