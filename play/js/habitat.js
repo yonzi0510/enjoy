@@ -2,7 +2,7 @@
  * 세 구역(SVG 배경) 위로 동물이 하나씩 나타나 "나는 어디에 살까~?" 하고 물으면,
  * 맞는 구역으로 드래그해 데려다준다. 맞으면 그 구역에서 헤엄치고/뛰놀고/날며 확인 멘트,
  * 틀리면 갸웃하고 다시 기회 (벌점 없음).
- * 주제: 동물(바다·숲·하늘 18종) + 탈것(도로·바다·하늘 12종). 한 판 6마리.
+ * 주제: 동물(바다·숲·하늘 30종) + 탈것(도로·바다·하늘 18종) + 음식(냉장고·과일바구니·빵 바구니 18종). 한 판 6개.
  * 판 완성 = 별 + 펫 간식, 주제의 모든 친구를 처음 데려다주면 펫 식사.
  */
 (() => {
@@ -55,6 +55,40 @@
       '<rect x="90" y="144" width="42" height="11" rx="5"/>' +
       '<rect x="166" y="144" width="42" height="11" rx="5"/>' +
       '<rect x="242" y="144" width="42" height="11" rx="5"/></g>' +
+      '</svg>',
+    fridge:
+      '<svg class="hz-bg" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' +
+      '<rect width="300" height="200" fill="#CBE7F7"/>' +
+      '<rect x="14" y="10" width="272" height="182" rx="14" fill="#F2FAFF" stroke="#A9D4EC" stroke-width="5"/>' +
+      '<rect x="28" y="66" width="244" height="10" rx="5" fill="#BFDFF2"/>' +
+      '<rect x="28" y="122" width="244" height="10" rx="5" fill="#BFDFF2"/>' +
+      '<rect x="28" y="176" width="244" height="9" rx="4" fill="#BFDFF2"/>' +
+      '<g fill="#9FD8F5"><circle cx="50" cy="36" r="5"/><circle cx="250" cy="96" r="5"/>' +
+      '<circle cx="72" cy="150" r="4"/><circle cx="234" cy="42" r="4"/><circle cx="160" cy="104" r="3"/></g>' +
+      '</svg>',
+    fruit:
+      '<svg class="hz-bg" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' +
+      '<rect width="300" height="200" fill="#FFF3D6"/>' +
+      '<circle cx="46" cy="34" r="15" fill="#FFE099" opacity=".8"/>' +
+      '<circle cx="256" cy="50" r="19" fill="#FFE099" opacity=".7"/>' +
+      '<circle cx="150" cy="24" r="11" fill="#FFE099" opacity=".6"/>' +
+      '<path d="M0 128 Q150 96 300 128 V200 H0 Z" fill="#E4B368"/>' +
+      '<path d="M0 150 Q150 120 300 150 V200 H0 Z" fill="#D9A455"/>' +
+      '<path d="M22 146 Q150 118 278 146" stroke="#B9853D" stroke-width="6" fill="none"/>' +
+      '<path d="M30 170 Q150 144 270 170" stroke="#B9853D" stroke-width="6" fill="none"/>' +
+      '<path d="M44 192 Q150 170 256 192" stroke="#B9853D" stroke-width="6" fill="none"/>' +
+      '</svg>',
+    bread:
+      '<svg class="hz-bg" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' +
+      '<rect width="300" height="200" fill="#FBE8D8"/>' +
+      '<circle cx="60" cy="38" r="14" fill="#F7D3B4" opacity=".8"/>' +
+      '<circle cx="242" cy="30" r="17" fill="#F7D3B4" opacity=".7"/>' +
+      '<path d="M20 128 q22 -20 44 0 q22 -20 44 0 q22 -20 44 0 q22 -20 44 0 q22 -20 44 0 V200 H20 Z" fill="#FFF6EA"/>' +
+      '<g fill="#F08080" opacity=".85"><circle cx="64" cy="146" r="6"/><circle cx="128" cy="158" r="6"/>' +
+      '<circle cx="192" cy="146" r="6"/><circle cx="244" cy="160" r="6"/></g>' +
+      '<path d="M0 156 Q150 126 300 156 V200 H0 Z" fill="#C98F4E"/>' +
+      '<path d="M18 154 Q150 128 282 154" stroke="#A76F33" stroke-width="6" fill="none"/>' +
+      '<path d="M28 178 Q150 154 272 178" stroke="#A76F33" stroke-width="6" fill="none"/>' +
       '</svg>'
   };
 
@@ -75,18 +109,30 @@
         { id: 'dolphin',  e: '🐬', name: '돌고래',  zone: 'sea',    fact: '돌고래는 바다에 살아요!' },
         { id: 'whale',    e: '🐳', name: '고래',    zone: 'sea',    fact: '고래는 바다에 살아요!' },
         { id: 'shark',    e: '🦈', name: '상어',    zone: 'sea',    fact: '상어는 바다에 살아요!' },
+        { id: 'jellyfish', e: '🪼', name: '해파리', zone: 'sea',    fact: '해파리는 바다에 살아요!' },
+        { id: 'penguin',  e: '🐧', name: '펭귄',    zone: 'sea',    fact: '펭귄은 바다에서 헤엄쳐요!' },
+        { id: 'squid',    e: '🦑', name: '오징어',  zone: 'sea',    fact: '오징어는 바다에 살아요!' },
+        { id: 'turtle',   e: '🐢', name: '거북이',  zone: 'sea',    fact: '거북이는 바다에서 헤엄쳐요!' },
+        { id: 'seal',     e: '🦭', name: '물개',    zone: 'sea',    fact: '물개는 바다에 살아요!' },
         { id: 'rabbit',   e: '🐰', name: '토끼',    zone: 'forest', fact: '토끼는 숲에 살아요!' },
         { id: 'fox',      e: '🦊', name: '여우',    zone: 'forest', fact: '여우는 숲에 살아요!' },
         { id: 'bear',     e: '🐻', name: '곰',      zone: 'forest', fact: '곰은 숲에 살아요!' },
         { id: 'deer',     e: '🦌', name: '사슴',    zone: 'forest', fact: '사슴은 숲에 살아요!' },
         { id: 'squirrel', e: '🐿️', name: '다람쥐',  zone: 'forest', fact: '다람쥐는 숲에 살아요!' },
         { id: 'boar',     e: '🐗', name: '멧돼지',  zone: 'forest', fact: '멧돼지는 숲에 살아요!' },
+        { id: 'hedgehog', e: '🦔', name: '고슴도치', zone: 'forest', fact: '고슴도치는 숲에 살아요!' },
+        { id: 'raccoon',  e: '🦝', name: '너구리',  zone: 'forest', fact: '너구리는 숲에 살아요!' },
+        { id: 'wolf',     e: '🐺', name: '늑대',    zone: 'forest', fact: '늑대는 숲에 살아요!' },
+        { id: 'monkey',   e: '🐒', name: '원숭이',  zone: 'forest', fact: '원숭이는 숲에 살아요!' },
         { id: 'bird',     e: '🐦', name: '새',      zone: 'sky',    fact: '새는 하늘을 날아다녀요!' },
         { id: 'eagle',    e: '🦅', name: '독수리',  zone: 'sky',    fact: '독수리는 하늘을 날아다녀요!' },
         { id: 'owl',      e: '🦉', name: '부엉이',  zone: 'sky',    fact: '부엉이는 하늘을 날아다녀요!' },
         { id: 'butterfly', e: '🦋', name: '나비',   zone: 'sky',    fact: '나비는 하늘을 날아다녀요!' },
         { id: 'bee',      e: '🐝', name: '꿀벌',    zone: 'sky',    fact: '꿀벌은 하늘을 날아다녀요!' },
-        { id: 'bat',      e: '🦇', name: '박쥐',    zone: 'sky',    fact: '박쥐는 하늘을 날아다녀요!' }
+        { id: 'bat',      e: '🦇', name: '박쥐',    zone: 'sky',    fact: '박쥐는 하늘을 날아다녀요!' },
+        { id: 'parrot',   e: '🦜', name: '앵무새',  zone: 'sky',    fact: '앵무새는 하늘을 날아다녀요!' },
+        { id: 'dove',     e: '🕊️', name: '비둘기',  zone: 'sky',    fact: '비둘기는 하늘을 날아다녀요!' },
+        { id: 'ladybug',  e: '🐞', name: '무당벌레', zone: 'sky',   fact: '무당벌레는 하늘을 날아다녀요!' }
       ]
     },
     vehicles: {
@@ -102,14 +148,49 @@
         { id: 'bus',        e: '🚌', name: '버스',     zone: 'road', fact: '버스는 도로에서 달려요!' },
         { id: 'firetruck',  e: '🚒', name: '소방차',   zone: 'road', fact: '소방차는 도로에서 달려요!' },
         { id: 'police',     e: '🚓', name: '경찰차',   zone: 'road', fact: '경찰차는 도로에서 달려요!' },
+        { id: 'ambulance',  e: '🚑', name: '구급차',   zone: 'road', fact: '구급차는 도로에서 달려요!' },
+        { id: 'tractor',    e: '🚜', name: '트랙터',   zone: 'road', fact: '트랙터는 길에서 천천히 달려요!' },
         { id: 'sailboat',   e: '⛵', name: '돛단배',   zone: 'sea',  fact: '돛단배는 바다에서 떠다녀요!' },
         { id: 'ship',       e: '🚢', name: '큰 배',    zone: 'sea',  fact: '큰 배는 바다에서 떠다녀요!' },
         { id: 'boat',       e: '🛥️', name: '보트',     zone: 'sea',  fact: '보트는 바다에서 떠다녀요!' },
         { id: 'canoe',      e: '🛶', name: '카누',     zone: 'sea',  fact: '카누는 바다에서 떠다녀요!' },
+        { id: 'speedboat',  e: '🚤', name: '쾌속정',   zone: 'sea',  fact: '쾌속정은 바다에서 씽씽 달려요!' },
+        { id: 'ferry',      e: '⛴️', name: '여객선',   zone: 'sea',  fact: '여객선은 바다에서 떠다녀요!' },
         { id: 'plane',      e: '✈️', name: '비행기',   zone: 'sky',  fact: '비행기는 하늘을 날아요!' },
         { id: 'helicopter', e: '🚁', name: '헬리콥터', zone: 'sky',  fact: '헬리콥터는 하늘을 날아요!' },
         { id: 'balloon',    e: '🎈', name: '열기구',   zone: 'sky',  fact: '열기구는 하늘을 날아요!' },
-        { id: 'rocket',     e: '🚀', name: '로켓',     zone: 'sky',  fact: '로켓은 하늘을 날아요!' }
+        { id: 'rocket',     e: '🚀', name: '로켓',     zone: 'sky',  fact: '로켓은 하늘을 날아요!' },
+        { id: 'smallplane', e: '🛩️', name: '경비행기', zone: 'sky',  fact: '경비행기는 하늘을 날아요!' },
+        { id: 'parachute',  e: '🪂', name: '낙하산',   zone: 'sky',  fact: '낙하산은 하늘에서 두둥실 내려와요!' }
+      ]
+    },
+    food: {
+      id: 'food', name: '음식의 자리', emoji: '🍎',
+      question: '나는 어디에 있어야 할까~?',
+      zones: [
+        { id: 'fridge', name: '냉장고',     emoji: '🧊', anim: 'hop', svg: BG.fridge },
+        { id: 'fruit',  name: '과일바구니', emoji: '🧺', anim: 'hop', svg: BG.fruit },
+        { id: 'bread',  name: '빵 바구니',  emoji: '🍞', anim: 'hop', svg: BG.bread }
+      ],
+      items: [
+        { id: 'milk',       e: '🥛', name: '우유',       zone: 'fridge', fact: '우유는 냉장고에 넣어요!' },
+        { id: 'icecream',   e: '🍦', name: '아이스크림', zone: 'fridge', fact: '아이스크림은 꽁꽁! 냉장고에 넣어요!' },
+        { id: 'cheese',     e: '🧀', name: '치즈',       zone: 'fridge', fact: '치즈는 냉장고에 넣어요!' },
+        { id: 'egg',        e: '🥚', name: '달걀',       zone: 'fridge', fact: '달걀은 냉장고에 넣어요!' },
+        { id: 'juice',      e: '🧃', name: '주스',       zone: 'fridge', fact: '주스는 시원하게 냉장고에 넣어요!' },
+        { id: 'butter',     e: '🧈', name: '버터',       zone: 'fridge', fact: '버터는 냉장고에 넣어요!' },
+        { id: 'apple',      e: '🍎', name: '사과',       zone: 'fruit',  fact: '사과는 과일바구니에 담아요!' },
+        { id: 'grape',      e: '🍇', name: '포도',       zone: 'fruit',  fact: '포도는 과일바구니에 담아요!' },
+        { id: 'banana',     e: '🍌', name: '바나나',     zone: 'fruit',  fact: '바나나는 과일바구니에 담아요!' },
+        { id: 'strawberry', e: '🍓', name: '딸기',       zone: 'fruit',  fact: '딸기는 과일바구니에 담아요!' },
+        { id: 'orange',     e: '🍊', name: '귤',         zone: 'fruit',  fact: '귤은 과일바구니에 담아요!' },
+        { id: 'watermelon', e: '🍉', name: '수박',       zone: 'fruit',  fact: '수박은 과일바구니에 담아요!' },
+        { id: 'croissant',  e: '🥐', name: '크루아상',   zone: 'bread',  fact: '크루아상은 빵 바구니에 담아요!' },
+        { id: 'baguette',   e: '🥖', name: '바게트',     zone: 'bread',  fact: '바게트는 빵 바구니에 담아요!' },
+        { id: 'donut',      e: '🍩', name: '도넛',       zone: 'bread',  fact: '도넛은 빵 바구니에 담아요!' },
+        { id: 'bagel',      e: '🥯', name: '베이글',     zone: 'bread',  fact: '베이글은 빵 바구니에 담아요!' },
+        { id: 'cookie',     e: '🍪', name: '쿠키',       zone: 'bread',  fact: '쿠키는 빵 바구니에 담아요!' },
+        { id: 'cupcake',    e: '🧁', name: '컵케이크',   zone: 'bread',  fact: '컵케이크는 빵 바구니에 담아요!' }
       ]
     }
   };
@@ -153,7 +234,7 @@
         '★'.repeat(stars) + '☆'.repeat(3 - stars) + ' · ' + Progress.habitatDoneCount(t.id) + '/' + t.items.length;
     });
     $('habitat-overlay').classList.remove('hidden');
-    Sound.speak('집 찾기 놀이! 동물 친구랑 탈것 친구, 누구를 도와줄까요?');
+    Sound.speak('집 찾기 놀이! 동물 친구, 탈것 친구, 음식 친구, 누구를 도와줄까요?');
   }
   $('btn-habitat').addEventListener('click', openTopicSelect);
   $('habitat-close').addEventListener('click', () => $('habitat-overlay').classList.add('hidden'));

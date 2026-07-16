@@ -17,12 +17,12 @@ Object.entries(wonExpect).forEach(([n, name]) => {
   if (got !== name) err('wonName(' + n + ') = "' + got + '" (기대: "' + name + '")');
 });
 
-/* ── 상품: 12종 이상, id 유일, 가격 100~900원의 100원 단위 ── */
-if (!Array.isArray(D.PRODUCTS) || D.PRODUCTS.length < 12) {
-  err('상품이 12종 이상이어야 함: ' + (D.PRODUCTS ? D.PRODUCTS.length : 0));
+/* ── 상품: 30종 이상, id 유일, 가격 100~900원의 100원 단위 ── */
+if (!Array.isArray(D.PRODUCTS) || D.PRODUCTS.length < 30) {
+  err('상품이 30종 이상이어야 함: ' + (D.PRODUCTS ? D.PRODUCTS.length : 0));
 }
 const ids = new Set();
-const cats = new Set(['fruit', 'snack', 'toy']);
+const cats = new Set(['fruit', 'veg', 'snack', 'bread', 'toy', 'stat', 'flower']);
 (D.PRODUCTS || []).forEach(p => {
   const tag = '상품 ' + (p.id || '?');
   if (!p.id || ids.has(p.id)) err(tag + ': id 누락/중복');
@@ -83,6 +83,37 @@ if (lv3) {
   }
 }
 
+/* ── 가게 테마: 3개 이상, id 유일, 어느 단계에서든 진열대를 채울 수 있어야 함 ── */
+if (!Array.isArray(D.THEMES) || D.THEMES.length < 3) {
+  err('가게 테마가 3개 이상이어야 함: ' + (D.THEMES ? D.THEMES.length : 0));
+}
+const themeIds = new Set();
+(D.THEMES || []).forEach(t => {
+  const tag = '테마 ' + (t.id || '?');
+  if (!t.id || themeIds.has(t.id)) err(tag + ': id 누락/중복');
+  themeIds.add(t.id);
+  if (!t.name || !t.emoji || !t.greet) err(tag + ': 이름·간판 이모지·개점 인사 누락');
+  if (!Array.isArray(t.cats) || !t.cats.length || t.cats.some(c => !cats.has(c))) {
+    err(tag + ': cats 오류 — ' + JSON.stringify(t.cats));
+  }
+  // 모든 단계에서: 진열대(SHELF칸)를 채우고 주문(items개)을 뽑을 수 있어야 한다
+  (D.LEVELS || []).forEach(lv => {
+    const pool = D.themePool(t, lv);
+    if (pool.length < D.SHELF) {
+      err(tag + ' × ' + lv.name + ': 진열대를 못 채움 — ' + pool.length + '/' + D.SHELF);
+    }
+    if (pool.length < lv.items) err(tag + ' × ' + lv.name + ': 주문 상품이 모자람');
+    // 두 개 주문 단계는 합산 금액(최소·최대 표본)도 동전으로 낼 수 있어야 한다
+    if (lv.items >= 2 && pool.length >= 2) {
+      const prices = pool.map(p => p.price).sort((a, b) => a - b);
+      [prices[0] + prices[1], prices[prices.length - 1] + prices[prices.length - 2]].forEach(total => {
+        const sum = D.coinsFor(total, lv.coins).reduce((a, b) => a + b, 0);
+        if (sum !== total) err(tag + ' × ' + lv.name + ': 합산 ' + total + '원을 동전으로 못 만듦');
+      });
+    }
+  });
+});
+
 /* ── 동전 조합 표본 검사 ── */
 if (JSON.stringify(D.coinsFor(300, [100])) !== '[100,100,100]') err('coinsFor(300,[100]) 오류');
 if (JSON.stringify(D.coinsFor(700, [500, 100])) !== '[500,100,100]') err('coinsFor(700,[500,100]) 오류');
@@ -104,10 +135,25 @@ const sps = new Set();
 });
 
 /* ── 주문 문장: 종류별 3개 이상, 조사 토큰이 다 채워지는지 ── */
-['eat', 'toy'].forEach(k => {
+['eat', 'toy', 'stat', 'flower'].forEach(k => {
   const pool = (D.ORDER_LINES || {})[k];
   if (!Array.isArray(pool) || pool.length < 3) err('주문 문장(' + k + ')이 3개 이상이어야 함');
   (pool || []).forEach(line => { if (line.indexOf('{n}') < 0) err('주문 문장에 {n}이 없음: ' + line); });
+});
+// 모든 상품 카테고리가 주문 문장·리액션 묶음으로 이어져야 한다
+cats.forEach(c => {
+  const k = D.lineKey(c);
+  if (!(D.ORDER_LINES || {})[k]) err('카테고리 ' + c + ': 주문 문장 묶음(' + k + ') 없음');
+  if (!(D.REACTIONS || {})[k]) err('카테고리 ' + c + ': 리액션 묶음(' + k + ') 없음');
+});
+// 리액션: 종류별 2개 이상, 미완성 토큰 없음
+Object.entries(D.REACTIONS || {}).forEach(([k, pool]) => {
+  if (!Array.isArray(pool) || pool.length < 2) err('리액션(' + k + ')이 2개 이상이어야 함');
+  (pool || []).forEach(line => { if (/[{}\[\]]/.test(line)) err('리액션에 미완성 토큰: ' + line); });
+});
+(D.PRODUCTS || []).forEach(p => {
+  const r = D.reactionFor(p);
+  if (!r || /[{}\[\]]/.test(r)) err('리액션 조립 오류(' + p.id + '): ' + r);
 });
 if (!Array.isArray(D.PAIR_LINES) || D.PAIR_LINES.length < 2) err('두 개 주문 문장이 2개 이상이어야 함');
 (D.PAIR_LINES || []).forEach(line => {
@@ -142,5 +188,5 @@ if (errors) {
   console.error('\n검증 실패: 오류 ' + errors + '개');
   process.exit(1);
 }
-console.log('✅ 데이터 검증 통과 — 상품 ' + D.PRODUCTS.length + '종, 단계 ' + D.LEVELS.length + '개, 손님 ' +
-  D.CUSTOMERS.length + '명, 한 판 손님 ' + D.ROUND + '명');
+console.log('✅ 데이터 검증 통과 — 상품 ' + D.PRODUCTS.length + '종, 가게 테마 ' + D.THEMES.length + '개, 단계 ' +
+  D.LEVELS.length + '개, 손님 ' + D.CUSTOMERS.length + '명, 한 판 손님 ' + D.ROUND + '명');

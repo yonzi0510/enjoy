@@ -1,5 +1,5 @@
 /* 데이터 검증 — node lab/tools/validate-data.js
- * 물감 5종·미션 12색(레시피가 목표색을 실제로 만드는지)·판정 임계·색 이름표 계약을 정적 검사한다.
+ * 물감 5종·미션 30색(레시피가 목표색을 실제로 만드는지)·판정 임계·색 이름표 계약을 정적 검사한다.
  */
 'use strict';
 
@@ -51,11 +51,18 @@ if (!(rw[1] > 90 && rw[0] > rw[1])) err('빨+흰이 파스텔(분홍)이 아님:
 const rk = mixOf(['red', 'black']);
 if (!(rk[0] < 200 && rk[0] > rk[1])) err('빨+검이 어두운 빨강이 아님: ' + M.hex(rk));
 
-/* 미션: 12개, id·이름·레시피 유효, 레시피가 목표색을 정확히 만들고,
+/* 미션: 30개(기본 12 + 확장 18), id·이름·레시피 유효, 레시피가 목표색을 정확히 만들고,
  * 목표색끼리는 판정 임계보다 멀어야 한다(도감이 헷갈리지 않게) */
-if (!Array.isArray(D.MISSIONS) || D.MISSIONS.length !== 12) {
-  err('미션이 12개여야 함: ' + (D.MISSIONS || []).length);
+if (!Array.isArray(D.MISSIONS) || D.MISSIONS.length !== 30) {
+  err('미션이 30개여야 함: ' + (D.MISSIONS || []).length);
 }
+if (D.BASE_COUNT !== 12) err('BASE_COUNT 는 12(기본 도감 크기)여야 함: ' + D.BASE_COUNT);
+// 기본 12색의 id·순서는 아이 진행도가 걸려 있으니 절대 바뀌면 안 된다
+const BASE_IDS = ['orange', 'green', 'purple', 'pink', 'sky', 'lgreen', 'brown', 'gray', 'lavender', 'peach', 'navy', 'mint'];
+BASE_IDS.forEach((id, i) => {
+  const got = (D.MISSIONS || [])[i] && D.MISSIONS[i].id;
+  if (got !== id) err('기본 12색 순서가 바뀜: ' + i + '번째가 ' + id + ' 여야 하는데 ' + got);
+});
 const ids = new Set();
 (D.MISSIONS || []).forEach(ms => {
   const tag = '미션 ' + (ms.id || '?');

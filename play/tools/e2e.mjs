@@ -2,6 +2,7 @@
 /* 종단 테스트 — node play/tools/e2e.mjs
  * 실제 Chromium으로 홈 → 숨은그림 완주 → 다른그림 완주 → 글자 찾기 완주 → 스티커북/스티커 놀이
  * → 짝꿍 카드(짝 맞춤·오답 재뒤집기·3단계 완주 → 펫 식사) → 동물의 집(오답 재시도·정답 드래그·판 완주)
+ * → 주제 데이터 계약(동물 30·탈것 18·음식 15+) → 음식의 자리(새 주제 진입·정답 드래그)
  * → 새로고침 후 진행도 유지까지 검증한다. 콘솔 오류 0이 기본 기대치.
  * 저장소 루트에서 정적 서버를 띄운 뒤 실행 (예: python3 -m http.server 8777)
  */
@@ -274,7 +275,50 @@ await check('동물의 집: 6마리 완주 → 별 + 펫 간식', async () => {
   expect(await activeScreen() === 'screen-home');
 });
 
-/* ── 15. 새로고침 후 진행도 유지 ── */
+/* ── 15. 주제 데이터 계약: 동물 30·탈것 18·음식 15+ ── */
+await check('동물의 집: 주제 3개 데이터 계약(동물 30·탈것 18·음식 15종 이상)', async () => {
+  const t = await page.evaluate(() => {
+    const T = window.Habitat.TOPICS;
+    const bad = [];
+    for (const k of Object.keys(T)) {
+      const zoneIds = new Set(T[k].zones.map(z => z.id));
+      const seen = new Set();
+      T[k].items.forEach(i => {
+        if (!zoneIds.has(i.zone)) bad.push(k + ':' + i.id + ' 잘못된 구역');
+        if (seen.has(i.id)) bad.push(k + ':' + i.id + ' id 중복');
+        seen.add(i.id);
+        if (!i.e || !i.name || !i.fact) bad.push(k + ':' + i.id + ' 필드 누락');
+      });
+    }
+    return { a: T.animals.items.length, v: T.vehicles.items.length, f: T.food ? T.food.items.length : 0, bad };
+  });
+  expect(t.bad.length === 0, '항목 오류: ' + t.bad.join(', '));
+  expect(t.a === 30, '동물 30종이어야 함: ' + t.a);
+  expect(t.v === 18, '탈것 18종이어야 함: ' + t.v);
+  expect(t.f >= 15, '음식 15종 이상이어야 함: ' + t.f);
+});
+
+/* ── 16. 음식의 자리(새 주제) ── */
+await check('음식의 자리: 주제 버튼 3개 → 냉장고·과일바구니·빵 바구니 + 정답 드래그', async () => {
+  await tap('#btn-habitat');
+  await page.locator('#habitat-overlay:not(.hidden)').waitFor({ timeout: 3000 });
+  expect(await page.locator('.habitat-topic-btn').count() === 3, '주제 버튼 3개');
+  await tap('.habitat-topic-btn[data-topic="food"]');
+  expect(await activeScreen() === 'screen-habitat');
+  for (const z of ['fridge', 'fruit', 'bread']) {
+    expect(await page.locator('.habitat-zone[data-zone="' + z + '"] .hz-bg').count() === 1, z + ' 구역 SVG 배경');
+  }
+  await page.waitForFunction(() => window.Habitat.state.cur, { timeout: 5000 });
+  const zone = await page.evaluate(() => window.Habitat.state.cur.zone);
+  await dragCenter('#habitat-actor', '.habitat-zone[data-zone="' + zone + '"]');
+  await page.locator('.habitat-zone[data-zone="' + zone + '"] .hz-guest').first().waitFor({ timeout: 2000 });
+  await page.waitForFunction(() => window.Habitat.state.idx === 1 && !window.Habitat.state.busy, { timeout: 4000 });
+  expect(await page.evaluate(() => window.Progress.habitatDoneCount('food') === 1), '음식 친구 1개 기록');
+  await tap('#habitat-back');
+  expect(await activeScreen() === 'screen-home');
+});
+
+/* ── 17. 새로고침 후 진행도 유지 ── */
 await check('새로고침 후 별·집찾기 기록·펫 먹이 유지', async () => {
   const petBefore = await petState();
   await page.goto(BASE);
@@ -286,11 +330,13 @@ await check('새로고침 후 별·집찾기 기록·펫 먹이 유지', async (
     memory: [1, 2, 3].map(l => window.Progress.getStars('memory_L' + l)),
     habitatStars: window.Progress.getStars('habitat_animals'),
     habitatDone: window.Progress.habitatDoneCount('animals'),
+    habitatFood: window.Progress.habitatDoneCount('food'),
   }));
   expect(kept.hidden > 0 && kept.diff > 0, '숨은그림·다른그림 별 유지');
   expect(kept.letters > 0, '글자 찾기 별 유지');
   expect(kept.memory.every(s => s > 0), '짝꿍 카드 별 유지: ' + kept.memory);
   expect(kept.habitatStars > 0 && kept.habitatDone === 6, '동물의 집 기록 유지');
+  expect(kept.habitatFood === 1, '음식의 자리 기록 유지: ' + kept.habitatFood);
   const pet = await petState();
   expect(pet.snacks + pet.meals + pet.fed >= 1 && pet.fed === petBefore.fed, '펫 먹이 유지');
   // 홈 카드에 별 합계 표시
@@ -298,7 +344,7 @@ await check('새로고침 후 별·집찾기 기록·펫 먹이 유지', async (
   expect(/⭐ [1-9]/.test(label), '홈 카드 별 표기: ' + label);
 });
 
-/* ── 16. 콘솔 오류 0 ── */
+/* ── 18. 콘솔 오류 0 ── */
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.slice(0, 5).join(' | '));
 });

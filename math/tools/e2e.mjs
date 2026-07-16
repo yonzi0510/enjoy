@@ -319,12 +319,12 @@ await check('숫자표: 다 채우면 보상 + 별 + 펫 간식', async () => {
   await page.waitForSelector('#scr-levels.on');
 });
 
-await check('점 잇기: 그림 8개 이상 → 틀린 점은 제자리 + 다음 번호 힌트', async () => {
+await check('점 잇기: 그림 30개 → 틀린 점은 제자리 + 다음 번호 힌트', async () => {
   await page.click('#scr-levels .back');
   await page.waitForSelector('#scr-home.on');
   await page.click('.menu-card.c-dots');
   await page.waitForSelector('#scr-levels.on');
-  expect(await page.locator('#levels-list .item-main').count() >= 8, '그림 수');
+  expect(await page.locator('#levels-list .item-main').count() === 30, '그림 수');
   await page.locator('#levels-list .item-main').first().click(); // 별
   await page.waitForSelector('#scr-dots.on');
   const total = (await page.evaluate(() => App.debug().dot)).total;

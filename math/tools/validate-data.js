@@ -126,12 +126,12 @@ if (typeof D.makePattern !== 'function') {
   });
 }
 
-// 점 잇기 도안: 그림 8개 이상, 점 10~20개(번호는 배열 순서 = 1부터 연속),
+// 점 잇기 도안: 그림 30개 이상, 점 10~20개(번호는 배열 순서 = 1부터 연속),
 // 좌표는 viewBox 안, 점끼리 9 이상 떨어져야 한다(잘못 눌림 방지)
 if (!DOTS || !Array.isArray(DOTS.PICTURES)) {
   err('점 잇기 도안(MathDots.PICTURES)이 없음');
 } else {
-  if (DOTS.PICTURES.length < 8) err('점 잇기 그림이 8개 이상이어야 함: ' + DOTS.PICTURES.length);
+  if (DOTS.PICTURES.length < 30) err('점 잇기 그림이 30개 이상이어야 함: ' + DOTS.PICTURES.length);
   const ids = new Set();
   DOTS.PICTURES.forEach(p => {
     const tag = '점 잇기 ' + (p.id || '?');
