@@ -105,7 +105,7 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
       <span class="big-num" id="used-min">0분</span>
     </div>
     <div class="row">
-      <span class="lbl">하루 제한<span class="sub">모든 놀이터가 함께 소진해요. 다 쓰면 잠기고, 확인 번호로 30분씩 연장돼요.</span></span>
+      <span class="lbl">하루 제한<span class="sub">모든 놀이터가 함께 소진해요 (은아·서하 공용 — 기기 기준). 다 쓰면 잠기고, 확인 번호로 30분씩 연장돼요.</span></span>
       <span class="seg" id="limit-seg"></span>
     </div>
   </div>
@@ -113,7 +113,7 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
   <div class="card">
     <h2>🧸 아이에게 보여줄 놀이터</h2>
     <div class="row">
-      <span class="lbl">🌸 일본어 놀이터<span class="sub">꺼져 있어도 한글 낱말 카드를 10장 모으면 자동으로 열려요. (지금 <b id="hangul-cards">0</b>장)</span></span>
+      <span class="lbl">🌸 일본어 놀이터<span class="sub">꺼져 있어도 그 아이가 한글 낱말 카드를 10장 모으면 자동으로 열려요. (은아 <b id="hangul-cards-1">0</b>장 · 서하 <b id="hangul-cards-2">0</b>장)</span></span>
       <button type="button" class="switch" data-key="showJapanese"></button>
     </div>
     <div class="row">
@@ -268,36 +268,50 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
   function readJson(key) {
     try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
   }
-  function hangulCards() {
-    const h = readJson('hangul-playground-v1');
+  // 아이별 진행도 — 은아는 원래 키, 서하는 'p2:' 접두어 키 (shared/profile.js 규칙)
+  const KIDS = [
+    { name: '🐰 은아', prefix: '' },
+    { name: '🐻 서하', prefix: 'p2:' }
+  ];
+  function hangulCards(prefix) {
+    const h = readJson(prefix + 'hangul-playground-v1');
     return h && h.cards ? Object.keys(h.cards).length : 0;
   }
   function renderSummary() {
-    $('hangul-cards').textContent = hangulCards();
+    $('hangul-cards-1').textContent = hangulCards('');
+    $('hangul-cards-2').textContent = hangulCards('p2:');
     const rows = [];
-    function row(name, key, fmt) {
-      const d = readJson(key);
-      rows.push('<tr><td>' + name + '</td><td>' + (d ? fmt(d) : '아직 기록 없음') + '</td></tr>');
-    }
-    row('🔍 찾기 놀이터', 'chatgi-playground-v1', d => '깬 판 ' + Object.keys(d.stars || {}).length + '개 · 스티커 ' + Object.keys(d.stickers || {}).length + '개');
-    row('🗣️ 영어 놀이터', 'english-playground-v1', d => '배운 단어 ' + Object.keys(d.learned || {}).length + '개');
-    row('🧩 픽셀 놀이터', 'pixel-playground-v1', d => {
-      const pics = Object.values(d.pics || {});
-      return '완성한 도안 ' + pics.filter(p => p.done).length + '개 (칠하던 것 ' + pics.length + '개)';
+    KIDS.forEach(kid => {
+      rows.push('<tr><td colspan="2" style="font-weight:900;padding-top:12px">' + kid.name + '</td></tr>');
+      function row(name, key, fmt) {
+        const d = readJson(kid.prefix + key);
+        rows.push('<tr><td>' + name + '</td><td>' + (d ? fmt(d) : '아직 기록 없음') + '</td></tr>');
+      }
+      row('🔍 찾기 놀이터', 'chatgi-playground-v1', d => '깬 판 ' + Object.keys(d.stars || {}).length + '개 · 스티커 ' + Object.keys(d.stickers || {}).length + '개');
+      row('🗣️ 영어 놀이터', 'english-playground-v1', d => '배운 단어 ' + Object.keys(d.learned || {}).length + '개');
+      row('🧩 픽셀 놀이터', 'pixel-playground-v1', d => {
+        const pics = Object.values(d.pics || {});
+        return '완성한 도안 ' + pics.filter(p => p.done).length + '개 (칠하던 것 ' + pics.length + '개)';
+      });
+      row('🌟 한글 놀이터', 'hangul-playground-v1', d => '낱말 카드 ' + Object.keys(d.cards || {}).length + '장 · 별 ' + (d.stars || 0));
+      row('🌸 일본어 놀이터', 'japanese-playground-v1', d => '낱말 카드 ' + Object.keys(d.cards || {}).length + '장 · 별 ' + (d.stars || 0));
+      row('✍️ 글씨 놀이터', 'write-playground-v1', d => '보관 작품 ' + Object.keys(d.gallery || {}).length + '개 · 별 ' + (d.stars || 0));
+      row('🎙️ 프랙티카 놀이터', 'practika-playground-v1', d => 'XP ' + (d.xp || 0) + ' · 젬 ' + (d.gems || 0));
     });
-    row('🌟 한글 놀이터', 'hangul-playground-v1', d => '낱말 카드 ' + Object.keys(d.cards || {}).length + '장 · 별 ' + (d.stars || 0));
-    row('🌸 일본어 놀이터', 'japanese-playground-v1', d => '낱말 카드 ' + Object.keys(d.cards || {}).length + '장 · 별 ' + (d.stars || 0));
-    row('✍️ 글씨 놀이터', 'write-playground-v1', d => '보관 작품 ' + Object.keys(d.gallery || {}).length + '개 · 별 ' + (d.stars || 0));
-    row('🎙️ 프랙티카 놀이터', 'practika-playground-v1', d => 'XP ' + (d.xp || 0) + ' · 젬 ' + (d.gems || 0));
     $('sum-table').innerHTML = rows.join('');
   }
 
   /* ─────────── 백업 (내려받기 / 되살리기) ─────────── */
+  const PROGRESS_KEYS = [
+    'chatgi-playground-v1', 'chatgi-stickerboard-v1',
+    'english-playground-v1', 'pixel-playground-v1',
+    'hangul-playground-v1', 'japanese-playground-v1', 'practika-playground-v1', 'write-playground-v1'
+  ];
   const BACKUP_KEYS = [
-    'chatgi-playground-v1', 'chatgi-stickerboard-v1', 'chatgi-timelimit-v1', 'chatgi-muted',
-    'english-playground-v1', 'pixel-playground-v1', 'pixel-muted',
-    'hangul-playground-v1', 'japanese-playground-v1', 'practika-playground-v1', 'write-playground-v1',
-    'enjoy-voice-ko', 'enjoy-rate-factor', 'enjoy-timelimit-v1', 'enjoy-parent-v1'
+    ...PROGRESS_KEYS,                          // 은아
+    ...PROGRESS_KEYS.map(k => 'p2:' + k),      // 서하
+    'chatgi-timelimit-v1', 'chatgi-muted', 'pixel-muted',
+    'enjoy-voice-ko', 'enjoy-rate-factor', 'enjoy-timelimit-v1', 'enjoy-parent-v1', 'enjoy-profile'
   ];
   $('btn-export').addEventListener('click', () => {
     const out = { _app: 'enjoy-backup', _at: new Date().toISOString() };

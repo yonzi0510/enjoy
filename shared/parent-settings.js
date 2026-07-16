@@ -38,11 +38,12 @@ window.ParentSettings = (() => {
   function set(k, v) { const st = load(); st[k] = v; save(st); }
   function checkPin(p) { return String(p) === String(load().pin); }
 
-  // 일본어 놀이터 열림 여부 — 부모가 허용했거나, 한글 낱말 카드를 10장 모았으면 열림
+  // 일본어 놀이터 열림 여부 — 부모가 허용했거나, (지금 노는 아이가) 한글 낱말 카드를 10장 모았으면 열림
   function japaneseUnlocked() {
     if (load().showJapanese) return true;
     try {
-      const h = JSON.parse(localStorage.getItem('hangul-playground-v1'));
+      const hk = window.Profile ? Profile.key('hangul-playground-v1') : 'hangul-playground-v1';
+      const h = JSON.parse(localStorage.getItem(hk));
       return !!h && !!h.cards && Object.keys(h.cards).length >= 10;
     } catch (e) { return false; }
   }

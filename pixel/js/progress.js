@@ -3,7 +3,7 @@
  * cells는 칠한 팔레트 인덱스(-1 = 안 칠함). 길이가 도안과 다르면 무시(도안 변경 방어).
  */
 window.Progress = (() => {
-  const KEY = 'pixel-playground-v1';
+  const KEY = window.Profile ? Profile.key('pixel-playground-v1') : 'pixel-playground-v1'; // 아이 프로필별 저장
   const BOMBS = 3, WANDS = 1; // 기본값 (엔진이 난이도별 기본값을 넘겨줌)
 
   function load() {

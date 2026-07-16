@@ -2,7 +2,7 @@
  * { traced: { 'あ': 횟수 }, cards: { 'いぬ': { e, from, at } }, stars: 숫자 }
  */
 window.Progress = (() => {
-  const KEY = 'japanese-playground-v1';
+  const KEY = window.Profile ? Profile.key('japanese-playground-v1') : 'japanese-playground-v1'; // 아이 프로필별 저장
 
   function load() {
     try {

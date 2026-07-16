@@ -38,8 +38,12 @@
 - 사용 중인 키: `chatgi-playground-v1`·`chatgi-stickerboard-v1`·`chatgi-muted`(play),
   `english-playground-v1`, `pixel-playground-v1`·`pixel-muted`, `hangul-playground-v1`,
   `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`,
-  `enjoy-voice-ko`·`enjoy-rate-factor`·`enjoy-timelimit-v1`·`enjoy-parent-v1`(공용).
+  `enjoy-voice-ko`·`enjoy-rate-factor`·`enjoy-timelimit-v1`·`enjoy-parent-v1`·`enjoy-profile`(공용).
   (`chatgi-timelimit-v1`은 예전 play 전용 시간제한 키 — `shared/time-limit.js`가 이어받는다.)
+- **아이 프로필(은아·서하)**: 진행도 키는 `shared/profile.js`의 `Profile.key()`를 거친다 —
+  은아는 원래 키 그대로(예전 진행도 보존), 서하는 `p2:` 접두어(예: `p2:hangul-playground-v1`).
+  음소거·목소리·시간제한·부모 설정은 기기 공용이라 접두어를 붙이지 않는다.
+  새 진행도 키를 만들면 반드시 `Profile.key()`로 감싼다.
 - 부모 설정(`enjoy-parent-v1`)이 콘텐츠 노출을 좌우한다: 프랙티카 홈 카드, 일본어 잠금(한글 카드 10장이면 자동 해제),
   픽셀 활동지(work*), 글씨 받아쓰기 6~7단계, 음성 인식(마이크) 허용. 새 기능도 이 원칙(기본은 5세 안전, 확장은 부모가 해제)을 따른다.
 - e2e 테스트의 "새로고침 후 진행도 유지" 검사를 지우거나 약화하지 않는다.

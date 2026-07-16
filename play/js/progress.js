@@ -3,7 +3,7 @@
  * stickers: { farm: 1|2|3 }  — 티어(1 쉬움, 2 보통, 3 어려움). 구버전 배열은 티어1로 이전
  */
 window.Progress = (() => {
-  const KEY = 'chatgi-playground-v1';
+  const KEY = window.Profile ? Profile.key('chatgi-playground-v1') : 'chatgi-playground-v1'; // 아이 프로필별 저장
 
   function load() {
     try {
