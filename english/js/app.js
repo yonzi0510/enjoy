@@ -124,7 +124,12 @@
 
   /* ─────────── 답변 ─────────── */
   function showAnswer(word) {
+    const firstTime = !Progress.knows(word.en); // 처음 배우는 단어인지 기록 전에 확인
     Progress.record(word.en); // 최초 진입 시에만 기록 (뒤로가기 재방문은 미기록)
+    // 카테고리의 모든 단어를 처음으로 다 배우면 펫 식사 (재방문은 중복 지급 안 함)
+    if (firstTime && window.Pet && WORDS.filter(w => w.cat === word.cat).every(w => Progress.knows(w.en))) {
+      Pet.awardMeal(1); // 카테고리 완주 = 펫 식사
+    }
     navigate({ s: 'answer', word });
   }
 
@@ -331,6 +336,7 @@
 
   function finishQuiz() {
     const q = state.quiz;
+    if (window.Pet) Pet.awardSnack(1); // 퀴즈 한 판 완료 = 펫 간식
     $('quiz-score').textContent = '⭐'.repeat(Math.max(1, q.score)) + '  ' + q.score + ' / ' + q.rounds.length;
     $('quiz-done-overlay').classList.remove('hidden');
     launchConfetti();

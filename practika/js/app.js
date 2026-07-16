@@ -318,7 +318,16 @@
   /* ─────────── 레슨 결과 ─────────── */
   function finishLesson() {
     const sum = Tutor.summary();
+    const wasDone = Progress.lesson(state.lessonId).done; // 완료 반영 전에 첫 완주인지 확인
     const res = Progress.completeLesson(state.lessonId, sum.avg);
+    if (window.Pet) {
+      Pet.awardSnack(1); // 레슨 하나 완료 = 펫 간식
+      // 이 레슨을 처음 끝내면서 트랙의 모든 레슨이 완료되면 펫 식사 (재플레이는 중복 지급 안 함)
+      const trackId = window.LESSONS[state.lessonId].trackId;
+      if (!wasDone && window.TRACK_LESSONS[trackId].every(id => Progress.lesson(id).done)) {
+        Pet.awardMeal(1); // 트랙 완주 = 펫 식사
+      }
+    }
     state.result = { sum, res, lessonId: state.lessonId };
     renderResult();
     navigate({ s: 'result' });
@@ -407,6 +416,7 @@
   function showReviewDone() {
     const s = Review.summary();
     Progress.rewardReview(s.correct);
+    if (window.Pet) Pet.awardSnack(1); // 복습 한 바퀴 완료 = 펫 간식
     $('review-score').textContent = s.total + '개 중 ' + s.correct + '개 맞았어요!';
     $('review-done').classList.remove('hidden');
     Speech.tada();
