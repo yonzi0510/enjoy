@@ -119,10 +119,28 @@ await check('그림 덧셈: 단계 3개 → 오답은 벌점 없이 다시', asy
   expect(d.qIdx === 0, '오답인데 넘어감');
 });
 
+await check('정답 → 식이 채워지고 그림을 같이 세는 이해 단계', async () => {
+  await clickAnswer(page, true);
+  await page.waitForSelector('#btn-qnext:not([hidden])'); // 저절로 안 넘어가고 ▶ 를 기다린다
+  const filled = await page.evaluate(() => ({
+    what: +document.querySelector('#quiz-expr .q-what').textContent,
+    ans: App.debug().answer,
+  }));
+  expect(filled.what === filled.ans, '식에 정답이 채워져야 함: ' + JSON.stringify(filled));
+  await page.waitForTimeout(1800); // 같이 세기 시작 (하나… 둘…)
+  const counted = await page.locator('#quiz-visual .count-obj .cnt').count();
+  expect(counted >= 1, '세기 배지: ' + counted);
+  const d = await page.evaluate(() => App.debug());
+  expect(d.qIdx === 0, '아이가 누르기 전에 넘어가면 안 됨');
+  await page.click('#btn-qnext');
+  expect((await page.evaluate(() => App.debug())).qIdx === 1, '▶ 로 다음 문제');
+});
+
 await check('그림 덧셈: 정답 5개 → 보상 + 별 + 펫 간식', async () => {
-  for (let i = 0; i < 5; i++) {
+  for (let i = 1; i < 5; i++) { // 첫 문제는 위에서 완료
     await clickAnswer(page, true);
-    await page.waitForTimeout(1550);
+    await page.waitForSelector('#btn-qnext:not([hidden])');
+    await page.click('#btn-qnext');
   }
   await page.waitForSelector('#reward.on', { timeout: 3000 });
   const d = await page.evaluate(() => App.debug());
