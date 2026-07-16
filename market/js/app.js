@@ -69,7 +69,8 @@ window.App = (() => {
   }
 
   /* ─────────── 가게 상태 ─────────── */
-  let sh = null; // { level, custIdx, phase 'pick'|'pay'|'done', customer, order, picked, price, paid, timers, av, lock, prevSp }
+  // { level, theme, custIdx, phase 'pick'|'pay'|'done', customer, order, picked, price, paid, timers, av, lock, prevSp, prevTheme }
+  let sh = null;
 
   function clearTimers() { ((sh && sh.timers) || []).forEach(clearTimeout); if (sh) sh.timers = []; }
   function later(fn, ms) { sh.timers.push(setTimeout(fn, ms)); }
@@ -79,8 +80,11 @@ window.App = (() => {
     if (sh) clearTimers();
     const av = sh && sh.av; // 아바타는 한 번 만들면 재사용
     const prevSp = sh && sh.prevSp;
-    sh = { level, custIdx: 0, timers: [], av, prevSp };
-    $('shop-title').textContent = '🛒 ' + level.name;
+    // 판마다 가게 테마가 바뀐다 (같은 테마가 연달아 나오지 않게)
+    const prevTheme = sh && sh.prevTheme;
+    const theme = pick(D.THEMES.filter(t => t.id !== prevTheme));
+    sh = { level, theme, custIdx: 0, timers: [], av, prevSp, prevTheme: theme.id };
+    $('shop-title').textContent = theme.emoji + ' ' + theme.name + ' · ' + level.id + '단계';
     showScreen('scr-shop');
     newCustomer();
   }
@@ -105,8 +109,8 @@ window.App = (() => {
     // 같은 손님이 연달아 오지 않게
     sh.customer = pick(D.CUSTOMERS.filter(c => c.sp !== sh.prevSp));
     sh.prevSp = sh.customer.sp;
-    // 주문 상품 뽑기 (섞은 진열대의 앞에서 items개)
-    const pool = shuffle(D.levelPool(lv));
+    // 주문 상품 뽑기 (테마 진열대를 섞어 앞에서 items개)
+    const pool = shuffle(D.themePool(sh.theme, lv));
     sh.order = pool.slice(0, lv.items);
     sh.price = sh.order.reduce((s, p) => s + p.price, 0);
 
@@ -121,7 +125,9 @@ window.App = (() => {
     const text = lv.items >= 2 ? D.pairText(sh.order[0], sh.order[1]) : D.orderText(sh.order[0]);
     sh.orderText = text;
     setBubble(sh.order.map(p => p.emoji).join(' '), text);
-    later(() => A.speak(sh.customer.greet + ' ' + text), 700);
+    // 첫 손님 때는 가게 개점 인사를 먼저 들려준다 (테마가 바뀐 걸 귀로 알게)
+    const opening = sh.custIdx === 0 ? sh.theme.greet + ' ' : '';
+    later(() => A.speak(opening + sh.customer.greet + ' ' + text), 700);
   }
 
   // 손님이 화면 밖에서 걸어 들어온다 (PetAvatar SVG, 없으면 이모지 폴백)
@@ -381,9 +387,11 @@ window.App = (() => {
     A.sfx.good();
     spawnHearts();
     if (sh.av && sh.av.happy) sh.av.happy();
+    // 산 물건에 어울리는 리액션 + 감사 인사
+    const react = D.reactionFor(sh.order[0]);
     const thanks = pick(D.THANKS);
-    setBubble('💕', thanks);
-    A.speak('딩동댕! ' + thanks);
+    setBubble('💕', react + ' ' + thanks);
+    A.speak('딩동댕! ' + react + ' ' + thanks);
     const served = sh.custIdx + 1;
     if (window.Pet && served % 2 === 0) Pet.awardSnack(1); // 접객 2명마다 간식 하나 (과하지 않게)
     later(leaveCustomer, 1300);
@@ -446,6 +454,7 @@ window.App = (() => {
       stars: P.stars(),
       shop: sh ? {
         level: sh.level.id,
+        theme: sh.theme.id,
         custIdx: sh.custIdx,
         phase: sh.phase,
         order: (sh.order || []).map(p => p.id),
