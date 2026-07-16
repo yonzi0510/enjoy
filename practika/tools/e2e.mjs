@@ -36,7 +36,16 @@ const expected = () => page.evaluate(() => window.__practikaTest.expected());
 const isUser = () => page.evaluate(() => window.__practikaTest.isUserTurn());
 const totals = () => page.evaluate(() => window.__practikaTest.totals());
 const say = t => page.evaluate(txt => window.__simulateSpeech(txt), t);
-const visible = sel => page.evaluate(s => { const el = document.querySelector(s); return el && !el.classList.contains('hidden') && el.offsetParent !== null; }, sel);
+// 가로모드에서 패널이 display:contents 로 풀리면 offsetParent 가 null 이라 자식 박스로도 판정한다
+const visible = sel => page.evaluate(s => {
+  const el = document.querySelector(s);
+  if (!el || el.classList.contains('hidden')) return false;
+  const cs = getComputedStyle(el);
+  if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+  if (el.offsetParent !== null) return true;
+  return cs.display === 'contents' &&
+    [...el.children].some(c => { const r = c.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+}, sel);
 
 console.log('▶ 프랙티카 놀이터 E2E');
 await page.goto(BASE);
@@ -194,6 +203,27 @@ await check('일본어 어휘가 복습 카운트에 반영된다', async () => 
   expect(await page.evaluate(() => window.__practikaTest.lang()) === 'ja', 'ja 유지');
   const cnt = await page.$eval('#review-count', el => +el.textContent);
   expect(cnt > 0, '일본어 배운 표현 수: ' + cnt);
+});
+
+await check('가로모드(패드·폰 가로)에서 세션이 2단 배치·잘림 없음', async () => {
+  for (const vp of [{ width: 1180, height: 820 }, { width: 844, height: 390 }]) {
+    await page.setViewportSize(vp);
+    await page.goto(BASE); await sleep(50);
+    await tap('#track-list .track-card:first-child'); await sleep(20);
+    await tap('#lesson-list .lesson-card:first-child'); await sleep(20);
+    expect(await screen() === 'screen-session', 'screen=' + await screen());
+    await tap('#tutor-next'); await sleep(20);           // 유저 턴(마이크)으로
+    expect(await isUser(), '유저 턴이어야 함');
+    const r = await page.evaluate(() => {
+      const av = document.querySelector('#session-avatar').getBoundingClientRect();
+      const mic = document.querySelector('#mic-btn').getBoundingClientRect();
+      const sc = document.querySelector('#screen-session');
+      return { avRight: av.right, micLeft: mic.left, scroll: sc.scrollHeight, client: sc.clientHeight };
+    });
+    expect(r.avRight <= r.micLeft, `아바타 왼쪽·마이크 오른쪽 2단: ${r.avRight} <= ${r.micLeft}`);
+    expect(r.scroll <= r.client + 1, `세션 세로 잘림 없음: ${r.scroll} <= ${r.client} (${vp.width}×${vp.height})`);
+  }
+  await page.setViewportSize({ width: 1024, height: 768 });
 });
 
 console.log(`\n결과: ${passed} 통과, ${failed} 실패`);
