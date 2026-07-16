@@ -199,6 +199,44 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
   .page > * { animation: none; }
   .seg button, .pill, .switch, .switch::after, #gate .tl-key { transition: none; }
 }
+/* ── 가로 모드 (태블릿 가로가 1차 기준 — DESIGN.md "가로모드 우선") ──
+   설정 카드를 2단(다단)으로 펼쳐 좌우 빈 공간을 쓰고 스크롤을 줄인다.
+   게이트(확인 번호)는 기존처럼 화면 가운데 그대로. 세로모드는 무변경. */
+@media (orientation: landscape) and (min-width: 700px) {
+  .page {
+    max-width: 1020px;
+    display: block;   /* 세로 flex → 2단 배치 */
+    columns: 2;
+    column-gap: 16px;
+  }
+  .page > * { break-inside: avoid; margin-bottom: 16px; } /* 카드가 열 사이에서 쪼개지지 않게 */
+  .page > div:first-child { column-span: all; }           /* 제목 줄은 두 열에 걸친다 */
+}
+/* 낮은 가로 화면(폰 가로) — 게이트 카드를 좌(안내)·우(숫자패드) 2단으로:
+   스크롤 없이 숫자패드까지 한눈에 보이게 한다 (선례: shared/pet.css 끝부분). */
+@media (orientation: landscape) and (max-height: 480px) {
+  #gate .tl-card {
+    max-width: none;
+    width: min(92vw, 640px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "emoji pad"
+      "title pad"
+      "sub   pad"
+      "dots  pad"
+      "back  pad";
+    align-content: center;
+    align-items: center;
+    column-gap: clamp(14px, 3vw, 28px);
+  }
+  #gate .tl-emoji { grid-area: emoji; }
+  #gate .tl-title { grid-area: title; }
+  #gate .tl-sub   { grid-area: sub; }
+  #gate .tl-dots  { grid-area: dots; }
+  #gate .tl-pad   { grid-area: pad; width: 100%; max-width: 260px; justify-self: center; }
+  #gate .tl-card > p { grid-area: back; }
+}
 </style>
 </head>
 <body>

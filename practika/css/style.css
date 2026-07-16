@@ -462,3 +462,112 @@ b { font-weight: 900; }
   .mic-btn.listening { animation: none; }
   .avatar.speaking, .avatar.speaking .av-mouth, .avatar.listening { animation: none; }
 }
+
+/* ═══════════ 가로모드(패드·폰 가로) 재배치 — DESIGN.md '가로모드 우선' ═══════════ */
+/* HTML 무변경, grid 재배치만 (선례: shared/pet.css 끝부분). 세로모드는 그대로 둔다. */
+@media (orientation: landscape) {
+
+  /* ── 홈: 판을 넓히고 트랙 카드를 2열로 ── */
+  .home-body { max-width: 1000px; }
+  .home-hero { flex-direction: row; gap: clamp(12px, 2vw, 20px); }
+  /* 말풍선 꼬리를 왼쪽(아바타 쪽)으로 돌린다 */
+  .hero-bubble::after {
+    top: 50%; left: -18px; transform: translateY(-50%);
+    border: 9px solid transparent; border-right: 10px solid #fff;
+  }
+  .track-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+  /* ── 코스맵: 레슨 카드를 2열로 ── */
+  .lesson-list {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px; max-width: 1000px; align-content: start;
+  }
+
+  /* ── 대화 세션: 아바타·말풍선 왼쪽 + 조작(버튼·마이크) 오른쪽 2단 ──
+     패널을 display:contents 로 풀어 자식들을 grid 영역에 직접 배치한다.
+     .hidden 의 display:none !important 가 이겨서 숨김 동작은 그대로다. */
+  #screen-session .session-body { max-width: min(94vw, 940px); }
+  #screen-session .tutor-panel, #screen-session .user-panel, #screen-session .fb-panel { display: contents; }
+  /* 튜터 턴: 아바타+말풍선 왼쪽, 듣기·다음 버튼 오른쪽 */
+  #screen-session .session-body:has(> #tutor-panel:not(.hidden)) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    grid-template-areas:
+      "avatar btns"
+      "bubble btns"
+      "sub    btns";
+    align-content: center; align-items: center; justify-items: center;
+    column-gap: clamp(18px, 4vw, 56px); row-gap: clamp(8px, 2.2vmin, 16px);
+  }
+  /* 유저 턴: 아바타+할 말 말풍선 왼쪽, 힌트·모범답·마이크 오른쪽 */
+  #screen-session .session-body:has(> #user-panel:not(.hidden)) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    grid-template-areas:
+      "avatar hint"
+      "avatar model"
+      "bubble mic"
+      "bubble miclabel"
+      "bubble interim";
+    align-content: center; align-items: center; justify-items: center;
+    column-gap: clamp(18px, 4vw, 56px); row-gap: clamp(6px, 1.8vmin, 12px);
+  }
+  /* 유저 턴에서 아바타와 말풍선이 행 경계에서 붙어 한 덩어리로 보이게 */
+  #screen-session .session-body:has(> #user-panel:not(.hidden)) .session-avatar { align-self: end; }
+  #screen-session .session-body:has(> #user-panel:not(.hidden)) .user-ask { align-self: start; }
+  /* 피드백: 아바타+점수 링 왼쪽, 제목·모범답·버튼 오른쪽 */
+  #screen-session .session-body:has(> #fb-panel:not(.hidden)) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "avatar fbtitle"
+      "avatar fbmodel"
+      "ring   fbheard"
+      "ring   fbbtns";
+    align-content: center; align-items: center; justify-items: center;
+    column-gap: clamp(18px, 4vw, 56px); row-gap: clamp(6px, 1.8vmin, 12px);
+  }
+  #screen-session .session-avatar { grid-area: avatar; }
+  #screen-session .tutor-en      { grid-area: bubble; }
+  #screen-session .tutor-ko      { grid-area: sub; }
+  #screen-session .tutor-btns    { grid-area: btns; }
+  #screen-session .user-ask      { grid-area: bubble; }
+  #screen-session .hint-btn      { grid-area: hint; align-self: end; }
+  #screen-session .user-model    { grid-area: model; }
+  #screen-session .mic-btn       { grid-area: mic; }
+  #screen-session .mic-label     { grid-area: miclabel; }
+  #screen-session .mic-interim   { grid-area: interim; align-self: start; }
+  #screen-session .fb-ring       { grid-area: ring; align-self: start; }
+  #screen-session .fb-title      { grid-area: fbtitle; align-self: end; }
+  #screen-session .fb-model      { grid-area: fbmodel; }
+  #screen-session .fb-heard      { grid-area: fbheard; }
+  #screen-session .fb-btns       { grid-area: fbbtns; align-self: start; }
+
+  /* ── 복습: 문제 카드(또는 피드백) 왼쪽, 마이크 오른쪽 ──
+     카드와 피드백은 동시에 안 보이므로 같은 자리를 나눠 쓴다 */
+  #screen-review .session-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+    grid-template-areas:
+      "face mic"
+      "face miclabel";
+    align-content: center; align-items: center; justify-items: center;
+    column-gap: clamp(18px, 4vw, 56px); row-gap: clamp(6px, 1.8vmin, 12px);
+    max-width: min(94vw, 940px);
+  }
+  #screen-review .review-card-face { grid-area: face; }
+  #screen-review .review-fb        { grid-area: face; }
+  #screen-review .mic-btn          { grid-area: mic; align-self: end; }
+  #screen-review .mic-label        { grid-area: miclabel; align-self: start; }
+
+  /* ── 결과: 카드를 넓히고 버튼을 가로로 늘어놓아 세로 잘림을 없앤다 ── */
+  .result-card { max-width: 760px; }
+  .result-btns { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+}
+
+/* 아주 낮은 가로 화면(폰 가로)에서는 여백을 줄여 스크롤 없이 다 보이게 */
+@media (orientation: landscape) and (max-height: 480px) {
+  .result-card { padding: 14px 24px; gap: 8px; }
+  .stat-bar { padding-top: 8px; }
+  .home-body { gap: 10px; }
+}

@@ -534,6 +534,48 @@ h1 {
   .palette { gap: clamp(10px, 2.6vmin, 18px); }
 }
 
+/* ─────────── 가로 모드 2단 배치 (태블릿 가로 우선, DESIGN.md) ───────────
+ * 병(물 캔버스)은 왼쪽에 크게, 목표색·물감 방울·물 비우기·선반은 오른쪽 열로.
+ * HTML은 그대로 두고 grid-template-areas로만 재배치한다 (선례: shared/pet.css).
+ * 캔버스는 jar-wrap의 CSS 크기(clientWidth/Height)를 읽어 스스로 리사이즈한다. */
+@media (orientation: landscape) {
+  .bar { max-width: 1040px; }
+  .lab-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    grid-template-areas:
+      "jar target"
+      "jar mixname"
+      "jar actions"
+      "jar palette"
+      "jar shelf";
+    grid-auto-rows: min-content;
+    align-content: center;
+    justify-items: center;
+    column-gap: clamp(16px, 3vw, 44px);
+    max-width: min(96vw, 1040px);
+  }
+  .target-chip { grid-area: target; }
+  .mix-name    { grid-area: mixname; }
+  .jar-zone    { grid-area: jar; align-self: stretch; justify-self: stretch; }
+  .lab-actions { grid-area: actions; }
+  .palette {
+    grid-area: palette;
+    flex-wrap: wrap;            /* 좁은 열에서도 방울이 잘리지 않게 */
+    justify-content: center;
+    max-width: 100%;
+    gap: clamp(12px, 1.8vw, 22px);
+  }
+  .shelf { grid-area: shelf; }
+  /* 숨김 의미 유지 — 미션/자유 모드에 따라 그리드 칸이 비워진다 */
+  .target-chip[hidden], .mix-name[hidden], .shelf[hidden] { display: none; }
+  /* 병을 가로 화면 높이에 맞춰 큼직하게 (폰 가로에서도 겹침 없이) */
+  .jar-wrap { height: clamp(170px, 62vh, 470px); }
+  /* 미션 목록·도감은 열을 늘려 넓게 */
+  .missions-grid { max-width: min(94vw, 1080px); }
+  .book-grid { max-width: min(94vw, 1040px); }
+}
+
 /* ─────────── 등장 모션 + 모션 줄이기 설정 존중 ─────────── */
 @keyframes card-in {
   from { opacity: 0; transform: translateY(14px); }

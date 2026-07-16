@@ -9,9 +9,19 @@ window.App = (() => {
   const $ = id => document.getElementById(id);
 
   /* ─────────── 판 좌표계 ───────────
-   * viewBox 0 0 100 148 — 위 0~92 그림판, 94~146 트레이 */
+   * 세로: viewBox 0 0 100 148 — 위 0~92 그림판, 94~146 트레이(가로 두 줄)
+   * 가로: viewBox 0 0 158 92 — 왼쪽 0~100 그림판, 오른쪽 102~156.5 트레이(세로 두 줄)
+   * 그림판 영역(0~100 × 0~92)은 두 방향에서 똑같아서
+   * 조각의 목표 좌표·스냅 판정은 방향과 무관하게 유지된다. */
   const VW = 100, VH = 148, BOARD_H = 92, TRAY_Y = 94, TRAY_H = 52;
+  const LVW = 158, LVH = 92, TRAY_X = 102; // 가로모드 전용 치수
   const SVGNS = 'http://www.w3.org/2000/svg';
+  const landMq = window.matchMedia('(orientation: landscape)');
+  let land = landMq.matches; // 지금 가로모드인가
+  // 조각이 트레이 영역에 있는가 (방향에 따라 아래쪽/오른쪽)
+  const inTray = pos => land ? pos.x > TRAY_X - 2 : pos.y > TRAY_Y - 2;
+  // 현재 방향의 viewBox 크기 (드래그 범위 제한용)
+  const viewSize = () => land ? { w: LVW, h: LVH } : { w: VW, h: VH };
 
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
@@ -109,8 +119,9 @@ window.App = (() => {
     showScreen('scr-play');
     const svg = $('stage');
     svg.innerHTML = '';
-    // 트레이 바탕
-    svg.appendChild(el('rect', { x: 1.5, y: TRAY_Y, width: VW - 3, height: TRAY_H - 2, rx: 5, class: 'tray-bg' }));
+    // 트레이 바탕 — 위치·크기는 applyOrientation()이 방향에 맞게 넣는다
+    cur.trayBg = el('rect', { rx: 5, class: 'tray-bg' });
+    svg.appendChild(cur.trayBg);
     const boardLayer = el('g', {}); svg.appendChild(boardLayer);
     const pieceLayer = el('g', {}); svg.appendChild(pieceLayer);
     cur.boardLayer = boardLayer;
@@ -120,6 +131,7 @@ window.App = (() => {
     else if (m.id === 'block') buildBlock(pz);
     else buildShape(pz);
 
+    applyOrientation();
     layoutTray();
     cur.pieces.forEach(renderPiece);
     updateCount();
@@ -162,7 +174,7 @@ window.App = (() => {
         rot: spawnRot, rotTarget: pc.r, sym: D.TAN_SYM[pc.t],
         target: { x: tc[0], y: tc[1] }, slotIdx: i,
         color: D.TAN_COLORS[pc.t][n % D.TAN_COLORS[pc.t].length],
-        pos: { x: 0, y: 0 }, k: 0.7, trayK: 0.7, placed: false,
+        pos: { x: 0, y: 0 }, k: 0.7, trayK: 0.7, trayK0: 0.7, placed: false,
       };
       p.el = el('g', { class: 'piece', 'data-id': p.id });
       p.body = el('polygon', { fill: p.color, class: 'piece-face' });
@@ -215,7 +227,7 @@ window.App = (() => {
         id: 'b' + i, kind: 'block',
         rot: 0, rotTarget: 0, sym: 360,
         target: tc, slotIdx: i, color: pc.color,
-        pos: { x: 0, y: 0 }, k: 0.7, trayK: 0.7, placed: false,
+        pos: { x: 0, y: 0 }, k: 0.7, trayK: 0.7, trayK0: 0.7, placed: false,
       };
       p.el = el('g', { class: 'piece', 'data-id': p.id });
       const ccx = (mx0 + mx1 + 1) / 2 - pc.x, ccy = (my0 + my1 + 1) / 2 - pc.y; // 기준 칸에서 가운데까지
@@ -260,7 +272,7 @@ window.App = (() => {
         id: 's' + i, kind: 'shape', shape: pt.s, sw: pt.w, sh: pt.h,
         rot: 0, rotTarget: 0, sym: 360,
         target: c, slotIdx: i, color: pt.color,
-        pos: { x: 0, y: 0 }, k: 0.72, trayK: 0.72, placed: false,
+        pos: { x: 0, y: 0 }, k: 0.72, trayK: 0.72, trayK0: 0.72, placed: false,
       };
       p.el = el('g', { class: 'piece', 'data-id': p.id });
       p.el.appendChild(shapeNode(pt.s, w, h, { fill: pt.color, class: 'piece-face' }));
@@ -270,19 +282,55 @@ window.App = (() => {
     });
   }
 
-  /* ─────────── 트레이 배치 (두 줄로 차곡차곡) ─────────── */
+  /* ─────────── 방향 적용 (viewBox·트레이 바탕) ───────────
+   * 세로: 판 위 + 트레이 아래 / 가로: 판 왼쪽 + 트레이 오른쪽 */
+  function applyOrientation() {
+    land = landMq.matches;
+    $('stage').setAttribute('viewBox', land ? '0 0 ' + LVW + ' ' + LVH : '0 0 ' + VW + ' ' + VH);
+    if (!cur || !cur.trayBg) return;
+    const a = land
+      ? { x: TRAY_X, y: 1.5, width: LVW - TRAY_X - 1.5, height: LVH - 3 }
+      : { x: 1.5, y: TRAY_Y, width: VW - 3, height: TRAY_H - 2 };
+    for (const k in a) cur.trayBg.setAttribute(k, a[k]);
+  }
+
+  /* ─────────── 트레이 배치 (두 줄로 차곡차곡) ───────────
+   * 세로: 가로 두 줄에 왼→오 / 가로: 세로 두 줄에 위→아래로 담는다 */
   function layoutTray() {
-    let x = 5, row = 0;
-    const rowY = [TRAY_Y + 13, TRAY_Y + 39];
+    if (!land) {
+      let x = 5, row = 0;
+      const rowY = [TRAY_Y + 13, TRAY_Y + 39];
+      cur.pieces.forEach(p => {
+        // 길쭉한 조각은 줄 높이에 맞게 트레이 축소율을 조금 더 줄인다
+        p.trayK = Math.min(p.trayK0, 23 / p.bbox.h, 34 / p.bbox.w);
+        const w = p.bbox.w * p.trayK + 3;
+        if (x + w > VW - 4 && row < rowY.length - 1) { row++; x = 5; }
+        p.home = { x: x + w / 2, y: rowY[row] };
+        x += w;
+      });
+    } else {
+      const colX = [TRAY_X + 14, TRAY_X + 40];
+      // 두 줄에 다 안 들어가면(회전 단계는 조각이 비스듬해 더 크다)
+      // 축소율을 조금씩 줄여 전부 담길 때까지 다시 담는다
+      for (let f = 1; f > 0.4; f -= 0.08) {
+        let y = 4, col = 0, over = false;
+        cur.pieces.forEach(p => {
+          // 세로 줄에서는 폭·높이 제한을 서로 바꿔 적용한다
+          p.trayK = Math.min(p.trayK0, 23 / p.bbox.w, 34 / p.bbox.h) * f;
+          const h = p.bbox.h * p.trayK + 3;
+          if (y + h > LVH - 3 && col < colX.length - 1) { col++; y = 4; }
+          p.home = { x: colX[col], y: y + h / 2 };
+          y += h;
+          if (y > LVH - 3) over = true;
+        });
+        if (!over) break;
+      }
+    }
+    // 아직 안 놓인 조각은 (새) 트레이 집으로 — 놓인 조각은 그림판에 그대로
     cur.pieces.forEach(p => {
-      // 길쭉한 조각은 줄 높이에 맞게 트레이 축소율을 조금 더 줄인다
-      p.trayK = Math.min(p.trayK, 23 / p.bbox.h, 34 / p.bbox.w);
+      if (p.placed) return;
       p.k = p.trayK;
-      const w = p.bbox.w * p.k + 3;
-      if (x + w > VW - 4 && row < rowY.length - 1) { row++; x = 5; }
-      p.home = { x: x + w / 2, y: rowY[row] };
       p.pos = { x: p.home.x, y: p.home.y };
-      x += w;
     });
   }
 
@@ -326,8 +374,9 @@ window.App = (() => {
     if (!grabbed) return;
     ev.preventDefault();
     const pt = svgPoint(ev);
-    const nx = Math.min(VW - 2, Math.max(2, pt.x + grabOff.x));
-    const ny = Math.min(VH - 2, Math.max(2, pt.y + grabOff.y));
+    const vs = viewSize(); // 방향에 따라 드래그 범위가 다르다
+    const nx = Math.min(vs.w - 2, Math.max(2, pt.x + grabOff.x));
+    const ny = Math.min(vs.h - 2, Math.max(2, pt.y + grabOff.y));
     moved += Math.abs(nx - grabbed.pos.x) + Math.abs(ny - grabbed.pos.y);
     grabbed.pos = { x: nx, y: ny };
     renderPiece(grabbed);
@@ -350,7 +399,7 @@ window.App = (() => {
       } else {
         A.sfx.tap();
       }
-      p.k = p.pos.y > TRAY_Y - 2 ? p.trayK : 1;
+      p.k = inTray(p.pos) ? p.trayK : 1;
       renderPiece(p);
       return;
     }
@@ -367,7 +416,7 @@ window.App = (() => {
       wiggleEl(p.el);
       A.speak('톡 눌러서 빙글 돌려 볼까?');
     }
-    p.k = p.pos.y > TRAY_Y - 2 ? p.trayK : 1;
+    p.k = inTray(p.pos) ? p.trayK : 1;
     renderPiece(p);
   }
   function dropShape(p) {
@@ -391,7 +440,7 @@ window.App = (() => {
       A.speak('괜찮아! 같은 모양을 찾아볼까?');
       return;
     }
-    p.k = p.pos.y > TRAY_Y - 2 ? p.trayK : 1;
+    p.k = inTray(p.pos) ? p.trayK : 1;
     renderPiece(p);
   }
 
@@ -495,6 +544,25 @@ window.App = (() => {
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
+
+    // 기기 회전(가로↔세로) 시 퍼즐판을 자연스럽게 재배치 —
+    // 놓인 조각은 그림판에 그대로, 트레이 조각은 새 트레이 집으로 옮긴다
+    const onOrient = () => {
+      if (land === landMq.matches) return; // 방향이 그대로면 아무것도 안 한다
+      applyOrientation();
+      if (!cur || screenId !== 'scr-play') return;
+      if (grabbed) { // 잡은 채 회전하면 조용히 놓는다
+        const g = grabbed;
+        grabbed = null;
+        g.el.classList.remove('grab');
+        if (cur.mode !== 'shape') { const s = slotEl(g.slotIdx); if (s) s.classList.remove('hint'); }
+      }
+      layoutTray();
+      cur.pieces.forEach(renderPiece);
+    };
+    landMq.addEventListener('change', onOrient);
+    window.addEventListener('resize', onOrient);
+    applyOrientation(); // 첫 화면부터 방향에 맞는 viewBox로
 
     document.querySelectorAll('[data-go]').forEach(b => {
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); showScreen(b.dataset.go); });
