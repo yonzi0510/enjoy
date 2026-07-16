@@ -1,6 +1,6 @@
 /* ═══════════ 공용 부모 설정 ═══════════
  * 부모가 정하는 놀이터 전체 설정. 저장: localStorage 'enjoy-parent-v1'
- *   pin            부모 확인 번호 4자리 (기본 5815 — 예전 play 시간제한 번호를 이어받음)
+ *   pin            부모 확인 번호 4자리 (기본 1234 — 부모님 페이지에서 변경 가능)
  *   limitMin       하루 사용 시간(분). 0이면 제한 없음. shared/time-limit.js가 읽는다.
  *   stt            음성 인식(마이크) 사용 허용 — 브라우저 음성 인식은 아이 목소리가
  *                  브라우저 회사 서버로 전송될 수 있어 부모가 끌 수 있게 한다.
@@ -16,7 +16,7 @@
 window.ParentSettings = (() => {
   const KEY = 'enjoy-parent-v1';
   const DEF = {
-    pin: '5815',
+    pin: '1234',
     limitMin: 30,
     stt: true,
     showPractika: false,

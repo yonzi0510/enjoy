@@ -117,7 +117,7 @@
   }
 
   function submitPin() {
-    const ok = window.ParentSettings ? ParentSettings.checkPin(pinInput) : pinInput === '5815';
+    const ok = window.ParentSettings ? ParentSettings.checkPin(pinInput) : pinInput === '1234';
     if (ok) {
       st.extraMs += EXTEND_MS;
       save();
