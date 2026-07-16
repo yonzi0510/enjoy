@@ -225,6 +225,33 @@ await check('도형 맞추기: 같은 모양 자리에 착! → 완성', async (
   await page.click('#reward-close');
 });
 
+await check('가로↔세로 회전: 판·트레이 재배치 + 진행 유지 + 양쪽에서 스냅', async () => {
+  await page.waitForSelector('#scr-list.on');
+  await page.click('#puzzle-list .item-main[data-puzzle="train"]');
+  await page.waitForSelector('#scr-play.on');
+  const vb = () => page.evaluate(() => document.getElementById('stage').getAttribute('viewBox'));
+  // 가로(1180×820)에서는 판 왼쪽 + 트레이 오른쪽 viewBox
+  expect(await vb() === '0 0 158 92', '가로 viewBox: ' + await vb());
+  let p = (await dbg(page)).pieces[0];
+  await dragPiece(page, p.id, p.targetClient);
+  expect((await dbg(page)).pieces[0].placed, '가로에서 스냅 안 됨');
+  // 세로로 회전 — 놓인 조각은 그대로, 트레이는 아래로
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(350);
+  expect(await vb() === '0 0 100 148', '세로 viewBox: ' + await vb());
+  const d = await dbg(page);
+  expect(d.placed === 1 && d.pieces[0].placed, '회전하며 진행이 풀림');
+  // 세로에서도 이어서 스냅된다
+  p = d.pieces.find(q => !q.placed);
+  await dragPiece(page, p.id, p.targetClient);
+  expect((await dbg(page)).pieces.find(q => q.id === p.id).placed, '세로에서 스냅 안 됨');
+  // 다시 가로로 — 진행 유지
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.waitForTimeout(350);
+  expect(await vb() === '0 0 158 92', '복귀 viewBox: ' + await vb());
+  expect((await dbg(page)).placed === 2, '복귀 후 진행이 풀림');
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });
