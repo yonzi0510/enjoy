@@ -1,0 +1,16 @@
+{
+  "name": "색깔 실험실",
+  "short_name": "색깔실험",
+  "description": "물감 방울을 섞어 새 색을 만드는 혼색 과학 놀이 — 5세 색깔 실험",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F0F7E6",
+  "theme_color": "#8BBF52",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

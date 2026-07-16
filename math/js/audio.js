@@ -32,6 +32,10 @@ window.Audio2 = (() => {
     bad()     { tone(330, 0, 0.15, 0.2, 'sawtooth'); tone(262, 0.13, 0.25, 0.2, 'sawtooth'); },
     fanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.12, 0.25, 0.3)); tone(1319, 0.5, 0.45, 0.3); },
     stroke()  { tone(740, 0, 0.1, 0.2, 'triangle'); tone(988, 0.08, 0.15, 0.2, 'triangle'); },
+    train()   { // 칙칙폭폭 리듬 + 뿌뿌~ 기적
+      for (let i = 0; i < 8; i++) tone(i % 2 ? 150 : 210, i * 0.14, 0.08, 0.2, 'square');
+      tone(660, 0.32, 0.5, 0.14, 'triangle'); tone(880, 0.38, 0.5, 0.12, 'triangle');
+    },
   };
 
   /* ─────────── TTS ─────────── */

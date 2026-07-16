@@ -1,0 +1,16 @@
+{
+  "name": "도형 놀이터",
+  "short_name": "도형",
+  "description": "칠교놀이·블록 퍼즐·도형 맞추기 — 손가락으로 조각을 끌어 그림을 완성하는 5세 도형 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#DFF6F3",
+  "theme_color": "#2EC4B6",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

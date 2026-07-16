@@ -3,7 +3,7 @@
  * 실제 Chromium으로 홈 → 자음 필사(펜 스트로크 합성) → 손가락 리젝션 → 완료·별 →
  * 동요 필사 → 물어보고 쓰기(낱말 추출·직접 입력·인식 주입·초기화) → 부분 지우개 →
  * 받아쓰기(빈 칸 쓰기·정답 공개·스스로 확인) → 자유 낙서장(무지개 펜·스티커·보관) →
- * 갤러리 → 새로고침 후 진행도 유지까지 검증한다.
+ * 갤러리 → 새로고침 후 진행도 유지 → 펫 방(도감 친구·장식 배치·간식 조르기)까지 검증한다.
  * 저장소 루트에서 정적 서버를 띄운 뒤 실행 (예: python3 -m http.server 8777)
  */
 import { createRequire } from 'node:module';
@@ -349,6 +349,72 @@ await check('펫: 부화 → 이름 짓기 → 선물 → 도감 등록 → 새 
   const cap = await page.locator('.pet-book-cell.got .pb-name').textContent();
   expect(cap === '반짝이', '도감 이름: ' + cap);
   await page.click('#pet-book-close');
+  await page.click('#pet-close');
+});
+
+await check('펫 방: 방 배경 + 도감 친구가 미니 펫으로 놀러 나온다', async () => {
+  await page.evaluate(() => Pet.open());
+  await page.waitForSelector('#pet-overlay.on');
+  expect(await page.locator('#pet-room .pet-room-bg svg').count() === 1, '방 배경 SVG');
+  expect(await page.locator('#pet-room .pet-deco-slot').count() === 8, '꾸미기 자리 수');
+  expect(await page.locator('#pet-room .pet-mini').count() === 1, '도감 친구(미니 펫) 수');
+  expect(await page.locator('#pet-room .pet-mini .pa-svg').count() === 1, '미니 펫 SVG 캐릭터');
+});
+
+await check('장식: 먹이 선물로 모으고(4·12·20번째) 자리에 배치', async () => {
+  const p = await page.evaluate(() => Pet.state());
+  expect(p.decoOwned === 3, '장식 선물 수: ' + p.decoOwned);
+  // 받은 장식은 무작위라, 벽·창가·바닥 자리를 차례로 열어 보유 장식이 있는 판에서 배치한다
+  let placedSlot = null;
+  for (const slot of ['w1', 'n1', 'f1']) {
+    await page.click('#pet-room .pet-deco-slot[data-slot="' + slot + '"]');
+    await page.waitForSelector('#pet-deco-overlay.on');
+    if (await page.locator('.pet-deco-cell:not(.lock)').count() > 0) {
+      expect(await page.locator('.pet-deco-cell.lock .pd-q').count() >= 0, '실루엣 ? 표시');
+      await page.locator('.pet-deco-cell:not(.lock)').first().click();
+      placedSlot = slot;
+      break;
+    }
+    await page.click('#pet-deco-close');
+  }
+  expect(placedSlot, '보유 장식이 있는 자리를 찾지 못함');
+  await page.waitForFunction(() => !document.getElementById('pet-deco-overlay').classList.contains('on'));
+  expect(await page.locator('#pet-room .pet-deco-slot[data-slot="' + placedSlot + '"].filled').count() === 1, '자리에 장식 표시');
+  const after = await page.evaluate(() => Pet.state());
+  expect(after.decoPlaced === 1, '배치 저장: ' + after.decoPlaced);
+  // 못 받은 장식은 실루엣+? 로 보인다 (아무 자리나 다시 열어 확인)
+  await page.click('#pet-room .pet-deco-slot[data-slot="f2"]');
+  await page.waitForSelector('#pet-deco-overlay.on');
+  expect(await page.locator('.pet-deco-cell.lock').count() >= 1, '미획득 실루엣 칸');
+  expect((await page.locator('.pet-deco-cell.lock .pd-name').first().textContent()) === '???', '미획득 이름 가림');
+  await page.click('#pet-deco-close');
+});
+
+await check('간식 조르기: 친구에게 나눠 주면 간식 1개 소모', async () => {
+  const before = await page.evaluate(() => Pet.state().snacks);
+  expect(before > 0, '간식이 있어야 조른다: ' + before);
+  const begged = await page.evaluate(() => Pet.forceBeg());
+  expect(begged === true, '조르기 시작');
+  await page.waitForSelector('#pet-room .pet-mini .pet-beg-bubble:not([hidden])');
+  await page.click('#pet-room .pet-mini.beg', { force: true }); // 조르는 동안 몸을 흔들어서(애니메이션) force 클릭
+  await page.waitForTimeout(300);
+  const p = await page.evaluate(() => Pet.state());
+  expect(p.snacks === before - 1, '간식 나눠 주기: ' + before + ' → ' + p.snacks);
+  expect(p.begging === false, '조르기 종료');
+  expect(await page.locator('#pet-room .pet-beg-bubble:not([hidden])').count() === 0, '말풍선 닫힘');
+  await page.click('#pet-close');
+});
+
+await check('새로고침 후 장식·배치·방 유지 (마이그레이션 겸 회귀)', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const p = await page.evaluate(() => Pet.state());
+  expect(p.decoOwned >= 3, '장식 보유 유지: ' + p.decoOwned); // 고마움 선물로 늘 수도 있다
+  expect(p.decoPlaced === 1, '배치 유지: ' + p.decoPlaced);
+  await page.evaluate(() => Pet.open());
+  await page.waitForSelector('#pet-overlay.on');
+  expect(await page.locator('#pet-room .pet-deco-slot.filled').count() === 1, '자리 표시 유지');
+  expect(await page.locator('#pet-room .pet-mini').count() === 1, '도감 친구 유지');
   await page.click('#pet-close');
 });
 

@@ -18,8 +18,12 @@
     const overlays = [
       ['complete-overlay', 'complete-home'],
       ['letters-done', 'letters-done-home'],
+      ['memory-done', 'memory-done-home'],
+      ['habitat-done', 'habitat-done-home'],
       ['mode-overlay', 'mode-close'],
-      ['letters-overlay', 'letters-close']
+      ['letters-overlay', 'letters-close'],
+      ['memory-overlay', 'memory-close'],
+      ['habitat-overlay', 'habitat-close']
     ];
     for (const [ov, btn] of overlays) {
       const el = $(ov);
@@ -32,6 +36,8 @@
     switch (active.id) {
       case 'screen-game': return clickIf('game-back');
       case 'screen-letters': return clickIf('letters-back');
+      case 'screen-memory': return clickIf('memory-back');
+      case 'screen-habitat': return clickIf('habitat-back');
       case 'screen-stickerplay': return clickIf('stickerplay-back');
       case 'screen-stickers': return clickIf('stickers-back');
       default: return false; // 홈: 브라우저 기본 동작(종료/이전 페이지)

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFEDE5">
+<title>시장 놀이터</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../shared/voice-settings.css">
+<link rel="stylesheet" href="../shared/time-limit.css">
+<link rel="stylesheet" href="../shared/pet.css">
+</head>
+<body>
+
+<!-- 홈: 가게(단계) 고르기 -->
+<section class="screen on" id="scr-home">
+  <header class="home-head">
+    <h1>🛒 시장 놀이터</h1>
+    <div class="stats">
+      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+      <span id="pet-slot"></span>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+    </div>
+  </header>
+  <div class="menu" id="menu"></div>
+</section>
+
+<!-- 가게: 손님 접객 (상품 담기 → 동전 계산) -->
+<section class="screen" id="scr-shop">
+  <header class="bar">
+    <button type="button" class="back" id="btn-shop-back">◀</button>
+    <h2 id="shop-title">🛒 1단계 가게</h2>
+    <span class="dots" id="shop-dots"></span>
+  </header>
+  <div class="shop-stage">
+    <div class="cust-row">
+      <div class="cust-figure" id="cust-figure">
+        <div class="cust-avatar" id="cust-avatar"></div>
+      </div>
+      <div class="bubble" id="bubble"></div>
+    </div>
+    <div class="shelf" id="shelf"></div>
+    <div class="lower">
+      <div class="dropzone basket" id="basket">
+        <span class="zone-label">🧺 장바구니</span>
+        <div class="zone-items" id="basket-items"></div>
+      </div>
+      <div class="dropzone counter" id="counter">
+        <span class="zone-label">🧾 계산대</span>
+        <div class="price-guide" id="price-guide"></div>
+        <div class="zone-items" id="paid-coins"></div>
+      </div>
+    </div>
+    <div class="pay-row" id="pay-row" hidden>
+      <div class="purse" id="purse"></div>
+      <button type="button" class="bigbtn primary" id="btn-pay">💰 다 냈어요!</button>
+    </div>
+  </div>
+  <div class="guide" id="guide"></div>
+</section>
+
+<!-- 보상 오버레이 -->
+<div class="reward" id="reward">
+  <div class="reward-card">
+    <div class="reward-stars">⭐</div>
+    <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
+    <div class="reward-btns">
+      <button type="button" class="bigbtn" id="reward-close" hidden>그만할래</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 ▶</button>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/profile.js"></script>
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/app.js"></script>
+<script src="../shared/parent-settings.js"></script>
+<script src="../shared/voice-settings.js"></script>
+<script src="../shared/pet-avatar.js"></script>
+<script src="../shared/pet.js"></script>
+<script src="../shared/time-limit.js"></script>
+<script src="../shared/sw-register.js"></script>
+</body>
+</html>

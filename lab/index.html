@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#F0F7E6">
+<title>색깔 실험실</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../shared/voice-settings.css">
+<link rel="stylesheet" href="../shared/time-limit.css">
+<link rel="stylesheet" href="../shared/pet.css">
+</head>
+<body>
+
+<!-- 홈 -->
+<section class="screen on" id="scr-home">
+  <header class="home-head">
+    <h1>🧪 색깔 실험실</h1>
+    <div class="stats">
+      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+      <span id="pet-slot"></span>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+    </div>
+  </header>
+  <div class="menu" id="menu"></div>
+</section>
+
+<!-- 미션 목록 (12색) -->
+<section class="screen" id="scr-missions">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2>🎯 미션 실험</h2>
+    <span class="page-count" id="missions-count">🎨 0 / 12</span>
+  </header>
+  <div class="missions-grid" id="missions-list"></div>
+</section>
+
+<!-- 실험대 (미션·자유 공용) -->
+<section class="screen" id="scr-lab">
+  <header class="bar">
+    <button type="button" class="back" id="btn-lab-back">◀</button>
+    <h2 id="lab-title">🎯 주황 만들기</h2>
+    <button type="button" class="mini-btn" id="btn-say" aria-label="다시 듣기">🔊</button>
+  </header>
+  <div class="lab-stage">
+    <div class="target-chip" id="target-chip">
+      <span class="tc-label">🎯 목표</span>
+      <span class="target-swatch" id="target-swatch"></span>
+      <b id="target-name">주황</b>
+    </div>
+    <div class="mix-name" id="mix-name" hidden>💧 맹물</div>
+    <div class="jar-zone">
+      <div class="jar-wrap" id="jar-wrap">
+        <canvas id="jar-canvas" aria-label="유리병"></canvas>
+        <svg class="jar-glass" viewBox="0 0 200 250" aria-hidden="true">
+          <!-- 유리병 몸통 (테두리) -->
+          <path d="M62 14 h76 v22 q34 16 34 58 v118 q0 24 -24 24 h-96 q-24 0 -24 -24 v-118 q0 -42 34 -58 z"
+                fill="none" stroke="#7FA3B8" stroke-width="7" stroke-linejoin="round"/>
+          <!-- 병 입구 -->
+          <rect x="56" y="6" width="88" height="16" rx="8" fill="#A8C6D6"/>
+          <!-- 유리 반짝임 -->
+          <path d="M52 96 q0 -26 18 -40" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="9" stroke-linecap="round"/>
+          <path d="M50 130 v66" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="9" stroke-linecap="round"/>
+        </svg>
+        <div class="jar-sparkle" id="jar-sparkle" hidden>✨</div>
+      </div>
+    </div>
+    <div class="lab-actions">
+      <button type="button" class="bigbtn" id="btn-empty">🚿 물 비우기</button>
+      <button type="button" class="bigbtn primary" id="btn-keep" hidden>🧴 병에 담기</button>
+    </div>
+    <div class="palette" id="palette"></div>
+    <div class="shelf" id="shelf" hidden>
+      <div class="shelf-title">🧴 내 색깔 선반</div>
+      <div class="shelf-row" id="shelf-row"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 색깔 도감 -->
+<section class="screen" id="scr-book">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2>📖 색깔 도감</h2>
+    <span class="page-count" id="book-count">0 / 12</span>
+  </header>
+  <div class="book-grid" id="book-grid"></div>
+</section>
+
+<!-- 보상 오버레이 -->
+<div class="reward" id="reward">
+  <div class="reward-card">
+    <div class="reward-stars" id="reward-icon">⭐</div>
+    <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
+    <div class="reward-btns">
+      <button type="button" class="bigbtn" id="reward-close" hidden>그만할래</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 ▶</button>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/profile.js"></script>
+<script src="js/mix.js"></script>
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/app.js"></script>
+<script src="../shared/parent-settings.js"></script>
+<script src="../shared/voice-settings.js"></script>
+<script src="../shared/pet-avatar.js"></script>
+<script src="../shared/pet.js"></script>
+<script src="../shared/time-limit.js"></script>
+<script src="../shared/sw-register.js"></script>
+</body>
+</html>

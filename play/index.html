@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="../shared/voice-settings.css">
 <link rel="stylesheet" href="../shared/time-limit.css">
+<link rel="stylesheet" href="../shared/pet.css">
 </head>
 <body>
 
@@ -23,6 +24,7 @@
     <h1 class="app-title"><span class="title-emoji">🔍</span> 찾기 놀이터</h1>
     <div class="header-btns">
       <a href="../" class="round-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+      <span id="pet-slot"></span>
       <button id="btn-voice" class="round-btn" aria-label="목소리 설정">🗣️</button>
       <button id="btn-stickers" class="round-btn" aria-label="스티커북">🏅</button>
       <button id="btn-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
@@ -33,7 +35,76 @@
     <span class="letters-banner-text">가나다 글자 찾기</span>
     <span class="letters-banner-emoji">✏️</span>
   </button>
+  <div class="mode-banners">
+    <button id="btn-memory" class="mode-banner mb-memory">
+      <span class="mode-banner-emoji">🃏</span>
+      <span class="mode-banner-text">짝꿍 카드</span>
+    </button>
+    <button id="btn-habitat" class="mode-banner mb-habitat">
+      <span class="mode-banner-emoji">🏠</span>
+      <span class="mode-banner-text">동물의 집 찾기</span>
+    </button>
+  </div>
   <div id="theme-grid" class="theme-grid"><!-- 엔진이 테마 카드 생성 --></div>
+</div>
+
+<!-- ═══════════ 짝꿍 카드: 단계 선택 오버레이 ═══════════ -->
+<div id="memory-overlay" class="overlay hidden">
+  <div class="mode-card">
+    <button class="close-btn" id="memory-close" aria-label="닫기">✕</button>
+    <div class="mode-theme-name">🃏 짝꿍 카드</div>
+    <div class="letters-level-btns memory-level-btns">
+      <button class="letters-level-btn llv-1" data-mlevel="1"><b>1단계</b><span>카드 4장<br>2쌍 찾기</span><span class="level-btn-stars"></span></button>
+      <button class="letters-level-btn llv-2" data-mlevel="2"><b>2단계</b><span>카드 8장<br>4쌍 찾기</span><span class="level-btn-stars"></span></button>
+      <button class="letters-level-btn llv-3" data-mlevel="3"><b>3단계</b><span>카드 12장<br>6쌍 찾기</span><span class="level-btn-stars"></span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 짝꿍 카드 게임 화면 ═══════════ -->
+<div id="screen-memory" class="screen">
+  <header class="game-header">
+    <button id="memory-back" class="round-btn" aria-label="처음으로">🏠</button>
+    <div id="memory-title" class="game-title">🃏 짝꿍 카드</div>
+    <div class="header-btns"><div style="width:clamp(48px, 8vmin, 64px)"></div></div>
+  </header>
+  <div class="memory-body">
+    <div id="memory-board" class="mem-board"></div>
+    <div id="memory-progress" class="diff-progress"></div>
+  </div>
+</div>
+
+<!-- ═══════════ 동물의 집 찾기: 주제 선택 오버레이 ═══════════ -->
+<div id="habitat-overlay" class="overlay hidden">
+  <div class="mode-card">
+    <button class="close-btn" id="habitat-close" aria-label="닫기">✕</button>
+    <div class="mode-theme-name">🏠 어디에 살까?</div>
+    <div class="habitat-topic-btns">
+      <button class="habitat-topic-btn ht-animals" data-topic="animals"><span class="ht-emoji">🐾</span><b>동물의 집</b><span>🌊 바다 · 🌳 숲 · ☁️ 하늘</span><span class="level-btn-stars"></span></button>
+      <button class="habitat-topic-btn ht-vehicles" data-topic="vehicles"><span class="ht-emoji">🚗</span><b>탈것의 길</b><span>🛣️ 도로 · 🌊 바다 · ☁️ 하늘</span><span class="level-btn-stars"></span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 동물의 집 찾기 게임 화면 ═══════════ -->
+<div id="screen-habitat" class="screen">
+  <header class="game-header">
+    <button id="habitat-back" class="round-btn" aria-label="처음으로">🏠</button>
+    <div id="habitat-title" class="game-title">🏠 동물의 집 찾기</div>
+    <div class="header-btns">
+      <button id="habitat-say" class="round-btn hint-btn" aria-label="다시 듣기">🔁</button>
+    </div>
+  </header>
+  <div class="habitat-body">
+    <div id="habitat-zones" class="habitat-zones"></div>
+    <div class="habitat-dock">
+      <div id="habitat-actor" class="habitat-actor"></div>
+      <div class="habitat-dock-side">
+        <div id="habitat-question" class="habitat-question"></div>
+        <div id="habitat-progress" class="diff-progress"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════ 글자 찾기: 단계 선택 오버레이 ═══════════ -->
@@ -178,9 +249,13 @@
 <script src="js/scenes/playground.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/letters.js"></script>
+<script src="js/memory.js"></script>
+<script src="js/habitat.js"></script>
 <script src="js/stickerplay.js"></script>
 <script src="js/nav.js"></script>
 <script src="../shared/voice-settings.js"></script>
+<script src="../shared/pet-avatar.js"></script>
+<script src="../shared/pet.js"></script>
 <script src="../shared/time-limit.js"></script>
 <script src="../shared/sw-register.js"></script>
 </body>

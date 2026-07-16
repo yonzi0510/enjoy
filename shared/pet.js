@@ -3,12 +3,19 @@
  * - 알 → 아기 → 어린이 → 어른으로 자라고, 다 크면 📖 도감에 등록 + 새 알 도착 (16종 수집)
  * - 부화하면 이름을 지어 줄 수 있고(추천 칩 + 직접 입력), 언제든 ✏️ 로 바꾼다
  * - 먹이를 8번 줄 때마다 🎁 꾸미기 선물(모자·리본 등 12종)을 받아 입혀 준다
+ * - 🏠 펫 방: 펫은 아늑한 방(벽지·바닥·창문·러그) 안에 살고,
+ *   도감에 등록한 친구들이 미니 펫으로 방 곳곳에 놀러 나온다
+ * - 🛋️ 방 꾸미기: 장식 14종을 먹이 4번째·12번째·20번째…(8번마다, 꾸미기 선물과 어긋나게)
+ *   선물로 받고, 방의 자리(벽 3·창가 1·바닥 4)를 탭해 배치·교체·빼기
+ * - 🍪 간식 조르기: 방을 열면 가끔 도감 친구가 "간식 줘~" 하고 조른다.
+ *   탭하면 간식 1개를 나눠 주고, 친구가 고마움 선물(장식)을 주기도 한다
  * - 나쁜 상태(배고픔·죽음)는 없다 — 5세 앱이므로 자라기만 한다
  *
  * 저장: localStorage 'enjoy-pet-v1' (Profile.key 적용 — 은아·서하 각자 키움)
  * { g 현재 펫 성장점수, meals, snacks, species 종 id(null=알), name,
- *   fed 지금까지 먹인 총 횟수(선물 기준), collection [{sp,name,at}], acc {head,side}, accOwned [id] }
- * 예전 형식 { g, meals, snacks } 는 읽어와 이어받는다 (마이그레이션).
+ *   fed 지금까지 먹인 총 횟수(선물 기준), collection [{sp,name,at}], acc {head,side}, accOwned [id],
+ *   deco {자리id: 장식id} 방 배치, decoOwned [장식id], lastBeg 마지막 조르기 시각 }
+ * 예전 형식 { g, meals, snacks } 및 deco 필드가 없는 형식은 읽어와 이어받는다 (마이그레이션).
  *
  * 사용법 — 각 앱에서:
  *   <link rel="stylesheet" href="../shared/pet.css">
@@ -23,7 +30,10 @@ window.Pet = (() => {
   const KEY = window.Profile ? Profile.key('enjoy-pet-v1') : 'enjoy-pet-v1';
   const MEAL_PTS = 3, SNACK_PTS = 1;
   const HATCH = 3, KID = 10, ADULT = 18, DONE = 24; // 성장 문턱 (성장점수)
-  const GIFT_EVERY = 8; // 먹이 8번마다 꾸미기 선물
+  const GIFT_EVERY = 8;   // 먹이 8번마다 꾸미기 선물
+  const DECO_OFFSET = 4;  // 먹이 4·12·20…번째(꾸미기 선물과 어긋나게)에 장식 선물
+  const BEG_CHANCE = 0.4;                     // 방을 열 때 친구가 조를 확률
+  const BEG_COOLDOWN = 3 * 60 * 60 * 1000;    // 이만큼 지났으면 확률과 상관없이 조른다
 
   /* ─────────── 펫 도감 (16종) ─────────── */
   const SPECIES = [
@@ -63,6 +73,63 @@ window.Pet = (() => {
   ];
   const accOf = id => ACCS.find(a => a.id === id) || null;
 
+  /* ─────────── 방 꾸미기 장식 (14종: 벽 4 + 창가 2 + 바닥 8) ───────────
+   * 이모지가 어울리지 않는 것(러그·스탠드·커튼·가랜드)은 직접 그린 인라인 SVG를 쓴다. */
+  const DECO_SVG = {
+    garland: '<svg class="deco" viewBox="0 0 60 34" aria-hidden="true">' +
+      '<path d="M2 5 Q30 21 58 5" fill="none" stroke="#C9A46A" stroke-width="2.5"/>' +
+      '<path d="M8 8 L17 10 L11 20 Z" fill="#F7A8C4"/>' +
+      '<path d="M21 13 L30 14 L25 24 Z" fill="#8ED9B5"/>' +
+      '<path d="M35 14 L44 12 L40 23 Z" fill="#8FC9EA"/>' +
+      '<path d="M47 9 L56 6 L53 18 Z" fill="#FFD93D"/>' +
+      '<circle cx="13" cy="6.5" r="2.2" fill="#FFD93D"/><circle cx="30" cy="10.5" r="2.2" fill="#FFD93D"/>' +
+      '<circle cx="47" cy="7" r="2.2" fill="#FFD93D"/></svg>',
+    curtain: '<svg class="deco" viewBox="0 0 60 60" aria-hidden="true">' +
+      '<rect x="2" y="2" width="56" height="6" rx="3" fill="#D9739B"/>' +
+      '<path d="M6 8 Q14 30 7 54 L22 54 Q15 30 20 8 Z" fill="#F7A8C4"/>' +
+      '<path d="M54 8 Q46 30 53 54 L38 54 Q45 30 40 8 Z" fill="#F7A8C4"/>' +
+      '<circle cx="13" cy="34" r="3" fill="#FFD93D"/><circle cx="47" cy="34" r="3" fill="#FFD93D"/></svg>',
+    rug: '<svg class="deco" viewBox="0 0 60 30" aria-hidden="true">' +
+      '<ellipse cx="30" cy="15" rx="28" ry="13" fill="#FBD3E0"/>' +
+      '<ellipse cx="30" cy="15" rx="20" ry="9" fill="#CDEBD8"/>' +
+      '<ellipse cx="30" cy="15" rx="12" ry="5" fill="#FFF3C9"/></svg>',
+    lamp: '<svg class="deco" viewBox="0 0 60 60" aria-hidden="true">' +
+      '<ellipse cx="30" cy="55" rx="12" ry="4" fill="#C9A46A"/>' +
+      '<rect x="28" y="22" width="4" height="33" fill="#C9A46A"/>' +
+      '<path d="M16 25 L44 25 L37 6 L23 6 Z" fill="#FFDF8E"/>' +
+      '<ellipse cx="30" cy="25" rx="14" ry="3.5" fill="#F5C55C"/></svg>',
+  };
+  const DECOS = [
+    { id: 'frame',    e: '🖼️', name: '액자',        zone: 'wall' },
+    { id: 'clock',    e: '⏰', name: '시계',        zone: 'wall' },
+    { id: 'garland',  e: '🚩', name: '별 가랜드',   zone: 'wall', svg: DECO_SVG.garland },
+    { id: 'mobile',   e: '🎐', name: '모빌',        zone: 'wall' },
+    { id: 'curtain',  e: '🎀', name: '커튼',        zone: 'win',  svg: DECO_SVG.curtain },
+    { id: 'cactus',   e: '🌵', name: '창가 화분',   zone: 'win' },
+    { id: 'rug',      e: '🌈', name: '무지개 러그', zone: 'floor', svg: DECO_SVG.rug },
+    { id: 'lamp',     e: '💡', name: '스탠드',      zone: 'floor', svg: DECO_SVG.lamp },
+    { id: 'plant',    e: '🪴', name: '화분',        zone: 'floor' },
+    { id: 'toybox',   e: '🧺', name: '장난감 상자', zone: 'floor' },
+    { id: 'bounce',   e: '🏀', name: '통통 공',     zone: 'floor' },
+    { id: 'books',    e: '📚', name: '책꽂이',      zone: 'floor' },
+    { id: 'fishbowl', e: '🐠', name: '어항',        zone: 'floor' },
+    { id: 'teddybig', e: '🧸', name: '곰인형',      zone: 'floor' },
+  ];
+  const decoOf = id => DECOS.find(d => d.id === id) || null;
+  // 방의 꾸미기 자리 — 벽 3 · 창가 1 · 바닥 4 (위치는 pet.css의 .ps-* 클래스)
+  const DECO_SLOTS = [
+    { id: 'w1', zone: 'wall' }, { id: 'w2', zone: 'wall' }, { id: 'w3', zone: 'wall' },
+    { id: 'n1', zone: 'win' },
+    { id: 'f1', zone: 'floor' }, { id: 'f2', zone: 'floor' }, { id: 'f3', zone: 'floor' }, { id: 'f4', zone: 'floor' },
+  ];
+  const ZONE_NAME = { wall: '🧱 벽', win: '🪟 창가', floor: '🟫 바닥' };
+  // 도감 친구(미니 펫) 자리 — 겹치지 않게 미리 정한 6곳 (l 왼쪽%, b 바닥%, w 너비%)
+  const MINI_SPOTS = [
+    { l: 15, b: 1, w: 22 }, { l: 63, b: 1, w: 22 },
+    { l: 1, b: 14, w: 19 }, { l: 80, b: 13, w: 19 },
+    { l: 30, b: 27, w: 14 }, { l: 56, b: 27, w: 14 },
+  ];
+
   const NAME_CHIPS = ['별이', '콩이', '솜사탕', '복덩이', '반짝이', '초코'];
   const PRAISES = ['냠냠! 맛있다!', '고마워!', '냠냠, 힘이 나요!', '우와, 잘 먹을게!'];
 
@@ -77,17 +144,23 @@ window.Pet = (() => {
             g, meals: raw.meals || 0, snacks: raw.snacks || 0,
             species: g >= HATCH ? 'chick' : null, name: '',
             fed: g, collection: [], acc: {}, accOwned: [],
+            deco: {}, decoOwned: [], lastBeg: 0,
           };
         }
+        // deco 필드가 없는 형식도 기본값으로 채워 이어받는다 (필드 추가만 — 기존 의미 변경 없음)
         return {
           g: raw.g || 0, meals: raw.meals || 0, snacks: raw.snacks || 0,
           species: raw.species || null, name: raw.name || '',
           fed: raw.fed || 0, collection: raw.collection || [],
           acc: raw.acc || {}, accOwned: raw.accOwned || [],
+          deco: raw.deco || {}, decoOwned: raw.decoOwned || [], lastBeg: raw.lastBeg || 0,
         };
       }
     } catch (e) { /* 손상 데이터 초기화 */ }
-    return { g: 0, meals: 0, snacks: 0, species: null, name: '', fed: 0, collection: [], acc: {}, accOwned: [] };
+    return {
+      g: 0, meals: 0, snacks: 0, species: null, name: '', fed: 0, collection: [],
+      acc: {}, accOwned: [], deco: {}, decoOwned: [], lastBeg: 0,
+    };
   }
   let state = load();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
@@ -158,6 +231,34 @@ window.Pet = (() => {
   let btn = null, mounted = false;
   const $ = id => document.getElementById(id);
 
+  /* 방 배경 — 벽지·바닥·창문·러그를 직접 그린 인라인 SVG */
+  function roomBg() {
+    const b = [];
+    b.push('<svg viewBox="0 0 400 300" preserveAspectRatio="none" aria-hidden="true">');
+    b.push('<rect x="0" y="0" width="400" height="204" fill="#FBEEDA"/>'); // 벽
+    for (let y = 18; y < 190; y += 34) {                                   // 벽지 물방울 무늬
+      for (let x = 14 + ((y / 34) % 2 ? 17 : 0); x < 400; x += 34) {
+        b.push('<circle cx="' + x + '" cy="' + y + '" r="3" fill="#F3E0BF"/>');
+      }
+    }
+    b.push('<rect x="0" y="196" width="400" height="104" fill="#F3DDBA"/>'); // 바닥
+    b.push('<path d="M0 232 H400 M0 264 H400" stroke="#EACFA2" stroke-width="2" opacity=".7"/>');
+    b.push('<path d="M66 196 V232 M200 196 V232 M333 196 V232 M133 232 V264 M266 232 V264 M66 264 V300 M200 264 V300 M333 264 V300" stroke="#EACFA2" stroke-width="2" opacity=".55"/>');
+    b.push('<rect x="0" y="192" width="400" height="9" rx="4.5" fill="#EAD3AC"/>'); // 걸레받이
+    // 창문 (오른쪽 위) — 하늘·해·구름
+    b.push('<rect x="268" y="24" width="112" height="96" rx="12" fill="#C2E7F8" stroke="#FFFFFF" stroke-width="9"/>');
+    b.push('<circle cx="296" cy="50" r="11" fill="#FFE082"/>');
+    b.push('<ellipse cx="336" cy="80" rx="17" ry="7" fill="#FFFFFF"/><ellipse cx="324" cy="74" rx="10" ry="6" fill="#FFFFFF"/>');
+    b.push('<path d="M324 28 V116 M272 72 H376" stroke="#FFFFFF" stroke-width="6"/>');
+    b.push('<rect x="258" y="116" width="132" height="11" rx="5.5" fill="#EAD3AC"/>'); // 창턱
+    // 기본 러그 (내 펫이 서는 자리)
+    b.push('<ellipse cx="200" cy="268" rx="118" ry="26" fill="#F6CFDD"/>');
+    b.push('<ellipse cx="200" cy="268" rx="92" ry="19" fill="#FBE3EC"/>');
+    b.push('<ellipse cx="200" cy="268" rx="60" ry="12" fill="#FDF0F5"/>');
+    b.push('</svg>');
+    return b.join('');
+  }
+
   function html() {
     const box = document.createElement('div');
     box.innerHTML =
@@ -169,11 +270,18 @@ window.Pet = (() => {
       '      <span class="pet-name" id="pet-name"></span>' +
       '      <button type="button" class="pet-rename" id="pet-rename" aria-label="이름 바꾸기">✏️</button>' +
       '    </div>' +
-      '    <div class="pet-avatar">' +
-      '      <div class="pet-svg" id="pet-svg"></div>' +
-      '      <span class="pet-emoji" id="pet-emoji" hidden></span>' +
-      '      <span class="pet-acc-head" id="pet-acc-head"></span>' +
-      '      <span class="pet-acc-side" id="pet-acc-side"></span>' +
+      '    <div class="pet-room" id="pet-room">' +
+      '      <div class="pet-room-bg">' + roomBg() + '</div>' +
+      DECO_SLOTS.map(s =>
+        '      <button type="button" class="pet-deco-slot ps-' + s.id + '" data-slot="' + s.id + '" aria-label="꾸미기 자리"></button>'
+      ).join('') +
+      '      <div class="pet-minis" id="pet-minis"></div>' +
+      '      <div class="pet-avatar">' +
+      '        <div class="pet-svg" id="pet-svg"></div>' +
+      '        <span class="pet-emoji" id="pet-emoji" hidden></span>' +
+      '        <span class="pet-acc-head" id="pet-acc-head"></span>' +
+      '        <span class="pet-acc-side" id="pet-acc-side"></span>' +
+      '      </div>' +
       '    </div>' +
       '    <div class="pet-naming" id="pet-naming" hidden>' +
       '      <div class="pet-naming-title">💛 이름을 지어 줄래?</div>' +
@@ -204,6 +312,14 @@ window.Pet = (() => {
       '    <div class="pet-book-grid" id="pet-book-grid"></div>' +
       '  </div>' +
       '</div>' +
+      '<div class="pet-overlay" id="pet-deco-overlay">' +
+      '  <div class="pet-card">' +
+      '    <button type="button" class="pet-close" id="pet-deco-close" aria-label="닫기">✕</button>' +
+      '    <div class="pet-stage-name" id="pet-deco-title">🛋️ 방 꾸미기</div>' +
+      '    <div class="pet-deco-grid" id="pet-deco-grid"></div>' +
+      '    <div class="pet-deco-hint" id="pet-deco-hint"></div>' +
+      '  </div>' +
+      '</div>' +
       '<div class="pet-toast" id="pet-toast"></div>';
     while (box.firstChild) document.body.appendChild(box.firstChild);
   }
@@ -223,6 +339,7 @@ window.Pet = (() => {
     $('pet-name').textContent = petName();
     $('pet-rename').hidden = !sp;
     renderPet();
+    renderRoomDeco();
     // 착용한 꾸미기
     const head = accOf(state.acc.head), side = accOf(state.acc.side);
     $('pet-acc-head').textContent = sp && head ? head.e : '';
@@ -332,17 +449,216 @@ window.Pet = (() => {
     speak(GIGGLES[Math.floor(Math.random() * GIGGLES.length)]);
   }
 
+  /* ─────────── 방 꾸미기 (장식 배치) ─────────── */
+  function decoMarkup(d) { return d.svg || '<span class="pet-deco-e">' + d.e + '</span>'; }
+
+  function renderRoomDeco() {
+    DECO_SLOTS.forEach(s => {
+      const el = document.querySelector('#pet-room .pet-deco-slot[data-slot="' + s.id + '"]');
+      if (!el) return;
+      const d = decoOf(state.deco[s.id]);
+      el.innerHTML = d ? decoMarkup(d) : '<span class="pet-slot-empty">＋</span>';
+      el.classList.toggle('filled', !!d);
+    });
+  }
+
+  // 장식을 자리에 놓는다 (같은 장식이 다른 자리에 있으면 옮겨 온다). id가 null이면 빼기
+  function placeDeco(slotId, id) {
+    if (id) DECO_SLOTS.forEach(s => { if (state.deco[s.id] === id) delete state.deco[s.id]; });
+    if (id) state.deco[slotId] = id;
+    else delete state.deco[slotId];
+    save();
+    renderRoomDeco();
+  }
+
+  function closeDecoPicker() { $('pet-deco-overlay').classList.remove('on'); }
+
+  // 자리를 탭하면 보유 장식 고르기 판 — 못 받은 장식은 실루엣+? 로 보여 준다
+  function openDecoPicker(slotId) {
+    const slot = DECO_SLOTS.find(s => s.id === slotId);
+    if (!slot) return;
+    sfxTap();
+    $('pet-deco-title').textContent = '🛋️ ' + ZONE_NAME[slot.zone] + ' 꾸미기';
+    const grid = $('pet-deco-grid');
+    grid.innerHTML = '';
+    if (state.deco[slotId]) { // 지금 놓인 장식 빼기
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pet-deco-cell';
+      b.innerHTML = '<span class="pd-icon">🚫</span><span class="pd-name">빼기</span>';
+      b.addEventListener('click', () => {
+        sfxTap();
+        placeDeco(slotId, null);
+        closeDecoPicker();
+        speak('깨끗하게 치웠어!');
+      });
+      grid.appendChild(b);
+    }
+    DECOS.filter(d => d.zone === slot.zone).forEach(d => {
+      const owned = state.decoOwned.indexOf(d.id) >= 0;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pet-deco-cell' + (owned ? '' : ' lock') + (state.deco[slotId] === d.id ? ' on' : '');
+      b.setAttribute('aria-label', owned ? d.name : '아직 못 받은 장식');
+      b.innerHTML = '<span class="pd-icon">' + decoMarkup(d) + '</span>' +
+        '<span class="pd-name">' + (owned ? d.name : '???') + '</span>' +
+        (owned ? '' : '<span class="pd-q">?</span>');
+      b.addEventListener('click', () => {
+        if (!owned) { sfxTap(); speak('공부하면 선물로 받을 수 있어!'); return; }
+        sfxGift();
+        placeDeco(slotId, d.id);
+        closeDecoPicker();
+        speak(d.name + '! 방이 예뻐졌다!');
+      });
+      grid.appendChild(b);
+    });
+    // 다음 장식 선물 안내
+    const r = state.fed % GIFT_EVERY;
+    const toDeco = r < DECO_OFFSET ? DECO_OFFSET - r : GIFT_EVERY + DECO_OFFSET - r;
+    $('pet-deco-hint').textContent = state.decoOwned.length >= DECOS.length
+      ? '장식을 다 모았어요!'
+      : '🎁 다음 장식 선물까지 ' + toDeco;
+    $('pet-deco-overlay').classList.add('on');
+    speak('무엇을 놓을까?');
+  }
+
+  /* ─────────── 도감 친구들 (미니 펫) + 간식 조르기 ─────────── */
+  let minis = [];          // [{ sp, name, av, el }]
+  let begMini = null;      // 지금 간식을 조르는 친구
+  let begTimer = null;
+
+  // 방을 열 때마다 도감의 친구들을 새로 배치한다 (종 중복 제거, 6자리 넘으면 매번 랜덤으로 놀러 나옴)
+  function buildMinis() {
+    const box = $('pet-minis');
+    if (!box) return;
+    endBeg();
+    minis.forEach(m => { if (m.av) m.av.destroy(); });
+    minis = [];
+    box.innerHTML = '';
+    const seen = {};
+    const friends = [];
+    for (let i = state.collection.length - 1; i >= 0; i--) { // 최근에 다 키운 이름을 쓴다
+      const c = state.collection[i];
+      if (!c || seen[c.sp] || !spOf(c.sp)) continue;
+      seen[c.sp] = 1;
+      friends.push({ sp: c.sp, name: c.name || spOf(c.sp).def });
+    }
+    if (friends.length > MINI_SPOTS.length) { // 자리보다 많으면 섞어서 — 열 때마다 다른 친구가 나온다
+      for (let i = friends.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = friends[i]; friends[i] = friends[j]; friends[j] = t;
+      }
+    }
+    friends.slice(0, MINI_SPOTS.length).forEach((f, i) => {
+      const spot = MINI_SPOTS[i];
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'pet-mini';
+      el.style.left = spot.l + '%';
+      el.style.bottom = spot.b + '%';
+      el.style.width = spot.w + '%';
+      el.setAttribute('aria-label', f.name);
+      el.innerHTML = '<span class="pet-beg-bubble" hidden>🍪 간식 줘~</span>' +
+        (window.PetAvatar ? '<span class="pet-mini-svg"></span>'
+          : '<span class="pet-mini-e">' + spOf(f.sp).e + '</span>'); // SVG 모듈이 없으면 이모지 안전망
+      let mav = null;
+      if (window.PetAvatar) {
+        mav = PetAvatar.create(el.querySelector('.pet-mini-svg'));
+        mav.stopIdle(); // 잔동작은 방이 열려 있는 동안만 (open/close에서 켜고 끈다)
+        mav.render({ species: f.sp, stage: 2 });
+      }
+      const m = { sp: f.sp, name: f.name, av: mav, el };
+      el.addEventListener('click', () => miniTap(m));
+      minis.push(m);
+      box.appendChild(el);
+    });
+  }
+
+  function miniTap(m) {
+    if (begMini === m) { shareSnack(m); return; }
+    sfxTap();
+    if (m.av) m.av.happy();
+    speak(m.name + '! 안녕!');
+  }
+
+  // 친구가 간식을 조르기 시작 — 말풍선 + 목소리
+  function startBeg(m) {
+    if (!m) return;
+    begMini = m;
+    state.lastBeg = Date.now();
+    save();
+    const bub = m.el.querySelector('.pet-beg-bubble');
+    if (bub) bub.hidden = false;
+    m.el.classList.add('beg');
+    speak('나도 간식 줘~');
+  }
+  function endBeg() {
+    if (begTimer) { clearTimeout(begTimer); begTimer = null; }
+    if (!begMini) return;
+    const bub = begMini.el && begMini.el.querySelector('.pet-beg-bubble');
+    if (bub) bub.hidden = true;
+    if (begMini.el) begMini.el.classList.remove('beg');
+    begMini = null;
+  }
+  // 방을 열면 가끔 조른다 — 간식이 없으면 조르지 않는다 (좌절 금지)
+  function maybeBeg() {
+    if (begMini || begTimer || !minis.length || state.snacks <= 0) return;
+    const since = Date.now() - (state.lastBeg || 0);
+    if (Math.random() >= BEG_CHANCE && since < BEG_COOLDOWN) return;
+    begTimer = setTimeout(() => {
+      begTimer = null;
+      // 앞줄 친구(내 펫에 덜 가려지는 자리)가 조른다 — 아이가 탭하기 쉽게
+      const n = Math.min(minis.length, 4);
+      startBeg(minis[Math.floor(Math.random() * n)]);
+    }, 1500);
+  }
+
+  // 조르는 친구를 탭 → 간식 1개 나눠 주기 (성장점수와 무관, 보유 간식만 소모)
+  function shareSnack(m) {
+    if (state.snacks <= 0) { // 그 사이 간식이 떨어졌으면 부드럽게 안내만
+      endBeg();
+      speak('간식이 없네. 공부해서 간식을 모아 오자!');
+      return;
+    }
+    state.snacks--;
+    save();
+    endBeg();
+    sfxMunch();
+    if (m.av) m.av.happy();
+    render();
+    // 가끔 고마움 선물로 장식을 떨어뜨린다
+    const unowned = DECOS.filter(d => state.decoOwned.indexOf(d.id) < 0);
+    if (unowned.length && Math.random() < 0.35) {
+      const d = unowned[Math.floor(Math.random() * unowned.length)];
+      state.decoOwned.push(d.id);
+      save();
+      setTimeout(() => {
+        sfxGift();
+        toast('💝 ' + m.name + '의 고마움 선물! ' + d.e + ' ' + d.name + '!');
+        speak('고마워! 이거 선물이야! ' + d.name + '!');
+        render();
+      }, 700);
+    } else {
+      speak('냠냠! 고마워!');
+    }
+  }
+
   function open() {
     if (!mounted) return;
     sfxTap();
+    buildMinis();
     $('pet-overlay').classList.add('on');
     render();
     if (av) av.startIdle();
+    minis.forEach(m => { if (m.av) m.av.startIdle(); }); // 잔동작은 방이 열려 있을 때만
     speak(state.species ? petName() + '가 기다리고 있어요!' : '알이 콕콕! 먹이를 주면 태어날 거예요!');
+    maybeBeg();
   }
   function close() {
     $('pet-overlay').classList.remove('on');
     if (av) av.stopIdle();
+    minis.forEach(m => { if (m.av) m.av.stopIdle(); });
+    endBeg();
     if (window.speechSynthesis) speechSynthesis.cancel();
   }
 
@@ -358,6 +674,20 @@ window.Pet = (() => {
       sfxGift();
       toast('🎁 선물! ' + a.e + ' ' + a.name + '을 받았어요!');
       speak('선물이 왔어요! ' + a.name + '!');
+      render();
+    }, 900);
+  }
+
+  function maybeDecoGift() { // 호출부에서 fed % 8 === 4 일 때만 부른다 (꾸미기 선물과 번갈아)
+    const unowned = DECOS.filter(d => state.decoOwned.indexOf(d.id) < 0);
+    if (!unowned.length) return;
+    const d = unowned[Math.floor(Math.random() * unowned.length)];
+    state.decoOwned.push(d.id);
+    save();
+    setTimeout(() => {
+      sfxGift();
+      toast('🎁 방 꾸미기 선물! ' + d.e + ' ' + d.name + '!');
+      speak('방 꾸미기 선물이 왔어요! ' + d.name + '! 방을 꾸며 보자!');
       render();
     }, 900);
   }
@@ -421,6 +751,7 @@ window.Pet = (() => {
       };
     }
     if (state.accOwned.length < ACCS.length && state.fed % GIFT_EVERY === 0) maybeGift();
+    if (state.fed % GIFT_EVERY === DECO_OFFSET) maybeDecoGift(); // 장식 선물 (4·12·20…번째)
 
     // 연출: 먹이가 날아가 입으로 쏙 → 오물오물 → 다음 연출. 연달아 누르면 연출은 생략(상태는 이미 반영됨).
     // after는 슬롯 하나에만 담는다 — 연타 시 최신(성장·부화) 연출이 남고,
@@ -548,6 +879,14 @@ window.Pet = (() => {
     $('pet-book-overlay').addEventListener('click', ev => {
       if (ev.target.id === 'pet-book-overlay') $('pet-book-overlay').classList.remove('on');
     });
+    // 방 꾸미기 — 자리를 탭하면 고르기 판
+    document.querySelectorAll('#pet-room .pet-deco-slot').forEach(el => {
+      el.addEventListener('click', () => openDecoPicker(el.getAttribute('data-slot')));
+    });
+    $('pet-deco-close').addEventListener('click', closeDecoPicker);
+    $('pet-deco-overlay').addEventListener('click', ev => {
+      if (ev.target.id === 'pet-deco-overlay') closeDecoPicker();
+    });
     render();
   }
 
@@ -559,11 +898,21 @@ window.Pet = (() => {
     awardSnack(n) { award('snack', n || 1); },
     awardMeal(n) { award('meal', n || 1); },
     open,
+    // 종단 테스트용 — 도감 친구 하나가 간식을 조르게 한다 (원래는 방을 열 때 확률)
+    forceBeg() {
+      if (!minis.length) return false;
+      endBeg();
+      startBeg(minis[0]);
+      return true;
+    },
     // 종단 테스트용
     state: () => ({
       g: state.g, meals: state.meals, snacks: state.snacks,
       species: state.species, name: petName(), fed: state.fed,
       stage: stageName(), collection: state.collection.length, accOwned: state.accOwned.length,
+      decoOwned: state.decoOwned.length,
+      decoPlaced: Object.keys(state.deco).filter(k => state.deco[k]).length,
+      begging: !!begMini,
     }),
   };
 })();

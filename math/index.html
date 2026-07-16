@@ -116,6 +116,62 @@
   </div>
 </section>
 
+<!-- 수 세기 맞춤 -->
+<section class="screen" id="scr-count">
+  <header class="bar">
+    <button type="button" class="back" id="btn-count-back">◀</button>
+    <h2>🔢 수 세기</h2>
+    <span class="dots" id="count-dots"></span>
+  </header>
+  <div class="quiz-stage">
+    <div class="quiz-visual big" id="count-visual"></div>
+    <div class="quiz-choices" id="count-choices"></div>
+    <button type="button" class="bigbtn primary big-next" id="btn-cnext" hidden>알겠어! 다음 ▶</button>
+  </div>
+</section>
+
+<!-- 숫자표 빈칸 채우기 -->
+<section class="screen" id="scr-chart">
+  <header class="bar">
+    <button type="button" class="back" id="btn-chart-back">◀</button>
+    <h2>💯 숫자표 채우기</h2>
+    <span class="page-count" id="chart-left">빈칸 0</span>
+  </header>
+  <div class="chart-stage">
+    <div class="chart-grid" id="chart-grid"></div>
+    <div class="quiz-choices chart-choices" id="chart-choices" hidden></div>
+  </div>
+</section>
+
+<!-- 패턴 이어가기 -->
+<section class="screen" id="scr-pattern">
+  <header class="bar">
+    <button type="button" class="back" id="btn-pattern-back">◀</button>
+    <h2>🚂 패턴 이어가기</h2>
+    <span class="dots" id="pattern-dots"></span>
+  </header>
+  <div class="pattern-stage">
+    <div class="train-wrap">
+      <div class="train" id="train"></div>
+    </div>
+    <button type="button" class="bigbtn" id="btn-pread">🔊 다시 듣기</button>
+    <div class="quiz-choices pattern-choices" id="pattern-choices"></div>
+    <button type="button" class="bigbtn primary big-next" id="btn-pnext" hidden>알겠어! 다음 ▶</button>
+  </div>
+</section>
+
+<!-- 점 잇기 -->
+<section class="screen" id="scr-dots">
+  <header class="bar">
+    <button type="button" class="back" id="btn-dots-back">◀</button>
+    <h2 id="dots-title">✨ 점 잇기</h2>
+    <span class="page-count" id="dots-count">0 / 0</span>
+  </header>
+  <div class="dots-stage">
+    <svg id="dots-svg" viewBox="-9 -9 118 118" aria-label="점 잇기 그림판"></svg>
+  </div>
+</section>
+
 <!-- 보상 오버레이 -->
 <div class="reward" id="reward">
   <div class="reward-card">
@@ -130,6 +186,7 @@
 
 <script src="../shared/profile.js"></script>
 <script src="js/data.js"></script>
+<script src="js/dots.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/ink.js"></script>
