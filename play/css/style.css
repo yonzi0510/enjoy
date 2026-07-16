@@ -1182,6 +1182,95 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   margin-bottom: 4px;
 }
 
+/* ═══════════ 가로 모드 우선 (태블릿 가로가 기본 사용 환경) ═══════════
+ * DESIGN.md "가로모드 우선": 세로로 쌓인 화면은 2단(좌 주 콘텐츠, 우 조작·트레이)로,
+ * 씬 화면은 흰 여백(레터박스) 없이 씬이 세로 공간을 꽉 쓰게 다듬는다.
+ * HTML은 그대로 두고 CSS 재배치만 한다 (선례: shared/pet.css 끝부분). 세로모드는 무변경. */
+@media (orientation: landscape) {
+  /* 모드 선택 오버레이: 숨은그림·다른그림 두 묶음을 가로 2단으로 — 카드가 낮고 넓어진다 */
+  #mode-overlay .mode-card { width: min(880px, 94vw); }
+  .mode-sections { flex-direction: row; }
+  .mode-section { flex: 1; min-width: 0; }
+
+  /* 숨은그림: 씬(좌) + 찾기 트레이(우, 2열) 2단 — 씬 높이가 화면을 꽉 채운다.
+   * flex-basis = (화면높이 - 헤더·여백) × 3/2 : 씬(viewBox 1200×800)이 흰 레터박스 없이
+   * 세로에 꼭 맞는 너비. 화면이 더 좁으면 shrink로 줄고 aspect-ratio가 높이를 따라간다. */
+  #hidden-layout { flex-direction: row; justify-content: center; align-items: center; }
+  #hidden-scene {
+    flex: 0 1 calc((100vh - clamp(90px, 18vmin, 130px)) * 1.5);
+    aspect-ratio: 3 / 2;
+    height: auto;
+    min-height: 0;
+  }
+  .find-tray {
+    flex: 0 0 auto;
+    /* 트레이 아이템 2개 + 사이 gap + 좌우 padding = 정확히 2열 폭 (최대 8개 → 4줄) */
+    width: calc(clamp(52px, 9vmin, 84px) * 2 + clamp(6px, 1.4vmin, 14px) + clamp(6px, 1.2vmin, 12px) * 2);
+    align-content: center;
+    max-height: 100%;
+  }
+
+  /* 다른그림: 두 판을 씬 비율(3:2) 그대로 — 판 안쪽 위아래 흰 여백을 없앤다 */
+  .diff-panels { align-items: center; justify-content: center; }
+  .diff-panel {
+    flex: 0 1 calc((100vh - clamp(140px, 28vmin, 200px)) * 1.5);
+    aspect-ratio: 3 / 2;
+    height: auto;
+  }
+
+  /* 짝꿍 카드: 칸 높이(1fr)에 맞춰 카드가 줄어들어 판 위아래 잘림이 없다 */
+  .mem-board { grid-auto-rows: minmax(0, 1fr); }
+  .mem-card {
+    width: auto;
+    height: 100%;
+    max-height: calc(clamp(96px, 22vmin, 170px) * 4 / 3); /* 기존 최대 크기 유지 (3:4) */
+    max-width: 100%;
+  }
+}
+
+/* 낮은 가로 화면(폰 가로): 세로 공간이 귀하다 — 2단 재배치로 스크롤·잘림 없이 다 보이게 */
+@media (orientation: landscape) and (max-height: 480px) {
+  /* 글자 찾기: 판(좌) + 찾아라 표적·진행 점(우) 2단 */
+  .letters-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "board target"
+      "board progress";
+    align-items: center;
+    justify-items: center;
+  }
+  #letters-board { grid-area: board; align-self: stretch; justify-self: stretch; }
+  .letters-target-bar {
+    grid-area: target;
+    flex-direction: column;
+    gap: clamp(4px, 1vmin, 10px);
+    padding: clamp(8px, 1.8vmin, 14px) clamp(12px, 2.4vmin, 20px);
+  }
+  #letters-progress { grid-area: progress; }
+
+  /* 짝꿍 카드 3단계(12장): 4×3 대신 6×2 — 카드가 크고 잘리지 않는다 */
+  .mem-board[data-level="3"] { grid-template-columns: repeat(6, 1fr); }
+
+  /* 완료 카드: 제목·별·버튼(좌) + 새 스티커(우) 2단 — 스크롤 없이 한눈에 */
+  .complete-card {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      "title reveal"
+      "stars reveal"
+      "btns  reveal";
+    align-items: center;
+    column-gap: clamp(14px, 3vmin, 28px);
+    padding: clamp(14px, 3vmin, 24px) clamp(20px, 4vmin, 36px);
+  }
+  .complete-title { grid-area: title; }
+  .complete-stars { grid-area: stars; margin: clamp(6px, 1.4vmin, 12px) 0; }
+  .sticker-reveal { grid-area: reveal; margin: 0; }
+  .complete-btns { grid-area: btns; margin-top: clamp(6px, 1.4vmin, 12px); }
+}
+
 /* ─────────── 모션 줄이기 설정 존중 ─────────── */
 @media (prefers-reduced-motion: reduce) {
   .theme-card, .letters-banner, .stickerplay-cta, .sticker-slot,
