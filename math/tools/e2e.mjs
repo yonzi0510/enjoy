@@ -64,9 +64,9 @@ page.on('pageerror', e => consoleErrors.push(String(e)));
 
 await page.goto(BASE);
 
-await check('홈: 모드 카드 5개', async () => {
+await check('홈: 모드 카드 6개', async () => {
   await page.waitForSelector('#scr-home.on');
-  expect(await page.locator('#menu .menu-card').count() === 5, '카드 수');
+  expect(await page.locator('#menu .menu-card').count() === 6, '카드 수');
 });
 
 await check('따라쓰기: 묶음 10개 → 1 쓰기 진입', async () => {
@@ -114,14 +114,16 @@ await check('그림 덧셈: 단계 3개 → 오답은 벌점 없이 다시', asy
   await page.locator('#levels-list .item-main').first().click();
   await page.waitForSelector('#scr-quiz.on');
   expect(!(await page.locator('#quiz-visual').isHidden()), '그림 셈은 그림이 보여야 함');
+  expect(await page.locator('#quiz-expr').isHidden(), '그림 셈은 풀 때 식이 숨어야 함');
   await clickAnswer(page, false); // 오답
   let d = await page.evaluate(() => App.debug());
   expect(d.qIdx === 0, '오답인데 넘어감');
 });
 
-await check('정답 → 식이 채워지고 그림을 같이 세는 이해 단계', async () => {
+await check('정답 → 산수식이 짠! 나타나고 그림을 같이 세는 이해 단계', async () => {
   await clickAnswer(page, true);
   await page.waitForSelector('#btn-qnext:not([hidden])'); // 저절로 안 넘어가고 ▶ 를 기다린다
+  expect(!(await page.locator('#quiz-expr').isHidden()), '정답 후 식이 나타나야 함');
   const filled = await page.evaluate(() => ({
     what: +document.querySelector('#quiz-expr .q-what').textContent,
     ans: App.debug().answer,
@@ -175,6 +177,45 @@ await check('새로고침 후 진행도 유지', async () => {
   expect(t.includes('1 / 100'), '따라쓴 숫자: ' + t);
   const a = await page.locator('.menu-card.c-addv .mc-prog').textContent();
   expect(a.includes('1판'), '그림 덧셈 판 수: ' + a);
+});
+
+await check('징검다리: 단계 3개 → 틀린 돌은 머물고, 맞는 돌로 폴짝 → 식 공개', async () => {
+  await page.click('.menu-card.c-stones');
+  await page.waitForSelector('#scr-levels.on');
+  expect(await page.locator('#levels-list .item-main').count() === 3, '단계 수');
+  await page.locator('#levels-list .item-main').first().click(); // 앞으로 폴짝 (더하기)
+  await page.waitForSelector('#scr-stones.on');
+  expect(await page.locator('#stones-row .stone').count() === 10, '돌 10개');
+  const s0 = (await page.evaluate(() => App.debug())).stone;
+  expect(s0.target === s0.a + s0.b, '더하기 문제: ' + JSON.stringify(s0));
+  // 틀린 돌 (더하기는 target ≥ 2 라 1번 돌은 항상 오답)
+  const wrongN = s0.target === 1 ? 2 : 1;
+  await page.click('#stones-row .stone[data-n="' + wrongN + '"]');
+  expect(await page.locator('#stones-expr').isHidden(), '틀렸는데 식이 나옴');
+  // 맞는 돌 → 폴짝 이동 후 식 공개
+  await page.click('#stones-row .stone[data-n="' + s0.target + '"]');
+  await page.waitForSelector('#btn-snext:not([hidden])', { timeout: 6000 });
+  expect(!(await page.locator('#stones-expr').isHidden()), '식이 나타나야 함');
+  const exprTxt = await page.locator('#stones-expr').textContent();
+  expect(exprTxt.replace(/\s/g, '') === s0.a + '+' + s0.b + '=' + s0.target, '식 내용: ' + exprTxt);
+});
+
+await check('징검다리: 다섯 번 성공 → 보상 + 별 + 펫 간식', async () => {
+  const before = await page.evaluate(() => ({ stars: App.debug().stars, snacks: Pet.state().snacks }));
+  for (let q = 0; q < 4; q++) { // 첫 문제는 위에서 완료
+    await page.click('#btn-snext');
+    await page.waitForFunction(() => document.getElementById('btn-snext').hidden);
+    const s = (await page.evaluate(() => App.debug())).stone;
+    await page.click('#stones-row .stone[data-n="' + s.target + '"]');
+    await page.waitForSelector('#btn-snext:not([hidden])', { timeout: 6000 });
+  }
+  await page.click('#btn-snext'); // 마지막 → 보상
+  await page.waitForSelector('#reward.on', { timeout: 3000 });
+  const after = await page.evaluate(() => ({ stars: App.debug().stars, snacks: Pet.state().snacks }));
+  expect(after.stars === before.stars + 5, '별: ' + JSON.stringify({ before, after }));
+  expect(after.snacks === before.snacks + 1, '펫 간식: ' + JSON.stringify({ before, after }));
+  await page.click('#reward-close');
+  await page.waitForSelector('#scr-levels.on');
 });
 
 await check('콘솔 오류 0', async () => {
