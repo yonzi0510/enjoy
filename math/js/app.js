@@ -18,10 +18,17 @@ window.App = (() => {
   /* ─────────── 홈 ─────────── */
   const MODES = [
     { id: 'trace', icon: '✏️', name: '숫자 따라쓰기', desc: '1부터 100까지', cls: 'c-trace' },
+    { id: 'stones', icon: '🐸', name: '숫자 징검다리', desc: '폴짝폴짝 수 개념 익히기', cls: 'c-stones' },
     { id: 'add-visual', icon: '🍎', name: '그림 덧셈', desc: '그림을 세면서 배워요', cls: 'c-addv', mode: 'add', visual: true },
     { id: 'sub-visual', icon: '🍏', name: '그림 뺄셈', desc: '먹은 건 몇 개?', cls: 'c-subv', mode: 'sub', visual: true },
     { id: 'add', icon: '➕', name: '덧셈 문제', desc: '3 + 4 = ?', cls: 'c-add', mode: 'add', visual: false },
     { id: 'sub', icon: '➖', name: '뺄셈 문제', desc: '5 - 2 = ?', cls: 'c-sub', mode: 'sub', visual: false },
+  ];
+  // 징검다리 전용 단계 (돌 1~10, 작은 걸음 1~3칸)
+  const STONE_LEVELS = [
+    { id: 'add', name: '앞으로 폴짝', desc: '더하기 배우기', emoji: '➡️' },
+    { id: 'sub', name: '뒤로 폴짝', desc: '빼기 배우기', emoji: '⬅️' },
+    { id: 'mix', name: '섞어서 폴짝', desc: '더하기·빼기 함께', emoji: '🔀' },
   ];
   function renderHome() {
     $('home-stars').textContent = P.stars();
@@ -35,7 +42,7 @@ window.App = (() => {
       if (m.id === 'trace') {
         prog = '⭐ ' + P.tracedCount(1, 100) + ' / 100';
       } else {
-        const total = D.LEVELS.reduce((s, lv) => s + P.rounds(m.id + '-' + lv.id), 0);
+        const total = modeLevels(m).reduce((s, lv) => s + P.rounds(m.id + '-' + lv.id), 0);
         prog = total ? '🎮 ' + total + '판' : '처음이야!';
       }
       b.innerHTML =
@@ -52,6 +59,7 @@ window.App = (() => {
       menu.appendChild(b);
     });
   }
+  function modeLevels(modeDef) { return modeDef.id === 'stones' ? STONE_LEVELS : D.LEVELS; }
 
   /* ─────────── 숫자 따라쓰기: 묶음 목록 ─────────── */
   function openGroups() {
@@ -181,7 +189,7 @@ window.App = (() => {
     $('levels-title').textContent = modeDef.icon + ' ' + modeDef.name;
     const list = $('levels-list');
     list.innerHTML = '';
-    D.LEVELS.forEach(lv => {
+    modeLevels(modeDef).forEach(lv => {
       const n = P.rounds(modeDef.id + '-' + lv.id);
       const b = document.createElement('button');
       b.type = 'button';
@@ -194,7 +202,8 @@ window.App = (() => {
       b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
-        startRound(lv);
+        if (modeDef.id === 'stones') startStoneRound(lv);
+        else startRound(lv);
       });
       list.appendChild(b);
     });
@@ -238,12 +247,16 @@ window.App = (() => {
       dots.appendChild(d);
     }
 
-    // 식
+    // 식 — 그림 셈은 풀 때 식을 숨긴다 (아이가 그림 세기에 집중, 정답 후에 짠! 하고 연결)
     const op = modeDef.mode === 'add' ? '+' : '−';
-    $('quiz-expr').innerHTML =
+    const expr = $('quiz-expr');
+    expr.innerHTML =
       '<b>' + a + '</b> <span class="q-op">' + op + '</span> <b>' + b + '</b> <span class="q-op">=</span> <span class="q-what">?</span>';
+    expr.hidden = !!modeDef.visual;
+    expr.classList.remove('expr-pop');
 
-    // 그림 (그림 셈은 항상, 숫자 문제는 힌트 때만)
+    // 그림 (그림 셈은 항상·크게, 숫자 문제는 힌트 때만)
+    $('quiz-visual').classList.toggle('big', !!modeDef.visual);
     renderQuizVisual(modeDef.visual);
     $('btn-hint').hidden = modeDef.visual;
 
@@ -342,6 +355,11 @@ window.App = (() => {
       const what = document.querySelector('#quiz-expr .q-what');
       what.textContent = qz.ans;
       what.classList.add('q-ans');
+      const expr = $('quiz-expr');
+      if (expr.hidden) { // 그림 셈: 이제 산수식이 짠! 나타나며 "아하" 연결
+        expr.hidden = false;
+        expr.classList.add('expr-pop');
+      }
       renderQuizVisual(true);
       $('btn-hint').hidden = true;
       $('btn-qnext').hidden = false;
@@ -377,6 +395,130 @@ window.App = (() => {
       openLevels(qz.modeDef);
     });
     A.speak('와, 다섯 문제를 모두 맞혔어요! 정말 똑똑해요!');
+  }
+
+  /* ─────────── 숫자 징검다리 — 폴짝 이동으로 더하기·빼기 개념 익히기 ─────────── */
+  let st = null; // { level, qIdx, a, b, dir, target, lock, timers }
+
+  function stoneClearTimers() {
+    (st && st.timers || []).forEach(clearTimeout);
+    if (st) st.timers = [];
+  }
+  function placeFrog(n, hop) {
+    const stone = document.querySelector('#stones-row .stone[data-n="' + n + '"]');
+    const frog = $('frog');
+    if (!stone) return;
+    frog.style.left = (stone.offsetLeft + stone.offsetWidth / 2) + 'px';
+    if (hop) {
+      frog.classList.remove('hop');
+      void frog.offsetWidth;
+      frog.classList.add('hop');
+    }
+  }
+  function startStoneRound(level) {
+    st = { level, qIdx: 0, timers: [] };
+    showScreen('scr-stones');
+    // 돌 1~10 깔기
+    const row = $('stones-row');
+    row.innerHTML = '';
+    for (let n = 1; n <= 10; n++) {
+      const s = document.createElement('button');
+      s.type = 'button';
+      s.className = 'stone';
+      s.dataset.n = n;
+      s.textContent = n;
+      s.addEventListener('click', ev => { ev.preventDefault(); tapStone(n); });
+      row.appendChild(s);
+    }
+    nextStone();
+  }
+  function nextStone() {
+    stoneClearTimers();
+    st.lock = false;
+    $('stones-expr').hidden = true;
+    $('btn-snext').hidden = true;
+    document.querySelectorAll('#stones-row .stone').forEach(s => s.classList.remove('landed', 'start'));
+
+    // 진행 점
+    const dots = $('stones-dots');
+    dots.innerHTML = '';
+    for (let i = 0; i < D.ROUND; i++) {
+      const d = document.createElement('span');
+      d.className = 'dot' + (i < st.qIdx ? ' done' : i === st.qIdx ? ' on' : '');
+      dots.appendChild(d);
+    }
+
+    // 문제: 작은 걸음(1~3칸)으로 이동
+    const kind = st.level.id === 'mix' ? (rnd(2) ? 'add' : 'sub') : st.level.id;
+    st.dir = kind === 'add' ? 1 : -1;
+    if (kind === 'add') {
+      st.a = 1 + rnd(9);                       // 1~9
+      st.b = 1 + rnd(Math.min(3, 10 - st.a));  // 1~3, 10 넘지 않게
+    } else {
+      st.a = 2 + rnd(9);                       // 2~10
+      st.b = 1 + rnd(Math.min(3, st.a - 1));   // 1~3, 1 아래로 안 내려가게
+    }
+    st.target = st.a + st.dir * st.b;
+
+    const dirWord = st.dir > 0 ? '앞으로' : '뒤로';
+    $('stones-task').innerHTML =
+      '🐸 <b>' + st.a + '</b>번 돌에서 ' + dirWord + ' <b>' + st.b + '</b>칸 폴짝!';
+    document.querySelector('#stones-row .stone[data-n="' + st.a + '"]').classList.add('start');
+    requestAnimationFrame(() => placeFrog(st.a));
+    setTimeout(() => A.speak(
+      '개구리가 ' + st.a + '번 돌에 있어요. ' + dirWord + ' ' + st.b + '칸 뛰면 몇 번 돌일까? 도착할 돌을 눌러 봐!'), 350);
+  }
+  function tapStone(n) {
+    if (!st || st.lock) return;
+    if (n !== st.target) {
+      const s = document.querySelector('#stones-row .stone[data-n="' + n + '"]');
+      s.classList.remove('wiggle');
+      void s.offsetWidth;
+      s.classList.add('wiggle');
+      A.sfx.tap();
+      A.speak('다시! ' + st.a + '번 돌에서 ' + (st.dir > 0 ? '앞으로' : '뒤로') + ' ' + st.b + '칸이야!');
+      return;
+    }
+    // 정답 — 개구리가 한 칸씩 폴짝폴짝 이동하며 보여준다
+    st.lock = true;
+    A.sfx.good();
+    for (let i = 1; i <= st.b; i++) {
+      st.timers.push(setTimeout(() => {
+        const at = st.a + st.dir * i;
+        placeFrog(at, true);
+        A.sfx.pop();
+        A.speak(String(at)); // 지나는 돌 번호를 세어 준다
+      }, i * 650));
+    }
+    st.timers.push(setTimeout(() => {
+      document.querySelector('#stones-row .stone[data-n="' + st.target + '"]').classList.add('landed');
+      const op = st.dir > 0 ? '+' : '−';
+      const expr = $('stones-expr');
+      expr.innerHTML =
+        '<b>' + st.a + '</b> <span class="q-op">' + op + '</span> <b>' + st.b + '</b> <span class="q-op">=</span> <span class="q-what q-ans">' + st.target + '</span>';
+      expr.hidden = false;
+      expr.classList.remove('expr-pop');
+      void expr.offsetWidth;
+      expr.classList.add('expr-pop');
+      $('btn-snext').hidden = false;
+      A.sfx.fanfare();
+      A.speak(D.numName(st.a) + (st.dir > 0 ? ' 더하기 ' : ' 빼기 ') + D.numName(st.b) + '는 ' + D.numName(st.target) + '! ' +
+        st.a + '번 돌에서 ' + (st.dir > 0 ? '앞으로' : '뒤로') + ' ' + st.b + '칸 가면 ' + st.target + '번!');
+    }, st.b * 650 + 500));
+  }
+  function stoneNext() {
+    stoneClearTimers();
+    st.qIdx++;
+    if (st.qIdx < D.ROUND) { nextStone(); return; }
+    // 한 판 끝!
+    P.recordRound('stones-' + st.level.id);
+    P.addStar(D.ROUND);
+    if (window.Pet) Pet.awardSnack(1);
+    A.sfx.fanfare();
+    showReward('폴짝폴짝 다섯 번 모두 성공!', '한 판 더 🐸', () => startStoneRound(st.level), () => {
+      openLevels(MODES.find(m => m.id === 'stones'));
+    });
+    A.speak('와, 징검다리를 다 건넜어요! 정말 대단해요!');
   }
 
   /* ─────────── 보상 오버레이 ─────────── */
@@ -417,6 +559,18 @@ window.App = (() => {
     });
     $('btn-qnext').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); quizNext();
+    });
+    $('btn-stones-back').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); stoneClearTimers();
+      openLevels(MODES.find(m => m.id === 'stones'));
+    });
+    $('btn-snext').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); stoneNext();
+    });
+    window.addEventListener('resize', () => { // 화면이 돌아가면 개구리 자리 다시 맞추기
+      if (st && document.getElementById('scr-stones').classList.contains('on')) {
+        placeFrog(st.lock ? st.target : st.a);
+      }
     });
     $('btn-tprev').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); if (tr.idx > 0) openTracePage(tr.idx - 1);
@@ -470,6 +624,7 @@ window.App = (() => {
       answer: qz && qz.ans != null ? qz.ans : null,
       qIdx: qz ? qz.qIdx : null,
       hinted: qz ? !!qz.hinted : null,
+      stone: st ? { a: st.a, b: st.b, dir: st.dir, target: st.target, qIdx: st.qIdx } : null,
     };
   }
 
