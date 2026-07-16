@@ -17,6 +17,7 @@
 | `japanese/` | 🌸 일본어 놀이터 | 한글 놀이터와 같은 구성, 획순은 KanjiVG 변환(`js/strokes.js`) |
 | `practika/` | 🎙️ 프랙티카 놀이터 | 영·일·중 회화, 설계 배경은 `practika/PLAN.md` |
 | `write/` | ✍️ 글씨 놀이터 | 패드+펜슬 줄노트 필사, 펜 전용 입력(`js/ink.js`) |
+| `math/` | 🔢 산수 놀이터 | 숫자 따라쓰기 1~100 + 그림/숫자 덧셈·뺄셈 (`js/ink.js`는 write에서 복제) |
 | `color/` | (리다이렉트) | 픽셀 놀이터로 이동만 함 — 수정할 일 없음 |
 | `parent/` | 🔑 부모님 페이지 | PIN 게이트 뒤에서 하루 제한·앱 노출·마이크 허용을 설정하고 진행도 백업 |
 | `shared/` | 공용 모듈 | 목소리 설정(`voice-settings.js`) · 부모 설정(`parent-settings.js`) · 하루 시간 제한(`time-limit.js`) · 학습 펫(`pet.js`, 다마고치식 공용 펫) · 오프라인 SW 등록(`sw-register.js`, 루트 `sw.js`) |
@@ -37,7 +38,7 @@
   (선례: `shared/voice-settings.js`가 옛 `pixel-voice` 키를 이어받는 방식).
 - 사용 중인 키: `chatgi-playground-v1`·`chatgi-stickerboard-v1`·`chatgi-muted`(play),
   `english-playground-v1`, `pixel-playground-v1`·`pixel-muted`, `hangul-playground-v1`,
-  `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`,
+  `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`, `math-playground-v1`,
   `enjoy-voice-ko`·`enjoy-rate-factor`·`enjoy-timelimit-v1`·`enjoy-parent-v1`·`enjoy-profile`(공용),
   `enjoy-pet-v1`(학습 펫 — `Profile.key()` 적용, 아이별로 각자 키움).
   (`chatgi-timelimit-v1`은 예전 play 전용 시간제한 키 — `shared/time-limit.js`가 이어받는다.)
@@ -70,10 +71,11 @@ node hangul/tools/validate-data.js
 node japanese/tools/validate-data.js
 node practika/tools/validate-data.js
 node write/tools/validate-data.js
+node math/tools/validate-data.js
 
 # 2) e2e (저장소 루트에서 정적 서버를 띄운 뒤 실행)
 python3 -m http.server 8777 &
-node hangul/tools/e2e.mjs                 # japanese·write도 같은 포트
+node hangul/tools/e2e.mjs                 # japanese·write·math도 같은 포트
 BASE_URL=http://127.0.0.1:8777/practika/ node practika/tools/e2e.mjs   # 기본값은 8788 포트
 PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
 ```
