@@ -19,6 +19,9 @@ window.App = (() => {
   const MODES = [
     { id: 'trace', icon: '✏️', name: '숫자 따라쓰기', desc: '1부터 100까지', cls: 'c-trace' },
     { id: 'stones', icon: '🐸', name: '숫자 징검다리', desc: '폴짝폴짝 수 개념 익히기', cls: 'c-stones' },
+    { id: 'count', icon: '🔢', name: '수 세기', desc: '몇 개인지 맞혀요', cls: 'c-count' },
+    { id: 'chart', icon: '💯', name: '숫자표 채우기', desc: '빈칸에 쏙!', cls: 'c-chart' },
+    { id: 'dots', icon: '✨', name: '점 잇기', desc: '순서대로 콕콕', cls: 'c-dots' },
     { id: 'add-visual', icon: '🍎', name: '그림 덧셈', desc: '그림을 세면서 배워요', cls: 'c-addv', mode: 'add', visual: true },
     { id: 'sub-visual', icon: '🍏', name: '그림 뺄셈', desc: '먹은 건 몇 개?', cls: 'c-subv', mode: 'sub', visual: true },
     { id: 'add', icon: '➕', name: '덧셈 문제', desc: '3 + 4 = ?', cls: 'c-add', mode: 'add', visual: false },
@@ -41,6 +44,10 @@ window.App = (() => {
       let prog;
       if (m.id === 'trace') {
         prog = '⭐ ' + P.tracedCount(1, 100) + ' / 100';
+      } else if (m.id === 'dots') {
+        const pics = window.MathDots.PICTURES;
+        const done = pics.filter(p => P.rounds('dots-' + p.id)).length;
+        prog = done ? '🎨 ' + done + ' / ' + pics.length : '처음이야!';
       } else {
         const total = modeLevels(m).reduce((s, lv) => s + P.rounds(m.id + '-' + lv.id), 0);
         prog = total ? '🎮 ' + total + '판' : '처음이야!';
@@ -59,7 +66,15 @@ window.App = (() => {
       menu.appendChild(b);
     });
   }
-  function modeLevels(modeDef) { return modeDef.id === 'stones' ? STONE_LEVELS : D.LEVELS; }
+  function modeLevels(modeDef) {
+    if (modeDef.id === 'stones') return STONE_LEVELS;
+    if (modeDef.id === 'count') return D.COUNT_LEVELS;
+    if (modeDef.id === 'chart') return D.CHART_LEVELS;
+    if (modeDef.id === 'dots') { // 점 잇기는 단계 대신 그림 목록
+      return window.MathDots.PICTURES.map(p => ({ id: p.id, name: p.name, desc: '점 ' + p.dots.length + '개', emoji: p.emoji }));
+    }
+    return D.LEVELS;
+  }
 
   /* ─────────── 숫자 따라쓰기: 묶음 목록 ─────────── */
   function openGroups() {
@@ -198,11 +213,14 @@ window.App = (() => {
         '<span class="it-emoji">' + lv.emoji + '</span>' +
         '<span class="it-texts"><span class="it-name">' + lv.name + '</span>' +
         '<span class="it-kind">' + lv.desc + '</span></span>' +
-        '<span class="it-prog">' + (n ? '🎮 ' + n + '판' : '') + '</span>';
+        '<span class="it-prog">' + (modeDef.id === 'dots' ? (n ? '🏅' : '') : (n ? '🎮 ' + n + '판' : '')) + '</span>';
       b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
         if (modeDef.id === 'stones') startStoneRound(lv);
+        else if (modeDef.id === 'count') startCountRound(lv);
+        else if (modeDef.id === 'chart') startChart(lv);
+        else if (modeDef.id === 'dots') startDots(window.MathDots.PICTURES.find(p => p.id === lv.id));
         else startRound(lv);
       });
       list.appendChild(b);
@@ -521,6 +539,305 @@ window.App = (() => {
     A.speak('와, 징검다리를 다 건넜어요! 정말 대단해요!');
   }
 
+  /* ─────────── 수 세기 맞춤 — 몇 개인지 고르고, 하나씩 탭하며 같이 센다 ─────────── */
+  let ct = null; // { level, qIdx, n, obj, lock, counted }
+
+  function startCountRound(level) {
+    ct = { level, qIdx: 0 };
+    showScreen('scr-count');
+    nextCount();
+  }
+  function nextCount() {
+    ct.lock = false;
+    ct.counted = 0;
+    $('btn-cnext').hidden = true;
+    const max = ct.level.max;
+    ct.n = 1 + rnd(max);
+    ct.obj = D.OBJECTS[rnd(D.OBJECTS.length)];
+
+    // 진행 점
+    const dots = $('count-dots');
+    dots.innerHTML = '';
+    for (let i = 0; i < D.ROUND; i++) {
+      const d = document.createElement('span');
+      d.className = 'dot' + (i < ct.qIdx ? ' done' : i === ct.qIdx ? ' on' : '');
+      dots.appendChild(d);
+    }
+
+    // 물건들 — 정답 후 하나씩 탭하면 번호 배지가 붙으며 같이 센다
+    const box = $('count-visual');
+    box.innerHTML = '';
+    for (let i = 0; i < ct.n; i++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'count-obj count-tap';
+      b.textContent = ct.obj;
+      b.addEventListener('click', ev => { ev.preventDefault(); tapCountObj(b); });
+      box.appendChild(b);
+    }
+
+    // 보기 3개 (1~max 안에서, 정답 포함)
+    const pool = [];
+    for (let v = 1; v <= max; v++) if (v !== ct.n) pool.push(v);
+    pool.sort(() => Math.random() - 0.5);
+    const choices = [ct.n, pool[0], pool[1]].sort(() => Math.random() - 0.5);
+    const cbox = $('count-choices');
+    cbox.innerHTML = '';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'choice-btn';
+      btn.textContent = c;
+      btn.addEventListener('click', ev => { ev.preventDefault(); answerCount(btn, c); });
+      cbox.appendChild(btn);
+    });
+    setTimeout(() => A.speak('모두 몇 개일까? 세어 보고 숫자를 눌러 봐!'), 300);
+  }
+  function tapCountObj(el) {
+    if (!ct) return;
+    if (!ct.lock) { // 아직 푸는 중 — 통통 튀며 세는 걸 도와준다 (판정 없음)
+      A.sfx.pop();
+      el.classList.remove('boing');
+      void el.offsetWidth;
+      el.classList.add('boing');
+      return;
+    }
+    if (el.classList.contains('counted')) return;
+    ct.counted++;
+    el.classList.add('counted');
+    el.insertAdjacentHTML('beforeend', '<b class="cnt">' + ct.counted + '</b>');
+    A.sfx.pop();
+    if (ct.counted >= ct.n) {
+      A.speak(countWord(ct.counted) + '! 모두 ' + ct.n + '개! 참 잘했어요!');
+      wiggle('btn-cnext');
+    } else {
+      A.speak(countWord(ct.counted));
+    }
+  }
+  function answerCount(btn, c) {
+    if (ct.lock) return;
+    if (c === ct.n) {
+      ct.lock = true;
+      btn.classList.add('ok');
+      A.sfx.good();
+      $('btn-cnext').hidden = false;
+      A.speak('정답! ' + ct.n + '개! 하나씩 눌러서 같이 세어 볼까?');
+    } else { // 오답도 벌점 없이 부드럽게 다시
+      btn.classList.add('no');
+      setTimeout(() => btn.classList.remove('no'), 500);
+      A.sfx.tap();
+      A.speak('다시 한번 세어 볼까? 물건을 눌러 봐도 돼!');
+    }
+  }
+  function countNext() {
+    $('btn-cnext').hidden = true;
+    ct.qIdx++;
+    if (ct.qIdx < D.ROUND) { nextCount(); return; }
+    // 한 판 끝!
+    P.recordRound('count-' + ct.level.id);
+    P.addStar(D.ROUND);
+    if (window.Pet) Pet.awardSnack(1);
+    A.sfx.fanfare();
+    showReward('숫자 세기 다섯 번 모두 성공!', '한 판 더 🎮', () => startCountRound(ct.level), () => {
+      openLevels(MODES.find(m => m.id === 'count'));
+    });
+    A.speak('와, 수 세기 박사님이네! 정말 잘했어요!');
+  }
+
+  /* ─────────── 숫자표 빈칸 채우기 — 빈칸을 골라 알맞은 숫자를 넣는다 ─────────── */
+  let ch = null; // { level, cells, blankNs, sel, left, timer }
+
+  function startChart(level) {
+    if (ch && ch.timer) clearTimeout(ch.timer);
+    ch = { level, cells: {}, blankNs: [], sel: null, left: level.blanks, timer: null };
+    showScreen('scr-chart');
+    const total = level.to - level.from + 1;
+    const idxs = new Set();
+    while (idxs.size < level.blanks) idxs.add(rnd(total));
+    const grid = $('chart-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const n = level.from + i;
+      if (idxs.has(i)) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chart-cell blank';
+        b.dataset.n = n;
+        b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); selectBlank(n); });
+        grid.appendChild(b);
+        ch.cells[n] = b;
+        ch.blankNs.push(n);
+      } else {
+        const s = document.createElement('span');
+        s.className = 'chart-cell' + (n % 10 === 0 ? ' ten' : ''); // 십의 자리는 주황으로 (십묶음 감각)
+        s.textContent = n;
+        grid.appendChild(s);
+      }
+    }
+    $('chart-left').textContent = '빈칸 ' + ch.left;
+    selectBlank(ch.blankNs[0]);
+    setTimeout(() => A.speak('숫자표에 빈칸이 있어요! 반짝이는 칸에 올 숫자를 찾아 줘!'), 300);
+  }
+  function selectBlank(n) {
+    if (!ch || !ch.cells[n] || ch.cells[n].classList.contains('filled')) return;
+    ch.sel = n;
+    ch.blankNs.forEach(m => ch.cells[m].classList.toggle('sel', m === n));
+    renderChartChoices(n);
+  }
+  function renderChartChoices(n) {
+    const set = new Set([n]);
+    while (set.size < 3) {
+      const d = n + (rnd(9) - 4); // 앞뒤 가까운 숫자로 보기 구성
+      if (d >= 1 && d <= 100 && d !== n) set.add(d);
+    }
+    const choices = [...set].sort(() => Math.random() - 0.5);
+    const box = $('chart-choices');
+    box.hidden = false;
+    box.innerHTML = '';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'choice-btn';
+      btn.textContent = c;
+      btn.addEventListener('click', ev => { ev.preventDefault(); answerChart(btn, c); });
+      box.appendChild(btn);
+    });
+  }
+  function answerChart(btn, c) {
+    if (!ch || ch.sel == null) return;
+    if (c !== ch.sel) { // 오답 — 벌점 없이 다시
+      btn.classList.add('no');
+      setTimeout(() => btn.classList.remove('no'), 500);
+      A.sfx.tap();
+      A.speak('음, 다시 볼까? 앞뒤 숫자를 보면 알 수 있어!');
+      return;
+    }
+    // 정답 — 칸이 채워지며 반짝!
+    const cell = ch.cells[ch.sel];
+    cell.textContent = c;
+    cell.classList.remove('blank', 'sel');
+    cell.classList.add('filled');
+    cell.disabled = true;
+    ch.sel = null;
+    ch.left--;
+    $('chart-left').textContent = '빈칸 ' + ch.left;
+    $('chart-choices').hidden = true;
+    A.sfx.good();
+    if (ch.left > 0) {
+      A.speak(c + '! 맞았어요!');
+      const next = ch.blankNs.find(m => !ch.cells[m].classList.contains('filled'));
+      ch.timer = setTimeout(() => selectBlank(next), 700); // 다음 빈칸을 이어서 짚어 준다
+      return;
+    }
+    // 표 완성!
+    P.recordRound('chart-' + ch.level.id);
+    P.addStar(ch.level.blanks);
+    if (window.Pet) Pet.awardSnack(1);
+    A.sfx.fanfare();
+    showReward('숫자표를 다 채웠어요!', '한 판 더 💯', () => startChart(ch.level), () => {
+      openLevels(MODES.find(m => m.id === 'chart'));
+    });
+    A.speak('와, 숫자표를 다 채웠어요! 정말 대단해요!');
+  }
+
+  /* ─────────── 점 잇기 — 1부터 순서대로 이으면 그림이 짠! ─────────── */
+  let dt = null; // { pic, next, lock, timer }
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  // 받침 유무에 따라 '이야/야' — TTS가 숫자를 한자어로 읽는 것에 맞춘다 (오→야, 십→이야)
+  function iya(n) {
+    const name = D.numName(n);
+    const code = name.charCodeAt(name.length - 1) - 0xAC00;
+    return code % 28 ? '이야' : '야';
+  }
+  function startDots(pic) {
+    if (dt && dt.timer) clearTimeout(dt.timer);
+    dt = { pic, next: 1, lock: false, timer: null };
+    $('dots-title').textContent = pic.emoji + ' ' + pic.name + ' 점 잇기';
+    showScreen('scr-dots');
+    const svg = $('dots-svg');
+    svg.innerHTML = '';
+    // 완성되면 색이 채워질 도형 + 이어지는 선 (점들 아래에 깔린다)
+    const fill = document.createElementNS(SVG_NS, 'polygon');
+    fill.setAttribute('points', pic.dots.map(p => p.join(',')).join(' '));
+    fill.setAttribute('class', 'dots-fill');
+    fill.setAttribute('fill', pic.color);
+    svg.appendChild(fill);
+    const line = document.createElementNS(SVG_NS, 'polyline');
+    line.setAttribute('points', '');
+    line.setAttribute('class', 'dots-line');
+    line.setAttribute('stroke', pic.color);
+    svg.appendChild(line);
+    // 번호표는 그림 무게중심에서 바깥쪽으로 밀어 붙인다 (선과 겹치지 않게)
+    const cx = pic.dots.reduce((s, p) => s + p[0], 0) / pic.dots.length;
+    const cy = pic.dots.reduce((s, p) => s + p[1], 0) / pic.dots.length;
+    pic.dots.forEach(([x, y], i) => {
+      const g = document.createElementNS(SVG_NS, 'g');
+      g.setAttribute('class', 'dot-g' + (i === 0 ? ' next' : ''));
+      g.setAttribute('data-n', i + 1);
+      let dx = x - cx, dy = y - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      dx = dx / len * 8; dy = dy / len * 8;
+      const hit = document.createElementNS(SVG_NS, 'circle'); // 큰 투명 터치 영역
+      hit.setAttribute('class', 'dot-hit');
+      hit.setAttribute('cx', x); hit.setAttribute('cy', y); hit.setAttribute('r', 6.5);
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('class', 'dot-c');
+      c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', 3);
+      const t = document.createElementNS(SVG_NS, 'text');
+      t.setAttribute('class', 'dot-num');
+      t.setAttribute('x', x + dx); t.setAttribute('y', y + dy + 2.4);
+      t.textContent = i + 1;
+      g.appendChild(hit); g.appendChild(c); g.appendChild(t);
+      g.addEventListener('click', ev => { ev.preventDefault(); tapDot(i + 1); });
+      svg.appendChild(g);
+    });
+    $('dots-count').textContent = '0 / ' + pic.dots.length;
+    setTimeout(() => A.speak('1부터 순서대로 점을 이어 봐! 무슨 그림이 나올까?'), 350);
+  }
+  function tapDot(n) {
+    if (!dt || dt.lock) return;
+    const svg = $('dots-svg');
+    const g = svg.querySelector('.dot-g[data-n="' + n + '"]');
+    if (n !== dt.next) { // 틀린 점 — 부드럽게 흔들고 다음 번호를 알려준다
+      g.classList.remove('shake');
+      void g.getBoundingClientRect();
+      g.classList.add('shake');
+      A.sfx.tap();
+      A.speak('다음은 ' + dt.next + iya(dt.next) + '!');
+      return;
+    }
+    // 맞는 점 — 선을 잇는다
+    const [x, y] = dt.pic.dots[n - 1];
+    const line = svg.querySelector('.dots-line');
+    line.setAttribute('points', (line.getAttribute('points') + ' ' + x + ',' + y).trim());
+    g.classList.remove('next');
+    g.classList.add('done');
+    A.sfx.pop();
+    dt.next++;
+    $('dots-count').textContent = n + ' / ' + dt.pic.dots.length;
+    if (dt.next <= dt.pic.dots.length) {
+      svg.querySelector('.dot-g[data-n="' + dt.next + '"]').classList.add('next');
+      A.speak(String(n)); // 점 번호를 세어 준다
+      return;
+    }
+    // 마지막 점! 처음 점과 이어서 그림이 색으로 채워진다
+    dt.lock = true;
+    const [x0, y0] = dt.pic.dots[0];
+    line.setAttribute('points', line.getAttribute('points') + ' ' + x0 + ',' + y0);
+    svg.querySelector('.dots-fill').classList.add('on');
+    A.sfx.fanfare();
+    P.recordRound('dots-' + dt.pic.id);
+    P.addStar(2);
+    if (window.Pet) Pet.awardSnack(1);
+    A.speak('우와! ' + dt.pic.name + ' 완성! 참 잘했어요!');
+    dt.timer = setTimeout(() => { // 채워진 그림을 잠깐 감상한 뒤 보상
+      showReward(dt.pic.emoji + ' ' + dt.pic.name + ' 완성!', '다른 그림 🎨', () => {
+        openLevels(MODES.find(m => m.id === 'dots'));
+      });
+    }, 1400);
+  }
+
   /* ─────────── 보상 오버레이 ─────────── */
   let rewardNextFn = null, rewardCloseFn = null;
   function showReward(praise, nextLabel, onNext, onClose) {
@@ -566,6 +883,20 @@ window.App = (() => {
     });
     $('btn-snext').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); stoneNext();
+    });
+    $('btn-count-back').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); openLevels(MODES.find(m => m.id === 'count'));
+    });
+    $('btn-cnext').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); countNext(); });
+    $('btn-chart-back').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      if (ch && ch.timer) clearTimeout(ch.timer);
+      openLevels(MODES.find(m => m.id === 'chart'));
+    });
+    $('btn-dots-back').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      if (dt && dt.timer) clearTimeout(dt.timer);
+      openLevels(MODES.find(m => m.id === 'dots'));
     });
     window.addEventListener('resize', () => { // 화면이 돌아가면 개구리 자리 다시 맞추기
       if (st && document.getElementById('scr-stones').classList.contains('on')) {
@@ -625,6 +956,9 @@ window.App = (() => {
       qIdx: qz ? qz.qIdx : null,
       hinted: qz ? !!qz.hinted : null,
       stone: st ? { a: st.a, b: st.b, dir: st.dir, target: st.target, qIdx: st.qIdx } : null,
+      count: ct ? { n: ct.n, qIdx: ct.qIdx, counted: ct.counted } : null,
+      chart: ch ? { sel: ch.sel, left: ch.left } : null,
+      dot: dt ? { next: dt.next, total: dt.pic.dots.length } : null,
     };
   }
 

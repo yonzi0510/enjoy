@@ -34,6 +34,17 @@ window.MathData = (() => {
       { id: 2, name: '2단계', desc: '10까지', emoji: '🌟', max: 10 },
       { id: 3, name: '3단계', desc: '20까지', emoji: '🔥', max: 20 },
     ],
+    // 수 세기 맞춤 단계 — 물건 1~max개를 보고 개수를 고른다
+    COUNT_LEVELS: [
+      { id: 1, name: '쉬움', desc: '1부터 5까지', emoji: '🐣', max: 5 },
+      { id: 2, name: '보통', desc: '1부터 10까지', emoji: '🐥', max: 10 },
+    ],
+    // 숫자표 빈칸 채우기 단계 — from~to 표에서 blanks개가 비어 있다 (칸 수는 10의 배수: 한 줄 10칸)
+    CHART_LEVELS: [
+      { id: 1, name: '1부터 30', desc: '빈칸 4개', emoji: '🐛', from: 1, to: 30, blanks: 4 },
+      { id: 2, name: '1부터 50', desc: '빈칸 6개', emoji: '🦋', from: 1, to: 50, blanks: 6 },
+      { id: 3, name: '51부터 100', desc: '빈칸 6개', emoji: '🦖', from: 51, to: 100, blanks: 6 },
+    ],
     ROUND: 5, // 한 판 문제 수
   };
 })();

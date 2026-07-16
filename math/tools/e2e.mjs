@@ -64,9 +64,9 @@ page.on('pageerror', e => consoleErrors.push(String(e)));
 
 await page.goto(BASE);
 
-await check('홈: 모드 카드 6개', async () => {
+await check('홈: 모드 카드 9개', async () => {
   await page.waitForSelector('#scr-home.on');
-  expect(await page.locator('#menu .menu-card').count() === 6, '카드 수');
+  expect(await page.locator('#menu .menu-card').count() === 9, '카드 수');
 });
 
 await check('따라쓰기: 묶음 10개 → 1 쓰기 진입', async () => {
@@ -216,6 +216,153 @@ await check('징검다리: 다섯 번 성공 → 보상 + 별 + 펫 간식', asy
   expect(after.snacks === before.snacks + 1, '펫 간식: ' + JSON.stringify({ before, after }));
   await page.click('#reward-close');
   await page.waitForSelector('#scr-levels.on');
+});
+
+await check('수 세기: 단계 2개 → 물건 수 = 정답, 오답은 벌점 없이 다시', async () => {
+  await page.click('#scr-levels .back');
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-count');
+  await page.waitForSelector('#scr-levels.on');
+  expect(await page.locator('#levels-list .item-main').count() === 2, '단계 수');
+  await page.locator('#levels-list .item-main').first().click(); // 쉬움 (1~5)
+  await page.waitForSelector('#scr-count.on');
+  const d0 = await page.evaluate(() => App.debug().count);
+  expect(d0.n >= 1 && d0.n <= 5, '개수 범위: ' + d0.n);
+  expect(await page.locator('#count-visual .count-obj').count() === d0.n, '물건 수가 정답과 달라짐');
+  // 오답 → 그대로 다시
+  await page.evaluate(() => {
+    const n = App.debug().count.n;
+    [...document.querySelectorAll('#count-choices .choice-btn')].find(b => +b.textContent !== n).click();
+  });
+  expect((await page.evaluate(() => App.debug().count)).qIdx === 0, '오답인데 넘어감');
+  expect(await page.locator('#btn-cnext').isHidden(), '오답인데 ▶ 가 보임');
+});
+
+await check('수 세기: 정답 → 물건을 하나씩 탭하며 같이 세는 이해 단계', async () => {
+  await page.evaluate(() => {
+    const n = App.debug().count.n;
+    [...document.querySelectorAll('#count-choices .choice-btn')].find(b => +b.textContent === n).click();
+  });
+  await page.waitForSelector('#btn-cnext:not([hidden])');
+  await page.locator('#count-visual .count-obj').first().click(); // 하나!
+  expect(await page.locator('#count-visual .count-obj .cnt').count() === 1, '세기 배지가 안 붙음');
+  expect((await page.evaluate(() => App.debug().count)).counted === 1, '센 개수');
+  const d = await page.evaluate(() => App.debug().count);
+  expect(d.qIdx === 0, '아이가 누르기 전에 넘어가면 안 됨');
+});
+
+await check('수 세기: 다섯 문제 → 보상 + 별 + 펫 간식', async () => {
+  const before = await page.evaluate(() => ({ stars: App.debug().stars, snacks: Pet.state().snacks }));
+  await page.click('#btn-cnext'); // 첫 문제는 위에서 완료
+  for (let q = 1; q < 5; q++) {
+    await page.evaluate(() => {
+      const n = App.debug().count.n;
+      [...document.querySelectorAll('#count-choices .choice-btn')].find(b => +b.textContent === n).click();
+    });
+    await page.waitForSelector('#btn-cnext:not([hidden])');
+    await page.click('#btn-cnext');
+  }
+  await page.waitForSelector('#reward.on', { timeout: 3000 });
+  const after = await page.evaluate(() => ({ stars: App.debug().stars, snacks: Pet.state().snacks }));
+  expect(after.stars === before.stars + 5, '별: ' + JSON.stringify({ before, after }));
+  expect(after.snacks === before.snacks + 1, '펫 간식: ' + JSON.stringify({ before, after }));
+  await page.click('#reward-close');
+  await page.waitForSelector('#scr-levels.on');
+  const prog = await page.locator('#levels-list .item-main .it-prog').first().textContent();
+  expect(prog.includes('1판'), '판 수 기록: ' + prog);
+});
+
+await check('숫자표: 단계 3개 → 1~30 빈칸 4개 → 오답 무벌점 → 정답이 칸을 채움', async () => {
+  await page.click('#scr-levels .back');
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-chart');
+  await page.waitForSelector('#scr-levels.on');
+  expect(await page.locator('#levels-list .item-main').count() === 3, '단계 수');
+  await page.locator('#levels-list .item-main').first().click(); // 1~30
+  await page.waitForSelector('#scr-chart.on');
+  expect(await page.locator('#chart-grid .chart-cell').count() === 30, '칸 수');
+  expect(await page.locator('#chart-grid .chart-cell.blank').count() === 4, '빈칸 수');
+  expect(!(await page.locator('#chart-choices').isHidden()), '첫 빈칸이 자동 선택되어 보기가 보여야 함');
+  // 오답 → 채워지지 않는다
+  await page.evaluate(() => {
+    const sel = App.debug().chart.sel;
+    [...document.querySelectorAll('#chart-choices .choice-btn')].find(b => +b.textContent !== sel).click();
+  });
+  expect((await page.evaluate(() => App.debug().chart)).left === 4, '오답인데 채워짐');
+  // 정답 → 그 칸이 채워진다
+  const sel = (await page.evaluate(() => App.debug().chart)).sel;
+  await page.evaluate(() => {
+    const s = App.debug().chart.sel;
+    [...document.querySelectorAll('#chart-choices .choice-btn')].find(b => +b.textContent === s).click();
+  });
+  expect((await page.evaluate(() => App.debug().chart)).left === 3, '빈칸이 줄어야 함');
+  const filled = await page.locator('#chart-grid .chart-cell.filled').first().textContent();
+  expect(+filled === sel, '채워진 숫자: ' + filled + ' (기대 ' + sel + ')');
+});
+
+await check('숫자표: 다 채우면 보상 + 별 + 펫 간식', async () => {
+  const before = await page.evaluate(() => ({ stars: App.debug().stars, snacks: Pet.state().snacks }));
+  for (let q = 0; q < 3; q++) { // 남은 빈칸 3개
+    await page.waitForFunction(() => App.debug().chart.sel != null); // 다음 빈칸 자동 선택을 기다린다
+    await page.evaluate(() => {
+      const s = App.debug().chart.sel;
+      [...document.querySelectorAll('#chart-choices .choice-btn')].find(b => +b.textContent === s).click();
+    });
+  }
+  await page.waitForSelector('#reward.on', { timeout: 3000 });
+  expect((await page.evaluate(() => App.debug().chart)).left === 0, '빈칸이 남음');
+  const after = await page.evaluate(() => ({ stars: App.debug().stars, snacks: Pet.state().snacks }));
+  expect(after.stars === before.stars + 4, '별(빈칸 수만큼): ' + JSON.stringify({ before, after }));
+  expect(after.snacks === before.snacks + 1, '펫 간식: ' + JSON.stringify({ before, after }));
+  await page.click('#reward-close');
+  await page.waitForSelector('#scr-levels.on');
+});
+
+await check('점 잇기: 그림 8개 이상 → 틀린 점은 제자리 + 다음 번호 힌트', async () => {
+  await page.click('#scr-levels .back');
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-dots');
+  await page.waitForSelector('#scr-levels.on');
+  expect(await page.locator('#levels-list .item-main').count() >= 8, '그림 수');
+  await page.locator('#levels-list .item-main').first().click(); // 별
+  await page.waitForSelector('#scr-dots.on');
+  const total = (await page.evaluate(() => App.debug().dot)).total;
+  expect(total >= 10 && total <= 20, '점 수: ' + total);
+  expect(await page.locator('#dots-svg .dot-g').count() === total, '점 요소 수');
+  await page.click('#dots-svg .dot-g[data-n="3"] .dot-c'); // 틀린 점
+  expect((await page.evaluate(() => App.debug().dot)).next === 1, '틀린 점인데 진행됨');
+});
+
+await check('점 잇기: 순서대로 다 이으면 그림이 채워지고 보상 + 별 + 펫 간식', async () => {
+  const before = await page.evaluate(() => ({ stars: App.debug().stars, snacks: Pet.state().snacks }));
+  const total = (await page.evaluate(() => App.debug().dot)).total;
+  for (let n = 1; n <= total; n++) {
+    // 다음 점은 깜빡이는 중이라(의도된 안내 애니메이션) 안정성 검사 없이 실제 클릭만 보낸다
+    await page.click('#dots-svg .dot-g[data-n="' + n + '"] .dot-hit', { force: true });
+  }
+  expect(await page.evaluate(() => document.querySelector('#dots-svg .dots-fill').classList.contains('on')),
+    '그림이 색으로 채워져야 함');
+  await page.waitForSelector('#reward.on', { timeout: 4000 });
+  const after = await page.evaluate(() => ({ stars: App.debug().stars, snacks: Pet.state().snacks }));
+  expect(after.stars === before.stars + 2, '별: ' + JSON.stringify({ before, after }));
+  expect(after.snacks === before.snacks + 1, '펫 간식: ' + JSON.stringify({ before, after }));
+  await page.click('#reward-next'); // 다른 그림 → 목록
+  await page.waitForSelector('#scr-levels.on');
+  const prog = await page.locator('#levels-list .item-main .it-prog').first().textContent();
+  expect(prog.includes('🏅'), '완성 훈장: ' + prog);
+});
+
+await check('새로고침 후 새 활동 진행도 유지', async () => {
+  const stars = await page.evaluate(() => App.debug().stars);
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  expect((await page.locator('#home-stars').textContent()) === String(stars), '별 수');
+  const c = await page.locator('.menu-card.c-count .mc-prog').textContent();
+  expect(c.includes('1판'), '수 세기 판 수: ' + c);
+  const h = await page.locator('.menu-card.c-chart .mc-prog').textContent();
+  expect(h.includes('1판'), '숫자표 판 수: ' + h);
+  const d = await page.locator('.menu-card.c-dots .mc-prog').textContent();
+  expect(d.includes('1 /'), '점 잇기 완성 수: ' + d);
 });
 
 await check('콘솔 오류 0', async () => {
