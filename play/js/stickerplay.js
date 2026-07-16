@@ -8,6 +8,8 @@
   const SCENES = window.SCENES || [];
 
   let board = load(); // { bg: 0, items: [{t: themeId, x: %, y: %, s: px}] }
+  let placedNow = 0;        // 이번 접속에서 붙인 스티커 수 (펫 간식 판정용)
+  let snackGiven = false;   // 꾸미기 간식은 접속당 한 번만 (무한 반복 방지)
 
   function load() {
     try {
@@ -59,6 +61,12 @@
         save();
         renderBoard();
         Sound.correct();
+        // 꾸미기 한 판(스티커 6장) 완성 = 펫 간식 (접속당 한 번)
+        placedNow++;
+        if (!snackGiven && placedNow >= 6 && window.Pet) {
+          snackGiven = true;
+          Pet.awardSnack(1);
+        }
       });
       pal.appendChild(b);
     });

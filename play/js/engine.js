@@ -393,7 +393,22 @@
     clearTimeout(state.idleTimer);
     const stars = calcStars();
     const lvNum = state.level;
+    const firstClear = Progress.getStars(state.theme.id + '_' + state.mode + '_L' + lvNum) === 0; // 이번이 첫 완주인지
     Progress.setStars(state.theme.id + '_' + state.mode + '_L' + lvNum, stars);
+
+    // 펫 먹이: 판(씬) 완료 = 간식, 테마의 여섯 판(두 놀이 × 3단계)을 처음 모두 깨면 식사
+    if (window.Pet) {
+      Pet.awardSnack(1);
+      if (firstClear) {
+        let allDone = true;
+        ['hidden', 'diff'].forEach(m => {
+          for (let lv = 1; lv <= 3; lv++) {
+            if (!Progress.getStars(state.theme.id + '_' + m + '_L' + lv)) allDone = false;
+          }
+        });
+        if (allDone) Pet.awardMeal(1);
+      }
+    }
 
     // 별 연출
     const starsEl = $('complete-stars');

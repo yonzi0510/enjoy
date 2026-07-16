@@ -57,7 +57,8 @@
 
   /* ─────────── 단계 선택 ─────────── */
   function openLevelSelect() {
-    document.querySelectorAll('.letters-level-btn').forEach(btn => {
+    // 짝꿍 카드 오버레이도 .letters-level-btn 스타일을 빌려 쓰므로 글자 찾기 것만 고른다
+    document.querySelectorAll('#letters-overlay .letters-level-btn').forEach(btn => {
       const stars = Progress.getStars('letters_L' + btn.dataset.llevel);
       btn.querySelector('.level-btn-stars').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
     });
@@ -69,7 +70,7 @@
   $('letters-overlay').addEventListener('click', e => {
     if (e.target === $('letters-overlay')) $('letters-overlay').classList.add('hidden');
   });
-  document.querySelectorAll('.letters-level-btn').forEach(btn => {
+  document.querySelectorAll('#letters-overlay .letters-level-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       $('letters-overlay').classList.add('hidden');
       startGame(+btn.dataset.llevel);
@@ -178,7 +179,14 @@
   function finish() {
     st.playing = false;
     const stars = st.hintCount === 0 ? 3 : (st.hintCount <= 2 ? 2 : 1);
+    const firstClear = Progress.getStars('letters_L' + st.level) === 0; // 이번이 첫 완주인지
     Progress.setStars('letters_L' + st.level, stars);
+
+    // 펫 먹이: 판 완료 = 간식, 네 단계를 처음 모두 깨면 식사
+    if (window.Pet) {
+      Pet.awardSnack(1);
+      if (firstClear && [1, 2, 3, 4].every(l => Progress.getStars('letters_L' + l) > 0)) Pet.awardMeal(1);
+    }
 
     const starsEl = $('letters-stars');
     starsEl.innerHTML = '';

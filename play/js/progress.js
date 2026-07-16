@@ -1,6 +1,8 @@
 /* 진행상황 저장 — localStorage (서버·로그인 없음)
  * stars: { 'farm_hidden_L1': 3, ... }  (구버전 'farm_hidden' 키는 L1로 읽음)
+ *   짝꿍 카드는 'memory_L1'~'memory_L3', 동물의 집은 'habitat_animals'류 키를 같은 곳에 쓴다
  * stickers: { farm: 1|2|3 }  — 티어(1 쉬움, 2 보통, 3 어려움). 구버전 배열은 티어1로 이전
+ * habitat: { animals: { fish: 1, ... }, vehicles: {...} }  — 집을 찾아 준 친구들 (필드 추가, 형식 유지)
  */
 window.Progress = (() => {
   const KEY = window.Profile ? Profile.key('chatgi-playground-v1') : 'chatgi-playground-v1'; // 아이 프로필별 저장
@@ -15,10 +17,11 @@ window.Progress = (() => {
         } else if (raw.stickers && typeof raw.stickers === 'object') {
           stickers = raw.stickers;
         }
-        return { stars: raw.stars || {}, stickers };
+        const habitat = (raw.habitat && typeof raw.habitat === 'object') ? raw.habitat : {};
+        return { stars: raw.stars || {}, stickers, habitat };
       }
     } catch (e) { /* 손상된 데이터는 초기화 */ }
-    return { stars: {}, stickers: {} };
+    return { stars: {}, stickers: {}, habitat: {} };
   }
 
   let state = load();
@@ -55,6 +58,18 @@ window.Progress = (() => {
         return true;
       }
       return false;
+    },
+
+    /* ── 🏠 동물의 집 찾기: 집을 찾아 준 친구 기록 ── */
+    isHabitatDone(topic, id) { return !!(state.habitat[topic] && state.habitat[topic][id]); },
+    habitatDoneCount(topic) { return Object.keys(state.habitat[topic] || {}).length; },
+    // 처음 집을 찾아 준 친구면 저장하고 true 반환 (주제 완주 판정용)
+    markHabitatDone(topic, id) {
+      if (!state.habitat[topic]) state.habitat[topic] = {};
+      if (state.habitat[topic][id]) return false;
+      state.habitat[topic][id] = 1;
+      save();
+      return true;
     }
   };
 })();
