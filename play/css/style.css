@@ -1,4 +1,11 @@
 /* ═══════════ 찾기 놀이터 — 5세용 스타일 ═══════════ */
+/* "포근한 장난감 방" (DESIGN.md): 카드 = 틴트 표면 + 노랑 chunk 단면 + 대표색 원거리 그림자.
+   검정 반투명 chunk 그림자는 쓰지 않는다. */
+:root {
+  --accent: 255, 217, 61; /* 대표색(노랑) rgb 삼중값 — rgba(var(--accent), .18)용 */
+  --chunk: #D9A800;       /* 카드색을 짙게 만든 바닥 단면색 */
+  --tint: #FFF6D9;        /* 표면에 스미는 옅은 틴트 */
+}
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 html, body {
@@ -11,7 +18,13 @@ html, body {
 }
 
 body {
-  background: linear-gradient(160deg, #FFF7D6 0%, #FFE8F0 55%, #DFF5FF 100%);
+  /* 기존 3색 그라데이션 유지 + 블러 글로우 2개 + 아주 옅은 물방울 도트 */
+  background:
+    radial-gradient(ellipse at 15% 8%,  rgba(255,217,61,.45), transparent 60%),
+    radial-gradient(ellipse at 88% 88%, rgba(125,216,255,.40), transparent 58%),
+    radial-gradient(rgba(255,255,255,.5) 1.2px, transparent 1.3px),
+    linear-gradient(160deg, #FFF7D6 0%, #FFE8F0 55%, #DFF5FF 100%);
+  background-size: auto, auto, 24px 24px, auto;
 }
 
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
@@ -40,9 +53,9 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .app-title {
   font-size: clamp(22px, 4.5vmin, 34px);
   font-weight: 900;
-  color: #5B4B00;
+  color: #4A3D00; /* 한 톤 짙게 — 가독성 */
   letter-spacing: -0.5px;
-  text-shadow: 0 2px 0 rgba(255,255,255,.8);
+  text-shadow: 0 2px 0 rgba(255,255,255,.85);
 }
 .title-emoji { font-size: 0.95em; }
 .header-btns { display: flex; gap: 10px; }
@@ -51,25 +64,37 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   width: clamp(48px, 8vmin, 64px);
   height: clamp(48px, 8vmin, 64px);
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 4px 0 rgba(0,0,0,.12);
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 4px 0 var(--chunk),
+    0 12px 20px rgba(var(--accent), .16);
   font-size: clamp(22px, 4vmin, 30px);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform .1s;
+  transition: transform .12s, box-shadow .12s;
 }
-.round-btn:active { transform: scale(.9) translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.12); }
-.hint-btn { background: #FFF3B8; }
+.round-btn:active {
+  transform: translateY(3px) scale(.94);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 1px 0 var(--chunk),
+    0 7px 12px rgba(var(--accent), .12);
+}
+.hint-btn { background: linear-gradient(180deg, #FFF9DC 0%, #FFF3B8 100%); }
 
 .game-title {
   font-size: clamp(17px, 3.4vmin, 26px);
   font-weight: 900;
-  color: #444;
-  background: rgba(255,255,255,.85);
+  color: #3B3320; /* 한 톤 짙게 — 가독성 */
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,246,217,.9));
   border-radius: 999px;
   padding: 8px 20px;
-  box-shadow: 0 3px 0 rgba(0,0,0,.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 3px 0 var(--chunk),
+    0 10px 16px rgba(var(--accent), .14);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -90,16 +115,40 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .theme-card {
-  background: #fff;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
   border-radius: 24px;
-  box-shadow: 0 6px 0 rgba(0,0,0,.1);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 7px 0 var(--chunk),
+    0 16px 26px rgba(var(--accent), .18);
   overflow: hidden;
-  transition: transform .12s;
+  transition: transform .12s, box-shadow .12s;
   display: flex;
   flex-direction: column;
   position: relative;
+  animation: card-in .35s ease-out backwards;
 }
-.theme-card:active { transform: scale(.95); }
+/* 스태거 등장 — 형제 순서대로 0.05s 간격 (8개 이후는 마지막 지연값) */
+.theme-grid .theme-card:nth-child(1) { animation-delay: .05s; }
+.theme-grid .theme-card:nth-child(2) { animation-delay: .10s; }
+.theme-grid .theme-card:nth-child(3) { animation-delay: .15s; }
+.theme-grid .theme-card:nth-child(4) { animation-delay: .20s; }
+.theme-grid .theme-card:nth-child(5) { animation-delay: .25s; }
+.theme-grid .theme-card:nth-child(6) { animation-delay: .30s; }
+.theme-grid .theme-card:nth-child(7) { animation-delay: .35s; }
+.theme-grid .theme-card:nth-child(n+8) { animation-delay: .40s; }
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.theme-card:active {
+  /* chunk가 7px→3px로 줄며 블록이 눌리는 느낌 */
+  transform: translateY(4px) scale(.98);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 3px 0 var(--chunk),
+    0 9px 14px rgba(var(--accent), .12);
+}
 .theme-thumb {
   width: 100%;
   aspect-ratio: 3 / 2;
@@ -116,7 +165,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   padding: 8px 6px 4px;
   font-size: clamp(16px, 3vmin, 24px);
   font-weight: 900;
-  color: #4A3F22;
+  color: #3E351C; /* 한 톤 짙게 — 가독성 */
 }
 .theme-card-stars {
   display: flex;
@@ -124,7 +173,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   gap: 14px;
   padding: 0 6px 10px;
   font-size: clamp(11px, 2vmin, 15px);
-  color: #C9A400;
+  color: #A38500; /* 한 톤 짙게 — 틴트 표면 위 가독성 */
   font-weight: 700;
 }
 .theme-card-sticker-badge {
@@ -154,11 +203,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 28px;
   padding: clamp(20px, 4vmin, 36px);
   width: min(560px, 94vw);
-  box-shadow: 0 12px 40px rgba(0,0,0,.3);
+  box-shadow: 0 12px 40px rgba(90,66,10,.32); /* 검정 대신 살짝 따뜻한 그늘 */
   position: relative;
-  animation: card-in .25s cubic-bezier(.2,1.6,.4,1);
+  animation: pop-in .25s cubic-bezier(.2,1.6,.4,1);
 }
-@keyframes card-in { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* 오버레이 카드의 팝 등장 — 홈 카드의 card-in(위로 떠오름)과 별개 */
+@keyframes pop-in { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .close-btn {
   position: absolute;
   top: 12px; right: 12px;
@@ -167,26 +217,29 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   background: #F1EADC;
   font-size: 18px;
   font-weight: 900;
-  color: #8A7B5C;
+  color: #6E6142; /* 한 톤 짙게 */
 }
 .mode-theme-name {
   text-align: center;
   font-size: clamp(22px, 4vmin, 32px);
   font-weight: 900;
-  color: #4A3F22;
+  color: #3E351C; /* 한 톤 짙게 */
   margin-bottom: clamp(14px, 3vmin, 24px);
 }
 .mode-sections { display: flex; flex-direction: column; gap: clamp(12px, 2.4vmin, 20px); }
 .mode-section {
-  background: #fff;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
   border-radius: 20px;
   padding: clamp(10px, 2vmin, 16px);
-  box-shadow: 0 4px 0 rgba(0,0,0,.07);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 4px 0 var(--chunk),
+    0 12px 20px rgba(var(--accent), .16);
 }
 .mode-section-title {
   font-size: clamp(16px, 3vmin, 22px);
   font-weight: 900;
-  color: #4A3F22;
+  color: #3E351C; /* 한 톤 짙게 */
   margin-bottom: clamp(8px, 1.6vmin, 12px);
   display: flex;
   align-items: center;
@@ -204,17 +257,21 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 16px;
   font-size: clamp(14px, 2.7vmin, 19px);
   font-weight: 900;
-  color: #4A3F22;
-  transition: transform .1s;
+  color: #3E351C; /* 한 톤 짙게 */
+  transition: transform .12s, box-shadow .12s;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), 0 5px 0 var(--lv-chunk);
 }
-.level-btn.level-1 { background: linear-gradient(180deg, #D8F5C8, #A8E28A); box-shadow: 0 5px 0 #7CBF5C; }
-.level-btn.level-2 { background: linear-gradient(180deg, #FFE9A8, #FFD93D); box-shadow: 0 5px 0 #E0B400; }
-.level-btn.level-3 { background: linear-gradient(180deg, #FFC9A8, #FF9A5C); box-shadow: 0 5px 0 #E06A2C; }
-.level-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.2); }
+.level-btn.level-1 { --lv-chunk: #7CBF5C; background: linear-gradient(180deg, #D8F5C8, #A8E28A); }
+.level-btn.level-2 { --lv-chunk: #E0B400; background: linear-gradient(180deg, #FFE9A8, #FFD93D); }
+.level-btn.level-3 { --lv-chunk: #E06A2C; background: linear-gradient(180deg, #FFC9A8, #FF9A5C); }
+.level-btn:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), 0 2px 0 var(--lv-chunk);
+}
 .level-btn-stars {
   font-size: clamp(12px, 2.2vmin, 16px);
   letter-spacing: 2px;
-  color: #C9A400;
+  color: #8A7000; /* 한 톤 짙게 — 노랑 버튼 위에서도 보이게 */
   min-height: 1.2em;
 }
 
@@ -229,9 +286,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 .scene-wrap {
   position: relative;
-  background: #fff;
+  background: #fff; /* 씬 색감이 왜곡되지 않게 흰 배경 유지 */
   border-radius: 20px;
-  box-shadow: 0 5px 0 rgba(0,0,0,.1);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 5px 0 var(--chunk),
+    0 12px 20px rgba(var(--accent), .16);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -249,9 +309,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   align-items: center;
   gap: clamp(6px, 1.4vmin, 14px);
   padding: clamp(6px, 1.2vmin, 12px);
-  background: rgba(255,255,255,.85);
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,246,217,.92));
   border-radius: 18px;
-  box-shadow: 0 4px 0 rgba(0,0,0,.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 4px 0 var(--chunk),
+    0 12px 20px rgba(var(--accent), .16);
   flex-wrap: wrap;
 }
 .tray-item {
@@ -390,8 +453,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 32px;
   padding: clamp(24px, 5vmin, 44px) clamp(28px, 6vmin, 56px);
   text-align: center;
-  box-shadow: 0 16px 50px rgba(0,0,0,.35);
-  animation: card-in .35s cubic-bezier(.2,1.6,.4,1);
+  box-shadow: 0 16px 50px rgba(90,66,10,.35); /* 검정 대신 살짝 따뜻한 그늘 */
+  animation: pop-in .35s cubic-bezier(.2,1.6,.4,1);
   max-width: 94vw;
   max-height: 90vh;
   overflow-y: auto;
@@ -443,7 +506,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   from { transform: scale(0) rotate(-360deg); }
   to { transform: scale(1) rotate(0); }
 }
-.sticker-name { font-size: clamp(15px, 2.8vmin, 20px); font-weight: 800; color: #6B5E3E; }
+.sticker-name { font-size: clamp(15px, 2.8vmin, 20px); font-weight: 800; color: #574A2C; /* 한 톤 짙게 */ }
 
 /* 스티커 티어 테두리: 2=금테, 3=보석테 */
 .sticker-art { border-radius: 50%; }
@@ -472,9 +535,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   font-weight: 900;
   transition: transform .1s;
 }
-.big-btn:active { transform: scale(.93); }
-.btn-primary { background: linear-gradient(180deg, #FFB03A, #FF7A00); color: #fff; box-shadow: 0 5px 0 #D96300; }
-.btn-soft { background: #F1EADC; color: #6B5E3E; box-shadow: 0 5px 0 #D5C9AE; }
+.big-btn:active { transform: translateY(3px) scale(.97); }
+.btn-primary:active { box-shadow: inset 0 0 0 1px rgba(255,255,255,.35), 0 2px 0 #D96300; }
+.btn-soft:active { box-shadow: inset 0 0 0 1px rgba(255,255,255,.55), 0 2px 0 #D5C9AE; }
+.btn-primary { background: linear-gradient(180deg, #FFB03A, #FF7A00); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.35), 0 5px 0 #D96300; }
+.btn-soft { background: #F1EADC; color: #574A2C; box-shadow: inset 0 0 0 1px rgba(255,255,255,.55), 0 5px 0 #D5C9AE; }
 
 /* 폭죽 */
 #confetti-box { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
@@ -503,19 +568,32 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .sticker-grid { grid-template-columns: repeat(2, 1fr); }
 }
 .sticker-slot {
-  background: #fff;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
   border-radius: 24px;
-  box-shadow: 0 5px 0 rgba(0,0,0,.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 5px 0 var(--chunk),
+    0 12px 20px rgba(var(--accent), .16);
   padding: clamp(12px, 2.4vmin, 22px);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  animation: card-in .35s ease-out backwards;
 }
+/* 스티커북도 목록 화면 — 스태거 등장 */
+.sticker-grid .sticker-slot:nth-child(1) { animation-delay: .05s; }
+.sticker-grid .sticker-slot:nth-child(2) { animation-delay: .10s; }
+.sticker-grid .sticker-slot:nth-child(3) { animation-delay: .15s; }
+.sticker-grid .sticker-slot:nth-child(4) { animation-delay: .20s; }
+.sticker-grid .sticker-slot:nth-child(5) { animation-delay: .25s; }
+.sticker-grid .sticker-slot:nth-child(6) { animation-delay: .30s; }
+.sticker-grid .sticker-slot:nth-child(7) { animation-delay: .35s; }
+.sticker-grid .sticker-slot:nth-child(n+8) { animation-delay: .40s; }
 .sticker-slot .sticker-art { animation: none; margin: 0 auto; }
 .sticker-slot.locked .sticker-art { filter: grayscale(1) brightness(.25); opacity: .18; }
-.sticker-slot.locked .sticker-name { color: #C9C0AC; }
-.sticker-slot .sticker-hint-text { font-size: clamp(11px, 1.9vmin, 14px); color: #B4A987; font-weight: 600; text-align: center; }
+.sticker-slot.locked .sticker-name { color: #B3A88F; }
+.sticker-slot .sticker-hint-text { font-size: clamp(11px, 1.9vmin, 14px); color: #8F8261; font-weight: 600; text-align: center; }
 
 /* ═══════════ 🔤 글자 찾기 ═══════════ */
 .letters-banner {
@@ -523,17 +601,28 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   padding: clamp(12px, 2.4vmin, 20px);
   border-radius: 22px;
   background: linear-gradient(90deg, #C9F0FF, #E8DCFA, #FFE3EE);
-  box-shadow: 0 5px 0 rgba(0,0,0,.1);
+  /* 배너 자체 색(라벤더)을 짙게 만든 chunk — 노랑 chunk는 파스텔 배너와 부딪힌다 */
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 5px 0 #B3A0DC,
+    0 12px 20px rgba(184,160,220,.22);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   font-size: clamp(19px, 3.8vmin, 30px);
   font-weight: 900;
-  color: #4A3F6E;
-  transition: transform .1s;
+  color: #3D3260; /* 한 톤 짙게 */
+  transition: transform .12s, box-shadow .12s;
+  animation: card-in .35s ease-out backwards;
 }
-.letters-banner:active { transform: scale(.97); }
+.letters-banner:active {
+  transform: translateY(3px) scale(.99);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 2px 0 #B3A0DC,
+    0 7px 12px rgba(184,160,220,.16);
+}
 .letters-banner-emoji { font-size: 1.2em; }
 
 .letters-level-btns {
@@ -549,17 +638,21 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   padding: clamp(12px, 2.4vmin, 20px) 8px;
   border-radius: 18px;
   font-weight: 900;
-  color: #4A3F22;
-  transition: transform .1s;
+  color: #3E351C; /* 한 톤 짙게 */
+  transition: transform .12s, box-shadow .12s;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), 0 5px 0 var(--lv-chunk);
 }
-.letters-level-btn:active { transform: scale(.94); }
+.letters-level-btn:active {
+  transform: translateY(3px) scale(.98);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), 0 2px 0 var(--lv-chunk);
+}
 .letters-level-btn b { font-size: clamp(16px, 3vmin, 22px); }
 .letters-level-btn span { font-size: clamp(12px, 2.3vmin, 16px); text-align: center; line-height: 1.35; font-weight: 800; }
-.letters-level-btn .level-btn-stars { color: #C9A400; letter-spacing: 2px; }
-.llv-1 { background: linear-gradient(180deg, #D8F5C8, #A8E28A); box-shadow: 0 5px 0 #7CBF5C; }
-.llv-2 { background: linear-gradient(180deg, #FFE9A8, #FFD93D); box-shadow: 0 5px 0 #E0B400; }
-.llv-3 { background: linear-gradient(180deg, #C9F0FF, #7DD8FF); box-shadow: 0 5px 0 #3FAEE0; }
-.llv-4 { background: linear-gradient(180deg, #FFC9A8, #FF9A5C); box-shadow: 0 5px 0 #E06A2C; }
+.letters-level-btn .level-btn-stars { color: #8A7000; letter-spacing: 2px; }
+.llv-1 { --lv-chunk: #7CBF5C; background: linear-gradient(180deg, #D8F5C8, #A8E28A); }
+.llv-2 { --lv-chunk: #E0B400; background: linear-gradient(180deg, #FFE9A8, #FFD93D); }
+.llv-3 { --lv-chunk: #3FAEE0; background: linear-gradient(180deg, #C9F0FF, #7DD8FF); }
+.llv-4 { --lv-chunk: #E06A2C; background: linear-gradient(180deg, #FFC9A8, #FF9A5C); }
 
 .letters-target-bar {
   flex: 0 0 auto;
@@ -567,15 +660,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   align-items: center;
   justify-content: center;
   gap: clamp(12px, 2.4vmin, 22px);
-  background: #fff;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
   border-radius: 20px;
-  box-shadow: 0 4px 0 rgba(0,0,0,.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 4px 0 var(--chunk),
+    0 12px 20px rgba(var(--accent), .16);
   padding: clamp(6px, 1.4vmin, 12px);
 }
 .letters-target-label {
   font-size: clamp(16px, 3.2vmin, 24px);
   font-weight: 900;
-  color: #8A7B5C;
+  color: #6E6142; /* 한 톤 짙게 */
 }
 .letters-target-big {
   font-size: clamp(52px, 11vmin, 92px);
@@ -590,7 +686,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .letters-target-count {
   font-size: clamp(18px, 3.6vmin, 28px);
   font-weight: 900;
-  color: #C9A400;
+  color: #A38500; /* 한 톤 짙게 */
 }
 
 .letters-body {
@@ -604,9 +700,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .letters-board {
   flex: 1;
   min-height: 0;
-  background: #fff;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
   border-radius: 20px;
-  box-shadow: 0 5px 0 rgba(0,0,0,.1);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 5px 0 var(--chunk),
+    0 12px 20px rgba(var(--accent), .16);
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: clamp(6px, 1.4vmin, 14px);
@@ -625,18 +724,19 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 50%;
   font-size: clamp(34px, 7.5vmin, 62px);
   font-weight: 900;
-  color: #4A3F22;
+  color: #3E351C; /* 한 톤 짙게 */
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 0 rgba(0,0,0,.12);
+  /* 방울색을 짙게 만든 chunk — 색은 아래 .lb-cN에서 정한다 */
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.55), 0 4px 0 var(--bb-chunk, #EDC94B);
   transform: translate(var(--jx, 0), var(--jy, 0)) rotate(var(--jr, 0));
   transition: transform .12s;
 }
 .letter-bubble.lb-word { border-radius: 26px; font-size: clamp(23px, 5vmin, 42px); aspect-ratio: auto; padding: clamp(10px, 2.4vmin, 20px) 6px; }
 .letter-bubble:active { transform: translate(var(--jx, 0), var(--jy, 0)) scale(.9); }
-.lb-c0 { background: #FFE3EE; } .lb-c1 { background: #D8F5C8; } .lb-c2 { background: #C9F0FF; }
-.lb-c3 { background: #FFF3B8; } .lb-c4 { background: #E8DCFA; } .lb-c5 { background: #FFE0CC; }
+.lb-c0 { background: #FFE3EE; --bb-chunk: #F09CC0; } .lb-c1 { background: #D8F5C8; --bb-chunk: #93D471; } .lb-c2 { background: #C9F0FF; --bb-chunk: #79CBEE; }
+.lb-c3 { background: #FFF3B8; --bb-chunk: #EDC94B; } .lb-c4 { background: #E8DCFA; --bb-chunk: #BCA4E8; } .lb-c5 { background: #FFE0CC; --bb-chunk: #F5AE7E; }
 .letter-bubble.found {
   animation: bubble-pop .45s cubic-bezier(.2,2,.4,1) forwards;
   pointer-events: none;
@@ -667,20 +767,24 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   padding: clamp(12px, 2.4vmin, 18px);
   border-radius: 20px;
   background: linear-gradient(90deg, #FFD93D, #FF9A5C);
-  box-shadow: 0 5px 0 #E06A2C;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.45), 0 5px 0 #E06A2C, 0 12px 20px rgba(var(--accent), .16);
   font-size: clamp(16px, 3.2vmin, 24px);
   font-weight: 900;
   color: #5E3820;
-  transition: transform .1s;
+  transition: transform .12s, box-shadow .12s;
+  animation: card-in .35s ease-out backwards;
 }
-.stickerplay-cta:active { transform: scale(.97); }
+.stickerplay-cta:active {
+  transform: translateY(3px) scale(.99);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.45), 0 2px 0 #E06A2C, 0 7px 12px rgba(var(--accent), .12);
+}
 
 .sticker-board {
   flex: 1;
   min-height: 0;
   margin: 4px clamp(8px, 1.5vmin, 16px);
   border-radius: 22px;
-  box-shadow: inset 0 3px 10px rgba(0,0,0,.08), 0 5px 0 rgba(0,0,0,.08);
+  box-shadow: inset 0 3px 10px rgba(0,0,0,.08), 0 5px 0 var(--chunk), 0 12px 20px rgba(var(--accent), .16);
   position: relative;
   overflow: hidden;
   touch-action: none;
@@ -710,17 +814,36 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   width: clamp(64px, 12vmin, 92px);
   height: clamp(64px, 12vmin, 92px);
   border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 4px 0 rgba(0,0,0,.12);
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 4px 0 var(--chunk),
+    0 12px 20px rgba(var(--accent), .16);
   padding: 6px;
-  transition: transform .1s;
+  transition: transform .12s, box-shadow .12s;
 }
-.palette-item:active { transform: scale(.9); }
+.palette-item:active {
+  transform: translateY(3px) scale(.94);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 1px 0 var(--chunk),
+    0 7px 12px rgba(var(--accent), .12);
+}
 .palette-item svg { width: 100%; height: 100%; }
 .palette-empty {
   font-size: clamp(14px, 2.8vmin, 19px);
   font-weight: 800;
-  color: #8A7B5C;
+  color: #6E6142; /* 한 톤 짙게 */
   padding: 10px;
+}
+
+/* ─────────── 모션 줄이기 설정 존중 ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  .theme-card, .letters-banner, .stickerplay-cta, .sticker-slot,
+  .mode-card, .complete-card,
+  .letter-bubble.wrong, .letter-bubble.hinting { animation: none; }
+  .theme-card, .round-btn, .level-btn, .letters-level-btn,
+  .letters-banner, .stickerplay-cta, .palette-item, .big-btn,
+  .letter-bubble, .game-title { transition: none; }
 }
 
