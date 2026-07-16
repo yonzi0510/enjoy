@@ -557,6 +557,76 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   to { transform: translateY(110vh) rotate(720deg); }
 }
 
+/* ─────────── 가로 모드 2단 배치 (DESIGN.md "가로모드 우선") ───────────
+   채색 화면: 세로(캔버스 위 + 팔레트 아래)에서는 가로 화면일 때 정사각 격자가
+   높이에 눌려 작아지고 좌우가 텅 빈다 — 캔버스를 왼쪽에 최대한 크게,
+   진행률·부스터·팔레트를 오른쪽 세로 열로 옮긴다.
+   HTML은 그대로, grid-template-areas로만 재배치한다 (선례: shared/pet.css 끝부분).
+   캔버스 크기는 엔진이 canvas-wrap의 실제 치수를 읽으므로 CSS만으로 충분하다.
+   세로 모드는 건드리지 않는다. */
+@media (orientation: landscape) {
+  #screen-paint.active {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(180px, 26vw, 290px);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "header header"
+      "canvas side";
+  }
+  #screen-paint .game-header { grid-area: header; min-width: 0; }
+  #screen-paint .canvas-wrap {
+    grid-area: canvas;
+    min-height: 0;
+    min-width: 0;
+    margin: 4px 0 clamp(8px, 1.5vmin, 14px) clamp(8px, 1.5vmin, 16px);
+  }
+  /* 오른쪽 조작 열: 진행률 → 부스터 → 팔레트를 세로로 쌓고 가운데 정렬 */
+  #screen-paint .paint-bottom {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    min-width: 0;
+    padding: 4px clamp(8px, 1.5vmin, 16px) clamp(8px, 1.5vmin, 14px) clamp(8px, 1.4vmin, 14px);
+  }
+  #screen-paint .palette-row {
+    flex-direction: column;
+    min-height: 0;
+  }
+  #screen-paint .booster-bar { padding-left: 0; justify-content: center; }
+  /* 팔레트는 가로 스크롤 줄 대신 여러 줄로 감아서 전부 보이게 */
+  #screen-paint .palette-bar {
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    overflow-x: hidden;
+    overflow-y: auto;   /* 색이 아주 많을 때만 세로 스크롤 (안전망) */
+    justify-content: center;
+    align-content: flex-start;
+    padding: 6px 4px 8px;
+    max-height: 100%;
+  }
+}
+
+/* 폰 가로(낮은 화면): 완성 카드가 세로로 길어 잘리므로 그림 왼쪽·글/버튼 오른쪽으로 */
+@media (orientation: landscape) and (max-height: 480px) {
+  .complete-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "thumb title"
+      "thumb name"
+      "thumb btns";
+    align-items: center;
+    column-gap: clamp(14px, 3vmin, 24px);
+    padding: clamp(14px, 3vmin, 24px) clamp(18px, 4vmin, 34px);
+  }
+  .complete-card .complete-title { grid-area: title; }
+  .complete-card .complete-thumb { grid-area: thumb; margin: 0; }
+  .complete-card .complete-name  { grid-area: name; margin-bottom: 0; }
+  .complete-card .complete-btns  { grid-area: btns; }
+}
+
 /* ─────────── 모션 줄이기 설정 존중 ─────────── */
 @media (prefers-reduced-motion: reduce) {
   .pic-card, .complete-card, .complete-thumb, .bomb-hint, .booster-btn.armed { animation: none; }
