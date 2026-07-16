@@ -10,6 +10,9 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="./shared/pet.css">
 <style>
+/* ── "포근한 장난감 방" — DESIGN.md 기준 구현 ──
+   카드 = 장난감 블록: 틴트 표면 + 유채색 chunk 단면 + 대표색 원거리 그림자.
+   검정 반투명 그림자는 쓰지 않는다. */
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { height: 100%; }
 body {
@@ -17,7 +20,13 @@ body {
      스크롤이 막힌다. min-height + .wrap의 margin:auto 로 스크롤 가능한 중앙 정렬. */
   min-height: 100%;
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
-  background: linear-gradient(160deg, #FFE3EE 0%, #EFE4FC 50%, #D8F4FF 100%);
+  /* 무지개 파스텔 3색 그라데이션 + 블러 글로우 2개 + 아주 옅은 물방울 도트 */
+  background:
+    radial-gradient(ellipse at 15% 8%,  rgba(255,178,208,.45), transparent 60%),
+    radial-gradient(ellipse at 88% 88%, rgba(148,206,255,.40), transparent 58%),
+    radial-gradient(rgba(255,255,255,.5) 1.2px, transparent 1.3px),
+    linear-gradient(160deg, #FFE0EC 0%, #EDE1FB 48%, #D3F1FF 100%);
+  background-size: auto, auto, 24px 24px, auto;
   display: flex;
   user-select: none;
 }
@@ -33,9 +42,10 @@ body {
 h1 {
   font-size: clamp(28px, 6.5vmin, 52px);
   font-weight: 900;
-  color: #6E4A8C;
-  text-shadow: 0 2px 0 rgba(255,255,255,.8);
+  color: #5E3D7C; /* 한 톤 짙게 — 가독성 */
+  text-shadow: 0 2px 0 rgba(255,255,255,.85);
   text-align: center;
+  animation: card-in .35s ease-out backwards;
 }
 .apps {
   display: flex;
@@ -46,6 +56,10 @@ h1 {
   max-width: 1040px;
 }
 .app-card {
+  /* 기본은 메인홈 라벤더 — 아래에서 카드마다 자기 앱 색으로 덮는다 */
+  --accent: 201,188,232; /* 원거리 그림자용 rgb 삼중값 */
+  --chunk: #B7A6DE;      /* 카드색을 짙게 만든 바닥 단면색 */
+  --tint: #F4EFFC;       /* 표면에 스미는 옅은 틴트 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -54,23 +68,60 @@ h1 {
   width: clamp(150px, 42vw, 300px);
   padding: clamp(14px, 3.4vmin, 32px) clamp(10px, 2.4vmin, 28px);
   border-radius: 32px;
-  background: #fff;
-  box-shadow: 0 10px 0 rgba(0,0,0,.1);
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 7px 0 var(--chunk),
+    0 16px 26px rgba(var(--accent), .18);
   text-decoration: none;
-  transition: transform .12s;
+  transition: transform .12s, box-shadow .12s;
+  animation: card-in .35s ease-out backwards;
 }
-.app-card:active { transform: scale(.95); }
+/* 카드별 대표색 (DESIGN.md 색표) — HTML을 안 고치고 href로 입힌다 */
+.app-card[href="./play/"]     { --accent: 255,217,61;  --chunk: #D9A800; --tint: #FFF6D9; }
+.app-card[href="./english/"]  { --accent: 255,143,176; --chunk: #E05C86; --tint: #FFEAF1; }
+.app-card[href="./pixel/"]    { --accent: 77,201,143;  --chunk: #2E9E6B; --tint: #E3F7EC; }
+.app-card[href="./hangul/"]   { --accent: 245,179,1;   --chunk: #C68C00; --tint: #FFF4D6; }
+.app-card[href="./japanese/"] { --accent: 247,168,196; --chunk: #D9739B; --tint: #FDEBF2; }
+.app-card[href="./write/"]    { --accent: 92,184,232;  --chunk: #2F8CC2; --tint: #E4F3FC; }
+.app-card[href="./math/"]     { --accent: 255,154,77;  --chunk: #DB6E1E; --tint: #FFEEDF; }
+.app-card[href="./practika/"] { --accent: 138,123,224; --chunk: #5F50B8; --tint: #EDEAFB; }
+/* 스태거 등장 — 0.05s 간격 */
+.apps .app-card:nth-child(1) { animation-delay: .05s; }
+.apps .app-card:nth-child(2) { animation-delay: .10s; }
+.apps .app-card:nth-child(3) { animation-delay: .15s; }
+.apps .app-card:nth-child(4) { animation-delay: .20s; }
+.apps .app-card:nth-child(5) { animation-delay: .25s; }
+.apps .app-card:nth-child(6) { animation-delay: .30s; }
+.apps .app-card:nth-child(7) { animation-delay: .35s; }
+.apps .app-card:nth-child(8) { animation-delay: .40s; }
+.app-card:active {
+  /* chunk가 7px→3px로 줄며 블록이 눌리는 느낌 */
+  transform: translateY(4px) scale(.98);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 3px 0 var(--chunk),
+    0 9px 14px rgba(var(--accent), .12);
+}
 .app-card[hidden] { display: none; } /* hidden 속성이 위 display:flex에 밀리지 않게 */
 .app-card img { width: 70%; border-radius: 26%; }
-.app-name { font-size: clamp(16px, 4vmin, 28px); font-weight: 900; color: #4A3F22; white-space: nowrap; }
-.app-desc { font-size: clamp(11px, 2.6vmin, 16px); font-weight: 700; color: #9C8FB8; text-align: center; line-height: 1.5; }
+.app-name { font-size: clamp(16px, 4vmin, 28px); font-weight: 900; color: #43391E; white-space: nowrap; }
+.app-desc { font-size: clamp(11px, 2.6vmin, 16px); font-weight: 700; color: #8B7DAB; text-align: center; line-height: 1.5; }
 /* 잠긴 카드(일본어 — 한글 카드 10장을 모으면 열림) */
-.app-card.locked { position: relative; opacity: .75; }
+.app-card.locked {
+  position: relative;
+  opacity: .8;
+  --accent: 150,142,170; --chunk: #C7C0D4; --tint: #F1EFF6; /* 회색 처리 */
+}
 .app-card.locked img { filter: grayscale(.9); }
 .lock-badge {
   position: absolute;
   top: 10px; right: 12px;
   font-size: clamp(20px, 4.5vmin, 34px);
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes card-nope {
   0%, 100% { transform: translateX(0); }
@@ -81,12 +132,19 @@ h1 {
 .parent-link {
   font-size: clamp(12px, 2.6vmin, 16px);
   font-weight: 700;
-  color: #B3A6CC;
+  color: #9A8BBF; /* 한 톤 짙게 — 가독성 */
   text-decoration: none;
   padding: 8px 14px;
+  border-radius: 999px;
+  animation: card-in .35s ease-out .45s backwards;
 }
+.parent-link:active { color: #5E3D7C; }
 /* 누가 놀 건지 고르기 (은아·서하) */
-.profiles { display: flex; gap: clamp(10px, 2.6vmin, 20px); }
+.profiles {
+  display: flex;
+  gap: clamp(10px, 2.6vmin, 20px);
+  animation: card-in .35s ease-out backwards;
+}
 .profile-btn {
   display: flex;
   align-items: center;
@@ -95,22 +153,39 @@ h1 {
   cursor: pointer;
   padding: clamp(8px, 2vmin, 14px) clamp(16px, 3.6vmin, 30px);
   border-radius: 999px;
-  background: rgba(255,255,255,.75);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F4EFFC 100%);
   font-family: inherit;
   font-size: clamp(17px, 4.2vmin, 28px);
   font-weight: 900;
-  color: #6E4A8C;
-  box-shadow: 0 6px 0 rgba(0,0,0,.08);
-  transition: transform .12s;
+  color: #5E3D7C;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 5px 0 #CBBFE4,
+    0 12px 20px rgba(139,120,190,.16);
+  transition: transform .12s, box-shadow .12s;
 }
-.profile-btn:active { transform: scale(.94); }
+.profile-btn:active {
+  transform: translateY(3px) scale(.98);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 2px 0 #CBBFE4,
+    0 7px 12px rgba(139,120,190,.12);
+}
 .profile-btn .p-emoji { font-size: clamp(24px, 5.6vmin, 40px); }
 .profile-btn.sel {
-  background: #fff;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF6DC 100%);
   border-color: #FFB800;
-  box-shadow: 0 6px 0 rgba(255,184,0,.35);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.7),
+    0 5px 0 #DFA400,
+    0 12px 20px rgba(255,184,0,.22);
 }
 .profile-btn.sel::after { content: '✔'; color: #FFB800; font-size: .8em; }
+/* 모션 줄이기 설정 존중 */
+@media (prefers-reduced-motion: reduce) {
+  h1, .profiles, .parent-link, .app-card, .app-card.nope { animation: none; }
+  .app-card, .profile-btn { transition: none; }
+}
 </style>
 </head>
 <body>
