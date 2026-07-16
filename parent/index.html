@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#6E4A8C">
+<title>부모님 페이지 — 은아의 놀이터</title>
+<link rel="icon" href="../icon-192.png">
+<link rel="stylesheet" href="../shared/time-limit.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body {
+  min-height: 100%;
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background: linear-gradient(160deg, #F3EDFB 0%, #E8F2FA 100%);
+  color: #4A3F6E;
+  padding: 20px 16px calc(28px + env(safe-area-inset-bottom));
+}
+.page { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-size: clamp(22px, 5vmin, 30px); font-weight: 900; }
+.back { color: #8A7B9C; text-decoration: none; font-weight: 800; font-size: 15px; }
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 6px 0 rgba(0,0,0,.06);
+}
+.card h2 { font-size: 17px; font-weight: 900; margin-bottom: 10px; }
+.card p.note { font-size: 13px; color: #8A7B9C; line-height: 1.6; margin-top: 8px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px dashed #EEE7F5; }
+.row:last-child { border-bottom: none; }
+.row .lbl { font-size: 15px; font-weight: 800; }
+.row .sub { display: block; font-size: 12px; font-weight: 600; color: #9C8FB8; margin-top: 3px; line-height: 1.5; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg button {
+  border: none; cursor: pointer;
+  padding: 8px 12px; border-radius: 12px;
+  background: #F1EADC; color: #5E4E7A; font-weight: 900; font-size: 14px;
+  box-shadow: 0 2px 0 #D5C9AE;
+}
+.seg button.sel { background: linear-gradient(180deg, #A88AE0, #7A5AC8); color: #fff; box-shadow: 0 2px 0 #5A3AA8; }
+.switch {
+  border: none; cursor: pointer; flex-shrink: 0;
+  width: 58px; height: 32px; border-radius: 16px;
+  background: #E4DCF0; position: relative; transition: background .15s;
+}
+.switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 26px; height: 26px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .15s;
+}
+.switch.on { background: #7CBF5C; }
+.switch.on::after { left: 29px; }
+.big-num { font-size: clamp(26px, 6vmin, 38px); font-weight: 900; }
+.pill {
+  border: none; cursor: pointer;
+  padding: 12px 16px; border-radius: 14px;
+  background: linear-gradient(180deg, #A88AE0, #7A5AC8); color: #fff;
+  font-weight: 900; font-size: 15px; box-shadow: 0 3px 0 #5A3AA8;
+}
+.pill.soft { background: #F1EADC; color: #5E4E7A; box-shadow: 0 3px 0 #D5C9AE; }
+input[type="password"], input[type="text"] {
+  width: 90px; padding: 10px; border-radius: 12px; border: 2px solid #E4DCF0;
+  font-size: 16px; font-weight: 900; text-align: center; letter-spacing: 4px;
+}
+table.sum { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.sum td { padding: 7px 4px; border-bottom: 1px dashed #EEE7F5; }
+table.sum td:last-child { text-align: right; font-weight: 800; }
+#gate .tl-card { max-width: 340px; }
+.hidden { display: none !important; }
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  background: #4A3F6E; color: #fff; font-weight: 800; font-size: 14px;
+  padding: 10px 18px; border-radius: 999px; opacity: 0; transition: opacity .2s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- 부모 확인 번호 입력 (통과 전에는 내용이 안 보인다) -->
+<div id="gate" class="tl-overlay">
+  <div class="tl-card">
+    <div class="tl-emoji">🔑</div>
+    <div class="tl-title">부모님 페이지</div>
+    <div class="tl-sub">부모님 확인 번호를 눌러 주세요</div>
+    <div class="tl-dots" id="gate-dots"><span></span><span></span><span></span><span></span></div>
+    <div class="tl-pad" id="gate-pad"></div>
+    <p style="margin-top:12px"><a class="back" href="../">◀ 놀이터로 돌아가기</a></p>
+  </div>
+</div>
+
+<div class="page hidden" id="main">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <h1>🔑 부모님 페이지</h1>
+    <a class="back" href="../">◀ 놀이터로</a>
+  </div>
+
+  <div class="card">
+    <h2>⏰ 오늘 사용 시간</h2>
+    <div class="row">
+      <span class="lbl">오늘 논 시간</span>
+      <span class="big-num" id="used-min">0분</span>
+    </div>
+    <div class="row">
+      <span class="lbl">하루 제한<span class="sub">모든 놀이터가 함께 소진해요. 다 쓰면 잠기고, 확인 번호로 30분씩 연장돼요.</span></span>
+      <span class="seg" id="limit-seg"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🧸 아이에게 보여줄 놀이터</h2>
+    <div class="row">
+      <span class="lbl">🌸 일본어 놀이터<span class="sub">꺼져 있어도 한글 낱말 카드를 10장 모으면 자동으로 열려요. (지금 <b id="hangul-cards">0</b>장)</span></span>
+      <button type="button" class="switch" data-key="showJapanese"></button>
+    </div>
+    <div class="row">
+      <span class="lbl">🎙️ 프랙티카 놀이터<span class="sub">여행·회사 회화라 5세에겐 어려워요. 켜면 홈에 나타나요.</span></span>
+      <button type="button" class="switch" data-key="showPractika"></button>
+    </div>
+    <div class="row">
+      <span class="lbl">🖍️ 픽셀 활동지 도안<span class="sub">셈하기·글자 찾기 활동지 29장. 어른과 함께 할 때 켜 주세요.</span></span>
+      <button type="button" class="switch" data-key="showWorksheets"></button>
+    </div>
+    <div class="row">
+      <span class="lbl">🎧 받아쓰기 6~7단계<span class="sub">긴 문장 받아쓰기. 준비가 되면 열어 주세요.</span></span>
+      <button type="button" class="switch" data-key="showDictHard"></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🎤 음성 인식(마이크)</h2>
+    <div class="row">
+      <span class="lbl">마이크로 말하기 사용<span class="sub">영어·글씨·프랙티카 놀이터가 씁니다.</span></span>
+      <button type="button" class="switch" data-key="stt"></button>
+    </div>
+    <p class="note">⚠️ 브라우저의 음성 인식은 크롬 등에서 <b>아이의 목소리가 브라우저 회사 서버로 전송되어</b> 처리될 수 있어요.
+    원치 않으시면 끄세요 — 끄면 마이크 대신 그림 단어장·직접 입력·듣고 따라 하기로 놀 수 있어요.</p>
+  </div>
+
+  <div class="card">
+    <h2>🔢 확인 번호 바꾸기</h2>
+    <div class="row">
+      <span class="lbl">새 번호 (4자리)</span>
+      <span style="display:flex;gap:8px;align-items:center">
+        <input type="password" id="new-pin" inputmode="numeric" maxlength="4" placeholder="0000">
+        <button type="button" class="pill" id="save-pin">저장</button>
+      </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📊 진행도 한눈에</h2>
+    <table class="sum" id="sum-table"></table>
+  </div>
+
+  <div class="card">
+    <h2>💾 진행도 백업</h2>
+    <p class="note">진행도는 이 브라우저에만 저장돼요. 브라우저 데이터를 지우거나 기기를 바꾸면 사라지니, 가끔 파일로 내려받아 두세요.</p>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button type="button" class="pill" id="btn-export">⬇️ 파일로 내려받기</button>
+      <button type="button" class="pill soft" id="btn-import">⬆️ 파일에서 되살리기</button>
+      <input type="file" id="import-file" accept="application/json" class="hidden">
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../shared/parent-settings.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  /* ─────────── 확인 번호 게이트 ─────────── */
+  let pin = '';
+  function renderDots() {
+    $('gate-dots').querySelectorAll('span').forEach((d, i) => d.classList.toggle('tl-filled', i < pin.length));
+  }
+  ['1','2','3','4','5','6','7','8','9','←','0','✓'].forEach(k => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tl-key' + (k === '✓' ? ' tl-ok' : '');
+    b.textContent = k;
+    b.addEventListener('click', () => {
+      if (k === '←') { pin = pin.slice(0, -1); renderDots(); return; }
+      if (k === '✓') { submit(); return; }
+      if (pin.length >= 4) return;
+      pin += k;
+      renderDots();
+      if (pin.length === 4) setTimeout(submit, 150);
+    });
+    $('gate-pad').appendChild(b);
+  });
+  function submit() {
+    if (ParentSettings.checkPin(pin)) {
+      $('gate').classList.add('tl-hidden');
+      $('main').classList.remove('hidden');
+      render();
+    } else {
+      pin = '';
+      renderDots();
+      $('gate-dots').classList.add('tl-wrong');
+      setTimeout(() => $('gate-dots').classList.remove('tl-wrong'), 500);
+    }
+  }
+
+  function toast(msg) {
+    $('toast').textContent = msg;
+    $('toast').classList.add('show');
+    setTimeout(() => $('toast').classList.remove('show'), 1800);
+  }
+
+  /* ─────────── 오늘 사용 시간 / 하루 제한 ─────────── */
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function usedMin() {
+    try {
+      const t = JSON.parse(localStorage.getItem('enjoy-timelimit-v1'));
+      if (t && t.date === todayStr()) return Math.round((t.used || 0) / 60000);
+    } catch (e) {}
+    try { // 예전 play 전용 키
+      const t = JSON.parse(localStorage.getItem('chatgi-timelimit-v1'));
+      if (t && t.date === todayStr()) return Math.round((t.used || 0) / 60000);
+    } catch (e) {}
+    return 0;
+  }
+  const LIMIT_CHOICES = [[15, '15분'], [30, '30분'], [45, '45분'], [60, '1시간'], [0, '제한 없음']];
+  function renderLimit() {
+    const cur = +ParentSettings.get('limitMin');
+    const seg = $('limit-seg');
+    seg.innerHTML = '';
+    LIMIT_CHOICES.forEach(([min, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.classList.toggle('sel', cur === min);
+      b.addEventListener('click', () => { ParentSettings.set('limitMin', min); renderLimit(); toast('하루 제한: ' + label); });
+      seg.appendChild(b);
+    });
+  }
+
+  /* ─────────── 토글 ─────────── */
+  function renderSwitches() {
+    document.querySelectorAll('.switch').forEach(sw => {
+      sw.classList.toggle('on', !!ParentSettings.get(sw.dataset.key));
+    });
+  }
+  document.querySelectorAll('.switch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      const k = sw.dataset.key;
+      ParentSettings.set(k, !ParentSettings.get(k));
+      renderSwitches();
+    });
+  });
+
+  /* ─────────── 확인 번호 변경 ─────────── */
+  $('save-pin').addEventListener('click', () => {
+    const v = $('new-pin').value.trim();
+    if (!/^\d{4}$/.test(v)) { toast('숫자 4자리로 입력해 주세요'); return; }
+    ParentSettings.set('pin', v);
+    $('new-pin').value = '';
+    toast('확인 번호를 바꿨어요');
+  });
+
+  /* ─────────── 진행도 요약 ─────────── */
+  function readJson(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+  }
+  function hangulCards() {
+    const h = readJson('hangul-playground-v1');
+    return h && h.cards ? Object.keys(h.cards).length : 0;
+  }
+  function renderSummary() {
+    $('hangul-cards').textContent = hangulCards();
+    const rows = [];
+    function row(name, key, fmt) {
+      const d = readJson(key);
+      rows.push('<tr><td>' + name + '</td><td>' + (d ? fmt(d) : '아직 기록 없음') + '</td></tr>');
+    }
+    row('🔍 찾기 놀이터', 'chatgi-playground-v1', d => '깬 판 ' + Object.keys(d.stars || {}).length + '개 · 스티커 ' + Object.keys(d.stickers || {}).length + '개');
+    row('🗣️ 영어 놀이터', 'english-playground-v1', d => '배운 단어 ' + Object.keys(d.learned || {}).length + '개');
+    row('🧩 픽셀 놀이터', 'pixel-playground-v1', d => {
+      const pics = Object.values(d.pics || {});
+      return '완성한 도안 ' + pics.filter(p => p.done).length + '개 (칠하던 것 ' + pics.length + '개)';
+    });
+    row('🌟 한글 놀이터', 'hangul-playground-v1', d => '낱말 카드 ' + Object.keys(d.cards || {}).length + '장 · 별 ' + (d.stars || 0));
+    row('🌸 일본어 놀이터', 'japanese-playground-v1', d => '낱말 카드 ' + Object.keys(d.cards || {}).length + '장 · 별 ' + (d.stars || 0));
+    row('✍️ 글씨 놀이터', 'write-playground-v1', d => '보관 작품 ' + Object.keys(d.gallery || {}).length + '개 · 별 ' + (d.stars || 0));
+    row('🎙️ 프랙티카 놀이터', 'practika-playground-v1', d => 'XP ' + (d.xp || 0) + ' · 젬 ' + (d.gems || 0));
+    $('sum-table').innerHTML = rows.join('');
+  }
+
+  /* ─────────── 백업 (내려받기 / 되살리기) ─────────── */
+  const BACKUP_KEYS = [
+    'chatgi-playground-v1', 'chatgi-stickerboard-v1', 'chatgi-timelimit-v1', 'chatgi-muted',
+    'english-playground-v1', 'pixel-playground-v1', 'pixel-muted',
+    'hangul-playground-v1', 'japanese-playground-v1', 'practika-playground-v1', 'write-playground-v1',
+    'enjoy-voice-ko', 'enjoy-rate-factor', 'enjoy-timelimit-v1', 'enjoy-parent-v1'
+  ];
+  $('btn-export').addEventListener('click', () => {
+    const out = { _app: 'enjoy-backup', _at: new Date().toISOString() };
+    BACKUP_KEYS.forEach(k => {
+      const v = localStorage.getItem(k);
+      if (v !== null) out[k] = v;
+    });
+    const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'enjoy-진행도-' + todayStr() + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('진행도 파일을 내려받았어요');
+  });
+  $('btn-import').addEventListener('click', () => $('import-file').click());
+  $('import-file').addEventListener('change', () => {
+    const f = $('import-file').files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        if (!data || data._app !== 'enjoy-backup') { toast('enjoy 백업 파일이 아니에요'); return; }
+        let n = 0;
+        BACKUP_KEYS.forEach(k => {
+          if (typeof data[k] === 'string') { localStorage.setItem(k, data[k]); n++; }
+        });
+        toast(n + '개 항목을 되살렸어요');
+        render();
+      } catch (e) { toast('파일을 읽지 못했어요'); }
+    };
+    r.readAsText(f);
+    $('import-file').value = '';
+  });
+
+  function render() {
+    $('used-min').textContent = usedMin() + '분';
+    renderLimit();
+    renderSwitches();
+    renderSummary();
+  }
+})();
+</script>
+<script src="../shared/sw-register.js"></script>
+</body>
+</html>

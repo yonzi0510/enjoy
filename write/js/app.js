@@ -24,13 +24,20 @@ window.App = (() => {
     scope.pages.forEach((p, i) => { if (P.isDone(pageId(scope, i))) n++; });
     return n;
   }
+  // 받아쓰기 6~7단계(긴 문장)는 부모가 허용할 때만 보여준다 — 진행도 계산도 같은 기준
+  function visibleItems(ch) {
+    if (ch.id === 'dict' && !(window.ParentSettings && ParentSettings.get('showDictHard'))) {
+      return ch.items.filter(it => it.id !== 'dict6' && it.id !== 'dict7');
+    }
+    return ch.items;
+  }
   function chapterDone(ch) {
     if (ch.pages) return doneIn(ch);
-    return ch.items.reduce((n, it) => n + doneIn(it), 0);
+    return visibleItems(ch).reduce((n, it) => n + doneIn(it), 0);
   }
   function chapterTotal(ch) {
     if (ch.pages) return ch.pages.length;
-    return ch.items.reduce((n, it) => n + it.pages.length, 0);
+    return visibleItems(ch).reduce((n, it) => n + it.pages.length, 0);
   }
   // 긴 받아쓰기 문장은 가운데에 가까운 공백에서 두 줄로 나눈다
   function splitText(text) {
@@ -121,7 +128,7 @@ window.App = (() => {
     document.getElementById('items-title').textContent = ch.icon + ' ' + ch.name;
     const list = document.getElementById('items-list');
     list.innerHTML = '';
-    ch.items.forEach(it => {
+    visibleItems(ch).forEach(it => {
       const done = doneIn(it), total = it.pages.length;
       const row = document.createElement('div');
       row.className = 'item-row';
@@ -161,12 +168,15 @@ window.App = (() => {
   let listening = false;
   function askStatus(msg) { document.getElementById('ask-status').textContent = msg; }
 
+  // 부모 설정에서 음성 인식을 꺼 두면 마이크 없이 최근 낱말·직접 입력만 쓴다
+  function sttOn() { return Ask.sttSupported() && !(window.ParentSettings && !ParentSettings.get('stt')); }
+
   function openAsk() {
     stopAsk();
-    document.getElementById('ask-mic').style.display = Ask.sttSupported() ? '' : 'none';
-    askStatus(Ask.sttSupported()
+    document.getElementById('ask-mic').style.display = sttOn() ? '' : 'none';
+    askStatus(sttOn()
       ? '마이크를 누르고 "토끼는 어떻게 써?" 하고 물어보세요'
-      : '이 브라우저는 마이크 듣기가 안 돼요. 아래에 낱말을 적어 주세요');
+      : '아래 낱말을 누르거나, 낱말을 적어 주세요');
     renderAskRecent();
     showScreen('scr-ask');
   }
@@ -510,8 +520,25 @@ window.App = (() => {
     document.getElementById('btn-draw-undo').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); pad.undo();
     });
-    document.getElementById('btn-draw-clear').addEventListener('click', ev => {
-      ev.preventDefault(); A.sfx.pop(); pad.clear();
+    // 전체 지우기는 실수 방지를 위해 두 번 눌러야 지워진다
+    let clearArmedUntil = 0, clearResetTimer = null;
+    const clearBtn = document.getElementById('btn-draw-clear');
+    clearBtn.addEventListener('click', ev => {
+      ev.preventDefault();
+      if (Date.now() < clearArmedUntil) {
+        clearArmedUntil = 0;
+        if (clearResetTimer) clearTimeout(clearResetTimer);
+        clearBtn.textContent = '🗑️';
+        A.sfx.pop();
+        pad.clear();
+        return;
+      }
+      clearArmedUntil = Date.now() + 2500;
+      clearBtn.textContent = '🗑️❗';
+      A.sfx.tap();
+      A.speak('다 지울까요? 한 번 더 누르면 지워져요');
+      if (clearResetTimer) clearTimeout(clearResetTimer);
+      clearResetTimer = setTimeout(() => { clearArmedUntil = 0; clearBtn.textContent = '🗑️'; }, 2500);
     });
     document.getElementById('btn-draw-save').addEventListener('click', ev => {
       ev.preventDefault();

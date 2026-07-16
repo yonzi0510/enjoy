@@ -107,3 +107,6 @@ window.Sound = (() => {
     }
   };
 })();
+
+// 공용 모듈(목소리 미리듣기·시간제한 안내)도 이 앱의 음소거를 따르게 한다
+window.EnjoyMuted = () => Sound.isMuted();

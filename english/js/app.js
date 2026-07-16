@@ -73,9 +73,13 @@
   function startAsk() {
     Speech.unlock();
     Speech.stopSpeak();
-    if (!Speech.sttSupported()) {
+    // 부모 설정에서 음성 인식을 꺼 두면 마이크 대신 그림 단어장으로 안내
+    const sttOff = window.ParentSettings && !ParentSettings.get('stt');
+    if (!Speech.sttSupported() || sttOff) {
       navigate({ s: 'cats' });
-      Speech.speakKo('이 기기에서는 마이크를 쓸 수 없어요. 그림 단어장에서 궁금한 그림을 눌러 볼까요?');
+      Speech.speakKo(sttOff
+        ? '마이크 대신 그림 단어장에서 궁금한 그림을 눌러 볼까요?'
+        : '이 기기에서는 마이크를 쓸 수 없어요. 그림 단어장에서 궁금한 그림을 눌러 볼까요?');
       return;
     }
     state.listening = true;

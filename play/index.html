@@ -13,6 +13,7 @@
 <title>찾기 놀이터</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="../shared/voice-settings.css">
+<link rel="stylesheet" href="../shared/time-limit.css">
 </head>
 <body>
 
@@ -81,20 +82,6 @@
   </header>
   <div id="sticker-board" class="sticker-board"></div>
   <div id="sticker-palette" class="sticker-palette"></div>
-</div>
-
-<!-- ═══════════ 시간제한 잠금 오버레이 ═══════════ -->
-<div id="lock-overlay" class="overlay lock-overlay hidden">
-  <div class="lock-card">
-    <div class="lock-emoji">😴</div>
-    <div class="lock-title">오늘은 많이 놀았어요!</div>
-    <div class="lock-sub">눈도 토끼도 쉬는 시간이에요.<br>내일 또 만나요! 👋</div>
-    <div class="lock-parent">
-      <div class="lock-parent-label">🔒 부모님 확인 (30분 더 놀기)</div>
-      <div id="pin-dots" class="pin-dots"><span></span><span></span><span></span><span></span></div>
-      <div id="pin-pad" class="pin-pad"></div>
-    </div>
-  </div>
 </div>
 
 <!-- ═══════════ 게임 모드 선택 오버레이 ═══════════ -->
@@ -179,6 +166,7 @@
   <div id="sticker-grid" class="sticker-grid"></div>
 </div>
 
+<script src="../shared/parent-settings.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/scenes/farm.js"></script>
@@ -190,8 +178,9 @@
 <script src="js/engine.js"></script>
 <script src="js/letters.js"></script>
 <script src="js/stickerplay.js"></script>
-<script src="js/timelimit.js"></script>
 <script src="js/nav.js"></script>
 <script src="../shared/voice-settings.js"></script>
+<script src="../shared/time-limit.js"></script>
+<script src="../shared/sw-register.js"></script>
 </body>
 </html>

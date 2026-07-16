@@ -161,6 +161,9 @@ window.App = (() => {
       b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
+        // 글을 못 읽는 아이를 위해 메뉴 이름을 말해 준다
+        const nm = b.querySelector('.mc-name');
+        if (nm) A.speakSeq([{ text: nm.textContent, rate: 1.0 }]);
         const go = b.dataset.go;
         if (go === 'learn') { gridPurpose = 'learn'; showScreen('scr-letters'); }
         else if (go === 'trace') { gridPurpose = 'trace'; showScreen('scr-letters'); }

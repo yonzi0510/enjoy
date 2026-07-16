@@ -59,9 +59,31 @@ h1 {
   transition: transform .12s;
 }
 .app-card:active { transform: scale(.95); }
+.app-card[hidden] { display: none; } /* hidden 속성이 위 display:flex에 밀리지 않게 */
 .app-card img { width: 70%; border-radius: 26%; }
 .app-name { font-size: clamp(16px, 4vmin, 28px); font-weight: 900; color: #4A3F22; white-space: nowrap; }
 .app-desc { font-size: clamp(11px, 2.6vmin, 16px); font-weight: 700; color: #9C8FB8; text-align: center; line-height: 1.5; }
+/* 잠긴 카드(일본어 — 한글 카드 10장을 모으면 열림) */
+.app-card.locked { position: relative; opacity: .75; }
+.app-card.locked img { filter: grayscale(.9); }
+.lock-badge {
+  position: absolute;
+  top: 10px; right: 12px;
+  font-size: clamp(20px, 4.5vmin, 34px);
+}
+@keyframes card-nope {
+  0%, 100% { transform: translateX(0); }
+  25%, 75% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+}
+.app-card.nope { animation: card-nope .4s; }
+.parent-link {
+  font-size: clamp(12px, 2.6vmin, 16px);
+  font-weight: 700;
+  color: #B3A6CC;
+  text-decoration: none;
+  padding: 8px 14px;
+}
 </style>
 </head>
 <body>
@@ -98,12 +120,71 @@ h1 {
     <span class="app-name">✍️ 글씨 놀이터</span>
     <span class="app-desc">펜슬로 따라 쓰고<br>혼자 써 봐요</span>
   </a>
-  <a class="app-card" href="./practika/">
+  <a class="app-card" href="./practika/" id="card-practika" hidden>
     <img src="./practika/icon-192.png" alt="프랙티카 놀이터 헤드셋 낀 보라 튜터">
     <span class="app-name">🎙️ 프랙티카 놀이터</span>
     <span class="app-desc">AI 튜터와 영·일·중 대화<br>말하기 연습 · 어휘 복습</span>
   </a>
 </div>
+<a class="parent-link" href="./parent/">🔑 부모님 페이지</a>
 </div>
+<script src="./shared/parent-settings.js"></script>
+<script>
+(() => {
+  // ── 글을 못 읽는 아이를 위해: 카드를 누르면 앱 이름을 말해 준 뒤 이동한다 ──
+  function speak(text) {
+    if (!window.speechSynthesis) return 0;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ko-KR';
+      u.rate = 1.0;
+      u.pitch = 1.15;
+      const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.replace('_', '-').toLowerCase().indexOf('ko') === 0);
+      if (vs.length) {
+        let uri = null;
+        try { uri = localStorage.getItem('enjoy-voice-ko'); } catch (e) {}
+        u.voice = vs.find(v => v.voiceURI === uri) || vs[0];
+      }
+      speechSynthesis.speak(u);
+      return 1;
+    } catch (e) { return 0; }
+  }
+  function koName(card) {
+    // "🔍 찾기 놀이터" → "찾기 놀이터" (이모지는 읽지 않게)
+    const el = card.querySelector('.app-name');
+    return el ? el.textContent.replace(/[^가-힣0-9 ]/g, '').trim() : '';
+  }
+
+  // ── 프랙티카: 회화 내용이 5세엔 어려워 부모가 허용할 때만 보여준다 ──
+  if (window.ParentSettings && ParentSettings.get('showPractika')) {
+    document.getElementById('card-practika').hidden = false;
+  }
+
+  // ── 일본어: 한글 낱말 카드 10장을 모으면 열림 (부모가 바로 열어줄 수도 있음) ──
+  const jaCard = document.querySelector('a[href="./japanese/"]');
+  const jaLocked = window.ParentSettings && !ParentSettings.japaneseUnlocked();
+  if (jaCard && jaLocked) {
+    jaCard.classList.add('locked');
+    jaCard.insertAdjacentHTML('beforeend', '<span class="lock-badge">🔒</span>');
+  }
+
+  document.querySelectorAll('.app-card').forEach(card => {
+    card.addEventListener('click', e => {
+      e.preventDefault();
+      if (card.classList.contains('locked')) {
+        card.classList.remove('nope');
+        void card.offsetWidth;
+        card.classList.add('nope');
+        speak('한글 놀이터에서 낱말 카드를 열 장 모으면 열려요!');
+        return;
+      }
+      const spoke = speak(koName(card));
+      setTimeout(() => { location.href = card.href; }, spoke ? 900 : 0);
+    });
+  });
+})();
+</script>
+<script src="./shared/sw-register.js"></script>
 </body>
 </html>

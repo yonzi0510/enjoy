@@ -12,6 +12,7 @@
 <title>프랙티카 놀이터</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="../shared/voice-settings.css">
+<link rel="stylesheet" href="../shared/time-limit.css">
 </head>
 <body>
 
@@ -53,7 +54,6 @@
 <!-- ═══════════ 홈 ═══════════ -->
 <div id="screen-home" class="screen active">
   <header class="stat-bar">
-    <div class="stat"><span class="stat-emoji">🔥</span><b id="stat-streak">0</b></div>
     <div class="stat"><span class="stat-emoji">⭐</span><b id="stat-xp">0</b></div>
     <div class="stat"><span class="stat-emoji">💎</span><b id="stat-gems">0</b></div>
     <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
@@ -136,7 +136,6 @@
     <div class="result-rewards">
       <div class="reward"><span>⭐</span><b id="result-xp">+0</b><small>XP</small></div>
       <div class="reward"><span>💎</span><b id="result-gems">+0</b><small>젬</small></div>
-      <div class="reward"><span>🔥</span><b id="result-streak">0</b><small>연속</small></div>
     </div>
     <div class="result-btns">
       <button id="result-next" class="pill-btn pill-primary">다음 레슨 ▶</button>
@@ -156,7 +155,7 @@
   <div class="session-body">
     <div class="review-card-face" id="review-face">
       <div class="review-ko" id="review-ko"></div>
-      <div class="review-sub">이 말을 영어로 해보세요</div>
+      <div class="review-sub" id="review-sub">이 말을 해보세요</div>
     </div>
     <button id="review-mic" class="mic-btn" aria-label="마이크로 말하기">
       <span id="review-mic-icon">🎤</span>
@@ -193,6 +192,9 @@
 <script src="js/tutor.js"></script>
 <script src="js/review.js"></script>
 <script src="js/app.js"></script>
+<script src="../shared/parent-settings.js"></script>
 <script src="../shared/voice-settings.js"></script>
+<script src="../shared/time-limit.js"></script>
+<script src="../shared/sw-register.js"></script>
 </body>
 </html>

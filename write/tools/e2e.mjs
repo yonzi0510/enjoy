@@ -219,11 +219,23 @@ await check('쓰다 만 글씨 자동 저장: 나갔다 와도 그대로', async
   await page.waitForSelector('#scr-home.on');
 });
 
-await check('받아쓰기: 7단계 목록 (정답 유출 ▶️ 없음)', async () => {
+await check('받아쓰기: 기본은 1~5단계만 (6~7단계는 부모 설정으로 열림)', async () => {
   await page.click('.menu-card.c-dict');
   await page.waitForSelector('#scr-items.on');
-  expect(await page.locator('.item-row').count() === 7, '단계 수');
+  expect(await page.locator('.item-row').count() === 5, '기본 단계 수');
   expect(await page.locator('.item-play').count() === 0, '전체 듣기 버튼이 있으면 안 됨');
+  // 부모가 허용하면 7단계 전부 보인다
+  await page.evaluate(() => ParentSettings.set('showDictHard', true));
+  await page.click('#scr-items .back');         // 홈으로
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-dict');
+  await page.waitForSelector('#scr-items.on');
+  expect(await page.locator('.item-row').count() === 7, '부모 허용 후 단계 수');
+  await page.evaluate(() => ParentSettings.set('showDictHard', false));
+  await page.click('#scr-items .back');
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-dict');
+  await page.waitForSelector('#scr-items.on');
 });
 
 await check('받아쓰기: 짧은 항목은 한 줄 + 빈 ▶ 는 그냥 다음 장', async () => {
