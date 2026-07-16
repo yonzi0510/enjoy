@@ -888,6 +888,105 @@ h1 {
 .reward-praise { font-size: clamp(20px, 4.6vmin, 34px); font-weight: 900; color: #9D5511; }
 .reward-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 
+/* ─────────── 가로모드 우선 (태블릿 가로가 기본 사용 환경, DESIGN.md) ───────────
+ * 세로로 길게 쌓인 화면을 2단으로 재배치한다 — 왼쪽 주 콘텐츠, 오른쪽 조작.
+ * HTML·JS 무변경: grid-template-areas 로만 옮긴다 (선례: shared/pet.css 끝부분).
+ * 세로모드(폰 세로) 레이아웃은 건드리지 않는다. */
+@media (orientation: landscape) {
+  /* 홈 메뉴 — 카드 10장을 4~5열로 펼쳐 스크롤 없이 한눈에 */
+  .menu { max-width: 1120px; }
+  .menu-card { width: clamp(140px, 17vw, 200px); }
+  .mc-name, .mc-desc { word-break: keep-all; text-align: center; } /* 어절 중간에서 안 꺾이게 */
+
+  /* 묶음·단계 목록 — 가로에선 2열로 */
+  .items-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 960px;
+  }
+
+  /* 숫자 따라쓰기 — 캔버스 노트 왼쪽, 듣기 버튼·십묶음 시각자료 오른쪽 열 */
+  .trace-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    grid-template-areas:
+      "note    head"
+      "note    visual"
+      "toolbar visual";
+    align-content: center;
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(14px, 2.5vw, 32px);
+    row-gap: clamp(8px, 1.6vmin, 14px);
+    max-width: 1100px;
+    flex: 1; /* 남는 세로 공간 가운데 정렬 */
+  }
+  .trace-stage .page-head    { grid-area: head; }
+  .trace-stage .trace-visual { grid-area: visual; align-self: start; }
+  .trace-stage .note         { grid-area: note; justify-self: stretch; }
+  .trace-stage .toolbar      { grid-area: toolbar; }
+
+  /* 문제 풀기·수 세기 — 그림이 보일 때만 왼쪽 크게 + 보기를 오른쪽 세로 열로.
+   * 숫자 문제는 그림 힌트가 뜨기 전까지 기존 세로 배치를 유지한다(:has 로 판별). */
+  .quiz-stage:has(> .quiz-visual:not([hidden])) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-areas:
+      "visual expr"
+      "visual choices"
+      "visual hint"
+      "visual next";
+    grid-auto-rows: min-content;
+    align-content: center;
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(16px, 3vw, 40px);
+    row-gap: clamp(12px, 2.4vmin, 22px);
+    max-width: 1060px;
+    flex: 1;
+  }
+  .quiz-stage:has(> .quiz-visual:not([hidden])) > .quiz-visual { grid-area: visual; justify-self: stretch; }
+  .quiz-stage:has(> .quiz-visual:not([hidden])) > .quiz-expr    { grid-area: expr; }
+  .quiz-stage:has(> .quiz-visual:not([hidden])) > .quiz-choices { grid-area: choices; flex-direction: column; }
+  .quiz-stage:has(> .quiz-visual:not([hidden])) > #btn-hint     { grid-area: hint; }
+  .quiz-stage:has(> .quiz-visual:not([hidden])) > .big-next     { grid-area: next; }
+  .quiz-stage:has(> .quiz-visual:not([hidden])) .q-row { max-width: 460px; }
+  .quiz-visual.big .q-row { max-width: 560px; } /* 수 세기는 기존 폭 유지 */
+
+  /* 숫자표 — 판을 왼쪽 크게, 보기를 오른쪽 세로 열로 (잘림 제거) */
+  .chart-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "board choices";
+    align-content: center;
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(14px, 2.5vw, 30px);
+    max-width: 1000px;
+    flex: 1;
+  }
+  .chart-grid { grid-area: board; width: min(100%, calc((100vh - 150px) * 1.9)); } /* 5줄 판도 세로로 안 잘리게 */
+  .chart-choices { grid-area: choices; flex-direction: column; }
+
+  /* 점 잇기 — 판을 화면 높이에 꽉 차게 가운데 크게 */
+  #dots-svg { width: min(92vw, calc(100vh - 120px), 640px); }
+
+  /* 패턴 기차 — 판을 가로로 넓게 */
+  .pattern-stage { max-width: 980px; }
+}
+
+/* 아주 낮은 가로 화면(폰 가로) — 여백을 줄여 스크롤 없이 다 보이게 */
+@media (orientation: landscape) and (max-height: 480px) {
+  #scr-home { gap: 8px; }
+  .home-head { flex-direction: row; margin-top: 0; gap: 14px; }
+  .menu { gap: 10px; }
+  .menu-card { padding: 10px 8px; }
+  .mc-desc { display: none; } /* 보조 설명은 좁은 화면에서 생략 (아이는 글을 못 읽는다) */
+  .trace-stage, .quiz-stage, .chart-stage { row-gap: 8px; }
+  /* 좁은 세로 폭에선 보기 3개를 오른쪽 열 안에서 가로로 눕힌다 */
+  .quiz-stage:has(> .quiz-visual:not([hidden])) > .quiz-choices { flex-direction: row; }
+}
+
 /* ─────────── 등장 모션 + 모션 줄이기 설정 존중 ─────────── */
 @keyframes card-in {
   from { opacity: 0; transform: translateY(14px); }
