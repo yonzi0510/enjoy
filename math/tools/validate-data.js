@@ -58,6 +58,74 @@ if (!Array.isArray(D.CHART_LEVELS) || D.CHART_LEVELS.length < 3) err('숫자표 
   if (!(lv.blanks >= 3 && lv.blanks < total)) err('숫자표 ' + lv.name + ': 빈칸 수 오류 — ' + lv.blanks);
 });
 
+// 패턴 이어가기: 단계 3개, 반복 단위 형식(A로 시작·순서대로 등장·2종류 이상·길이 2~4),
+// 보여줄 칸 수(단위가 드러날 만큼 길고 폰 화면에 맞게 6칸 이하), 소재 묶음 계약
+if (!Array.isArray(D.PATTERN_LEVELS) || D.PATTERN_LEVELS.length !== 3) {
+  err('패턴 단계가 3개여야 함');
+}
+(D.PATTERN_LEVELS || []).forEach(lv => {
+  const tag = '패턴 ' + (lv.name || lv.id);
+  if (!lv.name || !lv.desc || !lv.emoji) err(tag + ': 이름·설명·이모지 누락');
+  if (!Array.isArray(lv.forms) || !lv.forms.length) { err(tag + ': forms 없음'); return; }
+  lv.forms.forEach(f => {
+    const u = f.unit || '';
+    if (!/^A[ABC]{1,3}$/.test(u)) err(tag + ': 단위 형식 오류(A 시작, A~C, 길이 2~4) — ' + u);
+    if (new Set(u).size < 2) err(tag + ': 단위에 글자가 한 종류뿐 — ' + u);
+    let maxSeen = 0; // 글자는 A→B→C 순서로 처음 등장해야 한다 (B 없이 C 금지)
+    for (const ch of u) {
+      const k = 'ABC'.indexOf(ch);
+      if (k > maxSeen) err(tag + ': 글자 등장 순서 오류 — ' + u);
+      if (k === maxSeen) maxSeen++;
+    }
+    if (!Array.isArray(f.shown) || !f.shown.length) { err(tag + ': shown 없음 — ' + u); return; }
+    f.shown.forEach(s => {
+      if (!(s >= Math.ceil(u.length * 1.5) && s <= 6)) {
+        err(tag + ' ' + u + ': 칸 수(' + s + ') 오류 — 단위 1.5배 이상, 6칸 이하여야 함');
+      }
+    });
+  });
+});
+if (!Array.isArray(D.PATTERN_SETS) || D.PATTERN_SETS.length < 4) err('패턴 소재 묶음이 4개 이상이어야 함');
+(D.PATTERN_SETS || []).forEach(set => {
+  const tag = '패턴 소재 ' + (set.id || '?');
+  if (!set.id) err(tag + ': id 누락');
+  if (!Array.isArray(set.items) || set.items.length < 4) { err(tag + ': 소재가 4개 이상이어야 함'); return; }
+  const es = new Set();
+  set.items.forEach(it => {
+    if (!it.e || !it.name) err(tag + ': 이모지·이름 누락');
+    if (es.has(it.e)) err(tag + ': 이모지 중복 — ' + it.e);
+    es.add(it.e);
+  });
+});
+// 생성기 표본 검사: 수열이 단위를 따르고, 보기 3개가 서로 다르며 그중 정답이 정확히 하나
+if (typeof D.makePattern !== 'function') {
+  err('makePattern 생성기가 없음');
+} else {
+  (D.PATTERN_LEVELS || []).forEach(lv => {
+    for (let t = 0; t < 300; t++) {
+      const q = D.makePattern(lv);
+      const tag = '패턴 생성(' + lv.id + '단계)';
+      if (!Array.isArray(q.shown) || q.shown.length < 2 || q.shown.length > 6) {
+        err(tag + ': 칸 수 오류 — ' + (q.shown && q.shown.length)); break;
+      }
+      const L = q.unit.length;
+      const map = {};
+      let seqOk = true;
+      q.shown.forEach((it, i) => {
+        const ch = q.unit[i % L];
+        if (!map[ch]) map[ch] = it.e;
+        else if (map[ch] !== it.e) seqOk = false;
+      });
+      if (new Set(Object.values(map)).size !== Object.keys(map).length) seqOk = false; // 글자마다 다른 이모지
+      if (!seqOk) { err(tag + ': 수열이 반복 단위를 따르지 않음 — ' + q.unit); break; }
+      if (q.answer.e !== map[q.unit[q.shown.length % L]]) { err(tag + ': 정답이 패턴의 다음 칸이 아님'); break; }
+      if (!Array.isArray(q.choices) || q.choices.length !== 3
+        || new Set(q.choices.map(c => c.e)).size !== 3) { err(tag + ': 보기 3개가 서로 달라야 함'); break; }
+      if (q.choices.filter(c => c.e === q.answer.e).length !== 1) { err(tag + ': 보기 중 정답이 하나여야 함'); break; }
+    }
+  });
+}
+
 // 점 잇기 도안: 그림 8개 이상, 점 10~20개(번호는 배열 순서 = 1부터 연속),
 // 좌표는 viewBox 안, 점끼리 9 이상 떨어져야 한다(잘못 눌림 방지)
 if (!DOTS || !Array.isArray(DOTS.PICTURES)) {
@@ -96,4 +164,5 @@ if (errors) {
   process.exit(1);
 }
 console.log('✅ 데이터 검증 통과 — 숫자 1~100, 묶음 10개, 레벨 ' + D.LEVELS.length + '단계, 수 세기 ' +
-  D.COUNT_LEVELS.length + '단계, 숫자표 ' + D.CHART_LEVELS.length + '단계, 점 잇기 그림 ' + DOTS.PICTURES.length + '개');
+  D.COUNT_LEVELS.length + '단계, 숫자표 ' + D.CHART_LEVELS.length + '단계, 점 잇기 그림 ' + DOTS.PICTURES.length +
+  '개, 패턴 ' + D.PATTERN_LEVELS.length + '단계·소재 ' + D.PATTERN_SETS.length + '묶음');

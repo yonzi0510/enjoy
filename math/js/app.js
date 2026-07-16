@@ -22,6 +22,7 @@ window.App = (() => {
     { id: 'count', icon: '🔢', name: '수 세기', desc: '몇 개인지 맞혀요', cls: 'c-count' },
     { id: 'chart', icon: '💯', name: '숫자표 채우기', desc: '빈칸에 쏙!', cls: 'c-chart' },
     { id: 'dots', icon: '✨', name: '점 잇기', desc: '순서대로 콕콕', cls: 'c-dots' },
+    { id: 'pattern', icon: '🚂', name: '패턴 이어가기', desc: '다음 칸은 뭘까?', cls: 'c-pattern' },
     { id: 'add-visual', icon: '🍎', name: '그림 덧셈', desc: '그림을 세면서 배워요', cls: 'c-addv', mode: 'add', visual: true },
     { id: 'sub-visual', icon: '🍏', name: '그림 뺄셈', desc: '먹은 건 몇 개?', cls: 'c-subv', mode: 'sub', visual: true },
     { id: 'add', icon: '➕', name: '덧셈 문제', desc: '3 + 4 = ?', cls: 'c-add', mode: 'add', visual: false },
@@ -68,6 +69,7 @@ window.App = (() => {
   }
   function modeLevels(modeDef) {
     if (modeDef.id === 'stones') return STONE_LEVELS;
+    if (modeDef.id === 'pattern') return D.PATTERN_LEVELS;
     if (modeDef.id === 'count') return D.COUNT_LEVELS;
     if (modeDef.id === 'chart') return D.CHART_LEVELS;
     if (modeDef.id === 'dots') { // 점 잇기는 단계 대신 그림 목록
@@ -218,6 +220,7 @@ window.App = (() => {
         ev.preventDefault();
         A.sfx.tap();
         if (modeDef.id === 'stones') startStoneRound(lv);
+        else if (modeDef.id === 'pattern') startPatternRound(lv);
         else if (modeDef.id === 'count') startCountRound(lv);
         else if (modeDef.id === 'chart') startChart(lv);
         else if (modeDef.id === 'dots') startDots(window.MathDots.PICTURES.find(p => p.id === lv.id));
@@ -537,6 +540,124 @@ window.App = (() => {
       openLevels(MODES.find(m => m.id === 'stones'));
     });
     A.speak('와, 징검다리를 다 건넜어요! 정말 대단해요!');
+  }
+
+  /* ─────────── 패턴 이어가기 — 기차 칸의 규칙을 찾아 다음 칸을 채운다 ─────────── */
+  let pt = null; // { level, qIdx, q, lock, timers }
+
+  function patternClearTimers() {
+    (pt && pt.timers || []).forEach(clearTimeout);
+    if (pt) pt.timers = [];
+  }
+  function startPatternRound(level) {
+    pt = { level, qIdx: 0, timers: [] };
+    showScreen('scr-pattern');
+    nextPattern();
+  }
+  function nextPattern() {
+    patternClearTimers();
+    pt.lock = false;
+    pt.q = D.makePattern(pt.level);
+    $('btn-pnext').hidden = true;
+
+    // 진행 점
+    const dots = $('pattern-dots');
+    dots.innerHTML = '';
+    for (let i = 0; i < D.ROUND; i++) {
+      const d = document.createElement('span');
+      d.className = 'dot' + (i < pt.qIdx ? ' done' : i === pt.qIdx ? ' on' : '');
+      dots.appendChild(d);
+    }
+
+    // 기차: 기관차 + 패턴 칸들 + 마지막 ❓ 칸
+    const train = $('train');
+    train.classList.remove('go');
+    train.innerHTML = '';
+    const eng = document.createElement('span');
+    eng.className = 'train-engine';
+    eng.textContent = '🚂';
+    train.appendChild(eng);
+    pt.q.shown.forEach(it => {
+      const c = document.createElement('span');
+      c.className = 'train-car';
+      c.textContent = it.e;
+      train.appendChild(c);
+    });
+    const qc = document.createElement('span');
+    qc.className = 'train-car q-car';
+    qc.textContent = '❓';
+    train.appendChild(qc);
+
+    // 큰 보기 버튼 3개 (이모지)
+    const box = $('pattern-choices');
+    box.innerHTML = '';
+    pt.q.choices.forEach(it => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'choice-btn';
+      btn.textContent = it.e;
+      btn.addEventListener('click', ev => { ev.preventDefault(); answerPattern(btn, it); });
+      box.appendChild(btn);
+    });
+
+    setTimeout(() => readPattern(), 350);
+  }
+  // 패턴을 리듬 있게 읽어 준다: "사과, 바나나, 사과, 바나나… 다음은?"
+  function readPattern(prefix) {
+    const items = pt.q.shown.map(it => ({ text: it.name, rate: 1.05 }));
+    items.push({ text: '다음은 뭘까?' });
+    if (prefix) items.unshift({ text: prefix });
+    A.speakSeq(items);
+  }
+  function answerPattern(btn, it) {
+    if (pt.lock) return;
+    if (it.e !== pt.q.answer.e) { // 오답 — 부드럽게 흔들고 패턴을 한 번 더 읽어 준다
+      btn.classList.add('no');
+      setTimeout(() => btn.classList.remove('no'), 500);
+      const qc = document.querySelector('#train .q-car');
+      qc.classList.remove('wiggle');
+      void qc.offsetWidth;
+      qc.classList.add('wiggle');
+      A.sfx.tap();
+      readPattern('다시 잘 보자~');
+      return;
+    }
+    // 정답 — ❓ 칸이 채워지고 기차가 칙칙폭폭 출발!
+    pt.lock = true;
+    btn.classList.add('ok');
+    A.sfx.good();
+    const qc = document.querySelector('#train .q-car');
+    qc.textContent = it.e;
+    qc.classList.add('filled');
+    A.speak('정답! ' + it.name + '! 칙칙폭폭, 출발!');
+    pt.timers.push(setTimeout(() => {
+      A.sfx.train();
+      $('train').classList.add('go');
+    }, 500));
+    pt.timers.push(setTimeout(() => {
+      $('btn-pnext').hidden = false;
+      wiggle('btn-pnext');
+    }, 1400));
+  }
+  function patternNext() {
+    patternClearTimers();
+    $('btn-pnext').hidden = true;
+    pt.qIdx++;
+    if (pt.qIdx < D.ROUND) { nextPattern(); return; }
+    // 한 판 끝!
+    const first = P.rounds('pattern-' + pt.level.id) === 0;
+    P.recordRound('pattern-' + pt.level.id);
+    P.addStar(D.ROUND);
+    if (window.Pet) {
+      Pet.awardSnack(1);
+      // 3단계를 모두 한 번씩 완주하면 식사 보상
+      if (first && D.PATTERN_LEVELS.every(lv => P.rounds('pattern-' + lv.id) > 0)) Pet.awardMeal(1);
+    }
+    A.sfx.fanfare();
+    showReward('패턴 다섯 개 모두 성공!', '한 판 더 🚂', () => startPatternRound(pt.level), () => {
+      openLevels(MODES.find(m => m.id === 'pattern'));
+    });
+    A.speak('와, 패턴 박사님이네! 정말 잘했어요!');
   }
 
   /* ─────────── 수 세기 맞춤 — 몇 개인지 고르고, 하나씩 탭하며 같이 센다 ─────────── */
@@ -884,6 +1005,12 @@ window.App = (() => {
     $('btn-snext').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); stoneNext();
     });
+    $('btn-pattern-back').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); patternClearTimers();
+      openLevels(MODES.find(m => m.id === 'pattern'));
+    });
+    $('btn-pnext').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); patternNext(); });
+    $('btn-pread').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); readPattern(); });
     $('btn-count-back').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); openLevels(MODES.find(m => m.id === 'count'));
     });
@@ -956,6 +1083,7 @@ window.App = (() => {
       qIdx: qz ? qz.qIdx : null,
       hinted: qz ? !!qz.hinted : null,
       stone: st ? { a: st.a, b: st.b, dir: st.dir, target: st.target, qIdx: st.qIdx } : null,
+      pattern: pt && pt.q ? { answer: pt.q.answer.e, unit: pt.q.unit, shownLen: pt.q.shown.length, qIdx: pt.qIdx } : null,
       count: ct ? { n: ct.n, qIdx: ct.qIdx, counted: ct.counted } : null,
       chart: ch ? { sel: ch.sel, left: ch.left } : null,
       dot: dt ? { next: dt.next, total: dt.pic.dots.length } : null,
