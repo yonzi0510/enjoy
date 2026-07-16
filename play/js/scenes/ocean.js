@@ -21,6 +21,12 @@ SCENES.push({
     const A = v === 'A';
     const L = +level || 1;
     const D1 = !A && L === 1, D2 = !A && L === 2, D3 = !A && L === 3;
+    // 물결 곡선 조립 (백틱 중첩 없이 문자열로)
+    const wave = (y, amp) => {
+      let d = 'M0 ' + y;
+      for (let i = 0; i < 12; i++) d += ' Q' + (i * 100 + 50) + ' ' + (i % 2 ? y - amp : y + amp) + ' ' + (i * 100 + 100) + ' ' + y;
+      return d;
+    };
     return `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet">
   <!-- 물 레이어 (단색 밴드 — defs/그라디언트 사용 금지) -->
@@ -28,15 +34,50 @@ SCENES.push({
   <rect x="0" y="0" width="1200" height="150" fill="#C9ECFB"/>
   <rect x="0" y="150" width="1200" height="170" fill="#AEE4F8" opacity="0.7"/>
   <rect x="0" y="430" width="1200" height="370" fill="#7FC4EC" opacity="0.45"/>
+  <rect x="0" y="565" width="1200" height="235" fill="#5B9FD6" opacity="0.18"/>
 
-  <!-- 물결 표면 -->
-  <path d="M0 44 ${Array.from({ length: 12 }, (_, i) => `Q${i * 100 + 50} ${i % 2 ? 24 : 62} ${i * 100 + 100} 44`).join(' ')} L1200 0 L0 0 Z" fill="#E6F7FF"/>
-  <path d="M0 74 ${Array.from({ length: 12 }, (_, i) => `Q${i * 100 + 50} ${i % 2 ? 60 : 90} ${i * 100 + 100} 74`).join(' ')}" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <!-- 물결 표면 + 물거품 -->
+  <path d="${wave(44, 20)} L1200 0 L0 0 Z" fill="#E6F7FF"/>
+  <path d="${wave(74, 16)}" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <path d="${wave(98, 10)}" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.28"/>
+  <g fill="#FFFFFF" opacity="0.55">
+    <circle cx="150" cy="58" r="4"/><circle cx="365" cy="52" r="3"/><circle cx="590" cy="60" r="4"/>
+    <circle cx="812" cy="52" r="3"/><circle cx="1030" cy="58" r="4"/><circle cx="1145" cy="50" r="3"/>
+  </g>
 
-  <!-- 햇살 기둥 -->
-  <polygon points="170,0 245,0 400,320 315,320" fill="#FFFFFF" opacity="0.12"/>
-  <polygon points="500,0 555,0 690,270 625,270" fill="#FFFFFF" opacity="0.10"/>
-  <polygon points="880,0 930,0 1050,230 995,230" fill="#FFFFFF" opacity="0.10"/>
+  <!-- 햇살 기둥 (넓은 빛 + 밝은 심) -->
+  <polygon points="150,0 265,0 430,340 305,340" fill="#FFFFFF" opacity="0.10"/>
+  <polygon points="185,0 240,0 385,330 325,330" fill="#FFFFFF" opacity="0.10"/>
+  <polygon points="480,0 575,0 705,285 610,285" fill="#FFFFFF" opacity="0.09"/>
+  <polygon points="512,0 552,0 668,275 622,275" fill="#FFFFFF" opacity="0.09"/>
+  <polygon points="860,0 950,0 1065,245 980,245" fill="#FFFFFF" opacity="0.09"/>
+  <polygon points="890,0 928,0 1032,238 990,238" fill="#FFFFFF" opacity="0.09"/>
+
+  <!-- 물속 반짝임 -->
+  <g fill="#FFFFFF" opacity="0.35">
+    <circle cx="330" cy="120" r="2.5"/><circle cx="560" cy="95" r="2"/><circle cx="672" cy="140" r="2.5"/>
+    <circle cx="808" cy="110" r="2"/><circle cx="958" cy="140" r="2.5"/><circle cx="120" cy="140" r="2"/>
+    <circle cx="245" cy="95" r="2"/><circle cx="1160" cy="120" r="2.5"/>
+  </g>
+
+  <!-- 원경 물고기 떼 (흐릿한 실루엣 — 깊이감) -->
+  <g fill="#7FBEDE" opacity="0.45">
+    <ellipse cx="560" cy="136" rx="9" ry="5"/><polygon points="551,136 543,131 543,141"/>
+    <ellipse cx="596" cy="122" rx="9" ry="5"/><polygon points="587,122 579,117 579,127"/>
+    <ellipse cx="612" cy="150" rx="9" ry="5"/><polygon points="603,150 595,145 595,155"/>
+    <ellipse cx="648" cy="132" rx="9" ry="5"/><polygon points="639,132 631,127 631,137"/>
+    <ellipse cx="640" cy="164" rx="8" ry="4.5"/><polygon points="632,164 625,160 625,168"/>
+  </g>
+  <g fill="#7FBEDE" opacity="0.4">
+    <ellipse cx="100" cy="238" rx="8" ry="4.5"/><polygon points="108,238 115,234 115,242"/>
+    <ellipse cx="130" cy="222" rx="8" ry="4.5"/><polygon points="138,222 145,218 145,226"/>
+    <ellipse cx="142" cy="252" rx="8" ry="4.5"/><polygon points="150,252 157,248 157,256"/>
+  </g>
+  <g fill="#8CC8E4" opacity="0.4">
+    <ellipse cx="300" cy="488" rx="8" ry="4.5"/><polygon points="292,488 285,484 285,492"/>
+    <ellipse cx="332" cy="472" rx="8" ry="4.5"/><polygon points="324,472 317,468 317,476"/>
+    <ellipse cx="340" cy="502" rx="7" ry="4"/><polygon points="333,502 327,498 327,506"/>
+  </g>
 
   <!-- 숨은그림 L3: 플랑크톤 (밝은 물빛 보호색, 위쪽 물속) -->
   <g data-find="plankton" data-label="플랑크톤" data-level="3">
@@ -49,17 +90,49 @@ SCENES.push({
     <path d="M486 114 Q490 117 494 114" stroke="#4A7A6A" stroke-width="2" fill="none" stroke-linecap="round"/>
   </g>
 
-  <!-- 모래 바닥 -->
+  <!-- 모래 바닥 (언덕 두 겹 + 밝은 능선 + 결·조약돌) -->
   <path d="M0 668 Q150 640 300 662 Q450 684 600 660 Q750 638 900 664 Q1050 686 1200 656 L1200 800 L0 800 Z" fill="#F2E2AE"/>
+  <path d="M0 672 Q150 646 300 667 Q450 688 600 665 Q750 643 900 668 Q1050 690 1200 661" fill="none" stroke="#FFFFFF" stroke-width="5" opacity="0.35"/>
   <path d="M0 742 Q300 716 600 742 Q900 766 1200 738 L1200 800 L0 800 Z" fill="#E8CF8E" opacity="0.85"/>
+  <g stroke="#DDC078" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.8">
+    <path d="M60 706 Q80 700 100 706"/><path d="M496 700 Q516 694 536 700"/>
+    <path d="M596 720 Q616 714 636 720"/><path d="M1010 726 Q1030 720 1050 726"/>
+    <path d="M330 764 Q350 758 370 764"/><path d="M860 700 Q880 694 900 700"/>
+  </g>
   <g fill="#D9BC74">
     <circle cx="140" cy="770" r="5"/><circle cx="520" cy="762" r="4"/><circle cx="702" cy="776" r="5"/>
     <circle cx="1130" cy="760" r="4"/><circle cx="465" cy="712" r="4"/><circle cx="880" cy="720" r="4"/>
+    <circle cx="95" cy="748" r="4"/><circle cx="612" cy="772" r="3.5"/><circle cx="1058" cy="752" r="4"/>
   </g>
+  <!-- 모래 위 장식 조개·조약돌 -->
+  <g>
+    <path d="M636 776 Q630 764 646 760 Q662 764 656 776 Q646 781 636 776 Z" fill="#E8C8D8"/>
+    <path d="M646 778 L639 766 M646 778 L646 762 M646 778 L653 766" stroke="#D4A8BC" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="70" cy="764" rx="14" ry="8" fill="#C8B2C4"/>
+    <ellipse cx="66" cy="761" rx="5" ry="3" fill="#DCC8D8"/>
+  </g>
+
+  <!-- 뇌산호 (왼쪽 구석) -->
+  <g>
+    <ellipse cx="52" cy="712" rx="46" ry="30" fill="#E8A8D8"/>
+    <path d="M20 706 Q34 694 48 706 M40 720 Q54 708 68 720 M60 700 Q74 690 86 702 M26 726 Q38 716 50 726" stroke="#D488C0" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="38" cy="696" rx="12" ry="6" fill="#F5C8E8" opacity="0.7"/>
+  </g>
+
+  <!-- 관 산호 (오른쪽 성게 위쪽) -->
+  <g>
+    <path d="M1104 664 L1108 606 Q1113 596 1120 606 L1122 664 Z" fill="#9BD8E8"/>
+    <path d="M1126 664 L1128 620 Q1133 611 1139 620 L1141 664 Z" fill="#7FC8DC"/>
+    <ellipse cx="1114" cy="605" rx="7" ry="4" fill="#5FA8BC"/>
+    <ellipse cx="1134" cy="619" rx="6.5" ry="3.5" fill="#5FA8BC"/>
+    <circle cx="1111" cy="624" r="2.5" fill="#C8ECF4"/><circle cx="1133" cy="636" r="2" fill="#C8ECF4"/>
+  </g>
+
   <!-- 바다풀 새싹 -->
   <g fill="#5FBF57">
     <path d="M760 668 q6 -24 12 0 z"/>
     <path d="M245 672 q6 -22 12 0 z"/><path d="M1150 668 q6 -24 12 0 z"/>
+    <path d="M330 664 q5 -20 10 0 z"/>
   </g>
   <!-- ★차이11(L2): 바다풀 새싹 하나 — B에서는 사라짐 -->
   <g data-diff="11" data-level="2" data-cx="484" data-cy="656" data-r="40">${D2 ? '' : '<path d="M478 664 q6 -26 12 0 z" fill="#5FBF57"/>'}
@@ -67,34 +140,59 @@ SCENES.push({
 
   <!-- 물고기 떼 (왼쪽 위) -->
   <g>
+    <path d="M242 166 Q250 152 262 165" fill="#F28C3C"/>
     <ellipse cx="250" cy="180" rx="26" ry="16" fill="#FFB25E"/>
     <!-- ★차이9(L2): 주황 물고기 꼬리 색 (주황 → 청록) -->
     <g data-diff="9" data-level="2" data-cx="284" data-cy="180" data-r="42">
       <polygon points="274,180 298,166 298,194" fill="${D2 ? '#4FA8A0' : '#F28C3C'}"/>
     </g>
-    <circle cx="238" cy="176" r="4" fill="#6B4A2E"/>
+    <path d="M258 168 Q263 180 258 192" stroke="#F28C3C" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <path d="M267 171 Q271 180 267 189" stroke="#F28C3C" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <path d="M234 190 Q250 197 266 190" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <polygon points="250,184 260,196 246,194" fill="#F28C3C" opacity="0.9"/>
+    <circle cx="238" cy="176" r="4.5" fill="#6B4A2E"/>
+    <circle cx="236.5" cy="174.5" r="1.6" fill="#FFFFFF"/>
+    <circle cx="229" cy="183" r="3" fill="#F5808C" opacity="0.55"/>
     <path d="M232 186 Q238 190 244 186" stroke="#6B4A2E" stroke-width="3" fill="none" stroke-linecap="round"/>
   </g>
   <g>
+    <path d="M293 245 Q300 232 311 244" fill="#F2C63C"/>
     <ellipse cx="300" cy="258" rx="24" ry="15" fill="#FFD93D"/>
     <polygon points="322,258 344,245 344,271" fill="#F2C63C"/>
+    <path d="M308 247 Q312 258 308 269" stroke="#F2C63C" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <path d="M286 267 Q300 273 314 267" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <polygon points="300,261 309,272 296,271" fill="#F2C63C" opacity="0.9"/>
     <circle cx="289" cy="254" r="4" fill="#6B4A2E"/>
+    <circle cx="287.5" cy="252.5" r="1.5" fill="#FFFFFF"/>
+    <circle cx="281" cy="259" r="2.8" fill="#F5808C" opacity="0.5"/>
     <!-- ★차이14(L3): 노랑 물고기 입 — B에서는 사라짐 -->
     <g data-diff="14" data-level="3" data-cx="289" data-cy="264" data-r="40">${D3 ? '' : '<path d="M283 264 Q289 268 295 264" stroke="#6B4A2E" stroke-width="3" fill="none" stroke-linecap="round"/>'}
     </g>
   </g>
   <g>
+    <path d="M411 155 Q418 143 429 155" fill="#4FA8A0"/>
     <ellipse cx="418" cy="168" rx="24" ry="15" fill="#6BC8C0"/>
     <polygon points="440,168 462,155 462,181" fill="#4FA8A0"/>
+    <path d="M426 157 Q430 168 426 179" stroke="#4FA8A0" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <path d="M404 177 Q418 183 432 177" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <polygon points="418,171 427,182 414,181" fill="#4FA8A0" opacity="0.9"/>
     <circle cx="407" cy="164" r="4" fill="#2F5B58"/>
+    <circle cx="405.5" cy="162.5" r="1.5" fill="#FFFFFF"/>
+    <circle cx="399" cy="170" r="2.8" fill="#F5A0B0" opacity="0.5"/>
     <path d="M401 174 Q407 178 413 174" stroke="#2F5B58" stroke-width="3" fill="none" stroke-linecap="round"/>
   </g>
   <!-- ★차이1(L1): 큰 물고기 색 (주황 → 보라) -->
   <g data-diff="1" data-cx="340" data-cy="215" data-r="60">
+    <path d="M330 197 Q338 182 350 196" fill="${D1 ? '#A87BD0' : '#F28C3C'}"/>
     <ellipse cx="338" cy="215" rx="32" ry="20" fill="${D1 ? '#C39BE8' : '#FFB25E'}"/>
     <polygon points="366,215 394,198 394,232" fill="${D1 ? '#A87BD0' : '#F28C3C'}"/>
-    <path d="M330 197 Q338 184 348 196" fill="${D1 ? '#A87BD0' : '#F28C3C'}"/>
+    <path d="M348 200 Q354 215 348 230" stroke="${D1 ? '#A87BD0' : '#F28C3C'}" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
+    <path d="M358 204 Q362 215 358 226" stroke="${D1 ? '#A87BD0' : '#F28C3C'}" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <path d="M318 227 Q338 236 358 227" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <polygon points="336,220 348,234 331,232" fill="${D1 ? '#A87BD0' : '#F28C3C'}"/>
     <circle cx="322" cy="210" r="5" fill="#5E4430"/>
+    <circle cx="320" cy="208" r="1.8" fill="#FFFFFF"/>
+    <circle cx="312" cy="217" r="3" fill="#F5808C" opacity="0.55"/>
     <path d="M314 222 Q322 227 330 222" stroke="#5E4430" stroke-width="3.5" fill="none" stroke-linecap="round"/>
   </g>
 
@@ -102,36 +200,46 @@ SCENES.push({
   <g data-find="squid" data-label="오징어" data-level="2">
     <polygon points="180,296 166,318 194,318" fill="#A9D6EE"/>
     <ellipse cx="180" cy="322" rx="14" ry="14" fill="#B8DFF2"/>
+    <ellipse cx="175" cy="314" rx="4" ry="2.5" fill="#FFFFFF" opacity="0.5"/>
     <circle cx="174" cy="320" r="3" fill="#3E6A88"/><circle cx="186" cy="320" r="3" fill="#3E6A88"/>
+    <circle cx="169" cy="326" r="2.2" fill="#8FB8D8" opacity="0.8"/><circle cx="191" cy="326" r="2.2" fill="#8FB8D8" opacity="0.8"/>
+    <path d="M176 328 Q180 331 184 328" stroke="#3E6A88" stroke-width="2" fill="none" stroke-linecap="round"/>
     <path d="M172 335 Q168 344 172 348 M180 336 Q182 344 178 348 M188 335 Q192 344 188 348" stroke="#A9D6EE" stroke-width="4" fill="none" stroke-linecap="round"/>
   </g>
 
   <!-- 작은 물고기 한 쌍 (가운데) -->
   <g>
+    <path d="M434 319 Q440 309 449 318" fill="#E87FA8"/>
     <ellipse cx="440" cy="330" rx="20" ry="12" fill="#FF8FC7"/>
     <polygon points="458,330 476,320 476,340" fill="#E87FA8"/>
+    <path d="M448 322 Q451 330 448 338" stroke="#E87FA8" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <path d="M428 337 Q440 342 452 337" stroke="#FFFFFF" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.5"/>
     <circle cx="431" cy="327" r="3.5" fill="#6B3A50"/>
+    <circle cx="429.8" cy="325.8" r="1.3" fill="#FFFFFF"/>
+    <circle cx="425" cy="332" r="2.2" fill="#F5607C" opacity="0.5"/>
+    <path d="M427 336 Q432 339 437 336" stroke="#6B3A50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
   </g>
   <g>
+    <path d="M487 289 Q492 280 500 288" fill="#E87FA8"/>
     <ellipse cx="492" cy="298" rx="17" ry="10" fill="#FF8FC7"/>
     <!-- ★차이10(L2): 분홍 물고기 꼬리 색 (분홍 → 파랑) -->
     <g data-diff="10" data-level="2" data-cx="505" data-cy="298" data-r="42">
       <polygon points="507,298 523,289 523,307" fill="${D2 ? '#8FB8E8' : '#E87FA8'}"/>
     </g>
+    <path d="M498 291 Q501 298 498 305" stroke="#E87FA8" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
     <circle cx="484" cy="295" r="3" fill="#6B3A50"/>
+    <circle cx="483" cy="294" r="1.1" fill="#FFFFFF"/>
+    <path d="M480 302 Q484 305 488 302" stroke="#6B3A50" stroke-width="2.2" fill="none" stroke-linecap="round"/>
   </g>
 
   <!-- ★차이2(L1): 공기방울 무리 — B에서는 사라짐 -->
-  <g data-diff="2" data-cx="610" data-cy="225" data-r="60">${D1 ? '' : `
-    <g fill="#EAF8FF" stroke="#6FB8E0" stroke-width="3">
-      <circle cx="588" cy="260" r="9"/><circle cx="612" cy="224" r="14"/>
-      <circle cx="596" cy="188" r="7"/><circle cx="631" cy="192" r="10"/>
-    </g>`}
+  <g data-diff="2" data-cx="610" data-cy="225" data-r="60">${D1 ? '' : '<g fill="#EAF8FF" stroke="#6FB8E0" stroke-width="3"><circle cx="588" cy="260" r="9"/><circle cx="612" cy="224" r="14"/><circle cx="596" cy="188" r="7"/><circle cx="631" cy="192" r="10"/></g><g fill="#FFFFFF" opacity="0.85"><circle cx="585" cy="257" r="2.5"/><circle cx="607" cy="219" r="4"/><circle cx="593" cy="185" r="2"/><circle cx="628" cy="189" r="3"/></g>'}
   </g>
 
   <!-- 숨은그림: 닻 (물 위에서 내려온 밧줄 끝) -->
   <g data-find="anchor" data-label="닻">
     <path d="M700 8 Q707 90 700 168" stroke="#C9A26B" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M698 40 L706 46 M699 80 L707 86 M698 120 L705 126" stroke="#B08850" stroke-width="2.5" stroke-linecap="round"/>
     <circle cx="700" cy="180" r="10" fill="none" stroke="#7C8FA6" stroke-width="7"/>
     <line x1="700" y1="190" x2="700" y2="250" stroke="#7C8FA6" stroke-width="10" stroke-linecap="round"/>
     <line x1="676" y1="207" x2="724" y2="207" stroke="#7C8FA6" stroke-width="8" stroke-linecap="round"/>
@@ -139,15 +247,22 @@ SCENES.push({
     <path d="M700 250 Q732 250 738 222" stroke="#7C8FA6" stroke-width="10" fill="none" stroke-linecap="round"/>
     <polygon points="652,226 668,216 666,236" fill="#7C8FA6"/>
     <polygon points="748,226 732,216 734,236" fill="#7C8FA6"/>
+    <line x1="697" y1="196" x2="697" y2="242" stroke="#A5B4C6" stroke-width="3" stroke-linecap="round"/>
   </g>
 
   <!-- 고래 (오른쪽 가운데) -->
   <g>
     <path d="M990 320 Q1040 300 1052 262 Q1070 296 1056 322 Q1084 318 1106 338 Q1072 358 1036 352 Q1002 346 990 320 Z" fill="#7FA9DE"/>
+    <path d="M1046 282 Q1056 300 1050 316" stroke="#6B94CC" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.7"/>
     <ellipse cx="880" cy="330" rx="125" ry="72" fill="#8FB8E8"/>
+    <path d="M780 292 Q860 252 950 280" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.35"/>
     <path d="M772 352 Q880 420 986 350 Q944 398 880 400 Q808 396 772 352 Z" fill="#D8E9F8"/>
+    <path d="M800 372 Q806 384 804 394 M836 386 Q840 394 838 399 M872 392 Q874 398 873 400" stroke="#B8D2EC" stroke-width="3.5" fill="none" stroke-linecap="round"/>
     <ellipse cx="885" cy="372" rx="30" ry="14" transform="rotate(-18 885 372)" fill="#7FA9DE"/>
+    <ellipse cx="878" cy="368" rx="18" ry="7" transform="rotate(-18 878 368)" fill="#FFFFFF" opacity="0.25"/>
+    <circle cx="915" cy="296" r="4" fill="#7FA9DE" opacity="0.8"/><circle cx="945" cy="312" r="3" fill="#7FA9DE" opacity="0.8"/><circle cx="895" cy="278" r="3" fill="#7FA9DE" opacity="0.8"/>
     <circle cx="798" cy="314" r="7" fill="#35506B"/>
+    <circle cx="795.5" cy="311.5" r="2.4" fill="#FFFFFF"/>
     <!-- ★차이12(L3): 고래 볼 색 (분홍 → 하늘) -->
     <g data-diff="12" data-level="3" data-cx="780" data-cy="330" data-r="40">
       <circle cx="780" cy="330" r="8" fill="${D3 ? '#A8D8F0' : '#F5B8C4'}" opacity="0.85"/>
@@ -165,8 +280,13 @@ SCENES.push({
   <!-- 해파리 두 마리 (오른쪽 위) -->
   <g>
     <path d="M1058 160 Q1058 112 1096 112 Q1134 112 1134 160 Q1121 168 1096 168 Q1071 168 1058 160 Z" fill="#D9B8F2"/>
+    <ellipse cx="1082" cy="126" rx="12" ry="7" transform="rotate(-24 1082 126)" fill="#FFFFFF" opacity="0.45"/>
+    <circle cx="1067" cy="136" r="2.5" fill="#C9A2E8"/><circle cx="1125" cy="136" r="2.5" fill="#C9A2E8"/><circle cx="1111" cy="121" r="2.5" fill="#C9A2E8"/>
+    <path d="M1064 166 Q1058 184 1064 200 M1128 166 Q1134 184 1128 200" stroke="#D9B8F2" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.8"/>
     <path d="M1072 164 Q1066 188 1074 208 M1096 168 Q1102 192 1093 214 M1120 164 Q1126 188 1118 208" stroke="#C9A2E8" stroke-width="5" fill="none" stroke-linecap="round"/>
     <circle cx="1084" cy="142" r="4.5" fill="#7A5A96"/><circle cx="1108" cy="142" r="4.5" fill="#7A5A96"/>
+    <circle cx="1082.5" cy="140.5" r="1.6" fill="#FFFFFF"/><circle cx="1106.5" cy="140.5" r="1.6" fill="#FFFFFF"/>
+    <circle cx="1074" cy="150" r="3" fill="#E8A8D8" opacity="0.7"/><circle cx="1118" cy="150" r="3" fill="#E8A8D8" opacity="0.7"/>
     <!-- ★차이13(L3): 보라 해파리 입 (웃는 입 → 동그란 입) -->
     <g data-diff="13" data-level="3" data-cx="1096" data-cy="152" data-r="40">${D3
       ? '<circle cx="1096" cy="154" r="4" fill="#7A5A96"/>'
@@ -175,12 +295,15 @@ SCENES.push({
   </g>
   <g>
     <path d="M978 244 Q978 210 1004 210 Q1030 210 1030 244 Q1021 250 1004 250 Q987 250 978 244 Z" fill="#F5B8C4"/>
+    <ellipse cx="994" cy="221" rx="8" ry="5" transform="rotate(-24 994 221)" fill="#FFFFFF" opacity="0.45"/>
     <!-- ★차이7(L2): 분홍 해파리 다리 3개 → 2개 -->
     <g data-diff="7" data-level="2" data-cx="1004" data-cy="262" data-r="45">
       <path d="M988 248 Q984 266 990 280 M1020 248 Q1024 266 1018 280" stroke="#E89CB0" stroke-width="4" fill="none" stroke-linecap="round"/>
       ${D2 ? '' : '<path d="M1004 250 Q1008 268 1002 284" stroke="#E89CB0" stroke-width="4" fill="none" stroke-linecap="round"/>'}
     </g>
     <circle cx="996" cy="230" r="3.5" fill="#8A5468"/><circle cx="1012" cy="230" r="3.5" fill="#8A5468"/>
+    <circle cx="995" cy="229" r="1.2" fill="#FFFFFF"/><circle cx="1011" cy="229" r="1.2" fill="#FFFFFF"/>
+    <circle cx="988" cy="237" r="2.2" fill="#F09CB4" opacity="0.9"/><circle cx="1020" cy="237" r="2.2" fill="#F09CB4" opacity="0.9"/>
     <path d="M998 238 Q1004 242 1010 238" stroke="#8A5468" stroke-width="2.5" fill="none" stroke-linecap="round"/>
   </g>
 
@@ -193,24 +316,40 @@ SCENES.push({
       <line x1="1063" y1="512" x2="1054" y2="521"/><line x1="1117" y1="512" x2="1126" y2="521"/>
     </g>
     <circle cx="1090" cy="485" r="32" fill="#FFE08A"/>
+    <path d="M1068 466 Q1080 458 1094 462" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.55"/>
+    <circle cx="1104" cy="464" r="4" fill="#F2C63C" opacity="0.85"/><circle cx="1071" cy="464" r="3.5" fill="#F2C63C" opacity="0.85"/>
+    <circle cx="1106" cy="504" r="3.5" fill="#F2C63C" opacity="0.85"/><circle cx="1074" cy="506" r="3.5" fill="#F2C63C" opacity="0.85"/>
     <polygon points="1120,485 1138,473 1138,497" fill="#F2C63C"/>
     <circle cx="1078" cy="478" r="5" fill="#6B5A2E"/><circle cx="1100" cy="478" r="5" fill="#6B5A2E"/>
+    <circle cx="1076" cy="476" r="1.8" fill="#FFFFFF"/><circle cx="1098" cy="476" r="1.8" fill="#FFFFFF"/>
+    <circle cx="1067" cy="490" r="3.5" fill="#F2A24C" opacity="0.6"/><circle cx="1111" cy="490" r="3.5" fill="#F2A24C" opacity="0.6"/>
     <path d="M1080 496 Q1089 503 1098 496" stroke="#6B5A2E" stroke-width="4" fill="none" stroke-linecap="round"/>
   </g>
 
   <!-- 거북이 (가운데) -->
   <g>
     <ellipse cx="472" cy="438" rx="30" ry="14" transform="rotate(-28 472 438)" fill="#A8E0B2"/>
+    <ellipse cx="466" cy="434" rx="12" ry="5" transform="rotate(-28 466 434)" fill="#C8ECC8" opacity="0.8"/>
     <ellipse cx="602" cy="456" rx="26" ry="13" transform="rotate(24 602 456)" fill="#A8E0B2"/>
+    <ellipse cx="607" cy="452" rx="10" ry="4.5" transform="rotate(24 607 452)" fill="#C8ECC8" opacity="0.8"/>
     <ellipse cx="540" cy="400" rx="85" ry="60" fill="#7ACB8B"/>
     <ellipse cx="540" cy="400" rx="85" ry="60" fill="none" stroke="#5FAF70" stroke-width="5"/>
+    <path d="M468 380 Q505 344 560 348" stroke="#FFFFFF" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.35"/>
+    <path d="M462 420 Q540 462 618 418" stroke="#5FAF70" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.5"/>
     <circle cx="510" cy="385" r="14" fill="#5FAF70"/>
+    <circle cx="506" cy="381" r="4" fill="#8FD89C" opacity="0.9"/>
     <!-- ★차이8(L2): 등딱지 무늬 색 (초록 → 노랑) -->
     <g data-diff="8" data-level="2" data-cx="566" data-cy="380" data-r="42">
       <circle cx="566" cy="380" r="13" fill="${D2 ? '#E8C05A' : '#5FAF70'}"/>
     </g>
     <circle cx="540" cy="422" r="15" fill="#5FAF70"/>
+    <circle cx="536" cy="418" r="4" fill="#8FD89C" opacity="0.9"/>
+    <circle cx="600" cy="410" r="8" fill="#5FAF70" opacity="0.85"/>
+    <circle cx="497" cy="352" r="7" fill="#5FAF70" opacity="0.85"/>
+    <circle cx="480" cy="415" r="7" fill="#5FAF70" opacity="0.85"/>
     <circle cx="640" cy="378" r="26" fill="#A8E0B2"/>
+    <ellipse cx="633" cy="366" rx="8" ry="5" transform="rotate(-20 633 366)" fill="#FFFFFF" opacity="0.5"/>
+    <circle cx="661" cy="384" r="4.5" fill="#F5B8C4" opacity="0.7"/>
     <!-- ★차이18(L3): 거북이 눈 (뜬 눈 → 감은 눈) -->
     <g data-diff="18" data-level="3" data-cx="649" data-cy="373" data-r="40">${D3
       ? '<path d="M643 371 Q649 376 655 371" stroke="#2F5B3A" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
@@ -222,9 +361,14 @@ SCENES.push({
     </g>
   </g>
 
-  <!-- 왼쪽 해초 숲 -->
+  <!-- 왼쪽 해초 숲 (잎 달린 줄기) -->
   <path d="M85 692 Q60 600 90 520 Q110 460 88 420" stroke="#4DA644" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <g fill="#4DA644">
+    <path d="M76 647 q-24 -8 -28 -30 q24 6 28 30 z"/>
+    <path d="M74 603 q-24 -8 -28 -30 q24 6 28 30 z"/>
+  </g>
   <path d="M115 700 Q142 610 112 540 Q92 480 118 432" stroke="#5FBF57" stroke-width="12" fill="none" stroke-linecap="round"/>
+  <path d="M127 639 q24 -8 28 -30 q-24 6 -28 30 z" fill="#5FBF57"/>
 
   <!-- 숨은그림: 해마 (해초 사이 초록 보호색) -->
   <g data-find="seahorse" data-label="해마">
@@ -240,12 +384,16 @@ SCENES.push({
 
   <!-- 문어 (왼쪽 아래 모래 위) -->
   <g>
+    <ellipse cx="165" cy="716" rx="66" ry="10" fill="#5E3220" opacity="0.10"/>
     <path d="M125 640 Q106 690 126 714" stroke="#F2A0C0" stroke-width="14" fill="none" stroke-linecap="round"/>
     <path d="M150 650 Q144 700 162 718" stroke="#F2A0C0" stroke-width="14" fill="none" stroke-linecap="round"/>
     <path d="M182 650 Q188 700 172 718" stroke="#F2A0C0" stroke-width="14" fill="none" stroke-linecap="round"/>
     <path d="M206 640 Q226 690 206 712" stroke="#F2A0C0" stroke-width="14" fill="none" stroke-linecap="round"/>
     <circle cx="165" cy="600" r="52" fill="#F2A0C0"/>
+    <ellipse cx="148" cy="576" rx="16" ry="9" transform="rotate(-24 148 576)" fill="#FFFFFF" opacity="0.45"/>
+    <circle cx="194" cy="576" r="3" fill="#E87FA8" opacity="0.9"/><circle cx="176" cy="558" r="3" fill="#E87FA8" opacity="0.9"/>
     <circle cx="148" cy="594" r="6" fill="#6B3A50"/><circle cx="182" cy="594" r="6" fill="#6B3A50"/>
+    <circle cx="146" cy="592" r="2.2" fill="#FFFFFF"/><circle cx="180" cy="592" r="2.2" fill="#FFFFFF"/>
     <!-- ★차이16(L3): 문어 왼쪽 볼 색 (진분홍 → 보라) -->
     <g data-diff="16" data-level="3" data-cx="136" data-cy="612" data-r="40">
       <circle cx="136" cy="612" r="7" fill="${D3 ? '#B08CD9' : '#E87FA8'}" opacity="0.8"/>
@@ -254,6 +402,7 @@ SCENES.push({
     <path d="M152 616 Q165 626 178 616" stroke="#6B3A50" stroke-width="4" fill="none" stroke-linecap="round"/>
     <g fill="#E87FA8">
       <circle cx="120" cy="700" r="3.5"/><circle cx="158" cy="706" r="3.5"/><circle cx="176" cy="706" r="3.5"/><circle cx="212" cy="698" r="3.5"/>
+      <circle cx="114" cy="680" r="2.5"/><circle cx="149" cy="690" r="2.5"/><circle cx="182" cy="692" r="2.5"/><circle cx="216" cy="682" r="2.5"/>
     </g>
     <g fill="#E6F7FF" opacity="0.8">
       <circle cx="228" cy="540" r="5"/><circle cx="242" cy="518" r="7"/>
@@ -280,15 +429,21 @@ SCENES.push({
   <g data-find="starfish" data-label="불가사리">
     <polygon points="322,690 331,712 354,714 336,729 342,752 322,739 302,752 308,729 290,714 313,712"
       fill="#F2B95E" stroke="#E0A040" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="322" cy="700" r="2" fill="#E0A040"/><circle cx="345" cy="716" r="2" fill="#E0A040"/><circle cx="336" cy="744" r="2" fill="#E0A040"/>
+    <circle cx="308" cy="744" r="2" fill="#E0A040"/><circle cx="299" cy="716" r="2" fill="#E0A040"/>
     <circle cx="315" cy="720" r="3.5" fill="#8A5A2E"/><circle cx="329" cy="720" r="3.5" fill="#8A5A2E"/>
+    <circle cx="314" cy="719" r="1.2" fill="#FFFFFF"/><circle cx="328" cy="719" r="1.2" fill="#FFFFFF"/>
+    <circle cx="308" cy="726" r="2.5" fill="#F09070" opacity="0.7"/><circle cx="336" cy="726" r="2.5" fill="#F09070" opacity="0.7"/>
     <path d="M315 728 Q322 733 329 728" stroke="#8A5A2E" stroke-width="3" fill="none" stroke-linecap="round"/>
   </g>
 
   <!-- 바위 (불가사리 팔 하나를 살짝 가림) -->
   <g>
+    <ellipse cx="380" cy="742" rx="42" ry="9" fill="#5E3220" opacity="0.08"/>
     <ellipse cx="382" cy="724" rx="38" ry="26" fill="#B8C4CE"/>
     <ellipse cx="352" cy="740" rx="22" ry="14" fill="#A8B4BE"/>
     <ellipse cx="374" cy="716" rx="10" ry="6" fill="#CBD5DD"/>
+    <circle cx="398" cy="732" r="3" fill="#A8B4BE"/><circle cx="366" cy="732" r="2.5" fill="#98A6B2"/><circle cx="410" cy="720" r="2.5" fill="#98A6B2"/>
   </g>
 
   <!-- 숨은그림 L3: 따개비 (바위 위, 회색 보호색) -->
@@ -306,9 +461,14 @@ SCENES.push({
       <path d="M435 672 Q410 660 404 630"/>
       <path d="M435 682 Q462 668 468 638"/>
     </g>
+    <path d="M435 656 Q448 650 452 642" stroke="${D1 ? '#8FB8E8' : '#FF9EB5'}" stroke-width="9" stroke-linecap="round" fill="none"/>
     <circle cx="435" cy="630" r="10" fill="${D1 ? '#B8D4F2' : '#FFC2D1'}"/>
     <circle cx="403" cy="624" r="9" fill="${D1 ? '#B8D4F2' : '#FFC2D1'}"/>
     <circle cx="469" cy="632" r="9" fill="${D1 ? '#B8D4F2' : '#FFC2D1'}"/>
+    <circle cx="453" cy="639" r="6" fill="${D1 ? '#B8D4F2' : '#FFC2D1'}"/>
+    <circle cx="430" cy="690" r="3" fill="${D1 ? '#D6E6F8' : '#FFD6E0'}"/>
+    <circle cx="440" cy="668" r="3" fill="${D1 ? '#D6E6F8' : '#FFD6E0'}"/>
+    <circle cx="414" cy="650" r="3" fill="${D1 ? '#D6E6F8' : '#FFD6E0'}"/>
   </g>
 
   <!-- 숨은그림 L2: 소라게 (모래색 보호색, 산호 아래 모래) -->
@@ -319,12 +479,15 @@ SCENES.push({
     <path d="M438 754 Q430 748 432 738" stroke="#E8935E" stroke-width="5" fill="none" stroke-linecap="round"/>
     <circle cx="431" cy="735" r="4" fill="#E8935E"/>
     <circle cx="429" cy="733" r="1.8" fill="#5E3220"/>
+    <circle cx="428.4" cy="732.4" r="0.7" fill="#FFFFFF"/>
     <line x1="436" y1="760" x2="426" y2="764" stroke="#E8935E" stroke-width="4" stroke-linecap="round"/>
     <line x1="444" y1="762" x2="438" y2="768" stroke="#E8935E" stroke-width="4" stroke-linecap="round"/>
   </g>
 
   <!-- 가운데 바위 -->
   <ellipse cx="545" cy="702" rx="34" ry="22" fill="#B8C4CE"/>
+  <ellipse cx="536" cy="694" rx="9" ry="5" fill="#CBD5DD"/>
+  <circle cx="556" cy="710" r="2.5" fill="#A8B4BE"/><circle cx="532" cy="712" r="2" fill="#A8B4BE"/>
 
   <!-- 숨은그림 L2: 바다달팽이 (가운데 바위 위, 바위색 보호색) -->
   <g data-find="seasnail" data-label="바다달팽이" data-level="2">
@@ -347,9 +510,16 @@ SCENES.push({
 
   <!-- ★차이5(L1): 해초 줄기 개수 (3줄 → 2줄) -->
   <path d="M625 706 Q605 640 632 590 Q650 552 630 516" stroke="#4DA644" stroke-width="13" fill="none" stroke-linecap="round"/>
+  <g fill="#4DA644">
+    <path d="M617 644 q-24 -8 -28 -30 q24 6 28 30 z"/>
+    <path d="M640 552 q-24 -8 -28 -30 q24 6 28 30 z"/>
+  </g>
   <path d="M668 710 Q690 645 664 595 Q646 560 670 522" stroke="#5FBF57" stroke-width="12" fill="none" stroke-linecap="round"/>
-  <g data-diff="5" data-cx="650" data-cy="600" data-r="95">${D1 ? '' : `
-    <path d="M646 708 Q638 630 660 570 Q676 528 656 484" stroke="#3F9E3B" stroke-width="12" fill="none" stroke-linecap="round"/>`}
+  <g fill="#5FBF57">
+    <path d="M678 660 q24 -8 28 -30 q-24 6 -28 30 z"/>
+    <path d="M656 559 q24 -8 28 -30 q-24 6 -28 30 z"/>
+  </g>
+  <g data-diff="5" data-cx="650" data-cy="600" data-r="95">${D1 ? '' : '<path d="M646 708 Q638 630 660 570 Q676 528 656 484" stroke="#3F9E3B" stroke-width="12" fill="none" stroke-linecap="round"/>'}
   </g>
 
   <!-- 숨은그림 L2: 뱀장어 (해초 사이 초록 보호색) -->
@@ -367,6 +537,7 @@ SCENES.push({
     <path d="M772 686 Q754 676 750 656"/>
     <path d="M772 690 Q790 680 794 660"/>
   </g>
+  <circle cx="772" cy="657" r="7" fill="#FFC98A"/><circle cx="750" cy="653" r="6" fill="#FFC98A"/><circle cx="794" cy="657" r="6" fill="#FFC98A"/>
 
   <!-- 숨은그림 L3: 새우 (주황 산호 위, 주황 보호색) -->
   <g data-find="shrimp" data-label="새우" data-level="3">
@@ -388,8 +559,10 @@ SCENES.push({
     <path d="M800 748 Q794 718 826 710 Q858 718 852 748 Q840 757 826 757 Q812 757 800 748 Z" fill="#F7C9D9"/>
     <path d="M826 755 L808 722 M826 755 L826 712 M826 755 L844 722" stroke="#E8A8C0" stroke-width="4" stroke-linecap="round"/>
     <ellipse cx="826" cy="754" rx="9" ry="5" fill="#E8A8C0"/>
+    <circle cx="812" cy="722" r="3" fill="#FFFFFF" opacity="0.6"/>
   </g>
   <path d="M796 754 Q788 730 800 716" stroke="#FFB25E" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="800" cy="713" r="5" fill="#FFC98A"/>
 
   <!-- 숨은그림 L2: 말미잘 (모래색 보호색, 조개 옆) -->
   <g data-find="anemone" data-label="말미잘" data-level="2">
@@ -408,32 +581,46 @@ SCENES.push({
     <line x1="938" y1="676" x2="944" y2="660" stroke="#F28C6B" stroke-width="5" stroke-linecap="round"/>
     <circle cx="912" cy="657" r="6" fill="#FFF7F2"/><circle cx="912" cy="657" r="3" fill="#6B3A2E"/>
     <circle cx="944" cy="657" r="6" fill="#FFF7F2"/><circle cx="944" cy="657" r="3" fill="#6B3A2E"/>
+    <circle cx="911" cy="656" r="1.1" fill="#FFFFFF"/><circle cx="943" cy="656" r="1.1" fill="#FFFFFF"/>
     <path d="M906 686 Q894 684 890 676" stroke="#F28C6B" stroke-width="7" fill="none" stroke-linecap="round"/>
     <circle cx="888" cy="672" r="9" fill="#F28C6B"/>
     <path d="M910 702 L898 714 M920 706 L912 720" stroke="#F28C6B" stroke-width="5" stroke-linecap="round"/>
     <ellipse cx="928" cy="690" rx="25" ry="19" fill="#F28C6B"/>
+    <circle cx="921" cy="683" r="2.5" fill="#F8B09A"/><circle cx="934" cy="681" r="2.5" fill="#F8B09A"/>
     <path d="M918 692 Q926 698 934 692" stroke="#B85E3C" stroke-width="4" fill="none" stroke-linecap="round"/>
   </g>
 
   <!-- 보물상자 (오른쪽 아래) -->
   <g>
+    <ellipse cx="1020" cy="706" rx="85" ry="10" fill="#5E3220" opacity="0.10"/>
     <path d="M945 632 Q945 578 1020 578 Q1095 578 1095 632 Z" fill="#8B5A2B"/>
     <path d="M945 632 Q945 578 1020 578 Q1095 578 1095 632 Z" fill="none" stroke="#7E5430" stroke-width="5"/>
+    <path d="M985 584 L983 632 M1055 584 L1057 632" stroke="#7E5430" stroke-width="3.5" opacity="0.7"/>
+    <path d="M962 596 Q1020 570 1078 596" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.25"/>
     <rect x="945" y="632" width="150" height="70" rx="10" fill="#A9743F"/>
     <rect x="945" y="632" width="150" height="70" rx="10" fill="none" stroke="#7E5430" stroke-width="5"/>
+    <line x1="983" y1="636" x2="983" y2="698" stroke="#7E5430" stroke-width="3.5" opacity="0.7"/>
+    <line x1="1057" y1="636" x2="1057" y2="698" stroke="#7E5430" stroke-width="3.5" opacity="0.7"/>
     <rect x="938" y="626" width="164" height="13" rx="6" fill="#E8C05A"/>
+    <circle cx="948" cy="632" r="2.5" fill="#B8923C"/><circle cx="1092" cy="632" r="2.5" fill="#B8923C"/>
     <!-- ★차이15(L3): 자물쇠 색 (금색 → 은색) -->
     <g data-diff="15" data-level="3" data-cx="1020" data-cy="643" data-r="40">
       <rect x="1008" y="632" width="24" height="22" rx="4" fill="${D3 ? '#C2CCD6' : '#E8C05A'}"/>
     </g>
+    <circle cx="1020" cy="641" r="3" fill="#8A6A2E"/>
+    <rect x="1018" y="643" width="4" height="7" rx="2" fill="#8A6A2E"/>
     <!-- ★차이4(L1): 보석 색 (빨강 → 초록) -->
     <g data-diff="4" data-cx="1020" data-cy="602" data-r="60">
       <circle cx="1020" cy="602" r="14" fill="${D1 ? '#4DA644' : '#E8574B'}"/>
       <circle cx="1015" cy="597" r="4" fill="${D1 ? '#9BD98A' : '#F5978E'}"/>
     </g>
     <g fill="#FFD93D">
-      <circle cx="930" cy="710" r="8"/><circle cx="950" cy="716" r="7"/><circle cx="1110" cy="712" r="8"/>
+      <circle cx="930" cy="710" r="8"/><circle cx="950" cy="716" r="7"/><circle cx="1110" cy="712" r="8"/><circle cx="962" cy="708" r="6"/>
     </g>
+    <g fill="#F2CE6B">
+      <circle cx="930" cy="710" r="4"/><circle cx="950" cy="716" r="3.5"/><circle cx="1110" cy="712" r="4"/><circle cx="962" cy="708" r="3"/>
+    </g>
+    <circle cx="1098" cy="722" r="4" fill="#F5EDE2"/><circle cx="1108" cy="728" r="3.5" fill="#F5EDE2"/><circle cx="1088" cy="728" r="3.5" fill="#F5EDE2"/>
   </g>
 
   <!-- 숨은그림 L3: 반지 (금화 근처, 금색 보호색) -->
@@ -455,10 +642,14 @@ SCENES.push({
     <path d="M1126 710 Q1144 702 1162 710 L1164 718 L1124 718 Z" fill="#E8CF8E"/>
   </g>
 
-  <!-- 떠오르는 공기방울 (오른쪽) -->
+  <!-- 떠오르는 공기방울 -->
   <g fill="#E6F7FF" opacity="0.75">
     <circle cx="1155" cy="360" r="6"/><circle cx="1168" cy="330" r="8"/>
     <circle cx="738" cy="450" r="5"/><circle cx="752" cy="426" r="7"/>
+    <circle cx="70" cy="380" r="5"/><circle cx="82" cy="352" r="6"/><circle cx="60" cy="330" r="4"/>
+  </g>
+  <g fill="#FFFFFF" opacity="0.8">
+    <circle cx="1153" cy="358" r="2"/><circle cx="1165" cy="327" r="2.5"/><circle cx="750" cy="423" r="2.2"/><circle cx="80" cy="350" r="2"/>
   </g>
 
   <!-- 숨은그림 L3: 진주 (공기방울 사이, 방울 보호색) -->
@@ -469,21 +660,27 @@ SCENES.push({
 
   <!-- 작은 물고기 (오른쪽 아래) -->
   <g>
+    <path d="M814 511 Q820 502 828 510" fill="#4FA8A0"/>
     <ellipse cx="820" cy="520" rx="18" ry="11" fill="#6BC8C0"/>
     <!-- ★차이17(L3): 청록 물고기 꼬리 색 (청록 → 주황) -->
     <g data-diff="17" data-level="3" data-cx="833" data-cy="520" data-r="40">
       <polygon points="836,520 852,511 852,529" fill="${D3 ? '#F2A33C' : '#4FA8A0'}"/>
     </g>
+    <path d="M810 526 Q820 530 830 526" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
     <circle cx="812" cy="517" r="3.5" fill="#2F5B58"/>
+    <circle cx="811" cy="516" r="1.2" fill="#FFFFFF"/>
+    <path d="M807 523 Q811 526 815 523" stroke="#2F5B58" stroke-width="2.2" fill="none" stroke-linecap="round"/>
   </g>
   <g>
+    <path d="M1160 592 Q1165 584 1172 591" fill="#F2C63C"/>
     <ellipse cx="1165" cy="600" rx="16" ry="10" fill="#FFD93D"/>
     <polygon points="1179,600 1194,592 1194,608" fill="#F2C63C"/>
     <circle cx="1158" cy="597" r="3" fill="#6B4A2E"/>
+    <circle cx="1157" cy="596" r="1.1" fill="#FFFFFF"/>
+    <path d="M1154 603 Q1158 606 1162 603" stroke="#6B4A2E" stroke-width="2.2" fill="none" stroke-linecap="round"/>
   </g>
 </svg>`;
   },
-
   hidden: [
     /* ── L1: 쉬움 (6) ── */
     {
@@ -491,7 +688,10 @@ SCENES.push({
       icon: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
         <polygon points="30,4 36,19 53,21 40,31 44,47 30,39 16,47 20,31 7,21 24,19"
           fill="#F2B95E" stroke="#E0A040" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="30" cy="12" r="1.8" fill="#E0A040"/><circle cx="45" cy="24" r="1.8" fill="#E0A040"/><circle cx="15" cy="24" r="1.8" fill="#E0A040"/>
         <circle cx="25" cy="25" r="2.5" fill="#8A5A2E"/><circle cx="35" cy="25" r="2.5" fill="#8A5A2E"/>
+        <circle cx="24" cy="24" r="0.9" fill="#FFFFFF"/><circle cx="34" cy="24" r="0.9" fill="#FFFFFF"/>
+        <circle cx="20" cy="30" r="2" fill="#F09070" opacity="0.7"/><circle cx="40" cy="30" r="2" fill="#F09070" opacity="0.7"/>
         <path d="M25 31 Q30 35 35 31" stroke="#8A5A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`
     },
     {
@@ -511,6 +711,8 @@ SCENES.push({
         <circle cx="8" cy="28" r="7" fill="#F28C6B"/><circle cx="52" cy="28" r="7" fill="#F28C6B"/>
         <path d="M14 42 L6 50 M22 46 L16 54 M46 42 L54 50 M38 46 L44 54" stroke="#F28C6B" stroke-width="4" stroke-linecap="round"/>
         <ellipse cx="30" cy="38" rx="18" ry="14" fill="#F28C6B"/>
+        <circle cx="17" cy="10" r="1.5" fill="#FFFFFF"/><circle cx="37" cy="10" r="1.5" fill="#FFFFFF"/>
+        <circle cx="25" cy="33" r="2" fill="#F8B09A"/><circle cx="35" cy="31" r="2" fill="#F8B09A"/>
         <path d="M23 40 Q30 45 37 40" stroke="#B85E3C" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`
     },
     {
@@ -534,8 +736,12 @@ SCENES.push({
           <line x1="14" y1="43" x2="9" y2="48"/><line x1="40" y1="43" x2="45" y2="48"/>
         </g>
         <circle cx="27" cy="30" r="16" fill="#FFE08A"/>
+        <path d="M16 21 Q22 16 29 18" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.55"/>
+        <circle cx="35" cy="20" r="2.2" fill="#F2C63C" opacity="0.85"/><circle cx="18" cy="40" r="2" fill="#F2C63C" opacity="0.85"/><circle cx="36" cy="40" r="2" fill="#F2C63C" opacity="0.85"/>
         <polygon points="42,30 56,21 56,39" fill="#F2C63C"/>
         <circle cx="21" cy="27" r="2.8" fill="#6B5A2E"/><circle cx="33" cy="27" r="2.8" fill="#6B5A2E"/>
+        <circle cx="20" cy="26" r="1" fill="#FFFFFF"/><circle cx="32" cy="26" r="1" fill="#FFFFFF"/>
+        <circle cx="15" cy="33" r="2" fill="#F2A24C" opacity="0.6"/><circle cx="39" cy="33" r="2" fill="#F2A24C" opacity="0.6"/>
         <path d="M22 35 Q27 39 32 35" stroke="#6B5A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`
     },
     {
@@ -555,7 +761,10 @@ SCENES.push({
       icon: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
         <polygon points="30,4 14,28 46,28" fill="#A9D6EE"/>
         <ellipse cx="30" cy="32" rx="14" ry="13" fill="#B8DFF2"/>
+        <ellipse cx="25" cy="25" rx="4" ry="2.5" fill="#FFFFFF" opacity="0.5"/>
         <circle cx="24" cy="31" r="3" fill="#3E6A88"/><circle cx="36" cy="31" r="3" fill="#3E6A88"/>
+        <circle cx="19" cy="37" r="2.2" fill="#8FB8D8" opacity="0.8"/><circle cx="41" cy="37" r="2.2" fill="#8FB8D8" opacity="0.8"/>
+        <path d="M26 39 Q30 42 34 39" stroke="#3E6A88" stroke-width="2" fill="none" stroke-linecap="round"/>
         <path d="M21 44 Q17 52 21 56 M30 45 Q32 52 28 57 M39 44 Q43 52 39 56" stroke="#A9D6EE" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`
     },
     {
@@ -689,10 +898,14 @@ SCENES.push({
       <ellipse cx="30" cy="70" rx="12" ry="7" transform="rotate(-30 30 70)" fill="#A8E0B2"/>
       <ellipse cx="90" cy="70" rx="12" ry="7" transform="rotate(30 90 70)" fill="#A8E0B2"/>
       <circle cx="60" cy="42" r="17" fill="#A8E0B2"/>
+      <ellipse cx="54" cy="34" rx="6" ry="3.5" transform="rotate(-20 54 34)" fill="#FFFFFF" opacity="0.5"/>
       <circle cx="54" cy="40" r="3.5" fill="#2F5B3A"/><circle cx="66" cy="40" r="3.5" fill="#2F5B3A"/>
+      <circle cx="53" cy="39" r="1.2" fill="#FFFFFF"/><circle cx="65" cy="39" r="1.2" fill="#FFFFFF"/>
+      <circle cx="47" cy="46" r="2.8" fill="#F5B8C4" opacity="0.7"/><circle cx="73" cy="46" r="2.8" fill="#F5B8C4" opacity="0.7"/>
       <path d="M53 48 Q60 53 67 48" stroke="#2F5B3A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
       <ellipse cx="60" cy="74" rx="32" ry="24" fill="#7ACB8B" stroke="#5FAF70" stroke-width="4"/>
+      <path d="M36 66 Q48 54 66 55" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.4"/>
       <circle cx="48" cy="68" r="7" fill="#5FAF70"/><circle cx="72" cy="68" r="7" fill="#5FAF70"/>
-      <circle cx="60" cy="84" r="7" fill="#5FAF70"/></svg>`
+      <circle cx="60" cy="84" r="7" fill="#5FAF70"/><circle cx="82" cy="80" r="4" fill="#5FAF70" opacity="0.85"/><circle cx="38" cy="80" r="4" fill="#5FAF70" opacity="0.85"/></svg>`
   }
 });

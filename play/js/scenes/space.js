@@ -19,21 +19,61 @@ SCENES.push({
     const A = v === 'A';
     const L = +level || 1;
     const D1 = !A && L === 1, D2 = !A && L === 2, D3 = !A && L === 3;
+
+    // ── 그리기 헬퍼: 별 층(깊이감)·크레이터 (백틱 없이 문자열 결합) ──
+    const dot = (x, y, r, o) => '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#FFFFFF" opacity="' + o + '"/>';
+    const spark = (x, y, s) =>
+      '<circle cx="' + x + '" cy="' + y + '" r="' + (s * 2) + '" fill="#FFFFFF" opacity="0.1"/>' +
+      '<path d="M' + x + ' ' + (y - s) + ' L' + (x + s / 3) + ' ' + (y - s / 3) + ' L' + (x + s) + ' ' + y +
+      ' L' + (x + s / 3) + ' ' + (y + s / 3) + ' L' + x + ' ' + (y + s) + ' L' + (x - s / 3) + ' ' + (y + s / 3) +
+      ' L' + (x - s) + ' ' + y + ' L' + (x - s / 3) + ' ' + (y - s / 3) + ' Z" fill="#FFFFFF" opacity="0.95"/>';
+    const farStars = [[60, 58], [150, 95], [230, 152], [302, 116], [390, 72], [505, 95], [575, 132], [650, 55], [700, 252], [775, 58],
+      [862, 150], [916, 105], [985, 58], [1075, 252], [1120, 318], [35, 232], [338, 332], [200, 322], [726, 332], [893, 232]]
+      .map(p => dot(p[0], p[1], 1.6, 0.5)).join('');
+    const midStars = [[130, 220], [520, 180], [705, 150], [1010, 330], [420, 300], [615, 320], [40, 130], [1170, 120], [830, 340]]
+      .map(p => dot(p[0], p[1], 2.8, 0.75)).join('');
+    const bigStars = [[95, 62, 9], [320, 64, 7], [435, 118, 8], [560, 62, 10], [760, 215, 7], [1005, 296, 8], [70, 305, 9], [598, 170, 7], [1140, 235, 8], [250, 280, 7]]
+      .map(p => spark(p[0], p[1], p[2])).join('');
+    const crater = (x, y, rx, ry) =>
+      '<ellipse cx="' + x + '" cy="' + (y + 2) + '" rx="' + (rx + 4) + '" ry="' + (ry + 3) + '" fill="#FFFFFF" opacity="0.4"/>' +
+      '<ellipse cx="' + x + '" cy="' + y + '" rx="' + rx + '" ry="' + ry + '" fill="#BFBFDC"/>' +
+      '<ellipse cx="' + x + '" cy="' + (y - 3) + '" rx="' + (rx - 7) + '" ry="' + (ry - 4) + '" fill="#ADADCF"/>' +
+      '<ellipse cx="' + (x + rx * 0.2) + '" cy="' + (y - 4) + '" rx="' + (rx - 13) + '" ry="' + Math.max(ry - 7, 3) + '" fill="#000000" opacity="0.06"/>';
+    const craters = [[452, 758, 34, 14], [642, 744, 40, 16], [92, 752, 30, 13], [1118, 748, 36, 15], [790, 736, 30, 12], [985, 700, 24, 10]]
+      .map(c => crater(c[0], c[1], c[2], c[3])).join('');
     return `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet">
-  <!-- 우주 하늘 (단색 레이어) -->
-  <rect x="0" y="0" width="1200" height="800" fill="#514B95"/>
-  <rect x="0" y="0" width="1200" height="240" fill="#5D57A6" opacity="0.6"/>
-  <rect x="0" y="430" width="1200" height="220" fill="#433E7A" opacity="0.35"/>
+  <!-- 우주 하늘 (깊이 레이어: 위로 갈수록 깊은 우주, 지평선엔 달빛) -->
+  <rect x="0" y="0" width="1200" height="800" fill="#4E4899"/>
+  <rect x="0" y="0" width="1200" height="230" fill="#3F3A86" opacity="0.85"/>
+  <rect x="0" y="150" width="1200" height="160" fill="#463F8F" opacity="0.55"/>
+  <path d="M0 800 L0 585 Q600 455 1200 585 L1200 800 Z" fill="#FFFFFF" opacity="0.05"/>
+  <path d="M0 800 L0 645 Q600 545 1200 645 L1200 800 Z" fill="#FFFFFF" opacity="0.05"/>
 
-  <!-- 반짝이 별들 -->
-  <g fill="#FFFFFF" opacity="0.95">
-    ${[[95, 62], [320, 64], [435, 118], [560, 62], [760, 215], [1005, 296], [70, 305], [598, 170], [1140, 235], [250, 280]].map(([x, y]) => `
-    <path d="M${x} ${y - 9} L${x + 3} ${y - 3} L${x + 9} ${y} L${x + 3} ${y + 3} L${x} ${y + 9} L${x - 3} ${y + 3} L${x - 9} ${y} L${x - 3} ${y - 3} Z"/>`).join('')}
+  <!-- 은하수 띠 (반투명 흰 도형 겹침) -->
+  <g transform="rotate(-5 640 175)">
+    <ellipse cx="640" cy="178" rx="720" ry="105" fill="#FFFFFF" opacity="0.03"/>
+    <ellipse cx="640" cy="175" rx="580" ry="78" fill="#FFFFFF" opacity="0.04"/>
+    <ellipse cx="640" cy="172" rx="430" ry="42" fill="#FFFFFF" opacity="0.06"/>
+    <ellipse cx="640" cy="170" rx="260" ry="20" fill="#FFF6EE" opacity="0.07"/>
   </g>
-  <g fill="#FFFFFF" opacity="0.75">
-    ${[[130, 220], [520, 180], [705, 150], [1010, 330], [420, 300], [615, 320], [40, 130], [1170, 120], [830, 340]].map(([x, y]) => `
-    <circle cx="${x}" cy="${y}" r="4"/>`).join('')}
+
+  <!-- 색색 성운 (이중 겹으로 가장자리 부드럽게) -->
+  <ellipse cx="350" cy="72" rx="270" ry="82" fill="#FF8FC7" opacity="0.04"/>
+  <ellipse cx="350" cy="72" rx="200" ry="58" fill="#FF8FC7" opacity="0.06"/>
+  <ellipse cx="1080" cy="418" rx="205" ry="84" fill="#7BE0C8" opacity="0.035"/>
+  <ellipse cx="1080" cy="418" rx="150" ry="60" fill="#7BE0C8" opacity="0.05"/>
+  <ellipse cx="620" cy="348" rx="255" ry="88" fill="#7BC8E8" opacity="0.03"/>
+  <ellipse cx="620" cy="348" rx="190" ry="64" fill="#7BC8E8" opacity="0.045"/>
+
+  <!-- 별 층 (먼 잔별 → 중간 별 → 큰 반짝별: 크기·밝기로 깊이감) -->
+  <g>${farStars}</g>
+  <g>${midStars}</g>
+  <g>${bigStars}</g>
+  <g opacity="0.85">
+    <circle cx="270" cy="205" r="2.6" fill="#FFE08A"/><circle cx="722" cy="95" r="2.6" fill="#FFE08A"/>
+    <circle cx="1105" cy="302" r="2.4" fill="#FFC7E5"/><circle cx="168" cy="332" r="2.4" fill="#FFC7E5"/>
+    <circle cx="540" cy="322" r="2.4" fill="#B5EEDD"/><circle cx="905" cy="152" r="2.4" fill="#FFC7E5"/>
   </g>
 
   <!-- ★차이13(L2→L3): 반짝별 색 (하양 → 금빛) -->
@@ -73,15 +113,23 @@ SCENES.push({
     <circle cx="99" cy="430" r="5" fill="#C9C4EE"/>
   </g>
 
-  <!-- 웃는 지구 -->
+  <!-- 웃는 지구 (구름·볼터치·명암) -->
   <g>
+    <circle cx="1060" cy="125" r="72" fill="#FFFFFF" opacity="0.1"/>
     <circle cx="1060" cy="125" r="62" fill="#7BC8E8"/>
     <path d="M1020 90 Q1035 76 1052 86 Q1062 98 1046 108 Q1024 112 1020 90 Z" fill="#8BCF6B"/>
     <path d="M1076 132 Q1100 122 1110 142 Q1106 162 1084 158 Q1068 148 1076 132 Z" fill="#8BCF6B"/>
     <!-- ★차이6(L2): 작은 대륙 — B에서는 사라짐 -->
     <g data-diff="6" data-level="2" data-cx="1036" data-cy="158" data-r="42">${D2 ? '' : '<path d="M1028 152 Q1040 146 1046 158 Q1040 168 1028 164 Z" fill="#8BCF6B"/>'}
     </g>
+    <path d="M1004 122 Q1014 114 1024 122 Q1030 128 1022 132 Q1008 134 1004 122 Z" fill="#FFFFFF" opacity="0.6"/>
+    <path d="M1082 92 Q1092 84 1102 92 Q1108 98 1100 102 Q1086 104 1082 92 Z" fill="#FFFFFF" opacity="0.6"/>
+    <path d="M1052 172 Q1062 165 1072 172 Q1077 178 1069 181 Q1056 183 1052 172 Z" fill="#FFFFFF" opacity="0.5"/>
+    <path d="M1060 63 A62 62 0 0 1 998 125 Q1006 84 1060 63 Z" fill="#FFFFFF" opacity="0.16"/>
+    <path d="M1060 187 A62 62 0 0 0 1122 125 Q1114 166 1060 187 Z" fill="#000000" opacity="0.08"/>
     <circle cx="1042" cy="120" r="6" fill="#2E6E8E"/><circle cx="1080" cy="120" r="6" fill="#2E6E8E"/>
+    <circle cx="1044" cy="118" r="2" fill="#FFFFFF"/><circle cx="1082" cy="118" r="2" fill="#FFFFFF"/>
+    <circle cx="1028" cy="133" r="6.5" fill="#FF9ED2" opacity="0.5"/><circle cx="1094" cy="133" r="6.5" fill="#FF9ED2" opacity="0.5"/>
     <!-- ★차이16(L3): 지구 입 모양 (웃는 입 → 동그란 입) -->
     <g data-diff="16" data-level="3" data-cx="1061" data-cy="145" data-r="45">${D3
       ? '<circle cx="1061" cy="144" r="8" fill="#2E6E8E"/>'
@@ -95,17 +143,27 @@ SCENES.push({
     <circle cx="992" cy="246" r="4" fill="#BFDCEE"/>
   </g>
 
-  <!-- 고리 행성 1 (복숭아색) -->
+  <!-- 고리 행성 1 (복숭아색: 뒷고리는 그늘, 앞고리는 밝게 — 입체감) -->
   <g>
+    <ellipse cx="170" cy="150" rx="98" ry="24" transform="rotate(-14 170 150)" fill="none" stroke="#9A8FD8" stroke-width="13"/>
+    <ellipse cx="170" cy="150" rx="98" ry="24" transform="rotate(-14 170 150)" fill="none" stroke="#B5AEE8" stroke-width="4"/>
     <circle cx="170" cy="150" r="54" fill="#FFC58F"/>
-    <circle cx="146" cy="132" r="10" fill="#F2A96B"/><circle cx="192" cy="168" r="8" fill="#F2A96B"/>
+    <circle cx="170" cy="150" r="54" fill="#000000" opacity="0.1"/>
+    <circle cx="164" cy="144" r="50" fill="#FFC58F"/>
+    <path d="M121 130 Q170 144 219 130 Q220 136 219 139 Q170 153 121 139 Z" fill="#F2A96B" opacity="0.75"/>
+    <path d="M124 170 Q170 182 216 170 Q214 176 212 178 Q170 189 128 178 Z" fill="#F2A96B" opacity="0.6"/>
+    <circle cx="146" cy="126" r="10" fill="#F2A96B"/><circle cx="196" cy="118" r="6" fill="#F2A96B"/>
+    <ellipse cx="143" cy="115" rx="15" ry="8" transform="rotate(-33 143 115)" fill="#FFFFFF" opacity="0.45"/>
     <circle cx="152" cy="152" r="6" fill="#C97B3E"/><circle cx="184" cy="150" r="6" fill="#C97B3E"/>
+    <circle cx="154" cy="150" r="2" fill="#FFF6EE"/><circle cx="186" cy="148" r="2" fill="#FFF6EE"/>
+    <circle cx="144" cy="161" r="5.5" fill="#FF8A7A" opacity="0.55"/><circle cx="192" cy="159" r="5.5" fill="#FF8A7A" opacity="0.55"/>
     <path d="M154 166 Q169 176 184 164" stroke="#C97B3E" stroke-width="5" fill="none" stroke-linecap="round"/>
   </g>
-  <!-- ★차이1(L1): 행성 고리 색 (분홍 → 민트) -->
+  <!-- ★차이1(L1): 행성 고리 색 (분홍 → 민트) — 행성 앞을 지나는 아래쪽 반고리 -->
   <g data-diff="1" data-cx="170" data-cy="150" data-r="95">
-    <ellipse cx="170" cy="150" rx="98" ry="24" transform="rotate(-14 170 150)" fill="none" stroke="${D1 ? '#7BE0C8' : '#FF9ED2'}" stroke-width="13"/>
-    <ellipse cx="170" cy="150" rx="98" ry="24" transform="rotate(-14 170 150)" fill="none" stroke="${D1 ? '#B5EEDD' : '#FFC7E5'}" stroke-width="4"/>
+    <path d="M74.9 173.7 A98 24 -14 0 0 265.1 126.3" fill="none" stroke="${D1 ? '#7BE0C8' : '#FF9ED2'}" stroke-width="13" stroke-linecap="round"/>
+    <path d="M74.9 173.7 A98 24 -14 0 0 265.1 126.3" fill="none" stroke="${D1 ? '#B5EEDD' : '#FFC7E5'}" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="120" cy="181" r="2.5" fill="#FFFFFF" opacity="0.9"/><circle cx="236" cy="146" r="2.5" fill="#FFFFFF" opacity="0.9"/>
   </g>
 
   <!-- 숨은그림: 외계인 (행성 위로 빼꼼) -->
@@ -114,49 +172,79 @@ SCENES.push({
     <line x1="214" y1="80" x2="221" y2="62" stroke="#7CC940" stroke-width="4" stroke-linecap="round"/>
     <circle cx="190" cy="59" r="5" fill="#FF8FC7"/><circle cx="222" cy="59" r="5" fill="#FFD93D"/>
     <ellipse cx="206" cy="96" rx="20" ry="21" fill="#A8E86B"/>
+    <ellipse cx="199" cy="84" rx="7" ry="4" transform="rotate(-20 199 84)" fill="#FFFFFF" opacity="0.5"/>
     <circle cx="199" cy="93" r="4" fill="#2E5E1E"/><circle cx="213" cy="93" r="4" fill="#2E5E1E"/>
+    <circle cx="200" cy="92" r="1.4" fill="#FFFFFF"/><circle cx="214" cy="92" r="1.4" fill="#FFFFFF"/>
+    <circle cx="193" cy="102" r="3.4" fill="#FF8FC7" opacity="0.7"/><circle cx="219" cy="102" r="3.4" fill="#FF8FC7" opacity="0.7"/>
     <path d="M199 103 Q206 109 213 103" stroke="#2E5E1E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <circle cx="190" cy="114" r="4.5" fill="#7CC940"/><circle cx="222" cy="114" r="4.5" fill="#7CC940"/>
   </g>
 
-  <!-- 고리 행성 2 (민트) -->
+  <!-- 고리 행성 2 (민트: 명암·볼터치) -->
   <g>
     <circle cx="300" cy="352" r="32" fill="#7BE0C8"/>
-    <circle cx="288" cy="342" r="6" fill="#57C4A8"/><circle cx="312" cy="362" r="5" fill="#57C4A8"/>
+    <circle cx="300" cy="352" r="32" fill="#000000" opacity="0.1"/>
+    <circle cx="296" cy="348" r="29" fill="#7BE0C8"/>
+    <circle cx="288" cy="340" r="6" fill="#57C4A8"/><circle cx="313" cy="364" r="5" fill="#57C4A8"/>
+    <ellipse cx="287" cy="333" rx="9" ry="5" transform="rotate(-33 287 333)" fill="#FFFFFF" opacity="0.5"/>
     <circle cx="291" cy="350" r="4" fill="#2E7A64"/><circle cx="309" cy="350" r="4" fill="#2E7A64"/>
+    <circle cx="292" cy="349" r="1.4" fill="#FFFFFF"/><circle cx="310" cy="349" r="1.4" fill="#FFFFFF"/>
+    <circle cx="286" cy="357" r="3.6" fill="#FF9ED2" opacity="0.6"/><circle cx="314" cy="357" r="3.6" fill="#FF9ED2" opacity="0.6"/>
     <path d="M292 360 Q300 366 308 360" stroke="#2E7A64" stroke-width="4" fill="none" stroke-linecap="round"/>
     <!-- ★차이7(L2): 민트 행성 고리 색 (노랑 → 분홍) -->
     <g data-diff="7" data-level="2" data-cx="300" data-cy="352" data-r="68">
       <ellipse cx="300" cy="352" rx="56" ry="14" transform="rotate(12 300 352)" fill="none" stroke="${D2 ? '#FF8FC7' : '#FFD93D'}" stroke-width="8"/>
+      <ellipse cx="300" cy="352" rx="56" ry="14" transform="rotate(12 300 352)" fill="none" stroke="${D2 ? '#FFC7E5' : '#FFE9A8'}" stroke-width="2.5"/>
     </g>
   </g>
 
   <!-- ★차이3(L1): 별똥별 — B에서는 사라짐 -->
   <g data-diff="3" data-cx="645" data-cy="90" data-r="60">${D1 ? '' : `
+    <line x1="654" y1="84" x2="580" y2="62" stroke="#FFB0D8" stroke-width="8" stroke-linecap="round" opacity="0.55"/>
     <line x1="652" y1="86" x2="592" y2="68" stroke="#FFB0D8" stroke-width="7" stroke-linecap="round"/>
-    <line x1="650" y1="100" x2="600" y2="104" stroke="#FFB0D8" stroke-width="6" stroke-linecap="round"/>
-    <path d="M668 74 L673 87 L686 92 L673 97 L668 110 L663 97 L650 92 L663 87 Z" fill="#FFFFFF"/>`}
+    <line x1="650" y1="100" x2="588" y2="105" stroke="#FFB0D8" stroke-width="6" stroke-linecap="round" opacity="0.75"/>
+    <line x1="649" y1="93" x2="606" y2="87" stroke="#FFF6EE" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
+    <circle cx="575" cy="80" r="2.5" fill="#FFC7E5"/><circle cx="600" cy="55" r="2" fill="#FFC7E5"/>
+    <circle cx="668" cy="92" r="17" fill="#FFFFFF" opacity="0.18"/>
+    <path d="M668 74 L673 87 L686 92 L673 97 L668 110 L663 97 L650 92 L663 87 Z" fill="#FFFFFF"/>
+    <path d="M668 80 L671 89 L680 92 L671 95 L668 104 L665 95 L656 92 L665 89 Z" fill="#FFE08A" opacity="0.9"/>`}
   </g>
 
-  <!-- 숨은그림: 인공위성 (별들 사이) -->
+  <!-- 숨은그림: 인공위성 (별들 사이, 금박 패널·깜빡등) -->
   <g data-find="satellite" data-label="인공위성">
+    <line x1="772" y1="117" x2="746" y2="117" stroke="#B9B3D9" stroke-width="3"/>
+    <line x1="818" y1="117" x2="844" y2="117" stroke="#B9B3D9" stroke-width="3"/>
     <rect x="746" y="108" width="26" height="18" rx="4" fill="#FFB84D"/>
+    <rect x="746" y="108" width="26" height="18" rx="4" fill="none" stroke="#E8933C" stroke-width="2"/>
     <line x1="754" y1="108" x2="754" y2="126" stroke="#E8933C" stroke-width="3"/>
     <line x1="763" y1="108" x2="763" y2="126" stroke="#E8933C" stroke-width="3"/>
     <rect x="818" y="108" width="26" height="18" rx="4" fill="#FFB84D"/>
+    <rect x="818" y="108" width="26" height="18" rx="4" fill="none" stroke="#E8933C" stroke-width="2"/>
     <line x1="826" y1="108" x2="826" y2="126" stroke="#E8933C" stroke-width="3"/>
     <line x1="835" y1="108" x2="835" y2="126" stroke="#E8933C" stroke-width="3"/>
     <rect x="777" y="99" width="36" height="36" rx="8" fill="#E3E8F5"/>
+    <path d="M777 128 Q795 122 813 128 L813 127 Q813 135 805 135 L785 135 Q777 135 777 127 Z" fill="#B9B3D9" opacity="0.6"/>
+    <circle cx="781" cy="103" r="1.6" fill="#9B95C8"/><circle cx="809" cy="103" r="1.6" fill="#9B95C8"/>
     <circle cx="795" cy="117" r="9" fill="#7BC8E8"/>
+    <path d="M789 113 Q791 110 795 110" stroke="#FFFFFF" stroke-width="2.5" fill="none" stroke-linecap="round"/>
     <line x1="795" y1="99" x2="795" y2="82" stroke="#B9B3D9" stroke-width="4"/>
+    <circle cx="795" cy="79" r="9" fill="#FF8A7A" opacity="0.25"/>
     <circle cx="795" cy="79" r="5" fill="#FF8A7A"/>
   </g>
 
-  <!-- 숨은그림: 혜성 (지구 옆으로 슝) -->
+  <!-- 숨은그림: 혜성 (지구 옆으로 슝 — 겹층 꼬리·웃는 얼굴) -->
   <g data-find="comet" data-label="혜성">
+    <path d="M888 252 L978 192 L912 268 Z" fill="#9BDCF8" opacity="0.4"/>
     <path d="M886 258 L956 208 L906 274 Z" fill="#9BDCF8" opacity="0.85"/>
-    <line x1="892" y1="278" x2="936" y2="250" stroke="#C6ECFB" stroke-width="7" stroke-linecap="round"/>
+    <line x1="892" y1="278" x2="944" y2="245" stroke="#C6ECFB" stroke-width="7" stroke-linecap="round"/>
+    <line x1="898" y1="286" x2="932" y2="266" stroke="#C6ECFB" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+    <circle cx="952" cy="222" r="2.4" fill="#FFFFFF" opacity="0.9"/><circle cx="936" cy="252" r="2" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="880" cy="272" r="24" fill="#C6ECFB" opacity="0.5"/>
     <circle cx="880" cy="272" r="20" fill="#C6ECFB"/>
-    <circle cx="876" cy="270" r="12" fill="#FFFFFF"/>
+    <circle cx="877" cy="270" r="14" fill="#FFFFFF"/>
+    <circle cx="872" cy="268" r="2.4" fill="#3E6E8E"/><circle cx="882" cy="268" r="2.4" fill="#3E6E8E"/>
+    <path d="M872 274 Q877 278 882 274" stroke="#3E6E8E" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <circle cx="867" cy="273" r="2.4" fill="#FF9ED2" opacity="0.75"/><circle cx="887" cy="273" r="2.4" fill="#FF9ED2" opacity="0.75"/>
   </g>
 
   <!-- 숨은그림 L2: 우주 정거장 (하늘 보호색 태양전지판) -->
@@ -177,6 +265,7 @@ SCENES.push({
   <g data-find="star" data-label="노란별">
     <polygon points="700,309 707,326 725,327 711,338 715,356 700,346 685,356 690,338 675,327 694,326" fill="#FFD93D" stroke="#E8A800" stroke-width="3" stroke-linejoin="round"/>
     <circle cx="694" cy="333" r="2.5" fill="#B07A00"/><circle cx="706" cy="333" r="2.5" fill="#B07A00"/>
+    <circle cx="689" cy="338" r="2.4" fill="#FFB067" opacity="0.9"/><circle cx="711" cy="338" r="2.4" fill="#FFB067" opacity="0.9"/>
     <path d="M694 340 Q700 344 706 340" stroke="#B07A00" stroke-width="2.5" fill="none" stroke-linecap="round"/>
   </g>
   <g fill="#FFFFFF" opacity="0.9">
@@ -191,34 +280,49 @@ SCENES.push({
     <path d="M912 424 Q935 436 958 422" stroke="${D1 ? '#6FAE54' : '#E8945A'}" stroke-width="5" fill="none" stroke-linecap="round"/>
   </g>
 
-  <!-- 달 표면 -->
+  <!-- 달 표면 (능선 하이라이트·입체 크레이터·잔돌) -->
   <path d="M0 640 Q150 600 320 628 Q500 656 660 620 Q840 588 1000 622 Q1100 642 1200 618 L1200 800 L0 800 Z" fill="#DCDCEE"/>
+  <path d="M0 640 Q150 600 320 628 Q500 656 660 620 Q840 588 1000 622 Q1100 642 1200 618 L1200 630 Q1100 654 1000 634 Q840 600 660 632 Q500 668 320 640 Q150 612 0 652 Z" fill="#FFFFFF" opacity="0.55"/>
   <path d="M0 706 Q300 674 600 706 Q900 738 1200 698 L1200 800 L0 800 Z" fill="#CFCFE6"/>
+  <path d="M0 706 Q300 674 600 706 Q900 738 1200 698 L1200 706 Q900 746 600 714 Q300 682 0 714 Z" fill="#FFFFFF" opacity="0.4"/>
+  <path d="M0 770 Q300 748 600 772 Q900 796 1200 766 L1200 800 L0 800 Z" fill="#000000" opacity="0.05"/>
 
-  <!-- 크레이터 (고정) -->
-  <g>
-    ${[[452, 758, 34, 14], [642, 744, 40, 16], [92, 752, 30, 13], [1118, 748, 36, 15], [790, 736, 30, 12], [985, 700, 24, 10]].map(([x, y, rx, ry]) => `
-    <g><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#BFBFDC"/><ellipse cx="${x}" cy="${y - 3}" rx="${rx - 7}" ry="${ry - 4}" fill="#ADADCF"/></g>`).join('')}
+  <!-- 크레이터 (고정, 테두리 하이라이트+속그늘) -->
+  <g>${craters}</g>
+
+  <!-- 잔돌·모래 반짝임 -->
+  <g fill="#B7B5D6">
+    <ellipse cx="230" cy="662" rx="8" ry="5"/><ellipse cx="530" cy="700" rx="7" ry="4.5"/>
+    <ellipse cx="857" cy="726" rx="9" ry="5"/><ellipse cx="1042" cy="672" rx="7" ry="4"/>
+    <ellipse cx="352" cy="748" rx="6" ry="4"/><ellipse cx="722" cy="668" rx="6" ry="4"/>
+  </g>
+  <g fill="#FFFFFF" opacity="0.7">
+    <circle cx="205" cy="690" r="2.2"/><circle cx="475" cy="668" r="2.2"/><circle cx="620" cy="758" r="2.2"/>
+    <circle cx="920" cy="742" r="2.2"/><circle cx="1075" cy="712" r="2.2"/><circle cx="45" cy="676" r="2.2"/>
   </g>
 
   <!-- ★차이15(L3): 크레이터 안쪽 색 (회보라 → 연보라) -->
   <g data-diff="15" data-level="3" data-cx="340" data-cy="668" data-r="40">
+    <ellipse cx="340" cy="670" rx="30" ry="14" fill="#FFFFFF" opacity="0.4"/>
     <ellipse cx="340" cy="668" rx="26" ry="11" fill="#BFBFDC"/>
     <ellipse cx="340" cy="665" rx="19" ry="7" fill="${D3 ? '#C3A8D8' : '#ADADCF'}"/>
+    <ellipse cx="345" cy="664" rx="13" ry="4" fill="#000000" opacity="0.06"/>
   </g>
 
   <!-- ★차이5(L1): 크레이터 하나 — B에서는 사라짐 -->
   <g data-diff="5" data-cx="255" data-cy="695" data-r="50">${D1 ? '' : `
+    <ellipse cx="255" cy="697" rx="42" ry="21" fill="#FFFFFF" opacity="0.4"/>
     <ellipse cx="255" cy="695" rx="38" ry="18" fill="#BFBFDC"/>
-    <ellipse cx="255" cy="691" rx="30" ry="12" fill="#ADADCF"/>`}
+    <ellipse cx="255" cy="691" rx="30" ry="12" fill="#ADADCF"/>
+    <ellipse cx="262" cy="689" rx="20" ry="7" fill="#000000" opacity="0.06"/>`}
   </g>
 
   <!-- 달 돌멩이 -->
   <!-- ★차이10(L2): 달 돌멩이 — B에서는 사라짐 -->
-  <g data-diff="10" data-level="2" data-cx="390" data-cy="720" data-r="40">${D2 ? '' : '<ellipse cx="390" cy="720" rx="22" ry="13" fill="#C3C3DE"/>'}
+  <g data-diff="10" data-level="2" data-cx="390" data-cy="720" data-r="40">${D2 ? '' : '<ellipse cx="392" cy="729" rx="22" ry="6" fill="#000000" opacity="0.08"/><ellipse cx="390" cy="720" rx="22" ry="13" fill="#C3C3DE"/><ellipse cx="384" cy="714" rx="9" ry="4" fill="#FFFFFF" opacity="0.5"/>'}
   </g>
   <!-- ★차이14(L3): 달 돌멩이 — B에서는 사라짐 -->
-  <g data-diff="14" data-level="3" data-cx="700" data-cy="704" data-r="40">${D3 ? '' : '<ellipse cx="700" cy="704" rx="18" ry="11" fill="#C3C3DE"/>'}
+  <g data-diff="14" data-level="3" data-cx="700" data-cy="704" data-r="40">${D3 ? '' : '<ellipse cx="702" cy="711" rx="18" ry="5" fill="#000000" opacity="0.08"/><ellipse cx="700" cy="704" rx="18" ry="11" fill="#C3C3DE"/><ellipse cx="695" cy="699" rx="7" ry="3.5" fill="#FFFFFF" opacity="0.5"/>'}
   </g>
 
   <!-- 숨은그림: 망원경 (달 표면 왼쪽) -->
@@ -309,20 +413,40 @@ SCENES.push({
     <circle cx="1121" cy="716" r="3" fill="#C9C08E"/><circle cx="1131" cy="719" r="2.2" fill="#C9C08E"/>
   </g>
 
-  <!-- 큰 로켓 (달에 착륙) -->
+  <!-- 큰 로켓 (달에 착륙 — 리벳 창틀·보조 창문·명암·엔진 불꽃) -->
   <g>
+    <ellipse cx="480" cy="644" rx="108" ry="14" fill="#000000" opacity="0.1"/>
     <path d="M424 495 Q376 535 386 598 L424 572 Z" fill="#FF8A7A"/>
+    <path d="M424 505 Q390 538 392 586 L410 574 Q404 536 424 512 Z" fill="#FFFFFF" opacity="0.25"/>
     <path d="M536 495 Q584 535 574 598 L536 572 Z" fill="#FF8A7A"/>
+    <path d="M536 505 Q566 536 566 586 L552 578 Q552 540 536 514 Z" fill="#000000" opacity="0.1"/>
     <polygon points="456,580 504,580 518,612 442,612" fill="#B9B3D9"/>
+    <polygon points="456,580 504,580 507,587 453,587" fill="#FFFFFF" opacity="0.3"/>
     <path d="M424 350 Q424 255 480 238 Q536 255 536 350 L536 558 Q536 580 514 580 L446 580 Q424 580 424 558 Z" fill="#FFF6EE"/>
     <path d="M424 350 Q424 255 480 238 Q536 255 536 350 Z" fill="#FF8A7A"/>
+    <path d="M452 248 Q426 268 424 348 L436 348 Q438 278 458 254 Z" fill="#FFFFFF" opacity="0.3"/>
+    <path d="M536 350 L536 558 Q536 580 514 580 L508 580 L508 350 Z" fill="#000000" opacity="0.05"/>
+    <path d="M508 244 Q534 264 536 350 L508 350 Z" fill="#000000" opacity="0.06"/>
+    <circle cx="480" cy="238" r="7" fill="#FFD93D"/>
     <rect x="424" y="506" width="112" height="24" fill="#FF8A7A"/>
+    <rect x="424" y="524" width="112" height="6" fill="#000000" opacity="0.1"/>
+    <circle cx="480" cy="483" r="10" fill="#FF8A7A"/>
+    <circle cx="480" cy="483" r="6.5" fill="#9BDCF8"/>
+    <path d="M476 480 Q478 478 481 478" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round"/>
     <circle cx="480" cy="425" r="36" fill="#FF8A7A"/>
+    <circle cx="458" cy="403" r="3" fill="#E8705F"/><circle cx="502" cy="403" r="3" fill="#E8705F"/>
+    <circle cx="458" cy="447" r="3" fill="#E8705F"/><circle cx="502" cy="447" r="3" fill="#E8705F"/>
     <!-- ★차이2(L1): 로켓 창문 색 (하늘색 → 노랑) -->
     <g data-diff="2" data-cx="480" data-cy="425" data-r="58">
       <circle cx="480" cy="425" r="26" fill="${D1 ? '#FFD93D' : '#9BDCF8'}"/>
       <path d="M466 414 Q472 406 482 407" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M470 441 Q478 446 488 442" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
     </g>
+    <path d="M460 612 Q480 668 500 612 Z" fill="#FFB84D"/>
+    <path d="M468 612 Q480 650 492 612 Z" fill="#FFD93D"/>
+    <path d="M474 612 Q480 636 486 612 Z" fill="#FFF6EE"/>
+    <circle cx="430" cy="630" r="24" fill="#FFFFFF" opacity="0.5"/>
+    <circle cx="512" cy="634" r="24" fill="#FFFFFF" opacity="0.5"/>
     <circle cx="436" cy="622" r="18" fill="#FFFFFF" opacity="0.9"/>
     <circle cx="464" cy="634" r="22" fill="#FFFFFF" opacity="0.9"/>
     <circle cx="500" cy="632" r="20" fill="#FFFFFF" opacity="0.9"/>
@@ -331,12 +455,18 @@ SCENES.push({
     </g>
   </g>
 
-  <!-- 우주인 -->
+  <!-- 우주인 (장갑·바이저 반사·볼터치·배낭 다이얼) -->
   <g>
+    <ellipse cx="868" cy="699" rx="48" ry="9" fill="#000000" opacity="0.1"/>
     <rect x="824" y="562" width="24" height="52" rx="10" fill="#C9C4E8"/>
+    <rect x="824" y="562" width="24" height="52" rx="10" fill="none" stroke="#B4AEDC" stroke-width="2.5"/>
+    <circle cx="836" cy="576" r="4" fill="#A9A4CE"/><circle cx="836" cy="600" r="3" fill="#FFD93D"/>
     <path d="M842 600 Q818 616 826 638" stroke="#FFFFFF" stroke-width="14" fill="none" stroke-linecap="round"/>
     <path d="M894 600 Q918 616 910 638" stroke="#FFFFFF" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <circle cx="826" cy="641" r="8" fill="#FFFFFF" stroke="#CFC9E6" stroke-width="3"/>
+    <circle cx="910" cy="641" r="8" fill="#FFFFFF" stroke="#CFC9E6" stroke-width="3"/>
     <ellipse cx="868" cy="618" rx="32" ry="38" fill="#FFFFFF" stroke="#CFC9E6" stroke-width="5"/>
+    <ellipse cx="878" cy="624" rx="16" ry="26" fill="#000000" opacity="0.05"/>
     <rect x="848" y="646" width="16" height="40" rx="8" fill="#FFFFFF" stroke="#CFC9E6" stroke-width="4"/>
     <rect x="872" y="646" width="16" height="40" rx="8" fill="#FFFFFF" stroke="#CFC9E6" stroke-width="4"/>
     <!-- ★차이17(L3): 왼쪽 신발 색 (민트 → 살구) -->
@@ -350,8 +480,12 @@ SCENES.push({
     </g>
     <circle cx="862" cy="615" r="3" fill="#FF8A7A"/><circle cx="874" cy="615" r="3" fill="#FFD93D"/>
     <circle cx="868" cy="552" r="30" fill="#FFFFFF" stroke="#CFC9E6" stroke-width="5"/>
+    <ellipse cx="854" cy="535" rx="9" ry="4.5" transform="rotate(-35 854 535)" fill="#FFFFFF" opacity="0.8"/>
     <ellipse cx="870" cy="554" rx="20" ry="17" fill="#9BDCF8"/>
+    <path d="M858 545 Q864 541 871 542" stroke="#FFFFFF" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
     <circle cx="863" cy="551" r="3.5" fill="#2E4E6E"/><circle cx="877" cy="551" r="3.5" fill="#2E4E6E"/>
+    <circle cx="864" cy="550" r="1.2" fill="#FFFFFF"/><circle cx="878" cy="550" r="1.2" fill="#FFFFFF"/>
+    <circle cx="858" cy="558" r="2.8" fill="#FF9ED2" opacity="0.8"/><circle cx="882" cy="558" r="2.8" fill="#FF9ED2" opacity="0.8"/>
     <path d="M863 561 Q870 566 877 561" stroke="#2E4E6E" stroke-width="3" fill="none" stroke-linecap="round"/>
     <line x1="848" y1="530" x2="840" y2="514" stroke="#CFC9E6" stroke-width="4" stroke-linecap="round"/>
     <!-- ★차이12(L3): 안테나 공 색 (살구 → 노랑) -->
@@ -360,25 +494,39 @@ SCENES.push({
     </g>
   </g>
 
-  <!-- 깃발 -->
+  <!-- 깃발 (펄럭이는 모양·꼭대기 구슬) -->
   <g>
+    <ellipse cx="946" cy="694" rx="16" ry="5" fill="#000000" opacity="0.1"/>
     <line x1="944" y1="692" x2="944" y2="558" stroke="#E8E4F5" stroke-width="6" stroke-linecap="round"/>
-    <path d="M947 560 L1004 560 Q1013 573 1004 586 L947 586 Z" fill="#FF8A7A"/>
+    <line x1="942" y1="688" x2="942" y2="566" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+    <circle cx="944" cy="554" r="5.5" fill="#FFD93D"/>
+    <path d="M947 560 Q962 553 977 559 Q992 565 1006 558 Q1014 572 1006 586 Q992 593 977 587 Q962 581 947 586 Z" fill="#FF8A7A"/>
+    <path d="M977 559 Q992 565 1006 558 Q1014 572 1006 586 Q992 593 977 587 Z" fill="#000000" opacity="0.07"/>
     <!-- ★차이8(L2): 깃발 동그라미 색 (크림 → 노랑) -->
     <g data-diff="8" data-level="2" data-cx="974" data-cy="573" data-r="42">
       <circle cx="974" cy="573" r="8" fill="${D2 ? '#FFD93D' : '#FFF6EE'}"/>
     </g>
   </g>
 
-  <!-- 숨은그림: 로봇 (달 표면 오른쪽) -->
+  <!-- 숨은그림: 로봇 (달 표면 오른쪽 — 볼터치·게이지·나사) -->
   <g data-find="robot" data-label="로봇">
+    <ellipse cx="1080" cy="701" rx="42" ry="8" fill="#000000" opacity="0.1"/>
     <line x1="1080" y1="592" x2="1080" y2="578" stroke="#5F8FB0" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="1080" cy="574" r="10" fill="#FF8A7A" opacity="0.3"/>
     <circle cx="1080" cy="574" r="6" fill="#FF8A7A"/>
     <rect x="1056" y="592" width="48" height="36" rx="8" fill="#9BDCF8"/>
+    <rect x="1060" y="595" width="12" height="5" rx="2.5" fill="#FFFFFF" opacity="0.55"/>
     <circle cx="1071" cy="608" r="4.5" fill="#2E4E6E"/><circle cx="1089" cy="608" r="4.5" fill="#2E4E6E"/>
+    <circle cx="1072" cy="607" r="1.5" fill="#FFFFFF"/><circle cx="1090" cy="607" r="1.5" fill="#FFFFFF"/>
+    <circle cx="1063" cy="614" r="3" fill="#FF9ED2" opacity="0.75"/><circle cx="1097" cy="614" r="3" fill="#FF9ED2" opacity="0.75"/>
     <path d="M1071 618 Q1080 623 1089 618" stroke="#2E4E6E" stroke-width="3" fill="none" stroke-linecap="round"/>
     <rect x="1050" y="632" width="60" height="46" rx="10" fill="#7BC8E8"/>
+    <path d="M1098 632 Q1110 632 1110 642 L1110 668 Q1110 678 1100 678 L1098 678 Z" fill="#000000" opacity="0.07"/>
+    <circle cx="1057" cy="639" r="2.2" fill="#4A7A9B"/><circle cx="1103" cy="639" r="2.2" fill="#4A7A9B"/>
     <circle cx="1080" cy="655" r="12" fill="#FFD93D"/>
+    <path d="M1074 651 Q1077 648 1081 648" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <line x1="1080" y1="655" x2="1086" y2="649" stroke="#E8933C" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="1060" cy="668" r="2.5" fill="#FF8A7A"/><circle cx="1068" cy="668" r="2.5" fill="#FFD93D"/><circle cx="1076" cy="668" r="2.5" fill="#8BCF6B"/>
     <line x1="1050" y1="644" x2="1032" y2="662" stroke="#7BC8E8" stroke-width="10" stroke-linecap="round"/>
     <line x1="1110" y1="644" x2="1128" y2="662" stroke="#7BC8E8" stroke-width="10" stroke-linecap="round"/>
     <rect x="1058" y="678" width="14" height="20" rx="6" fill="#5F8FB0"/>
@@ -396,7 +544,10 @@ SCENES.push({
         <line x1="38" y1="18" x2="44" y2="7" stroke="#7CC940" stroke-width="3.5" stroke-linecap="round"/>
         <circle cx="15" cy="6" r="4" fill="#FF8FC7"/><circle cx="45" cy="6" r="4" fill="#FFD93D"/>
         <ellipse cx="30" cy="35" rx="19" ry="20" fill="#A8E86B"/>
+        <ellipse cx="23" cy="24" rx="6" ry="3.5" transform="rotate(-20 23 24)" fill="#FFFFFF" opacity="0.5"/>
         <circle cx="23" cy="33" r="4" fill="#2E5E1E"/><circle cx="37" cy="33" r="4" fill="#2E5E1E"/>
+        <circle cx="24" cy="32" r="1.4" fill="#FFFFFF"/><circle cx="38" cy="32" r="1.4" fill="#FFFFFF"/>
+        <circle cx="17" cy="42" r="3.2" fill="#FF8FC7" opacity="0.7"/><circle cx="43" cy="42" r="3.2" fill="#FF8FC7" opacity="0.7"/>
         <path d="M23 43 Q30 49 37 43" stroke="#2E5E1E" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`
     },
     {
@@ -418,6 +569,8 @@ SCENES.push({
         <circle cx="30" cy="4" r="3" fill="#FF8A7A"/>
         <rect x="17" y="9" width="26" height="18" rx="5" fill="#9BDCF8"/>
         <circle cx="25" cy="17" r="3" fill="#2E4E6E"/><circle cx="35" cy="17" r="3" fill="#2E4E6E"/>
+        <circle cx="25.8" cy="16.2" r="1" fill="#FFFFFF"/><circle cx="35.8" cy="16.2" r="1" fill="#FFFFFF"/>
+        <circle cx="20.5" cy="21" r="2" fill="#FF9ED2" opacity="0.75"/><circle cx="39.5" cy="21" r="2" fill="#FF9ED2" opacity="0.75"/>
         <path d="M25 22 Q30 25 35 22" stroke="#2E4E6E" stroke-width="2" fill="none" stroke-linecap="round"/>
         <rect x="14" y="29" width="32" height="22" rx="6" fill="#7BC8E8"/>
         <circle cx="30" cy="40" r="6" fill="#FFD93D"/>
@@ -429,10 +582,14 @@ SCENES.push({
     {
       id: 'comet', label: '혜성',
       icon: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <path d="M30 26 L59 4 L38 36 Z" fill="#9BDCF8" opacity="0.4"/>
         <path d="M28 30 L56 6 L36 40 Z" fill="#9BDCF8" opacity="0.85"/>
         <line x1="30" y1="44" x2="48" y2="30" stroke="#C6ECFB" stroke-width="4" stroke-linecap="round"/>
         <circle cx="22" cy="38" r="13" fill="#C6ECFB"/>
-        <circle cx="20" cy="36" r="8" fill="#FFFFFF"/></svg>`
+        <circle cx="20" cy="36" r="9.5" fill="#FFFFFF"/>
+        <circle cx="16.5" cy="34.5" r="1.7" fill="#3E6E8E"/><circle cx="23.5" cy="34.5" r="1.7" fill="#3E6E8E"/>
+        <path d="M16.5 39 Q20 42 23.5 39" stroke="#3E6E8E" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <circle cx="13" cy="38" r="1.7" fill="#FF9ED2" opacity="0.75"/><circle cx="27" cy="38" r="1.7" fill="#FF9ED2" opacity="0.75"/></svg>`
     },
     {
       id: 'telescope', label: '망원경',
@@ -449,6 +606,7 @@ SCENES.push({
       icon: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
         <polygon points="30,6 37,23 55,24 41,35 45,53 30,43 15,53 19,35 5,24 23,23" fill="#FFD93D" stroke="#E8A800" stroke-width="2.5" stroke-linejoin="round"/>
         <circle cx="25" cy="30" r="2.5" fill="#B07A00"/><circle cx="35" cy="30" r="2.5" fill="#B07A00"/>
+        <circle cx="20.5" cy="34.5" r="2.3" fill="#FFB067" opacity="0.9"/><circle cx="39.5" cy="34.5" r="2.3" fill="#FFB067" opacity="0.9"/>
         <path d="M25 37 Q30 41 35 37" stroke="#B07A00" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`
     },
     /* ── L2: 보통 (7) ── */
@@ -587,9 +745,16 @@ SCENES.push({
       <path d="M75 68 Q88 78 86 94 L75 86 Z" fill="#FF8A7A"/>
       <path d="M45 46 Q45 24 60 18 Q75 24 75 46 L75 80 Q75 86 69 86 L51 86 Q45 86 45 80 Z" fill="#FFF6EE"/>
       <path d="M45 46 Q45 24 60 18 Q75 24 75 46 Z" fill="#FF8A7A"/>
+      <path d="M52 21 Q46 28 45 44 L49 44 Q50 30 55 23 Z" fill="#FFFFFF" opacity="0.4"/>
+      <circle cx="60" cy="18" r="3.5" fill="#FFD93D"/>
       <circle cx="60" cy="56" r="12" fill="#FF8A7A"/>
+      <circle cx="52" cy="49" r="1.6" fill="#E8705F"/><circle cx="68" cy="49" r="1.6" fill="#E8705F"/>
+      <circle cx="52" cy="63" r="1.6" fill="#E8705F"/><circle cx="68" cy="63" r="1.6" fill="#E8705F"/>
       <circle cx="60" cy="56" r="8" fill="#9BDCF8"/>
+      <path d="M55 52 Q57 50 60 50" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M50 88 Q60 112 70 88 Z" fill="#FFB84D"/>
       <path d="M53 88 Q60 106 67 88 Z" fill="#FFD93D"/>
+      <path d="M56 88 Q60 98 64 88 Z" fill="#FFF6EE"/>
       <path d="M23 40 L26 46 L32 48 L26 50 L23 56 L20 50 L14 48 L20 46 Z" fill="#FFD93D"/>
       <path d="M96 62 L99 68 L105 70 L99 72 L96 78 L93 72 L87 70 L93 68 Z" fill="#FFD93D"/>
       <circle cx="30" cy="76" r="3" fill="#8F7BE8"/><circle cx="92" cy="36" r="3" fill="#8F7BE8"/></svg>`
