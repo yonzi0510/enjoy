@@ -352,24 +352,29 @@ window.App = (() => {
     P.recordMission(ms.id);
     P.addStar(1);
     if (window.Pet) Pet.awardSnack(1);
-    const all = P.missionCount() >= D.MISSIONS.length;
-    const allFirst = first && all;
-    if (allFirst && window.Pet) Pet.awardMeal(1); // 12색 도감 완성 = 특별 식사
+    // 두 가지 도감 잔치: 기본 12색을 다 모으면 식사, 30색 전체를 다 모으면 또 식사 + 특별 축하
+    const base = D.MISSIONS.slice(0, D.BASE_COUNT);
+    const baseFirst = first && base.some(m => m.id === ms.id) && base.every(m => P.missionDone(m.id));
+    const allFirst = first && P.missionCount() >= D.MISSIONS.length;
+    if (baseFirst && window.Pet) Pet.awardMeal(1); // 기본 12색 도감 완성 = 특별 식사
+    if (allFirst && window.Pet) Pet.awardMeal(1);  // 30색 전체 완성 = 특별 식사 한 번 더
     $('jar-sparkle').hidden = false;
     $('jar-wrap').classList.add('glow');
     A.sfx.sparkle();
     A.sfx.fanfare();
     flyButterfly(M.hex(rgb));
     A.speak(allFirst
-      ? '우와! ' + ms.sayName + ' 완성! 열두 가지 색 도감을 모두 모았어요! 정말 대단한 꼬마 과학자야!'
-      : '우와! ' + ms.sayName + ' 완성! ' + D.PRAISES[Math.floor(Math.random() * D.PRAISES.length)]);
+      ? '우와! ' + ms.sayName + ' 완성! 서른 가지 색 도감을 전부 모았어요! 정말 최고의 꼬마 과학자야!'
+      : baseFirst
+        ? '우와! ' + ms.sayName + ' 완성! 열두 가지 기본 색 도감을 모두 모았어요! 정말 대단한 꼬마 과학자야!'
+        : '우와! ' + ms.sayName + ' 완성! ' + D.PRAISES[Math.floor(Math.random() * D.PRAISES.length)]);
     lab.rewardTimer = setTimeout(() => {
       $('jar-sparkle').hidden = true;
       $('jar-wrap').classList.remove('glow');
       const next = D.MISSIONS.find(m => !P.missionDone(m.id));
-      $('reward-icon').textContent = allFirst ? '🌈' : '🦋';
+      $('reward-icon').textContent = allFirst ? '🏆' : baseFirst ? '🌈' : '🦋';
       showReward(
-        allFirst ? '12색 도감 완성! 🌈' : ms.emoji + ' ' + ms.name + ' 완성!',
+        allFirst ? '30색 도감 완성! 🏆' : baseFirst ? '12색 도감 완성! 🌈' : ms.emoji + ' ' + ms.name + ' 완성!',
         next ? '다음 미션 ▶' : '도감 보기 📖',
         () => { if (next) openLab('mission', next); else openBook(); },
         () => openMissions());
