@@ -802,3 +802,112 @@ h1 {
   .menu-card, .back, .navbtn, .side-nav, .pen-btn, .bigbtn,
   .ask-mic, .ask-chip, .item-main, .item-play, .art-card, .pen-hint { transition: none; }
 }
+
+/* [hidden] 의미 복구 — .sticker-row의 display:flex가 브라우저 기본 [hidden]{display:none}을
+ * 덮어써서 스티커 줄이 항상 보이던 버그. JS는 hidden 속성으로 여닫으므로 여기서 지켜 준다. */
+.sticker-row[hidden] { display: none; }
+
+/* ─────────── 가로 모드 — 태블릿 가로가 기본 사용 환경 (DESIGN.md 가로모드 우선) ───────────
+ * HTML·JS 무변경. 세로(portrait) 레이아웃은 그대로 두고 여기서만 재배치한다.
+ * 캔버스는 width + aspect-ratio로만 크기를 정해 ink.js의 좌표 변환이 그대로 맞는다. */
+@media (orientation: landscape) {
+  /* 홈: 4열 → 5열 (카드·간격은 ±10% 안에서만 줄임) — 카드 10장이 두 줄로 다 보인다 */
+  .menu {
+    max-width: 1160px;
+    gap: clamp(12px, 2.2vmin, 22px);
+  }
+  .menu-card { width: clamp(140px, 24vmin, 200px); }
+  /* 좁아진 카드에서 "물어보고 쓰 기"처럼 낱말 중간이 꺾이지 않게 */
+  .mc-name, .mc-desc { word-break: keep-all; text-align: center; }
+
+  /* 목록: 한 열 → 두 열 */
+  .items-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: 1160px;
+  }
+
+  /* 갤러리: 열 확대 (패드 가로에서 3열 → 4열) */
+  .gallery-grid { max-width: 1160px; }
+  .art-card { width: clamp(150px, 22.5vw, 270px); }
+
+  /* 쓰기 화면: 노트를 가로 최대 폭으로 — 높이에 맞춰 폭을 잡아 세로 스크롤을 없앤다.
+   * (바+글자머리+툴바+여백 ≈ 330px을 빼고 남는 높이 ÷ 두 줄 비율 0.52 ≈ ×1.92) */
+  .write-stage { max-width: 1400px; }
+  .note {
+    max-width: calc((100vh - 330px) * 1.92);
+    margin: 0 auto;
+  }
+  /* 받아쓰기 정답 패널이 열리면 그만큼 노트를 줄여 잘림을 막는다 */
+  .write-stage:has(.dict-check.on) .note { max-width: calc((100vh - 410px) * 1.92); }
+
+  /* 낙서장: 판 왼쪽 + 도구(색·펜·스티커) 오른쪽 열 — 판이 세로 공간을 다 쓴다 */
+  #scr-draw.on {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(230px, 24vw, 300px);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "bar  bar"
+      "pad  tools"
+      "pad  stick";
+    align-items: start;
+    justify-items: center;
+  }
+  #scr-draw .bar { grid-area: bar; }
+  #scr-draw .draw-tools { grid-area: tools; }
+  #scr-draw .sticker-row { grid-area: stick; align-self: start; }
+  #scr-draw .draw-holder {
+    grid-area: pad;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+  /* 판은 남는 높이에 딱 맞는 폭(1000:620 = ×1.613)까지만 — 비율이 깨지지 않는다 */
+  #draw-pad {
+    width: min(100%, calc((100vh - 150px) * 1.613));
+    max-height: none;
+  }
+}
+
+/* 아주 낮은 가로 화면(폰 가로): 쓰기 화면을 2단으로 — 노트 왼쪽 + 듣기·툴바 오른쪽 열 */
+@media (orientation: landscape) and (max-height: 480px) {
+  .screen { padding: clamp(8px, 1.6vmin, 12px) 14px; gap: clamp(6px, 1.4vmin, 10px); }
+
+  /* 홈: 제목 줄을 가로로 붙여 세로를 아낀다 */
+  .home-head { flex-direction: row; gap: 14px; margin-top: 0; }
+
+  /* 쓰기 화면 2단 배치 — 받아쓰기 패널은 아래로 길게 */
+  .write-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 200px);
+    grid-template-areas:
+      "note head"
+      "note tool"
+      "dict dict";
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(8px, 1.6vw, 14px);
+    row-gap: clamp(6px, 1.4vmin, 10px);
+    padding: 0 clamp(56px, 8vw, 72px); /* 양옆 화살표 자리 (위치·크기는 그대로) */
+    max-width: none;
+  }
+  .page-head { grid-area: head; }
+  .note {
+    grid-area: note;
+    /* 남는 높이(바·여백 ≈ 122px 제외)에 맞는 폭까지만 */
+    max-width: calc((100vh - 122px) * 1.92);
+    margin: 0;
+  }
+  .write-stage:has(.dict-check.on) .note { max-width: calc((100vh - 122px) * 1.92 - 148px); }
+  /* 아랫줄이 숨는 한 줄 받아쓰기는 높이 여유가 커서 줄이지 않는다 */
+  .write-stage:has(#line-free[style*="none"]) .note { max-width: calc((100vh - 122px) * 1.92); }
+  .dict-check { grid-area: dict; padding: clamp(6px, 1.4vmin, 10px); }
+  .toolbar { grid-area: tool; flex-direction: column; gap: clamp(6px, 1.4vmin, 10px); }
+  .toolbar .swatches { max-width: 190px; }
+
+  /* 낙서장 오른쪽 도구 열을 조금 좁혀 판을 넓힌다 */
+  #scr-draw.on { grid-template-columns: minmax(0, 1fr) clamp(210px, 26vw, 260px); }
+  #draw-pad { width: min(100%, calc((100vh - 84px) * 1.613)); }
+}
