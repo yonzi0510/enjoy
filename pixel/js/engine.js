@@ -657,6 +657,7 @@
     state.playing = false;
     state.viewer = true;
     Progress.markDone(state.pic.id);
+    if (window.Pet) Pet.awardMeal(1); // 도안 완성 = 펫 식사
     document.querySelector('.palette-row').classList.add('hidden');
     $('viewer-bar').classList.remove('hidden');
     state.bombArmed = false;

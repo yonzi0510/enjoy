@@ -138,6 +138,17 @@ await check('홈으로: 별·진행도 반영', async () => {
   expect(prog.includes('1 / 4'), '챕터 진행도: ' + prog);
 });
 
+await check('펫: 완료로 간식 획득 → 먹이면 자란다', async () => {
+  let p = await page.evaluate(() => Pet.state());
+  expect(p.snacks === 1, '페이지 완료 간식: ' + p.snacks);
+  await page.click('#pet-slot .pet-btn');
+  await page.waitForSelector('#pet-overlay.on');
+  await page.click('#pet-feed-snack');
+  p = await page.evaluate(() => Pet.state());
+  expect(p.g === 1 && p.snacks === 0, '먹이기: ' + JSON.stringify(p));
+  await page.click('#pet-close');
+});
+
 await check('동요 필사: 항목 5개 목록 → 한 줄 완료', async () => {
   await page.click('.menu-card.c-song');
   await page.waitForSelector('#scr-items.on');
@@ -299,6 +310,8 @@ await check('새로고침 후 진행도·갤러리·물어본 낱말 유지', as
   expect(g.trim() === '6장', '갤러리 수: ' + g);
   const a = await page.locator('.menu-card.c-ask .mc-prog').textContent();
   expect(a.includes('2 낱말'), '물어본 낱말 수: ' + a);
+  const p = await page.evaluate(() => Pet.state());
+  expect(p.g === 1 && p.snacks === 3, '펫 상태 유지: ' + JSON.stringify(p));
 });
 
 await check('물어본 낱말 초기화 🧹', async () => {

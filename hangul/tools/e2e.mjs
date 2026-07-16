@@ -90,6 +90,8 @@ await check('전 획 드래그 → 완성 + 카드 보상', async () => {
   expect(st.done, '완성되지 않음: ' + JSON.stringify(st));
   await page.locator('#reward.on').waitFor({ timeout: 5000 });
   expect(await page.locator('#reward-word').textContent() !== '');
+  const pet = await page.evaluate(() => window.Pet && Pet.state());
+  expect(pet && pet.snacks >= 1, '따라쓰기 완주 → 펫 간식: ' + JSON.stringify(pet));
 });
 await check('보상 → 다음 글자 ㄴ으로 자동 진행 → 그리드 ⭐ 표시', async () => {
   const label = await page.locator('#reward-next').textContent();

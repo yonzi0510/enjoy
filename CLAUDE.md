@@ -19,7 +19,7 @@
 | `write/` | ✍️ 글씨 놀이터 | 패드+펜슬 줄노트 필사, 펜 전용 입력(`js/ink.js`) |
 | `color/` | (리다이렉트) | 픽셀 놀이터로 이동만 함 — 수정할 일 없음 |
 | `parent/` | 🔑 부모님 페이지 | PIN 게이트 뒤에서 하루 제한·앱 노출·마이크 허용을 설정하고 진행도 백업 |
-| `shared/` | 공용 모듈 | 목소리 설정(`voice-settings.js`) · 부모 설정(`parent-settings.js`) · 하루 시간 제한(`time-limit.js`) · 오프라인 SW 등록(`sw-register.js`, 루트 `sw.js`) |
+| `shared/` | 공용 모듈 | 목소리 설정(`voice-settings.js`) · 부모 설정(`parent-settings.js`) · 하루 시간 제한(`time-limit.js`) · 학습 펫(`pet.js`, 다마고치식 공용 펫) · 오프라인 SW 등록(`sw-register.js`, 루트 `sw.js`) |
 
 ## 기술 원칙 (절대 규칙)
 
@@ -38,7 +38,8 @@
 - 사용 중인 키: `chatgi-playground-v1`·`chatgi-stickerboard-v1`·`chatgi-muted`(play),
   `english-playground-v1`, `pixel-playground-v1`·`pixel-muted`, `hangul-playground-v1`,
   `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`,
-  `enjoy-voice-ko`·`enjoy-rate-factor`·`enjoy-timelimit-v1`·`enjoy-parent-v1`·`enjoy-profile`(공용).
+  `enjoy-voice-ko`·`enjoy-rate-factor`·`enjoy-timelimit-v1`·`enjoy-parent-v1`·`enjoy-profile`(공용),
+  `enjoy-pet-v1`(학습 펫 — `Profile.key()` 적용, 아이별로 각자 키움).
   (`chatgi-timelimit-v1`은 예전 play 전용 시간제한 키 — `shared/time-limit.js`가 이어받는다.)
 - **아이 프로필(은아·서하)**: 진행도 키는 `shared/profile.js`의 `Profile.key()`를 거친다 —
   은아는 원래 키 그대로(예전 진행도 보존), 서하는 `p2:` 접두어(예: `p2:hangul-playground-v1`).

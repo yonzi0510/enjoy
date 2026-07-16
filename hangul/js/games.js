@@ -40,6 +40,7 @@ window.Games = (() => {
     const letter = D.all[Math.floor(Math.random() * D.all.length)];
     const word = letter.words[Math.floor(Math.random() * letter.words.length)];
     P.addCard(word.w, word.e, fromGame);
+    if (window.Pet) Pet.awardSnack(1); // 놀이 한 판 = 펫 간식
     P.addStar(ROUNDS);
     A.sfx.fanfare();
     window.App.showReward(word, onNext);

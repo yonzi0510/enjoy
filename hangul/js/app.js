@@ -109,6 +109,7 @@ window.App = (() => {
         P.addStar(3);
         const w = l.words[Math.floor(Math.random() * l.words.length)];
         const isNew = P.addCard(w.w, w.e, 'trace');
+        if (window.Pet) Pet.awardSnack(1); // 따라쓰기 완주 = 펫 간식
         A.sfx.fanfare();
         A.speakSeq([
           { text: l.name + '! 다 썼어요!', rate: 0.95, pitch: 1.3 },

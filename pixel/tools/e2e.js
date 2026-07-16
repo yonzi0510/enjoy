@@ -129,6 +129,8 @@ const server = http.createServer((req, res) => {
   await page.waitForSelector('#complete-overlay:not(.hidden)', { timeout: 6000 });
   s = await px();
   check('완성 오버레이 + 전 칸 정답', s.correct === s.total);
+  const pet = await page.evaluate(() => window.Pet && Pet.state());
+  check('도안 완성 → 펫 식사 1', pet && pet.meals === 1, JSON.stringify(pet));
   await shot('02-complete');
   await page.locator('#complete-home').click();
   check('완성 뱃지 표시', await page.locator('#pic-grid .done-badge').count() === 1);

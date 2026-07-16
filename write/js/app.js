@@ -428,6 +428,10 @@ window.App = (() => {
     const scope = cur.scope, idx = cur.idx;
     clearTimeout(draftTimer); // 완료 저장이 초안 저장을 대신한다
     P.completePage(pageId(scope, idx), pageArt());
+    if (window.Pet) { // 펫 먹이: 페이지 = 간식, 챕터(3장 이상) 완주 = 식사
+      Pet.awardSnack(1);
+      if (scope.pages.length >= 3 && doneIn(scope) >= scope.pages.length) Pet.awardMeal(1);
+    }
     A.sfx.fanfare();
     const praise = D.praises[Math.floor(Math.random() * D.praises.length)];
     const isLast = idx >= scope.pages.length - 1;
