@@ -542,3 +542,51 @@
   z-index: 110;
 }
 .pet-toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── 가로 모드 2단 배치 — 세로로 긴 카드가 화면에서 잘리는 문제 해결 ──
+ * 방(pet-room)은 왼쪽에 크게, 이름·먹이·꾸미기·도감은 오른쪽 열로.
+ * HTML 구조는 그대로 두고 grid-area로만 재배치한다. */
+@media (orientation: landscape) {
+  #pet-overlay .pet-card {
+    display: grid;
+    width: min(94vw, 900px);
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    grid-template-areas:
+      "room stage"
+      "room name"
+      "room naming"
+      "room bar"
+      "room barlabel"
+      "room foods"
+      "room dress"
+      "room book"
+      "room hint";
+    grid-auto-rows: min-content;
+    align-content: center;
+    justify-items: center;
+    column-gap: clamp(14px, 2.4vw, 26px);
+  }
+  #pet-overlay .pet-stage-name  { grid-area: stage; }
+  #pet-overlay .pet-name-row    { grid-area: name; }
+  #pet-overlay .pet-naming      { grid-area: naming; }
+  #pet-overlay .pet-room        { grid-area: room; align-self: center; }
+  #pet-overlay .pet-bar         { grid-area: bar; }
+  #pet-overlay .pet-bar-label   { grid-area: barlabel; }
+  #pet-overlay .pet-foods       { grid-area: foods; }
+  #pet-overlay .pet-dressup-box { grid-area: dress; }
+  #pet-overlay .pet-book-btn    { grid-area: book; }
+  #pet-overlay .pet-hint        { grid-area: hint; }
+  /* 도감·방 꾸미기 판도 가로 화면에선 넓게 펼친다 */
+  #pet-book-overlay .pet-card,
+  #pet-deco-overlay .pet-card { width: min(94vw, 760px); }
+  #pet-book-overlay .pet-book-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); width: 100%; }
+  #pet-deco-overlay .pet-deco-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); width: 100%; }
+}
+
+/* 아주 낮은 가로 화면(폰 가로)에서는 여백을 줄여 스크롤 없이 다 보이게 */
+@media (orientation: landscape) and (max-height: 480px) {
+  #pet-overlay .pet-card { padding: 10px 16px; gap: 4px clamp(12px, 2vw, 20px); }
+  #pet-overlay .pet-food { padding: 6px 16px; }
+  #pet-overlay .pet-dressup-box { padding: 6px 10px; }
+  #pet-overlay .pet-hint { display: none; } /* 안내문은 좁은 화면에서 생략 */
+}
