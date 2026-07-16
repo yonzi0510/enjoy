@@ -1,0 +1,16 @@
+{
+  "name": "시장 놀이터",
+  "short_name": "시장",
+  "description": "동물 손님에게 과일·간식·장난감을 팔며 동전으로 돈 개념을 배우는 5세 가게 역할놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFEDE5",
+  "theme_color": "#E8703F",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
