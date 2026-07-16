@@ -102,22 +102,43 @@
   cursor: pointer;
 }
 .pet-avatar { position: relative; line-height: 1; }
+/* SVG 캐릭터 무대 */
+.pet-svg {
+  width: clamp(150px, 36vmin, 250px);
+  height: clamp(150px, 36vmin, 250px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pet-svg svg { width: 100%; height: 100%; display: block; }
+/* 먹이가 버튼에서 입가로 날아간다 */
+.pet-fly {
+  position: fixed;
+  z-index: 130;
+  font-size: clamp(26px, 5vmin, 40px);
+  line-height: 1;
+  pointer-events: none;
+  transition: transform .5s cubic-bezier(.35, -0.2, .6, 1), opacity .5s ease-in;
+}
+/* 꾸미기 위치 — SVG 무대(0 0 200 200) 기준: 머리 꼭대기 근처·몸 옆 */
 .pet-acc-head {
   position: absolute;
-  top: -0.32em;
+  top: 14%;
   left: 50%;
   transform: translateX(-50%) rotate(-12deg);
   font-size: clamp(30px, 7vmin, 50px);
   pointer-events: none;
+  z-index: 2;
 }
 .pet-acc-side {
   position: absolute;
-  right: -0.5em;
-  bottom: 0;
+  right: 6%;
+  bottom: 24%;
   font-size: clamp(28px, 6.6vmin, 46px);
   pointer-events: none;
   animation: pet-float 2.2s ease-in-out infinite;
+  z-index: 2;
 }
+.pet-emoji[hidden] { display: none; } /* SVG 캐릭터를 쓸 때 이모지 안전망은 숨긴다 */
 .pet-emoji {
   display: inline-block;
   line-height: 1.15;
@@ -130,6 +151,7 @@
 .pet-sz-3 { font-size: clamp(104px, 24vmin, 170px); }
 
 /* 이름 짓기 */
+.pet-naming[hidden] { display: none; } /* hidden 속성이 아래 display:flex에 밀리지 않게 */
 .pet-naming {
   display: flex;
   flex-direction: column;

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>펫 아바타 디자인 검수</title>
+<link rel="icon" href="data:,"><!-- 파비콘 404 방지 -->
+<!-- 개발 확인용 페이지 — 어디에도 링크하지 않는다 -->
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: sans-serif; background: #fdf8ef; color: #5a4a3a; padding: 16px; }
+  h1 { font-size: 20px; margin-bottom: 12px; }
+  .preview { display: flex; align-items: center; gap: 16px; background: #fff; border-radius: 16px;
+             padding: 12px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(90,74,58,.1);
+             position: sticky; top: 8px; z-index: 5; }
+  #big { width: 220px; height: 220px; flex: none; background: #f2ead9; border-radius: 14px; }
+  .ctrl { display: flex; flex-direction: column; gap: 10px; }
+  #sel-label { font-weight: bold; font-size: 17px; }
+  .ctrl button { font-size: 17px; padding: 10px 16px; border: 0; border-radius: 12px;
+                 background: #ffd98a; cursor: pointer; }
+  .ctrl button:active { transform: scale(.96); }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .card { background: #fff; border-radius: 12px; padding: 6px; text-align: center; cursor: pointer;
+          box-shadow: 0 1px 4px rgba(90,74,58,.08); }
+  .card.on { outline: 3px solid #f7a94e; }
+  .box { width: 100%; aspect-ratio: 1; }
+  .lbl { font-size: 12px; padding: 2px 0 4px; }
+</style>
+</head>
+<body>
+<h1>🐾 펫 아바타 검수 — 16종 × 3단계 + 알</h1>
+<section class="preview">
+  <div id="big"></div>
+  <div class="ctrl">
+    <span id="sel-label"></span>
+    <button type="button" id="btn-eat">🍚 먹기</button>
+    <button type="button" id="btn-happy">💗 하트</button>
+    <button type="button" id="btn-cele">🎉 축하</button>
+  </div>
+</section>
+<div id="grid"></div>
+
+<script src="pet-avatar.js"></script>
+<script>
+  const KR = {
+    chick: '병아리', puppy: '강아지', kitty: '고양이', rabbit: '토끼',
+    bear: '곰', panda: '판다', koala: '코알라', fox: '여우',
+    frog: '개구리', turtle: '거북이', lion: '사자', tiger: '호랑이',
+    pig: '돼지', hamster: '햄스터', dolphin: '돌고래', unicorn: '유니콘',
+  };
+  const STAGE_KR = { 1: '아기', 2: '어린이', 3: '어른' };
+  const grid = document.getElementById('grid');
+  const big = PetAvatar.create(document.getElementById('big'));
+  const cells = []; // { el, opts }
+
+  function select(card, opts, label) {
+    cells.forEach(c => c.el.classList.remove('on'));
+    card.classList.add('on');
+    big.render(opts);
+    document.getElementById('sel-label').textContent = label;
+  }
+
+  function addCard(opts, label) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const box = document.createElement('div');
+    box.className = 'box';
+    card.appendChild(box);
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl';
+    lbl.textContent = label;
+    card.appendChild(lbl);
+    grid.appendChild(card);
+    const av = PetAvatar.create(box);
+    av.render(opts);
+    card.addEventListener('click', () => select(card, opts, label));
+    cells.push({ el: card, opts });
+    return card;
+  }
+
+  Object.keys(KR).forEach(sp => {
+    for (let st = 1; st <= 3; st++) addCard({ species: sp, stage: st }, KR[sp] + ' · ' + STAGE_KR[st]);
+  });
+  [0, 0.5, 1].forEach(c => addCard({ species: 'egg', crack: c }, '알 · 금 ' + c));
+
+  // 첫 캐릭터 선택
+  select(cells[0].el, cells[0].opts, '병아리 · 아기');
+
+  document.getElementById('btn-eat').addEventListener('click', () => big.eat(() => console.log('eat done')));
+  document.getElementById('btn-happy').addEventListener('click', () => big.happy());
+  document.getElementById('btn-cele').addEventListener('click', () => big.celebrate());
+</script>
+</body>
+</html>
