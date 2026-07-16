@@ -698,6 +698,105 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ═══════════ 가로모드(태블릿 가로 우선) 재배치 ═══════════
+ * 기준: 패드 가로 1180×820 1차, 폰 가로 844×390 잘림 없음, 폰 세로는 무변경.
+ * HTML은 그대로 두고 grid-template-areas로만 2단 배치한다 (선례: shared/pet.css). */
+@media (orientation: landscape) {
+  /* 홈: 좌 토끼(말풍선+마이크) · 우 안내+메뉴 — 세로 스택이 폰 가로에서 잘리던 문제 해결 */
+  .home-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-rows: min-content min-content;
+    grid-template-areas:
+      "bubble guide"
+      "mic    nav";
+    align-content: center;
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(16px, 4vw, 48px);
+    row-gap: clamp(10px, 2.4vmin, 24px);
+  }
+  .bunny-bubble { grid-area: bubble; align-self: end; }
+  .mic-guide    { grid-area: guide;  align-self: end; }
+  .mic-btn      { grid-area: mic;    align-self: start; }
+  /* 메뉴는 오른쪽 세로 열로 — 카드가 오히려 넓어진다(터치 영역 유지) */
+  .home-nav     { grid-area: nav;    align-self: start; flex-direction: column; width: min(380px, 94%); }
+
+  /* 답변·모르는 단어: 좌 그림 · 우 단어(안내)+버튼 */
+  .answer-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    grid-template-areas:
+      "emoji main"
+      "emoji sub"
+      "emoji btns";
+    align-content: center;
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(14px, 3vw, 40px);
+  }
+  /* 왼쪽 그림은 가로 화면에서 더 큼직하게 (세로모드 크기는 그대로) */
+  .answer-emoji                { grid-area: emoji; font-size: clamp(110px, 32vmin, 280px); }
+  .answer-en, .unknown-msg     { grid-area: main; }
+  .answer-read, .unknown-heard { grid-area: sub; }
+  .answer-btns                 { grid-area: btns; }
+
+  /* 퀴즈: 좌 문제 단어+다시 듣기 · 우 보기 카드 */
+  .quiz-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    grid-template-areas:
+      "question choices"
+      "replay   choices";
+    align-content: center;
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(14px, 3vw, 40px);
+  }
+  .quiz-question { grid-area: question; align-self: end; }
+  #quiz-replay   { grid-area: replay;   align-self: start; }
+  .quiz-choices  { grid-area: choices; }
+  /* 보기 카드는 가로 화면에서 더 큼직하게 (터치 영역 확대) */
+  .quiz-choice   { width: clamp(96px, 22vmin, 190px); height: clamp(96px, 22vmin, 190px); font-size: clamp(52px, 12vmin, 106px); }
+
+  /* 그림 단어장: 가로에선 5열 — 10개 카테고리가 두 줄로 꽉 찬다 */
+  .cat-grid { grid-template-columns: repeat(5, 1fr); align-content: safe center; }
+
+  /* 배운 단어: 넓은 화면에선 두 열로 */
+  .learned-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: min(1080px, 96%);
+    align-content: start;
+  }
+  .miss-head, .learned-empty { grid-column: 1 / -1; }
+}
+
+/* 폰 가로(낮은 화면): 메뉴는 가로로 눕혀 높이를 아끼고, 듣는 중 카드는 2단으로 */
+@media (orientation: landscape) and (max-height: 480px) {
+  .home-body { row-gap: 8px; }
+  .home-nav  { flex-direction: row; width: 100%; max-width: 430px; }
+  .listen-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "mic waves"
+      "mic label"
+      "mic interim"
+      "mic btn";
+    align-content: center;
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(14px, 3vw, 28px);
+    padding: 16px 28px;
+  }
+  .listen-mic           { grid-area: mic; align-self: center; }
+  .listen-waves         { grid-area: waves; }
+  .listen-label         { grid-area: label; }
+  .listen-interim       { grid-area: interim; }
+  .listen-card .big-btn { grid-area: btn; }
+}
+
 /* 모션 줄이기 설정 존중 — 등장·흔들림·장식 모션 전부 끈다 */
 @media (prefers-reduced-motion: reduce) {
   .nav-card, .cat-card, .word-card, .learned-row,
