@@ -6,7 +6,7 @@
  * 페이지마다 최신 작품 1개만 보관하므로 저장 용량이 페이지 수로 한정된다.
  */
 window.Progress = (() => {
-  const KEY = 'write-playground-v1';
+  const KEY = window.Profile ? Profile.key('write-playground-v1') : 'write-playground-v1'; // 아이 프로필별 저장
 
   function load() {
     try {

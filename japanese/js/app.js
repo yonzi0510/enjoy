@@ -115,6 +115,7 @@ window.App = (() => {
         P.addStar(3);
         const w = k.words[Math.floor(Math.random() * k.words.length)];
         const isNew = P.addCard(w.w, w.e, 'trace');
+        if (window.Pet) Pet.awardSnack(1); // 따라쓰기 완주 = 펫 간식
         A.sfx.fanfare();
         A.speakSeq([
           { text: k.ch, lang: 'ja', rate: 0.75, pitch: 1.3 },
@@ -168,6 +169,9 @@ window.App = (() => {
       b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
+        // 글을 못 읽는 아이를 위해 메뉴 이름을 말해 준다
+        const nm = b.querySelector('.mc-name');
+        if (nm) A.speakSeq([{ text: nm.textContent, lang: 'ko', rate: 1.0 }]);
         const go = b.dataset.go;
         if (go === 'learn') { gridPurpose = 'learn'; showScreen('scr-letters'); }
         else if (go === 'trace') { gridPurpose = 'trace'; showScreen('scr-letters'); }

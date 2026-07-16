@@ -4,7 +4,7 @@
  *   learned:{ 'a coffee please':{en,ko,count,last} } }
  */
 window.Progress = (() => {
-  const KEY = 'practika-playground-v1';
+  const KEY = window.Profile ? Profile.key('practika-playground-v1') : 'practika-playground-v1'; // 아이 프로필별 저장
 
   function today() {
     const d = new Date();

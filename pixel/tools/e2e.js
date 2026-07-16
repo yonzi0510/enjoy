@@ -56,14 +56,25 @@ const server = http.createServer((req, res) => {
   await page.waitForSelector('#pic-grid .pic-card');
 
   console.log('■ 홈 갤러리');
+  // 활동지(work)는 부모가 허용할 때만 보인다 — 기본 홈은 그림 도안만
   const picIds = await page.evaluate(() => window.__pixel.pics());
-  check('도안 카드 수 = 도안 수 (' + picIds.length + ')', await page.locator('#pic-grid .pic-card').count() === picIds.length);
+  const kidCount = await page.evaluate(() => window.PIXELS.filter(p => p.category !== 'work').length);
+  check('기본 도안 카드 수 = 활동지 제외 (' + kidCount + ')', await page.locator('#pic-grid .pic-card').count() === kidCount);
   check('난이도 섹션 3개 (쉬움·보통·어려움)', await page.locator('#pic-grid .level-head').count() === 3);
+  check('활동지 칩이 기본으로는 없음', await page.locator('.cat-chip', { hasText: '활동지' }).count() === 0);
   const animalCount = await page.evaluate(() => window.PIXELS.filter(p => p.category === 'animal').length);
   await page.locator('.cat-chip', { hasText: '동물' }).click();
   check('카테고리 필터(동물 ' + animalCount + '개)', await page.locator('#pic-grid .pic-card').count() === animalCount);
   await page.locator('.cat-chip', { hasText: '전체' }).click();
-  check('카테고리 필터(전체 복귀)', await page.locator('#pic-grid .pic-card').count() === picIds.length);
+  check('카테고리 필터(전체 복귀)', await page.locator('#pic-grid .pic-card').count() === kidCount);
+  // 부모 설정을 켜면 활동지까지 전부 보인다
+  await page.evaluate(() => window.ParentSettings.set('showWorksheets', true));
+  await page.reload();
+  await page.waitForSelector('#pic-grid .pic-card');
+  check('부모 허용 후 도안 카드 수 = 전체 (' + picIds.length + ')', await page.locator('#pic-grid .pic-card').count() === picIds.length);
+  await page.evaluate(() => window.ParentSettings.set('showWorksheets', false));
+  await page.reload();
+  await page.waitForSelector('#pic-grid .pic-card');
   await shot('01-home');
 
   console.log('■ 난이도별 부스터 기본값');
@@ -118,6 +129,8 @@ const server = http.createServer((req, res) => {
   await page.waitForSelector('#complete-overlay:not(.hidden)', { timeout: 6000 });
   s = await px();
   check('완성 오버레이 + 전 칸 정답', s.correct === s.total);
+  const pet = await page.evaluate(() => window.Pet && Pet.state());
+  check('도안 완성 → 펫 식사 1', pet && pet.meals === 1, JSON.stringify(pet));
   await shot('02-complete');
   await page.locator('#complete-home').click();
   check('완성 뱃지 표시', await page.locator('#pic-grid .done-badge').count() === 1);

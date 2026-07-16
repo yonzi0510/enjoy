@@ -114,10 +114,17 @@
   /* ─────────── 홈 화면 ─────────── */
   let curCat = 'all';
 
+  // 활동지(work) 도안은 5세가 혼자 하기 어려워 부모가 허용할 때만 보여준다
+  function visiblePics() {
+    const showWork = !!(window.ParentSettings && ParentSettings.get('showWorksheets'));
+    return showWork ? PICS : PICS.filter(p => p.category !== 'work');
+  }
+
   function renderChips() {
     const box = $('cat-chips');
     box.innerHTML = '';
-    const cats = ['all', ...new Set(PICS.map(p => p.category))];
+    const cats = ['all', ...new Set(visiblePics().map(p => p.category))];
+    if (cats.indexOf(curCat) < 0) curCat = 'all';
     cats.forEach(cat => {
       const chip = document.createElement('button');
       chip.className = 'cat-chip' + (cat === curCat ? ' sel' : '');
@@ -133,7 +140,7 @@
     grid.innerHTML = '';
     // 난이도 단계별 섹션
     [1, 2, 3].forEach(lv => {
-      const pics = PICS.filter(p => (curCat === 'all' || p.category === curCat) && picLevel(p) === lv);
+      const pics = visiblePics().filter(p => (curCat === 'all' || p.category === curCat) && picLevel(p) === lv);
       if (!pics.length) return;
       const head = document.createElement('div');
       head.className = 'level-head';
@@ -650,6 +657,7 @@
     state.playing = false;
     state.viewer = true;
     Progress.markDone(state.pic.id);
+    if (window.Pet) Pet.awardMeal(1); // 도안 완성 = 펫 식사
     document.querySelector('.palette-row').classList.add('hidden');
     $('viewer-bar').classList.remove('hidden');
     state.bombArmed = false;
@@ -668,9 +676,11 @@
   }
 
   function nextPicture() {
-    const idx = PICS.indexOf(state.pic);
-    for (let i = 1; i <= PICS.length; i++) {
-      const cand = PICS[(idx + i) % PICS.length];
+    // "다음 그림"도 숨겨진 활동지는 건너뛴다 (지금 칠하던 그림이 활동지면 목록에 포함)
+    const pics = visiblePics().indexOf(state.pic) >= 0 ? visiblePics() : [state.pic].concat(visiblePics());
+    const idx = pics.indexOf(state.pic);
+    for (let i = 1; i <= pics.length; i++) {
+      const cand = pics[(idx + i) % pics.length];
       const { W, H, target } = parsePic(cand);
       if (Progress.correctCount(cand.id, Array.from(target)) < W * H) return cand;
     }

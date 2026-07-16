@@ -13,6 +13,7 @@
     mode: 'home',
   };
   function langMeta(id) { return window.LANGS.find(l => l.id === id) || window.LANGS[0]; }
+  function langName(id) { return langMeta(id).label; } // '영어'·'일본어'·'중국어'
 
   /* ─────────── 아바타 주입 ─────────── */
   function injectAvatar(slotId) {
@@ -70,7 +71,6 @@
   /* ─────────── 홈 ─────────── */
   function refreshStats() {
     const t = Progress.totals();
-    $('stat-streak').textContent = t.streak;
     $('stat-xp').textContent = t.xp;
     $('stat-gems').textContent = t.gems;
     $('review-count').textContent = Progress.learnedCount(state.lang);
@@ -197,7 +197,7 @@
     $('user-model').classList.add('hidden');
     $('user-model').textContent = t.model;
     $('mic-interim').textContent = '';
-    $('mic-label').textContent = '버튼을 누르고 영어로 말해보세요';
+    $('mic-label').textContent = '버튼을 누르고 ' + langName(Tutor.lesson().lang) + '로 말해보세요';
     setMic('session', false);
     setAvatar('session-avatar', 'listening');
   }
@@ -216,7 +216,8 @@
     Speech.unlock();
     Speech.stopSpeak();
     const labelEl = which === 'session' ? $('mic-label') : $('review-mic-label');
-    if (!Speech.sttSupported()) {
+    // 부모 설정에서 음성 인식을 꺼 두면 마이크 없는 기기처럼 듣고 따라 하기로 진행
+    if (!Speech.sttSupported() || (window.ParentSettings && !ParentSettings.get('stt'))) {
       // 마이크 없음 → 모범 답안 공개 + 신뢰 점수로 진행 가능하게
       if (which === 'session') { $('user-model').classList.remove('hidden'); }
       labelEl.textContent = '이 기기는 마이크를 쓸 수 없어요. 모범 답안을 듣고 따라 해보세요';
@@ -275,7 +276,10 @@
     const band = r.score >= 75 ? 'good' : r.score >= 60 ? 'mid' : 'low';
     const ring = $('fb-ring');
     ring.className = 'fb-ring ' + band;
-    $('fb-score').textContent = r.score;
+    // 숫자 점수는 아이를 주눅 들게 해서 이모지로만 보여준다 (점수는 data-score에 보관)
+    const scoreEl = $('fb-score');
+    scoreEl.textContent = r.score >= 90 ? '🌟' : r.score >= 75 ? '👏' : r.score >= 60 ? '🙂' : '💪';
+    scoreEl.dataset.score = r.score;
     const title = $('fb-title');
     title.className = 'fb-title ' + band;
     title.textContent = r.score >= 90 ? '완벽해요! 🌟' : r.score >= 75 ? '아주 좋아요! 👏'
@@ -283,7 +287,8 @@
     $('fb-model').innerHTML = renderSegments(r.segments, r.model);
     $('fb-heard').textContent = r.said ? '내가 말한 것: “' + r.said + '”' : '';
     $('fb-next').textContent = r.pass ? '다음 ▶' : '넘어가기 ▶';
-    if (r.score >= 75) Speech.tada(); else if (r.pass) Speech.ding(); else Speech.buzz();
+    // 못 맞혀도 나무라는 소리 대신 부드러운 소리만 낸다
+    if (r.score >= 75) Speech.tada(); else if (r.pass) Speech.ding(); else Speech.pop();
   }
 
   // 세그먼트(단어/문자)별 맞음·놓침 색칠. 영어는 단어 사이 공백, 일·중은 붙여 렌더.
@@ -323,10 +328,9 @@
     const { sum, res } = state.result;
     $('result-stars').textContent = '⭐'.repeat(res.stars) + '☆'.repeat(3 - res.stars);
     $('result-title').textContent = res.stars === 3 ? '완벽했어요! 🎉' : res.stars === 2 ? '잘했어요! 👏' : '레슨 완료! 🙂';
-    $('result-acc').textContent = '평균 정확도 ' + sum.avg + '점';
+    $('result-acc').textContent = '오늘도 씩씩하게 말했어요!'; // 숫자 점수는 보여주지 않는다
     $('result-xp').textContent = '+' + res.xpGain;
     $('result-gems').textContent = '+' + res.gemGain;
-    $('result-streak').textContent = res.streak;
     confetti();
     Speech.tada();
   }
@@ -374,7 +378,8 @@
     $('review-fb').classList.add('hidden');
     $('review-face').classList.remove('hidden');
     $('review-ko').textContent = r.ko;
-    $('review-mic-label').textContent = '버튼을 누르고 영어로 말해보세요';
+    $('review-sub').textContent = '이 말을 ' + langName(state.lang) + '로 해보세요';
+    $('review-mic-label').textContent = '버튼을 누르고 ' + langName(state.lang) + '로 말해보세요';
     $('review-mic-label').classList.remove('hidden');
     setMic('review', false);
     const pct = Review.total() ? Math.round(100 * Review.index() / Review.total()) : 0;
@@ -397,7 +402,7 @@
     title.className = 'fb-title ' + band;
     title.textContent = best.pass ? (best.score >= 90 ? '완벽해요! 🌟' : '맞았어요! 👏') : '아쉬워요, 이렇게 말해요';
     $('review-fb-model').innerHTML = renderSegments(best.segments, best.model);
-    if (best.pass) Speech.ding(); else Speech.buzz();
+    if (best.pass) Speech.ding(); else Speech.pop();
   }
   function showReviewDone() {
     const s = Review.summary();

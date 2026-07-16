@@ -3,7 +3,7 @@
  */
 (() => {
   const $ = id => document.getElementById(id);
-  const KEY = 'chatgi-stickerboard-v1';
+  const KEY = window.Profile ? Profile.key('chatgi-stickerboard-v1') : 'chatgi-stickerboard-v1'; // 아이 프로필별 저장
   const BGS = ['spbg-meadow', 'spbg-sky', 'spbg-sea'];
   const SCENES = window.SCENES || [];
 

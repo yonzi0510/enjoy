@@ -2,7 +2,7 @@
  * { learned: { elephant: { count: 3, last: 1730000000000 } } }
  */
 window.Progress = (() => {
-  const KEY = 'english-playground-v1';
+  const KEY = window.Profile ? Profile.key('english-playground-v1') : 'english-playground-v1'; // 아이 프로필별 저장
 
   function load() {
     try {

@@ -45,8 +45,9 @@ window.VoiceSettings = (() => {
   function setVoice(uri) { try { localStorage.setItem(VOICE_KEY, uri); } catch (e) {} }
   function setRateFactor(f) { try { localStorage.setItem(RATE_KEY, String(f)); } catch (e) {} }
 
-  // 미리 듣기 — 각 앱의 음소거와 무관하게 들려준다 (설정 확인용)
+  // 미리 듣기 — 앱이 음소거 상태(window.EnjoyMuted)면 내지 않는다
   function preview() {
+    if (window.EnjoyMuted && window.EnjoyMuted()) return;
     if (!window.speechSynthesis) return;
     try {
       speechSynthesis.cancel();
@@ -130,7 +131,27 @@ window.VoiceSettings = (() => {
     if (overlay) overlay.classList.add('vs-hidden');
   }
 
-  function init(btn) { if (btn) btn.addEventListener('click', open); }
+  // 부모용 설정이라 아이가 실수로 못 열게 "길게 누르기(0.6초)"로만 연다
+  function init(btn) {
+    if (!btn) return;
+    btn.title = '길게 누르면 열려요';
+    let timer = null, fired = false;
+    const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    btn.addEventListener('pointerdown', () => {
+      fired = false;
+      cancel();
+      timer = setTimeout(() => { fired = true; open(); }, 600);
+    });
+    btn.addEventListener('pointerup', () => {
+      cancel();
+      if (!fired && btn.animate) { // 짧은 탭: 살짝 움츠렸다 펴며 "아니야" 신호만
+        btn.animate([{ transform: 'scale(1)' }, { transform: 'scale(.85)' }, { transform: 'scale(1)' }], { duration: 220 });
+      }
+    });
+    btn.addEventListener('pointerleave', cancel);
+    btn.addEventListener('pointercancel', cancel);
+    btn.addEventListener('click', e => e.preventDefault());
+  }
   function autoInit() { init(document.getElementById('btn-voice')); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoInit);
   else autoInit();

@@ -18,7 +18,8 @@
 | `practika/` | 🎙️ 프랙티카 놀이터 | 영·일·중 회화, 설계 배경은 `practika/PLAN.md` |
 | `write/` | ✍️ 글씨 놀이터 | 패드+펜슬 줄노트 필사, 펜 전용 입력(`js/ink.js`) |
 | `color/` | (리다이렉트) | 픽셀 놀이터로 이동만 함 — 수정할 일 없음 |
-| `shared/` | 공용 목소리 설정 | 모든 앱이 같은 한국어 목소리·빠르기를 쓰게 하는 모듈 |
+| `parent/` | 🔑 부모님 페이지 | PIN 게이트 뒤에서 하루 제한·앱 노출·마이크 허용을 설정하고 진행도 백업 |
+| `shared/` | 공용 모듈 | 목소리 설정(`voice-settings.js`) · 부모 설정(`parent-settings.js`) · 하루 시간 제한(`time-limit.js`) · 학습 펫(`pet.js`, 다마고치식 공용 펫) · 오프라인 SW 등록(`sw-register.js`, 루트 `sw.js`) |
 
 ## 기술 원칙 (절대 규칙)
 
@@ -34,9 +35,18 @@
 
 - localStorage **키 이름이나 데이터 형식을 바꿀 때는 반드시 이전 데이터를 읽어오는 마이그레이션 코드**를 넣는다
   (선례: `shared/voice-settings.js`가 옛 `pixel-voice` 키를 이어받는 방식).
-- 사용 중인 키: `chatgi-playground-v1`·`chatgi-stickerboard-v1`·`chatgi-timelimit-v1`·`chatgi-muted`(play),
+- 사용 중인 키: `chatgi-playground-v1`·`chatgi-stickerboard-v1`·`chatgi-muted`(play),
   `english-playground-v1`, `pixel-playground-v1`·`pixel-muted`, `hangul-playground-v1`,
-  `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`, `enjoy-voice-ko`·`enjoy-rate-factor`(공용).
+  `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`,
+  `enjoy-voice-ko`·`enjoy-rate-factor`·`enjoy-timelimit-v1`·`enjoy-parent-v1`·`enjoy-profile`(공용),
+  `enjoy-pet-v1`(학습 펫 — `Profile.key()` 적용, 아이별로 각자 키움).
+  (`chatgi-timelimit-v1`은 예전 play 전용 시간제한 키 — `shared/time-limit.js`가 이어받는다.)
+- **아이 프로필(은아·서하)**: 진행도 키는 `shared/profile.js`의 `Profile.key()`를 거친다 —
+  은아는 원래 키 그대로(예전 진행도 보존), 서하는 `p2:` 접두어(예: `p2:hangul-playground-v1`).
+  음소거·목소리·시간제한·부모 설정은 기기 공용이라 접두어를 붙이지 않는다.
+  새 진행도 키를 만들면 반드시 `Profile.key()`로 감싼다.
+- 부모 설정(`enjoy-parent-v1`)이 콘텐츠 노출을 좌우한다: 프랙티카 홈 카드, 일본어 잠금(한글 카드 10장이면 자동 해제),
+  픽셀 활동지(work*), 글씨 받아쓰기 6~7단계, 음성 인식(마이크) 허용. 새 기능도 이 원칙(기본은 5세 안전, 확장은 부모가 해제)을 따른다.
 - e2e 테스트의 "새로고침 후 진행도 유지" 검사를 지우거나 약화하지 않는다.
 
 ## 5세 UX 원칙

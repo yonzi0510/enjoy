@@ -12,7 +12,7 @@
 
   function backOne() {
     // 시간제한 잠금 중엔 뒤로가기로 빠져나갈 수 없음
-    if ($('lock-overlay') && !$('lock-overlay').classList.contains('hidden')) return true;
+    if (window.TimeLimit && window.TimeLimit.isLocked()) return true;
 
     // 1) 열린 오버레이 닫기
     const overlays = [

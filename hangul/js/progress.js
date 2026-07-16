@@ -2,7 +2,7 @@
  * { traced: { 'ㄱ': 횟수 }, cards: { '가방': { e, from, at } }, stars: 숫자 }
  */
 window.Progress = (() => {
-  const KEY = 'hangul-playground-v1';
+  const KEY = window.Profile ? Profile.key('hangul-playground-v1') : 'hangul-playground-v1'; // 아이 프로필별 저장
 
   function load() {
     try {

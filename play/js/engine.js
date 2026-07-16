@@ -80,7 +80,8 @@
       btn.querySelector('.level-btn-stars').textContent = starStr(stars);
     });
     $('mode-overlay').classList.remove('hidden');
-    Sound.speak('무슨 놀이를 할까요?');
+    // 글을 못 읽는 아이를 위해 무엇이 있는지 말로 알려준다
+    Sound.speak('무슨 놀이를 할까요? 위는 숨은그림찾기, 아래는 다른그림찾기예요!');
   }
   $('mode-close').addEventListener('click', () => $('mode-overlay').classList.add('hidden'));
   $('mode-overlay').addEventListener('click', e => {
