@@ -170,7 +170,8 @@ window.Pet = (() => {
       '      <button type="button" class="pet-rename" id="pet-rename" aria-label="이름 바꾸기">✏️</button>' +
       '    </div>' +
       '    <div class="pet-avatar">' +
-      '      <span class="pet-emoji" id="pet-emoji"></span>' +
+      '      <div class="pet-svg" id="pet-svg"></div>' +
+      '      <span class="pet-emoji" id="pet-emoji" hidden></span>' +
       '      <span class="pet-acc-head" id="pet-acc-head"></span>' +
       '      <span class="pet-acc-side" id="pet-acc-side"></span>' +
       '    </div>' +
@@ -221,11 +222,7 @@ window.Pet = (() => {
     $('pet-stage-name').textContent = sp ? (stageName() + ' ' + sp.name) : '🥚 신비한 알';
     $('pet-name').textContent = petName();
     $('pet-rename').hidden = !sp;
-    const emojiEl = $('pet-emoji');
-    emojiEl.textContent = petEmoji();
-    // 애니메이션 클래스(pet-munch 등)를 지우지 않게 크기 클래스만 갈아 끼운다
-    emojiEl.classList.remove('pet-sz-0', 'pet-sz-1', 'pet-sz-2', 'pet-sz-3');
-    emojiEl.classList.add('pet-sz-' + (sp ? (state.g < KID ? 1 : state.g < ADULT ? 2 : 3) : 0));
+    renderPet();
     // 착용한 꾸미기
     const head = accOf(state.acc.head), side = accOf(state.acc.side);
     $('pet-acc-head').textContent = sp && head ? head.e : '';
@@ -306,15 +303,46 @@ window.Pet = (() => {
     el.classList.add(cls);
   }
 
+  /* SVG 캐릭터(pet-avatar.js)로 그린다 — 모듈이 없으면 이모지로 대체(안전망) */
+  let av = null;
+  function renderPet() {
+    if (av) {
+      if (!state.species) av.render({ species: 'egg', crack: Math.min(1, state.g / HATCH) });
+      else av.render({ species: state.species, stage: state.g < KID ? 1 : state.g < ADULT ? 2 : 3 });
+      return;
+    }
+    // 이모지 안전망: 빈 SVG 무대는 숨기고, 예전 크기 클래스로 큼직하게
+    $('pet-svg').style.display = 'none';
+    const emojiEl = $('pet-emoji');
+    emojiEl.hidden = false;
+    emojiEl.textContent = petEmoji();
+    emojiEl.classList.remove('pet-sz-0', 'pet-sz-1', 'pet-sz-2', 'pet-sz-3');
+    emojiEl.classList.add('pet-sz-' + (state.species ? (state.g < KID ? 1 : state.g < ADULT ? 2 : 3) : 0));
+  }
+  // 펫을 만지면 좋아한다 (알은 흔들흔들)
+  const GIGGLES = ['히히, 간지러워!', '까르르!', '좋아 좋아!', '나랑 놀자!'];
+  function petTouch() {
+    sfxTap();
+    if (!state.species) {
+      if (av) av.celebrate();
+      speak('알이 흔들흔들! 곧 태어날 것 같아!');
+      return;
+    }
+    if (av) av.happy();
+    speak(GIGGLES[Math.floor(Math.random() * GIGGLES.length)]);
+  }
+
   function open() {
     if (!mounted) return;
     sfxTap();
     $('pet-overlay').classList.add('on');
     render();
+    if (av) av.startIdle();
     speak(state.species ? petName() + '가 기다리고 있어요!' : '알이 콕콕! 먹이를 주면 태어날 거예요!');
   }
   function close() {
     $('pet-overlay').classList.remove('on');
+    if (av) av.stopIdle();
     if (window.speechSynthesis) speechSynthesis.cancel();
   }
 
@@ -347,10 +375,9 @@ window.Pet = (() => {
     else { state.snacks--; state.g += SNACK_PTS; }
     state.fed++;
     save();
-    const petEl = $('pet-emoji');
-    bounce(petEl, 'pet-munch');
-    sfxMunch();
 
+    // 상태 변화(부화·성장·도감)는 즉시 반영하고, 연출만 먹기 애니메이션 뒤에 이어 붙인다
+    let after = null;
     if (!state.species && state.g >= HATCH) { // 🐣 부화 — 아직 없는 종 중에서 태어난다
       const have = collectedIds();
       const pool = SPECIES.filter(s => have.indexOf(s.id) < 0);
@@ -358,12 +385,12 @@ window.Pet = (() => {
       state.species = sp.id;
       state.name = '';
       save();
-      setTimeout(() => {
+      after = () => {
         render();
-        bounce($('pet-emoji'), 'pet-evolve');
+        if (av) av.celebrate();
         sfxGrow();
         speak('우와! ' + sp.name + '가 태어났어요! 이름을 지어 줄래?');
-      }, 500);
+      };
     } else if (state.g >= DONE) { // 🎓 다 컸다 — 도감 등록 + 새 알
       const sp = spOf(state.species);
       state.collection.push({ sp: state.species, name: petName(), at: Date.now() });
@@ -373,25 +400,76 @@ window.Pet = (() => {
       state.name = '';
       state.acc = {}; // 다음 펫에게 새로 입혀 준다 (받은 선물은 그대로 보관)
       save();
-      setTimeout(() => {
+      after = () => {
         render();
-        bounce($('pet-emoji'), 'pet-evolve');
+        if (av) av.celebrate();
         sfxGrow();
         speak('와! ' + grownName + '가 다 컸어요! 도감에 쏙! 새로운 알이 도착했어요!');
         toast('📖 ' + sp.e + ' ' + grownName + ' 도감 등록!');
-      }, 600);
+      };
     } else if ((state.g >= KID && gBefore < KID) || (state.g >= ADULT && gBefore < ADULT)) { // 성장
-      setTimeout(() => {
+      after = () => {
         render();
-        bounce($('pet-emoji'), 'pet-evolve');
+        if (av) av.celebrate();
         sfxGrow();
         speak('우와! ' + petName() + '가 ' + stageName() + '가 됐어요!');
-      }, 500);
+      };
     } else {
-      speak(PRAISES[Math.floor(Math.random() * PRAISES.length)]);
+      after = () => {
+        if (av && state.species) av.happy(); // 방긋 + 하트
+        speak(PRAISES[Math.floor(Math.random() * PRAISES.length)]);
+      };
     }
     if (state.accOwned.length < ACCS.length && state.fed % GIFT_EVERY === 0) maybeGift();
-    render();
+
+    // 연출: 먹이가 날아가 입으로 쏙 → 오물오물 → 다음 연출. 연달아 누르면 연출은 생략(상태는 이미 반영됨).
+    // after는 슬롯 하나에만 담는다 — 연타 시 최신(성장·부화) 연출이 남고,
+    // 뒤늦게 끝난 먹기의 칭찬말이 중요한 안내 음성을 끊지 않는다.
+    pendingAfter = after;
+    if (feedBusy || !av) {
+      sfxMunch();
+      if (!av) bounce($('pet-emoji'), 'pet-munch');
+      render();
+      runAfter();
+      return;
+    }
+    feedBusy = true;
+    flyFood(isMeal ? '🍚' : '🍪', isMeal ? 'pet-feed-meal' : 'pet-feed-snack', () => {
+      sfxMunch();
+      render();
+      av.eat(() => {
+        feedBusy = false;
+        runAfter();
+      });
+    });
+  }
+
+  let feedBusy = false;
+  let pendingAfter = null;
+  function runAfter() {
+    const f = pendingAfter;
+    pendingAfter = null;
+    if (f) f();
+  }
+  // 먹이가 버튼에서 펫 입가로 포물선처럼 날아간다
+  function flyFood(emoji, fromId, onArrive) {
+    const fromEl = $(fromId), toEl = $('pet-svg');
+    if (!fromEl || !toEl) { onArrive(); return; }
+    const from = fromEl.getBoundingClientRect();
+    const to = toEl.getBoundingClientRect();
+    const s = document.createElement('span');
+    s.className = 'pet-fly';
+    s.textContent = emoji;
+    s.style.left = (from.left + from.width / 2) + 'px';
+    s.style.top = from.top + 'px';
+    document.body.appendChild(s);
+    requestAnimationFrame(() => {
+      const dx = (to.left + to.width / 2) - (from.left + from.width / 2);
+      const dy = (to.top + to.height * 0.62) - from.top;
+      s.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(.5)';
+      s.style.opacity = '0';
+    });
+    setTimeout(() => { s.remove(); onArrive(); }, 520);
   }
 
   /* ─────────── 도감 ─────────── */
@@ -438,6 +516,11 @@ window.Pet = (() => {
     if (mounted) return;
     mounted = true;
     html();
+    if (window.PetAvatar) { // SVG 캐릭터 장착 (없으면 이모지 안전망)
+      av = PetAvatar.create($('pet-svg'));
+      av.stopIdle(); // 잔동작은 펫 화면이 열려 있는 동안만 (open/close에서 켜고 끈다)
+      $('pet-svg').addEventListener('click', petTouch); // 만지면 좋아한다
+    }
     const slot = $('pet-slot');
     btn = document.createElement('button');
     btn.type = 'button';
