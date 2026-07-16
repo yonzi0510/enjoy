@@ -211,6 +211,8 @@ window.App = (() => {
   }
 
   function nextProblem() {
+    clearCountTimers();
+    $('btn-qnext').hidden = true;
     const { modeDef, level } = qz;
     const max = level.max;
     let a, b;
@@ -301,29 +303,50 @@ window.App = (() => {
     }
   }
 
+  // 세는 말: 10까지는 순우리말, 그 위는 한자어
+  function countWord(n) { return n <= 10 ? D.NATIVE[n] : D.numName(n); }
+  function clearCountTimers() {
+    (qz && qz.timers || []).forEach(clearTimeout);
+    if (qz) qz.timers = [];
+  }
+
+  /* 정답 후 이해 단계 — 그림을 하나씩 반짝이며 같이 세고, 아이가 ▶ 를 눌러야 넘어간다 */
+  function celebrateCount() {
+    const objs = [...document.querySelectorAll('#quiz-visual .count-obj:not(.eaten)')];
+    const { modeDef } = qz;
+    const full = D.numName(qz.a) + (modeDef.mode === 'add' ? ' 더하기 ' : ' 빼기 ') + D.numName(qz.b) + '는 ' + D.numName(qz.ans) + '!';
+    qz.timers = [];
+    objs.forEach((o, i) => {
+      qz.timers.push(setTimeout(() => {
+        o.classList.add('counted');
+        o.insertAdjacentHTML('beforeend', '<b class="cnt">' + (i + 1) + '</b>');
+        A.speak(countWord(i + 1));
+      }, 700 + i * 800));
+    });
+    qz.timers.push(setTimeout(() => {
+      A.speak('모두 ' + qz.ans + '개! ' + full + ' 참 잘했어요!');
+      const nb = $('btn-qnext');
+      nb.classList.remove('wiggle');
+      void nb.offsetWidth;
+      nb.classList.add('wiggle');
+    }, 700 + objs.length * 800 + 300));
+  }
+
   function answer(btn, c) {
     if (qz.lock) return;
     if (c === qz.ans) {
       qz.lock = true;
       btn.classList.add('ok');
       A.sfx.good();
-      const isLast = qz.qIdx >= D.ROUND - 1;
-      const { modeDef } = qz;
-      const full = D.numName(qz.a) + (modeDef.mode === 'add' ? ' 더하기 ' : ' 빼기 ') + D.numName(qz.b) + '는 ' + D.numName(qz.ans) + '!';
-      A.speak('정답! ' + full);
-      setTimeout(() => {
-        qz.qIdx++;
-        if (!isLast) { nextProblem(); return; }
-        // 한 판 끝!
-        P.recordRound(modeDef.id + '-' + qz.level.id);
-        P.addStar(D.ROUND);
-        if (window.Pet) Pet.awardSnack(1);
-        A.sfx.fanfare();
-        showReward('다섯 문제 모두 정답!', '한 판 더 🎮', () => startRound(qz.level), () => {
-          openLevels(qz.modeDef);
-        });
-        A.speak('와, 다섯 문제를 모두 맞혔어요! 정말 똑똑해요!');
-      }, 1400);
+      // 식에 정답을 채우고 (1 + 3 = 4), 그림을 보여 주며 함께 센다 — 이해하고 넘어가는 시간
+      const what = document.querySelector('#quiz-expr .q-what');
+      what.textContent = qz.ans;
+      what.classList.add('q-ans');
+      renderQuizVisual(true);
+      $('btn-hint').hidden = true;
+      $('btn-qnext').hidden = false;
+      A.speak('정답!');
+      celebrateCount();
     } else {
       btn.classList.add('no');
       setTimeout(() => btn.classList.remove('no'), 500);
@@ -336,6 +359,24 @@ window.App = (() => {
         A.speak('다시 한번 세어 볼까?');
       }
     }
+  }
+
+  // ▶ 아이가 직접 눌러야 다음 문제로 (스스로 이해할 시간을 준다)
+  function quizNext() {
+    clearCountTimers();
+    $('btn-qnext').hidden = true;
+    qz.qIdx++;
+    if (qz.qIdx < D.ROUND) { nextProblem(); return; }
+    // 한 판 끝!
+    const { modeDef } = qz;
+    P.recordRound(modeDef.id + '-' + qz.level.id);
+    P.addStar(D.ROUND);
+    if (window.Pet) Pet.awardSnack(1);
+    A.sfx.fanfare();
+    showReward('다섯 문제 모두 정답!', '한 판 더 🎮', () => startRound(qz.level), () => {
+      openLevels(qz.modeDef);
+    });
+    A.speak('와, 다섯 문제를 모두 맞혔어요! 정말 똑똑해요!');
   }
 
   /* ─────────── 보상 오버레이 ─────────── */
@@ -372,7 +413,10 @@ window.App = (() => {
     });
     $('btn-groups-back').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openGroups(); });
     $('btn-levels-back').addEventListener('click', ev => {
-      ev.preventDefault(); A.sfx.tap(); openLevels(qz.modeDef);
+      ev.preventDefault(); A.sfx.tap(); clearCountTimers(); openLevels(qz.modeDef);
+    });
+    $('btn-qnext').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); quizNext();
     });
     $('btn-tprev').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); if (tr.idx > 0) openTracePage(tr.idx - 1);

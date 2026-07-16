@@ -243,7 +243,25 @@ h1 {
   border-radius: 999px;
   padding: 1px 6px;
 }
-.count-obj { font-size: clamp(24px, 5vmin, 40px); line-height: 1.15; }
+.count-obj { position: relative; font-size: clamp(24px, 5vmin, 40px); line-height: 1.15; transition: transform .25s; }
+/* 정답 후 같이 세기: 하나씩 커지며 숫자 배지가 붙는다 */
+.count-obj.counted { transform: scale(1.22); }
+.count-obj .cnt {
+  position: absolute;
+  top: -0.55em;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: .42em;
+  font-weight: 900;
+  background: #E8913C;
+  color: #fff;
+  border-radius: 999px;
+  padding: 1px 7px;
+  animation: pop .3s;
+}
+.big-next { font-size: clamp(18px, 3.8vmin, 26px); padding: clamp(12px, 2.4vmin, 20px) clamp(28px, 5.6vmin, 48px); }
+.big-next[hidden] { display: none; }
+.q-what.q-ans { color: #2C8C4B; animation: pop .35s; }
 .count-obj.eaten { opacity: .25; filter: grayscale(1); position: relative; }
 .count-obj.eaten::after {
   content: '✖';
