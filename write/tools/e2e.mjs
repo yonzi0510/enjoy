@@ -322,6 +322,36 @@ await check('물어본 낱말 초기화 🧹', async () => {
   expect(await page.locator('.ask-chip').count() === 0, '초기화 후 낱말 칩');
 });
 
+await check('펫: 부화 → 이름 짓기 → 선물 → 도감 등록 → 새 알', async () => {
+  await page.evaluate(() => Pet.awardSnack(30));
+  await page.evaluate(() => Pet.open());
+  await page.waitForSelector('#pet-overlay.on');
+  await page.click('#pet-feed-snack'); // g 1 → 3 이면 부화
+  await page.click('#pet-feed-snack');
+  await page.waitForTimeout(800);
+  let p = await page.evaluate(() => Pet.state());
+  expect(p.species, '부화해야 함: ' + JSON.stringify(p));
+  await page.waitForSelector('#pet-naming:not([hidden])');
+  await page.fill('#pet-name-input', '반짝이');
+  await page.click('#pet-name-ok');
+  p = await page.evaluate(() => Pet.state());
+  expect(p.name === '반짝이', '이름: ' + p.name);
+  for (let i = 0; i < 21; i++) await page.click('#pet-feed-snack'); // g 3 → 24 = 도감 등록
+  await page.waitForTimeout(1000);
+  p = await page.evaluate(() => Pet.state());
+  expect(p.collection === 1, '도감 등록 수: ' + JSON.stringify(p));
+  expect(p.species === null && p.g === 0, '새 알 도착: ' + JSON.stringify(p));
+  expect(p.accOwned === 3, '꾸미기 선물 (먹이 8번마다): ' + p.accOwned);
+  expect(p.snacks === 10, '남은 간식: ' + p.snacks);
+  await page.click('#pet-book-btn'); // 도감에 등록된 펫 확인
+  await page.waitForSelector('#pet-book-overlay.on');
+  expect(await page.locator('.pet-book-cell.got').count() === 1, '도감 칸');
+  const cap = await page.locator('.pet-book-cell.got .pb-name').textContent();
+  expect(cap === '반짝이', '도감 이름: ' + cap);
+  await page.click('#pet-book-close');
+  await page.click('#pet-close');
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });
