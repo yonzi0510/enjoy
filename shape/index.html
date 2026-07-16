@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#DFF6F3">
+<title>도형 놀이터</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../shared/voice-settings.css">
+<link rel="stylesheet" href="../shared/time-limit.css">
+<link rel="stylesheet" href="../shared/pet.css">
+</head>
+<body>
+
+<!-- 홈 -->
+<section class="screen on" id="scr-home">
+  <header class="home-head">
+    <h1>🔷 도형 놀이터</h1>
+    <div class="stats">
+      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+      <span id="pet-slot"></span>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+    </div>
+  </header>
+  <div class="menu" id="menu"></div>
+</section>
+
+<!-- 도안 목록 -->
+<section class="screen" id="scr-list">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2 id="list-title">🧩 칠교놀이</h2>
+  </header>
+  <div class="items-list" id="puzzle-list"></div>
+</section>
+
+<!-- 퍼즐판 -->
+<section class="screen" id="scr-play">
+  <header class="bar">
+    <button type="button" class="back" id="btn-play-back">◀</button>
+    <h2 id="play-title">🧩 집</h2>
+    <span class="page-count" id="play-count">0 / 7</span>
+  </header>
+  <div class="stage-wrap">
+    <svg id="stage" viewBox="0 0 100 148" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+</section>
+
+<!-- 색종이 축하 -->
+<div id="confetti" aria-hidden="true"></div>
+
+<!-- 보상 오버레이 -->
+<div class="reward" id="reward">
+  <div class="reward-card">
+    <div class="reward-stars">⭐</div>
+    <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
+    <div class="reward-btns">
+      <button type="button" class="bigbtn" id="reward-close" hidden>그만할래</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 ▶</button>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/profile.js"></script>
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/app.js"></script>
+<script src="../shared/parent-settings.js"></script>
+<script src="../shared/voice-settings.js"></script>
+<script src="../shared/pet-avatar.js"></script>
+<script src="../shared/pet.js"></script>
+<script src="../shared/time-limit.js"></script>
+<script src="../shared/sw-register.js"></script>
+</body>
+</html>

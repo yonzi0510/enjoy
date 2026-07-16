@@ -1,0 +1,346 @@
+/* 도형 놀이터 — 5세용 큰 조각, 청록 파스텔 톤
+   "포근한 장난감 방" (DESIGN.md): 카드 = 장난감 블록.
+   틴트 표면 + 유채색 chunk 단면 + 대표색 원거리 그림자. 검정 반투명 그림자 금지. */
+:root {
+  --accent: 46,196,182;   /* 청록 대표색 rgb 삼중값 */
+  --chunk: #1E8F84;       /* 바닥 단면색 */
+  --chunk-soft: #8AD4CC;  /* 작은 정보 알약용 옅은 단면색 (틴트에서 유도) */
+  --tint: #DFF6F3;        /* 표면에 스미는 옅은 틴트 */
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  /* 길게 눌러도 복사·전체선택 풍선이 뜨지 않게 */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+html, body { height: 100%; }
+body {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  /* 청록 3색 그라데이션 + 블러 글로우 2개 + 아주 옅은 물방울 도트 */
+  background:
+    radial-gradient(ellipse at 15% 8%,  rgba(126,231,215,.45), transparent 60%),
+    radial-gradient(ellipse at 88% 88%, rgba(150,205,250,.40), transparent 58%),
+    radial-gradient(rgba(255,255,255,.5) 1.2px, transparent 1.3px),
+    linear-gradient(160deg, #DBF8F1 0%, #DFF6F3 52%, #E2F1FF 100%);
+  background-size: auto, auto, 24px 24px, auto;
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+/* ─────────── 화면 ─────────── */
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(10px, 2.5vmin, 24px);
+  gap: clamp(8px, 1.8vmin, 18px);
+  overflow-y: auto;
+}
+.screen.on { display: flex; }
+
+/* ─────────── 홈 ─────────── */
+.home-head {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 2vmin;
+  animation: card-in .35s ease-out backwards;
+}
+h1 {
+  font-size: clamp(26px, 6vmin, 48px);
+  font-weight: 900;
+  color: #0B6C61; /* 한 톤 짙게 — 가독성 */
+  text-shadow: 0 2px 0 rgba(255,255,255,.85);
+  text-align: center;
+}
+.stats { display: flex; gap: 12px; align-items: center; }
+.stat {
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: clamp(15px, 3vmin, 20px);
+  font-weight: 800;
+  color: #14655B;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 3px 0 var(--chunk-soft),
+    0 8px 14px rgba(var(--accent), .14);
+}
+.menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(12px, 2.5vmin, 24px);
+  max-width: 960px;
+}
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: clamp(150px, 28vmin, 230px);
+  padding: clamp(16px, 3.4vmin, 28px);
+  border: none;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 7px 0 var(--chunk),
+    0 16px 26px rgba(var(--accent), .18);
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s;
+  font-family: inherit;
+  animation: card-in .35s ease-out backwards;
+}
+.menu-card:active {
+  /* chunk가 7px→3px로 줄며 블록이 눌리는 느낌 */
+  transform: translateY(4px) scale(.98);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 3px 0 var(--chunk),
+    0 9px 14px rgba(var(--accent), .12);
+}
+/* 스태거 등장 — 0.05s 간격 */
+.menu .menu-card:nth-child(1) { animation-delay: .05s; }
+.menu .menu-card:nth-child(2) { animation-delay: .10s; }
+.menu .menu-card:nth-child(3) { animation-delay: .15s; }
+.mc-icon { font-size: clamp(40px, 9vmin, 64px); line-height: 1.15; }
+.mc-name { font-size: clamp(17px, 3.4vmin, 25px); font-weight: 900; color: #1E3733; }
+.mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #5B7E77; }
+.mc-prog {
+  font-size: clamp(12px, 2.4vmin, 16px);
+  font-weight: 800;
+  color: #14655B;
+  background: rgba(255,255,255,.75);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+/* 메뉴 카드마다 자기 색 블록 — 표면 틴트 + 같은 hue의 chunk */
+.c-tan   { --tint: #DFF6F3; --chunk: #35B3A6; }
+.c-block { --tint: #E4FFE9; --chunk: #6FD489; }
+.c-shape { --tint: #FFF3C4; --chunk: #E6BE3F; }
+
+/* ─────────── 상단 바 ─────────── */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 980px;
+}
+.bar h2 { font-size: clamp(19px, 4.2vmin, 30px); font-weight: 900; color: #0F6B60; text-shadow: 0 2px 0 rgba(255,255,255,.7); flex: 1; }
+.back {
+  width: clamp(44px, 8vmin, 60px);
+  height: clamp(44px, 8vmin, 60px);
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  font-size: clamp(18px, 3.6vmin, 26px);
+  font-weight: 900;
+  color: #0F6B60;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 4px 0 var(--chunk),
+    0 10px 18px rgba(var(--accent), .16);
+  cursor: pointer;
+  flex: none;
+  transition: transform .12s, box-shadow .12s;
+}
+.back:active {
+  transform: translateY(2px) scale(.95);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 2px 0 var(--chunk),
+    0 6px 10px rgba(var(--accent), .12);
+}
+.page-count {
+  font-size: clamp(13px, 2.6vmin, 18px);
+  font-weight: 900;
+  color: #0F6B60;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  border-radius: 999px;
+  padding: 4px 12px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 3px 0 var(--chunk-soft),
+    0 8px 14px rgba(var(--accent), .14);
+}
+
+/* ─────────── 도안 목록 ─────────── */
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 2vmin, 16px);
+  width: 100%;
+  max-width: 720px;
+}
+.item-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: none;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  padding: clamp(10px, 2.2vmin, 18px) clamp(14px, 2.6vmin, 22px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 6px 0 var(--chunk),
+    0 14px 24px rgba(var(--accent), .16);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: transform .12s, box-shadow .12s;
+  animation: card-in .35s ease-out backwards;
+}
+.item-main:active {
+  transform: translateY(3px) scale(.98);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 3px 0 var(--chunk),
+    0 8px 13px rgba(var(--accent), .12);
+}
+/* 스태거 등장 — 8개 넘으면 마지막 지연값을 같이 쓴다 */
+.items-list .item-main:nth-child(1) { animation-delay: .05s; }
+.items-list .item-main:nth-child(2) { animation-delay: .10s; }
+.items-list .item-main:nth-child(3) { animation-delay: .15s; }
+.items-list .item-main:nth-child(4) { animation-delay: .20s; }
+.items-list .item-main:nth-child(5) { animation-delay: .25s; }
+.items-list .item-main:nth-child(6) { animation-delay: .30s; }
+.items-list .item-main:nth-child(7) { animation-delay: .35s; }
+.items-list .item-main:nth-child(n+8) { animation-delay: .40s; }
+.it-emoji { font-size: clamp(24px, 5vmin, 38px); min-width: 1.6em; text-align: center; }
+.it-texts { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.it-name { font-size: clamp(17px, 3.4vmin, 24px); font-weight: 900; color: #1E3733; }
+.it-kind { font-size: clamp(11px, 2.2vmin, 14px); font-weight: 700; color: #5B7E77; }
+.it-prog { font-size: clamp(16px, 3.2vmin, 24px); font-weight: 800; }
+
+/* ─────────── 퍼즐판 ─────────── */
+.stage-wrap {
+  flex: 1;
+  width: 100%;
+  max-width: 760px;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+}
+#stage {
+  width: 100%;
+  height: 100%;
+  touch-action: none; /* 드래그 중 화면이 밀리지 않게 */
+}
+/* 회색 실루엣 자리 */
+.slot { fill: #C3D2D8; stroke: #AFC2C9; stroke-width: .35; }
+.slot-cell { fill: #C9D7DC; stroke: #B4C6CC; stroke-width: .3; }
+.slot-shape { stroke-dasharray: 1.6 1.2; stroke-width: .5; fill: #D7E2E6; }
+.slot.hint, .slot.hint .slot-cell { fill: #A9DED6; stroke: #5DBFB1; animation: slot-pulse 1s infinite; }
+.slot.filled { opacity: 0; }
+@keyframes slot-pulse { 50% { fill: #BFEAE3; } }
+/* 트레이 */
+.tray-bg { fill: rgba(255,255,255,.6); stroke: rgba(255,255,255,.9); stroke-width: .4; }
+/* 조각 */
+.piece { cursor: grab; }
+.piece-face { stroke: #FFFFFF; stroke-width: .7; stroke-linejoin: round; paint-order: stroke; }
+.piece.grab { filter: drop-shadow(0 1.6px 1.2px rgba(20,101,91,.35)); cursor: grabbing; }
+.piece.placed { cursor: default; pointer-events: none; }
+.piece.placed .piece-face { stroke-width: .35; }
+.piece.wiggle { animation: wiggle .45s; }
+.wiggle { animation: wiggle .45s; }
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  50% { transform: translateX(8px); }
+  75% { transform: translateX(-5px); }
+}
+/* SVG 조각 흔들림은 transform 속성과 겹치면 안 되므로 투명도 깜빡임으로 */
+.piece.wiggle { animation: piece-nope .45s; }
+@keyframes piece-nope {
+  0%, 100% { opacity: 1; }
+  30%, 70% { opacity: .45; }
+  50% { opacity: .8; }
+}
+
+/* ─────────── 색종이 축하 ─────────── */
+#confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 30; }
+#confetti .cf {
+  position: absolute;
+  top: -4vh;
+  width: clamp(8px, 1.6vmin, 14px);
+  height: clamp(12px, 2.4vmin, 20px);
+  border-radius: 3px;
+  animation: cf-fall 1.6s linear forwards;
+}
+@keyframes cf-fall {
+  to { top: 104vh; transform: rotate(540deg); }
+}
+
+/* ─────────── 큰 버튼 ─────────── */
+.bigbtn {
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  padding: clamp(10px, 2vmin, 16px) clamp(18px, 3.4vmin, 30px);
+  font-size: clamp(15px, 3vmin, 21px);
+  font-weight: 900;
+  font-family: inherit;
+  color: #0F6B60;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 5px 0 var(--chunk),
+    0 12px 20px rgba(var(--accent), .16);
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s;
+}
+.bigbtn:active {
+  transform: translateY(3px) scale(.98);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 2px 0 var(--chunk),
+    0 7px 12px rgba(var(--accent), .12);
+}
+.bigbtn.primary { background: linear-gradient(180deg, #4ED4C4 0%, #2EC4B6 100%); color: #fff; }
+
+/* ─────────── 보상 오버레이 ─────────── */
+.reward {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 94, 84, .35);
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+.reward.on { display: flex; }
+.reward-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 2.4vmin, 20px);
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  border-radius: 32px;
+  padding: clamp(24px, 5vmin, 44px) clamp(28px, 6vmin, 56px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 10px 0 var(--chunk),
+    0 22px 34px rgba(var(--accent), .24);
+  animation: pop-in .3s;
+}
+@keyframes pop-in { from { transform: scale(.6); opacity: 0; } }
+.reward-stars { font-size: clamp(44px, 10vmin, 80px); animation: star-spin .8s; }
+@keyframes star-spin { from { transform: rotate(-30deg) scale(.3); } 60% { transform: rotate(10deg) scale(1.2); } }
+.reward-praise { font-size: clamp(20px, 4.6vmin, 34px); font-weight: 900; color: #0F6B60; }
+.reward-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+/* ─────────── 등장 모션 + 모션 줄이기 설정 존중 ─────────── */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-head, .menu-card, .item-main { animation: none; }
+  .menu-card, .item-main, .back, .bigbtn { transition: none; }
+  .piece.wiggle, .slot.hint { animation: none; }
+  #confetti .cf { display: none; }
+}
