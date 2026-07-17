@@ -220,9 +220,17 @@ window.App = (() => {
       onFail(kind) {
         listening = false;
         document.getElementById('ask-mic').classList.remove('listening');
-        if (kind === 'denied') askStatus('마이크 사용을 허용해 주세요');
-        else if (kind === 'nospeech') askStatus('아무 말도 안 들렸어요. 다시 눌러 보세요');
-        else askStatus('마이크가 잘 안 돼요. 아래에 낱말을 적어 주세요');
+        // 실패해도 좌절하지 않게 — 안내 문구 + 소리로 직접 입력 폴백을 알려 준다
+        if (kind === 'denied') {
+          askStatus('🙏 마이크 사용을 허용해 주세요. 아래 칸에 낱말을 적어도 돼요');
+          A.speak('마이크 사용을 허용해 주세요. 아래 칸에 낱말을 적어도 돼요.');
+        } else if (kind === 'nospeech') {
+          askStatus('아무 말도 안 들렸어요. 다시 눌러 보세요');
+          A.speak('아무 말도 안 들렸어요. 마이크를 다시 눌러 볼까?');
+        } else {
+          askStatus('마이크가 잘 안 돼요. 아래 칸에 낱말을 적어 주세요');
+          A.speak('마이크가 잘 안 돼요. 아래 칸에 낱말을 적어 주세요.');
+        }
       },
     });
   }
@@ -476,6 +484,39 @@ window.App = (() => {
   let drawTool = 'pen';      // 'pen' | 'erase' | 'sticker'
   let drawPen = 'mid';
   let drawSticker = STICKERS[0];
+  const PEN_EMOJI = { thin: '✏️', mid: '🖊️', thick: '🖍️', hl: '🖌️' };
+  // 드롭판: 도구 단추를 누르면 펼쳐지는 선택판 (한 번에 하나만 열린다)
+  const DROPS = { color: 'drop-color', pen: 'drop-pen', sticker: 'drop-sticker' };
+  const DOCK_OF = { color: 'dock-color', pen: 'dock-pen', sticker: 'btn-draw-sticker' };
+
+  function openDropName() {
+    for (const k in DROPS) if (!document.getElementById(DROPS[k]).hidden) return k;
+    return null;
+  }
+  function closeDrops(silent) {
+    const was = openDropName();
+    for (const k in DROPS) {
+      document.getElementById(DROPS[k]).hidden = true;
+      document.getElementById(DOCK_OF[k]).classList.remove('open');
+    }
+    if (was && !silent) A.sfx.tap(); // 닫히는 소리
+    return was;
+  }
+  function toggleDrop(name) {
+    const was = closeDrops(true);
+    if (was === name) { A.sfx.tap(); return; } // 같은 단추 다시 → 접기
+    document.getElementById(DROPS[name]).hidden = false;
+    document.getElementById(DOCK_OF[name]).classList.add('open');
+    A.sfx.pop(); // 펼쳐지는 소리
+  }
+  // 도구 단추에 현재 선택 표시 — 색 동그라미·펜 이모지·스티커 미리보기
+  function updateDock() {
+    const chip = document.getElementById('dock-color-chip');
+    chip.classList.toggle('rb', drawColor === 'rb');
+    chip.style.background = drawColor === 'rb' ? '' : drawColor;
+    document.getElementById('dock-pen').textContent = PEN_EMOJI[drawPen];
+    document.getElementById('btn-draw-sticker').textContent = drawSticker;
+  }
 
   function initDraw() {
     pad = Ink.FreePad(document.getElementById('draw-pad'), {
@@ -485,9 +526,16 @@ window.App = (() => {
       sticker: () => drawSticker,
       onTouchReject: penHint(),
     });
+    // 도화지를 누르면 드롭판만 닫힌다 — 같은 pointerdown이 ink.js로 이어져 바로 그려진다
+    document.getElementById('draw-pad').addEventListener('pointerdown', () => {
+      if (openDropName()) closeDrops();
+    }, true);
+
     makeSwatches(document.getElementById('draw-swatches'), drawColor, c => {
       drawColor = c;
-      setDrawTool('pen');
+      setDrawTool('pen'); // 색을 고르면 바로 그 색 펜으로
+      updateDock();
+      closeDrops(true); // 고르는 소리는 makeSwatches가 낸다
     });
     const stickerRow = document.getElementById('sticker-row');
     STICKERS.forEach(s => {
@@ -501,6 +549,8 @@ window.App = (() => {
         drawSticker = s;
         setDrawTool('sticker');
         stickerRow.querySelectorAll('.sticker-btn').forEach(x => x.classList.toggle('on', x === b));
+        updateDock();
+        closeDrops(true);
       });
       stickerRow.appendChild(b);
     });
@@ -511,24 +561,33 @@ window.App = (() => {
         drawPen = b.dataset.pen;
         setDrawTool('pen');
         document.querySelectorAll('.pen-btn').forEach(x => x.classList.toggle('on', x === b));
+        updateDock();
+        closeDrops(true);
       });
+    });
+    document.getElementById('dock-color').addEventListener('click', ev => {
+      ev.preventDefault(); toggleDrop('color');
+    });
+    document.getElementById('dock-pen').addEventListener('click', ev => {
+      ev.preventDefault(); setDrawTool('pen'); toggleDrop('pen');
+    });
+    document.getElementById('btn-draw-sticker').addEventListener('click', ev => {
+      ev.preventDefault(); setDrawTool('sticker'); toggleDrop('sticker');
     });
     document.getElementById('btn-draw-eraser').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap();
+      closeDrops(true);
       setDrawTool(drawTool === 'erase' ? 'pen' : 'erase');
     });
-    document.getElementById('btn-draw-sticker').addEventListener('click', ev => {
-      ev.preventDefault(); A.sfx.tap();
-      setDrawTool(drawTool === 'sticker' ? 'pen' : 'sticker');
-    });
     document.getElementById('btn-draw-undo').addEventListener('click', ev => {
-      ev.preventDefault(); A.sfx.tap(); pad.undo();
+      ev.preventDefault(); A.sfx.tap(); closeDrops(true); pad.undo();
     });
     // 전체 지우기는 실수 방지를 위해 두 번 눌러야 지워진다
     let clearArmedUntil = 0, clearResetTimer = null;
     const clearBtn = document.getElementById('btn-draw-clear');
     clearBtn.addEventListener('click', ev => {
       ev.preventDefault();
+      closeDrops(true);
       if (Date.now() < clearArmedUntil) {
         clearArmedUntil = 0;
         if (clearResetTimer) clearTimeout(clearResetTimer);
@@ -546,6 +605,7 @@ window.App = (() => {
     });
     document.getElementById('btn-draw-save').addEventListener('click', ev => {
       ev.preventDefault();
+      closeDrops(true);
       if (!pad.count()) { A.sfx.tap(); A.speak('먼저 마음껏 그려 보자!'); return; }
       P.completePage('draw-' + Date.now(), { t: '자유 그림', e: '🎨', k: 'free', items: pad.items() });
       A.sfx.fanfare();
@@ -555,14 +615,16 @@ window.App = (() => {
       void btn.offsetWidth;
       btn.classList.add('pulse');
     });
+    updateDock(); // 단추에 초기 선택(파랑·보통 펜·⭐) 표시
   }
   function setDrawTool(tool) {
     drawTool = tool;
     document.getElementById('btn-draw-eraser').classList.toggle('on', tool === 'erase');
     document.getElementById('btn-draw-sticker').classList.toggle('on', tool === 'sticker');
-    document.getElementById('sticker-row').hidden = tool !== 'sticker';
   }
   function openDraw() {
+    closeDrops(true);
+    updateDock();
     showScreen('scr-draw');
     pad.resize();
   }
@@ -727,6 +789,8 @@ window.App = (() => {
       dict: cur ? cur.dict : false,
       revealed: cur ? !!cur.revealed : false,
       padItems: pad ? pad.count() : 0,
+      drawTool, drawColor, drawPen, drawSticker,
+      drawDrop: openDropName(), // 열려 있는 드롭판 이름 (없으면 null)
     };
   }
 

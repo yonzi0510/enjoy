@@ -2,8 +2,9 @@
 /* 종단 테스트 — node write/tools/e2e.mjs
  * 실제 Chromium으로 홈 → 자음 필사(펜 스트로크 합성) → 손가락 리젝션 → 완료·별 →
  * 동요 필사 → 물어보고 쓰기(낱말 추출·직접 입력·인식 주입·초기화) → 부분 지우개 →
- * 받아쓰기(빈 칸 쓰기·정답 공개·스스로 확인) → 자유 낙서장(무지개 펜·스티커·보관) →
- * 갤러리 → 새로고침 후 진행도 유지 → 펫 방(도감 친구·장식 배치·간식 조르기)까지 검증한다.
+ * 받아쓰기(빈 칸 쓰기·정답 공개·스스로 확인) → 자유 낙서장(무지개 펜·스티커·보관·드롭판) →
+ * 갤러리 → 새로고침 후 진행도 유지 → STT 스텁(iOS식 interim-only·침묵 stop) →
+ * 펫 방(도감 친구·장식 배치·간식 조르기)까지 검증한다.
  * 저장소 루트에서 정적 서버를 띄운 뒤 실행 (예: python3 -m http.server 8777)
  */
 import { createRequire } from 'node:module';
@@ -61,6 +62,40 @@ const page = await browser.newPage({ viewport: { width: 1180, height: 820 } });
 const consoleErrors = [];
 page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
 page.on('pageerror', e => consoleErrors.push(String(e)));
+
+// 가짜 SpeechRecognition — CI에는 마이크가 없으므로, iOS 사파리식 동작(인터림만 주고
+// final 없이 end)을 흉내 낼 수 있는 스텁으로 갈아끼운다
+await page.addInitScript(() => {
+  window.__srList = [];
+  window.SpeechRecognition = class {
+    constructor() { window.__srList.push(this); this._on = false; }
+    start() {
+      if (this._on) { const e = new Error('invalid'); e.name = 'InvalidStateError'; throw e; }
+      this._on = true;
+    }
+    stop() { // 사파리: stop() 뒤 final 없이 end만 온다
+      const s = this;
+      setTimeout(() => { s._on = false; if (s.onend) s.onend(); }, 0);
+    }
+    abort() { this._on = false; if (this.onend) this.onend(); }
+  };
+  window.webkitSpeechRecognition = window.SpeechRecognition;
+});
+// 마지막 인식 엔진에 interim(중간 결과)만 흘려 넣는다
+async function srInterim(text) {
+  await page.evaluate(t => {
+    const r = window.__srList[window.__srList.length - 1];
+    r.onresult({ results: [{ isFinal: false, length: 1, 0: { transcript: t } }] });
+  }, text);
+}
+// 마지막 인식 엔진을 final 없이 끝낸다 (iOS 사파리 경로)
+async function srEnd() {
+  await page.evaluate(() => {
+    const r = window.__srList[window.__srList.length - 1];
+    r._on = false;
+    r.onend();
+  });
+}
 
 await page.goto(BASE);
 
@@ -280,11 +315,12 @@ await check('받아쓰기: 빈 칸 쓰기 → ▶ → 정답 공개 → ⭕ → 
 await check('자유 낙서장: 무지개 펜 + 스티커 + 보관', async () => {
   await page.click('.menu-card.c-draw');
   await page.waitForSelector('#scr-draw.on');
+  await page.click('#dock-color'); // 색 드롭판 펼치기
   await page.locator('#draw-swatches .sw-rb').click(); // 무지개 크레용
   await stroke(page, '#draw-pad', squiggle, 'pen');
   let d = await page.evaluate(() => App.debug());
   expect(d.padItems === 1, '획 기록: ' + d.padItems);
-  await page.click('#btn-draw-sticker');
+  await page.click('#btn-draw-sticker'); // 스티커 드롭판 펼치기
   await page.locator('.sticker-btn').first().click();
   await stroke(page, '#draw-pad', [[0.8, 0.3], [0.8, 0.3]], 'pen'); // 스티커 찍기
   d = await page.evaluate(() => App.debug());
@@ -294,6 +330,36 @@ await check('자유 낙서장: 무지개 펜 + 스티커 + 보관', async () => 
   await page.waitForSelector('#scr-home.on');
   const prog = await page.locator('.menu-card.c-draw .mc-prog').textContent();
   expect(prog.trim() === '1장', '낙서장 보관 수: ' + prog);
+});
+
+await check('낙서장 드롭판: 🎨 열림 → 색 고르면 즉시 적용·닫힘·단추 표시', async () => {
+  await page.click('.menu-card.c-draw');
+  await page.waitForSelector('#scr-draw.on');
+  await page.click('#dock-color');
+  let d = await page.evaluate(() => App.debug());
+  expect(d.drawDrop === 'color', '색 판이 열려야 함: ' + d.drawDrop);
+  expect(!(await page.locator('#drop-color').isHidden()), '색 판 표시');
+  await page.locator('#draw-swatches .swatch').first().click(); // 빨강 고르기
+  d = await page.evaluate(() => App.debug());
+  expect(d.drawDrop === null, '색을 고르면 판이 닫혀야 함');
+  expect(d.drawColor === '#E8354D', '고른 색 즉시 적용: ' + d.drawColor);
+  expect(d.drawTool === 'pen', '색을 고르면 펜 도구: ' + d.drawTool);
+  const chip = await page.locator('#dock-color-chip').evaluate(el => el.style.background);
+  expect(chip.indexOf('232, 53, 77') >= 0 || chip.indexOf('#E8354D') >= 0, '단추에 현재 색 표시: ' + chip);
+});
+
+await check('드롭판 열린 채 도화지 터치 → 판만 닫히고 바로 그려진다', async () => {
+  await page.click('#dock-pen');
+  let d = await page.evaluate(() => App.debug());
+  expect(d.drawDrop === 'pen', '펜 판이 열려야 함: ' + d.drawDrop);
+  const before = d.padItems;
+  await stroke(page, '#draw-pad', squiggle, 'pen'); // 판이 열린 채 첫 터치
+  d = await page.evaluate(() => App.debug());
+  expect(d.drawDrop === null, '도화지를 누르면 판이 닫혀야 함');
+  expect(await page.locator('#drop-pen').isHidden(), '펜 판 숨김');
+  expect(d.padItems === before + 1, '닫히면서 첫 터치가 그리기로 이어져야 함: ' + d.padItems);
+  await page.click('#scr-draw .back');
+  await page.waitForSelector('#scr-home.on');
 });
 
 await check('갤러리: 작품 6장 (완성 4 + 쓰던 글 1 + 그림 1)', async () => {
@@ -320,6 +386,30 @@ await check('물어본 낱말 초기화 🧹', async () => {
   expect(await page.locator('.ask-chip').count() === 2, '초기화 전 낱말 칩');
   await page.click('#ask-clear');
   expect(await page.locator('.ask-chip').count() === 0, '초기화 후 낱말 칩');
+});
+
+await check('STT 보강: interim만 오고 final 없이 끝나도 결과로 채택 (iOS 사파리)', async () => {
+  await page.click('#ask-mic'); // 듣기 시작 (스텁 엔진)
+  await srInterim('바나나는 어떻게 써');
+  await srEnd(); // final 없이 end → 마지막 interim을 결과로 채택해야 한다
+  await page.waitForSelector('#scr-write.on', { timeout: 3000 });
+  const d = await page.evaluate(() => App.debug());
+  expect(d.pageText === '바나나', '페이지 글: ' + d.pageText);
+  await page.click('#btn-write-back');
+  await page.waitForSelector('#scr-ask.on');
+});
+
+await check('STT 보강: interim 뒤 침묵 1.3초면 stop()으로 결과를 끌어낸다', async () => {
+  await page.click('#ask-mic');
+  await srInterim('포도는 어떻게 써');
+  // 침묵 감지 타이머 → rec.stop() → (사파리처럼 final 없이) end → interim 채택
+  await page.waitForSelector('#scr-write.on', { timeout: 4000 });
+  const d = await page.evaluate(() => App.debug());
+  expect(d.pageText === '포도', '페이지 글: ' + d.pageText);
+  await page.click('#btn-write-back');
+  await page.waitForSelector('#scr-ask.on');
+  await page.click('#scr-ask .back');
+  await page.waitForSelector('#scr-home.on');
 });
 
 await check('펫: 부화 → 이름 짓기 → 선물 → 도감 등록 → 새 알', async () => {

@@ -74,16 +74,25 @@ window.Speech = (() => {
   /* ─────────── STT ───────────
    * 아이가 말을 생각할 시간을 주기 위해, 브라우저의 짧은 무음 타임아웃(no-speech)이
    * 와도 실패로 처리하지 않고 조용히 인식을 재시작해 총 LISTEN_TOTAL_MS까지 기다린다.
+   * iOS 사파리 보강 (write/js/ask.js와 같은 패턴):
+   * - isFinal 없이 interim만 주다가 onend로 끝나는 기기 → 마지막 interim을 결과로 채택
+   * - interim 뒤 1.3초 새 소리가 없으면 stop()을 불러 final을 강제로 끌어낸다
+   * - 재시작 시 start()가 InvalidStateError를 던지면 잠깐 뒤 다시 시도
    */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const LISTEN_TOTAL_MS = 25000; // 총 대기 시간 (생각할 시간 포함)
+  const SILENCE_STOP_MS = 1300;  // interim 후 이만큼 조용하면 stop()으로 결과를 끌어낸다
   let rec = null;
   let cb = null; // { onResult(alts[]), onInterim(text), onWaiting(), onFail(kind), onEnd() }
-  let session = null; // { start, done }
+  let session = null; // { start, done, interim, startFails }
+  let silenceTimer = null;
 
   function sttSupported() { return !!SR; }
 
+  function clearSilenceTimer() { clearTimeout(silenceTimer); silenceTimer = null; }
+
   function finishSession(kind, payload) {
+    clearSilenceTimer();
     if (!session || session.done) return;
     session.done = true;
     if (kind === 'result') { if (cb.onResult) cb.onResult(payload); }
@@ -98,17 +107,25 @@ window.Speech = (() => {
     try {
       rec = new SR();
       rec.lang = 'ko-KR';
-      rec.interimResults = true;
+      rec.interimResults = true; // 미지원 기기는 그냥 final만 온다 — 어느 쪽이든 동작
       rec.maxAlternatives = 3;
       rec.onresult = e => {
         sawSpeech = true;
         const res = e.results[e.results.length - 1];
         if (res.isFinal) {
+          clearSilenceTimer();
           const alts = [];
           for (let i = 0; i < res.length; i++) alts.push(res[i].transcript);
           finishSession('result', alts);
-        } else if (cb.onInterim) {
-          cb.onInterim(res[0].transcript);
+        } else {
+          // interim: final 없이 끝나는 사파리 대비로 저장하고, 침묵 타이머를 되감는다
+          const t = res[0] && res[0].transcript;
+          if (t && t.trim()) session.interim = t;
+          clearSilenceTimer();
+          silenceTimer = setTimeout(() => {
+            try { if (rec) rec.stop(); } catch (err) {} // stop()이 final(또는 onend)을 만들어 준다
+          }, SILENCE_STOP_MS);
+          if (cb.onInterim && t) cb.onInterim(t);
         }
       };
       rec.onerror = e => {
@@ -116,9 +133,14 @@ window.Speech = (() => {
         else if (e.error !== 'no-speech' && e.error !== 'aborted') hardError = 'error';
         // no-speech는 onend에서 재시작으로 이어감
       };
+      // 알아듣지 못함 → no-speech처럼 onend의 재시도 흐름으로 (interim이 있으면 채택된다)
+      rec.onnomatch = () => {};
       rec.onend = () => {
+        clearSilenceTimer();
         if (!session || session.done) return;
         if (hardError) { finishSession(hardError); return; }
+        // 사파리: final 없이 끝났어도 마지막 interim을 결과로 채택
+        if (session.interim) { finishSession('result', [session.interim]); return; }
         // 아직 시간 여유가 있으면 조용히 다시 듣기 (아이가 생각하는 중)
         if (Date.now() - session.start < LISTEN_TOTAL_MS) {
           if (cb.onWaiting && !sawSpeech) cb.onWaiting();
@@ -127,7 +149,14 @@ window.Speech = (() => {
           finishSession('nospeech');
         }
       };
-      rec.start();
+      try {
+        rec.start();
+        session.startFails = 0;
+      } catch (err) { // 이전 인식이 아직 닫히는 중(InvalidStateError) — 잠깐 뒤 재시도
+        session.startFails = (session.startFails || 0) + 1;
+        if (session.startFails > 3) { finishSession('error'); return; }
+        setTimeout(() => { if (session && !session.done) startRec(); }, 300);
+      }
     } catch (e) {
       finishSession('error');
     }
@@ -136,12 +165,13 @@ window.Speech = (() => {
   function startListen(callbacks) {
     cb = callbacks || {};
     if (!SR) { if (cb.onFail) cb.onFail('unsupported'); return false; }
-    session = { start: Date.now(), done: false };
+    session = { start: Date.now(), done: false, interim: null, startFails: 0 };
     startRec();
     return true;
   }
 
   function stopListen() {
+    clearSilenceTimer();
     if (session) session.done = true; // 사용자가 취소 → 실패 안내 생략
     try { if (rec) rec.abort(); } catch (e) {}
   }

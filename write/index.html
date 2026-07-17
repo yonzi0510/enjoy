@@ -97,29 +97,38 @@
   </div>
 </section>
 
-<!-- 자유 낙서장 -->
+<!-- 자유 낙서장 — 도화지가 메인, 도구는 가장자리 단추를 누르면 드롭판으로 펼쳐진다 -->
 <section class="screen" id="scr-draw">
   <header class="bar">
     <button type="button" class="back" data-go="scr-home">◀</button>
     <h2>🎨 자유 낙서장</h2>
-    <button type="button" class="bigbtn primary" id="btn-draw-save">💾 보관하기</button>
   </header>
-  <div class="draw-tools">
-    <div class="swatches" id="draw-swatches"></div>
-    <div class="pens">
-      <button type="button" class="pen-btn" data-pen="thin" aria-label="가는 펜">✏️</button>
-      <button type="button" class="pen-btn on" data-pen="mid" aria-label="보통 펜">🖊️</button>
-      <button type="button" class="pen-btn" data-pen="thick" aria-label="굵은 크레용">🖍️</button>
-      <button type="button" class="pen-btn" data-pen="hl" aria-label="형광펜">🖌️</button>
+  <div class="draw-wrap">
+    <!-- 도구 단추 줄 (세로: 위쪽, 가로: 오른쪽 열) — 단추에 현재 선택이 보인다 -->
+    <div class="draw-dock" id="draw-dock">
+      <button type="button" class="dock-btn" id="dock-color" aria-label="색 고르기"><span class="dock-chip" id="dock-color-chip"></span></button>
+      <button type="button" class="dock-btn" id="dock-pen" aria-label="펜 고르기">🖊️</button>
+      <button type="button" class="dock-btn" id="btn-draw-sticker" aria-label="스티커 고르기">⭐</button>
+      <button type="button" class="dock-btn" id="btn-draw-eraser" aria-label="지우개">🧼</button>
+      <button type="button" class="dock-btn" id="btn-draw-undo" aria-label="한 번 되돌리기">↩️</button>
+      <button type="button" class="dock-btn" id="btn-draw-clear" aria-label="다 지우기">🗑️</button>
+      <button type="button" class="dock-btn save" id="btn-draw-save" aria-label="보관하기">💾</button>
     </div>
-    <button type="button" class="bigbtn" id="btn-draw-sticker">🌟 스티커</button>
-    <button type="button" class="bigbtn" id="btn-draw-eraser">🧼 지우개</button>
-    <button type="button" class="bigbtn" id="btn-draw-undo">↩️</button>
-    <button type="button" class="bigbtn" id="btn-draw-clear">🗑️</button>
-  </div>
-  <div class="sticker-row" id="sticker-row" hidden></div>
-  <div class="draw-holder">
-    <canvas id="draw-pad"></canvas>
+    <!-- 도화지 (메인 — 화면을 최대한 크게 쓴다) -->
+    <div class="draw-holder">
+      <canvas id="draw-pad"></canvas>
+    </div>
+    <!-- 드롭판 — 단추를 누르면 펼쳐지고, 고르거나 도화지를 누르면 닫힌다 -->
+    <div class="draw-drop" id="drop-color" hidden><div class="swatches" id="draw-swatches"></div></div>
+    <div class="draw-drop" id="drop-pen" hidden>
+      <div class="pens">
+        <button type="button" class="pen-btn" data-pen="thin" aria-label="가는 펜">✏️</button>
+        <button type="button" class="pen-btn on" data-pen="mid" aria-label="보통 펜">🖊️</button>
+        <button type="button" class="pen-btn" data-pen="thick" aria-label="굵은 크레용">🖍️</button>
+        <button type="button" class="pen-btn" data-pen="hl" aria-label="형광펜">🖌️</button>
+      </div>
+    </div>
+    <div class="draw-drop" id="drop-sticker" hidden><div class="sticker-row" id="sticker-row"></div></div>
   </div>
 </section>
 
