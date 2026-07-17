@@ -403,17 +403,106 @@ h1 {
 .dict-check.on { display: flex; }
 .dc-msg { font-size: clamp(14px, 2.8vmin, 19px); font-weight: 800; color: #7A5423; }
 
-/* ─────────── 자유 낙서장 ─────────── */
-.draw-tools {
+/* ─────────── 자유 낙서장 — 도화지가 메인, 도구는 가장자리 단추 + 드롭판 ─────────── */
+.draw-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.4vmin, 12px);
+  width: 100%;
+  max-width: 1100px;
+  flex: 1;
+  min-height: 0;
+}
+/* 도구 단추 줄 — 세로 화면에선 위쪽 한 줄 */
+.draw-dock {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: clamp(5px, 1.2vmin, 10px);
+}
+.dock-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: clamp(8px, 1.8vmin, 14px);
-  width: 100%;
-  max-width: 1100px;
+  width: clamp(46px, 8vmin, 64px);
+  height: clamp(46px, 8vmin, 64px);
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  font-size: clamp(22px, 4vmin, 32px);
+  font-family: inherit;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 4px 0 var(--chunk-soft),
+    0 10px 16px rgba(var(--accent), .14);
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s;
 }
-.pens { display: flex; gap: 6px; }
+.dock-btn:active {
+  transform: translateY(2px) scale(.95);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 2px 0 var(--chunk-soft),
+    0 6px 10px rgba(var(--accent), .12);
+}
+/* 열려 있는 드롭판의 단추·켜진 도구는 보라로 표시 */
+.dock-btn.on, .dock-btn.open {
+  background: #6E4A8C;
+  color: #fff;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    0 4px 0 #533569,
+    0 10px 16px rgba(142,111,192,.22);
+}
+.dock-btn.save {
+  background: #8E6FC0;
+  color: #fff;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.3),
+    0 4px 0 #6B4BA6,
+    0 10px 16px rgba(142,111,192,.25);
+}
+/* 색 단추 안의 현재 색 동그라미 */
+.dock-chip {
+  width: 58%;
+  height: 58%;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: #4E6FE3;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.08);
+  pointer-events: none;
+}
+.dock-chip.rb { background: conic-gradient(#E8354D, #F2762E, #E5A800, #3FBF77, #31B7D8, #4E6FE3, #8B5BD6, #F25CA2, #E8354D); }
+
+/* 드롭판 — 도화지 위에 떠서 펼쳐진다 (레이아웃 공간을 먹지 않는다) */
+.draw-drop {
+  position: absolute;
+  top: calc(clamp(46px, 8vmin, 64px) + clamp(10px, 2vmin, 16px));
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: min(100%, 640px);
+  z-index: 12;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  border-radius: 22px;
+  padding: clamp(8px, 1.8vmin, 14px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 6px 0 var(--chunk-soft),
+    0 18px 30px rgba(var(--accent), .22);
+  animation: drop-in .18s ease-out;
+}
+.draw-drop[hidden] { display: none; } /* [hidden] 의미 유지 — JS가 hidden 속성으로 여닫는다 */
+@keyframes drop-in {
+  from { opacity: 0; transform: translateY(-10px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pens { display: flex; gap: clamp(6px, 1.4vmin, 12px); justify-content: center; flex-wrap: wrap; }
+.draw-drop .swatches { gap: clamp(7px, 1.6vmin, 12px); }
+.draw-drop .swatch { width: clamp(38px, 7vmin, 54px); height: clamp(38px, 7vmin, 54px); }
+.draw-drop .pen-btn { width: clamp(52px, 9vmin, 68px); height: clamp(52px, 9vmin, 68px); font-size: clamp(24px, 4.4vmin, 34px); }
 .pen-btn {
   width: clamp(40px, 7vmin, 54px);
   height: clamp(40px, 7vmin, 54px);
@@ -442,41 +531,39 @@ h1 {
     0 4px 0 #533569,
     0 10px 16px rgba(142,111,192,.22);
 }
+/* 스티커 고르기 판 — 드롭판 안에서 스크롤 */
 .sticker-row {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-content: flex-start;
   gap: 6px;
-  width: 100%;
-  max-width: 1100px;
-  max-height: clamp(90px, 17vmin, 150px);
+  max-height: min(44vmin, 320px);
   overflow-y: auto;
-  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
-  border-radius: 22px;
-  padding: 8px 14px;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.65),
-    0 4px 0 var(--chunk-soft),
-    0 10px 16px rgba(var(--accent), .14);
   -webkit-overflow-scrolling: touch;
 }
 .sticker-btn {
-  width: clamp(38px, 6.6vmin, 52px);
-  height: clamp(38px, 6.6vmin, 52px);
+  width: clamp(42px, 7.4vmin, 58px);
+  height: clamp(42px, 7.4vmin, 58px);
   border: none;
   border-radius: 12px;
   background: transparent;
-  font-size: clamp(20px, 4vmin, 30px);
+  font-size: clamp(24px, 4.6vmin, 34px);
   cursor: pointer;
 }
 .sticker-btn.on { background: #EDE4FF; }
-.draw-holder { width: 100%; max-width: 1100px; flex: 1; min-height: 0; }
+.draw-holder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
 #draw-pad {
   display: block;
   width: 100%;
   aspect-ratio: 1000 / 620;
-  max-height: 100%;
   border-radius: 22px;
   background: #fff;
   box-shadow:
@@ -798,8 +885,8 @@ h1 {
 /* ─────────── 모션 줄이기 설정 존중 ─────────── */
 @media (prefers-reduced-motion: reduce) {
   .menu-card, .item-row, .art-card, .art-card.pulse, #btn-draw-save.pulse,
-  .wiggle, .ask-mic.listening, .reward-card, .reward-stars { animation: none; }
-  .menu-card, .back, .navbtn, .side-nav, .pen-btn, .bigbtn,
+  .wiggle, .ask-mic.listening, .reward-card, .reward-stars, .draw-drop { animation: none; }
+  .menu-card, .back, .navbtn, .side-nav, .pen-btn, .bigbtn, .dock-btn,
   .ask-mic, .ask-chip, .item-main, .item-play, .art-card, .pen-hint { transition: none; }
 }
 
@@ -841,34 +928,35 @@ h1 {
   /* 받아쓰기 정답 패널이 열리면 그만큼 노트를 줄여 잘림을 막는다 */
   .write-stage:has(.dict-check.on) .note { max-width: calc((100vh - 410px) * 1.92); }
 
-  /* 낙서장: 판 왼쪽 + 도구(색·펜·스티커) 오른쪽 열 — 판이 세로 공간을 다 쓴다 */
-  #scr-draw.on {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) clamp(230px, 24vw, 300px);
-    grid-template-rows: auto auto minmax(0, 1fr);
-    grid-template-areas:
-      "bar  bar"
-      "pad  tools"
-      "pad  stick";
-    align-items: start;
-    justify-items: center;
+  /* 낙서장: 판 왼쪽 최대 + 작은 도구 단추 오른쪽 세로 열 (DESIGN.md 가로모드 원칙) */
+  .draw-wrap {
+    flex-direction: row;
+    align-items: stretch;
+    max-width: none;
+    gap: clamp(8px, 1.4vw, 14px);
   }
-  #scr-draw .bar { grid-area: bar; }
-  #scr-draw .draw-tools { grid-area: tools; }
-  #scr-draw .sticker-row { grid-area: stick; align-self: start; }
-  #scr-draw .draw-holder {
-    grid-area: pad;
-    align-self: center;
-    display: flex;
-    align-items: center;
+  .draw-holder { order: 1; min-width: 0; }
+  .draw-dock {
+    order: 2;
+    flex-direction: column;
+    flex-wrap: nowrap;
     justify-content: center;
-    height: 100%;
+    overflow-y: auto;
+  }
+  /* 드롭판은 단추 열 왼쪽(도화지 위)에 세로 가운데로 펼쳐진다 */
+  .draw-drop {
+    left: auto;
+    right: calc(clamp(46px, 8vmin, 64px) + clamp(12px, 2vw, 18px));
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    height: fit-content;
+    max-height: 100%;
+    width: min(56vw, 600px);
+    overflow-y: auto;
   }
   /* 판은 남는 높이에 딱 맞는 폭(1000:620 = ×1.613)까지만 — 비율이 깨지지 않는다 */
-  #draw-pad {
-    width: min(100%, calc((100vh - 150px) * 1.613));
-    max-height: none;
-  }
+  #draw-pad { width: min(100%, calc((100vh - 118px) * 1.613)); }
 }
 
 /* 아주 낮은 가로 화면(폰 가로): 쓰기 화면을 2단으로 — 노트 왼쪽 + 듣기·툴바 오른쪽 열 */
@@ -907,7 +995,8 @@ h1 {
   .toolbar { grid-area: tool; flex-direction: column; gap: clamp(6px, 1.4vmin, 10px); }
   .toolbar .swatches { max-width: 190px; }
 
-  /* 낙서장 오른쪽 도구 열을 조금 좁혀 판을 넓힌다 */
-  #scr-draw.on { grid-template-columns: minmax(0, 1fr) clamp(210px, 26vw, 260px); }
-  #draw-pad { width: min(100%, calc((100vh - 84px) * 1.613)); }
+  /* 낙서장: 낮은 화면에선 단추를 조금 줄이고 판을 최대한 키운다 */
+  .dock-btn { width: clamp(40px, 10vmin, 50px); height: clamp(40px, 10vmin, 50px); font-size: clamp(19px, 5vmin, 26px); }
+  .draw-drop { right: calc(clamp(40px, 10vmin, 50px) + 12px); width: min(62vw, 560px); }
+  #draw-pad { width: min(100%, calc((100vh - 78px) * 1.613)); }
 }
