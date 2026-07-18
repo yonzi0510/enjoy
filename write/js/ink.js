@@ -307,6 +307,142 @@ window.Ink = (() => {
     };
   }
 
+  /* ─────────── 요리조리 풍선 줄 카드 ───────────
+   * 본보기 카드(풍선+검은 줄)를 보고 내 카드의 풍선 꼭지부터 줄을 그리는 운필력 놀이.
+   * 판정은 InkLine.coverage 와 같은 방식 — 목표 곡선을 래스터로 깔고
+   * 굵게 친 잉크 레이어와 겹친 비율을 센다. judgeW 를 키우면 더 너그러워진다. */
+  const BW = 520, BH = 640;   // 풍선 카드 논리 좌표계
+  const BKX = 260, BKY = 244; // 풍선 꼭지(줄 시작점)
+  // 풍선 6색 순환 — 본보기·내 카드가 같은 색을 쓴다
+  const BALLOON_COLS = [
+    { main: '#F2607A', dark: '#D6486B', lite: '#FBAABB' }, // 빨강
+    { main: '#F2A03D', dark: '#D97F1E', lite: '#FBD9A6' }, // 주황
+    { main: '#F0C93C', dark: '#CFA312', lite: '#FBE896' }, // 노랑
+    { main: '#4DC98F', dark: '#2E9E6B', lite: '#A5E8C9' }, // 초록
+    { main: '#5CA8F2', dark: '#3A7FD0', lite: '#ABD2FB' }, // 파랑
+    { main: '#B07CE8', dark: '#8A55C4', lite: '#D8BCF6' }, // 보라
+  ];
+  function drawBalloon(ctx, colorIdx) {
+    const col = BALLOON_COLS[(colorIdx || 0) % BALLOON_COLS.length];
+    ctx.save();
+    // 몸통 — 옆에서 빛을 받은 풍선 느낌의 방사 그라데이션
+    const g = ctx.createRadialGradient(BKX - 32, 96, 14, BKX, 130, 122);
+    g.addColorStop(0, col.lite);
+    g.addColorStop(0.55, col.main);
+    g.addColorStop(1, col.dark);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(BKX, 130, 88, 100, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 하이라이트
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.beginPath();
+    ctx.ellipse(BKX - 34, 92, 20, 30, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+    // 꼭지(매듭) — 여기서 줄이 시작된다
+    ctx.fillStyle = col.dark;
+    ctx.beginPath();
+    ctx.moveTo(BKX, 226);
+    ctx.lineTo(BKX - 13, BKY);
+    ctx.lineTo(BKX + 13, BKY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  function drawBalloonCurve(ctx, p, color, width, dash) {
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    if (dash) ctx.setLineDash(dash);
+    strokePath(ctx, p);
+    ctx.restore();
+  }
+  function itemsLength(items) {
+    let len = 0;
+    for (const st of items) {
+      if (st.s) continue;
+      for (let i = 2; i < st.p.length; i += 2) {
+        len += Math.hypot(st.p[i] - st.p[i - 2], st.p[i + 1] - st.p[i - 1]);
+      }
+    }
+    return len;
+  }
+
+  function BalloonPad(canvas, opts) { // opts: { color(), tool(), onChange(), onTouchReject() }
+    let curve = null;
+    let showGuide = true; // true = 안내선(흐린 점선) 표시, false = 본보기만 보고 그리기
+    let colorIdx = 0;
+    const base = pointerCanvas(canvas, {
+      w: BW, h: BH,
+      color: opts.color, tool: opts.tool,
+      onChange: opts.onChange, onTouchReject: opts.onTouchReject,
+      draw(ctx) {
+        drawBalloon(ctx, colorIdx);
+        if (curve && showGuide) drawBalloonCurve(ctx, curve, '#C9D5E4', 13, [1, 24]);
+      },
+    });
+    return {
+      resize: base.resize,
+      // 페이지 준비 — guide: 'show' 따라 그리기 / 'hide' 보고 그리기(안내선 숨김, 판정은 동일 곡선)
+      setCurve(p, guide, col) {
+        curve = p || null;
+        showGuide = guide !== 'hide';
+        colorIdx = col || 0;
+        base.setItems([]);
+      },
+      guideShown() { return showGuide; },
+      setStrokes(arr) { base.setItems(arr); },
+      strokes() { return base.items(); },
+      strokeCount() { return base.count(); },
+      clear: base.clear,
+      undo: base.undo,
+      inkLength() { return itemsLength(base.items()); },
+      // 목표 곡선을 잉크가 얼마나 덮었는지 0~1. judgeW = 판정용 잉크 굵기(클수록 너그럽다)
+      coverage(judgeW) {
+        if (!curve) return 1;
+        const s = 0.5, w = BW * s, h = BH * s;
+        const g = document.createElement('canvas'); g.width = w; g.height = h;
+        const gc = g.getContext('2d', { willReadFrequently: true });
+        gc.scale(s, s);
+        gc.lineCap = 'round'; gc.lineJoin = 'round';
+        gc.lineWidth = 14; gc.strokeStyle = '#000';
+        strokePath(gc, curve);
+        const gd = gc.getImageData(0, 0, w, h).data;
+        const k = document.createElement('canvas'); k.width = w; k.height = h;
+        const kc = k.getContext('2d', { willReadFrequently: true });
+        kc.scale(s, s);
+        kc.lineCap = 'round'; kc.lineJoin = 'round';
+        kc.lineWidth = judgeW || 60; kc.strokeStyle = '#000';
+        for (const st of base.items()) if (!st.s) strokePath(kc, st.p);
+        const kd = kc.getImageData(0, 0, w, h).data;
+        let total = 0, hit = 0;
+        for (let y = 0; y < h; y += 3) {
+          for (let x = 0; x < w; x += 3) {
+            const a = (y * w + x) * 4 + 3;
+            if (gd[a] > 60) { total++; if (kd[a] > 10) hit++; }
+          }
+        }
+        return total ? hit / total : 1;
+      },
+    };
+  }
+
+  // 본보기 카드 — 풍선 + 검은 줄만 그린다 (입력 없음)
+  function renderBalloonSample(canvas, p, colorIdx) {
+    const r = canvas.getBoundingClientRect();
+    if (!r.width) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.width * (BH / BW) * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform((r.width / BW) * dpr, 0, 0, (r.width / BW) * dpr, 0, 0);
+    ctx.clearRect(0, 0, BW, BH);
+    drawBalloon(ctx, colorIdx);
+    drawBalloonCurve(ctx, p, '#3B3B4A', 10);
+  }
+
   /* ─────────── 자유 그림판 ─────────── */
   function FreePad(canvas, opts) { // opts: { color(), tool(), pen(), sticker(), onChange(), onTouchReject() }
     const base = pointerCanvas(canvas, {
@@ -332,6 +468,16 @@ window.Ink = (() => {
       drawItems(ctx, art.items || [], null);
       return;
     }
+    if (art.k === 'bl') { // 풍선 줄 작품 — 풍선 + 옅은 목표 곡선 + 내가 그린 줄
+      canvas.width = Math.round(cw * dpr);
+      canvas.height = Math.round(cw * (BH / BW) * dpr);
+      const s = (cw / BW) * dpr;
+      ctx.setTransform(s, 0, 0, s, 0, 0);
+      drawBalloon(ctx, art.col || 0);
+      if (art.curve) drawBalloonCurve(ctx, art.curve, '#E4E9F1', 12);
+      drawItems(ctx, art.st || [], null);
+      return;
+    }
     canvas.width = Math.round(cw * dpr);
     canvas.height = Math.round(cw * ((H * 2) / W) * dpr); // 두 줄을 위아래로
     const s = (cw / W) * dpr;
@@ -345,5 +491,8 @@ window.Ink = (() => {
     drawItems(ctx, art.fr || [], null);
   }
 
-  return { InkLine, FreePad, renderArt, W, H, FW, FH, RB };
+  return {
+    InkLine, FreePad, renderArt, W, H, FW, FH, RB,
+    BalloonPad, renderBalloonSample, BW, BH, BALLOON_N: BALLOON_COLS.length,
+  };
 })();

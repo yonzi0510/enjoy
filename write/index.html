@@ -97,6 +97,37 @@
   </div>
 </section>
 
+<!-- 요리조리 풍선 줄 — 본보기 풍선 카드의 줄 모양을 보고 똑같이 그리는 운필력 놀이 -->
+<section class="screen" id="scr-balloon">
+  <header class="bar">
+    <button type="button" class="back" id="btn-balloon-back">◀</button>
+    <h2 id="balloon-title">🎈 요리조리 풍선 줄</h2>
+    <span class="dots" id="balloon-dots"></span>
+  </header>
+  <button type="button" class="side-nav prev" id="balloon-prev" aria-label="이전 풍선">◀</button>
+  <button type="button" class="side-nav next" id="balloon-next" aria-label="다 그리고 다음 풍선">▶</button>
+  <div class="bl-stage">
+    <div class="bl-cards">
+      <div class="bl-card" id="balloon-sample-card">
+        <span class="bl-tag">👀 본보기</span>
+        <canvas id="balloon-sample"></canvas>
+      </div>
+      <div class="bl-card mine" id="balloon-mine">
+        <span class="bl-tag mine">✏️ 내 풍선</span>
+        <canvas id="balloon-pad"></canvas>
+        <button type="button" class="line-clear" id="balloon-clear" aria-label="내 줄 지우기">🧽</button>
+        <span class="bl-fly" id="balloon-fly" hidden>🎈</span>
+      </div>
+    </div>
+    <div class="toolbar bl-toolbar">
+      <button type="button" class="bigbtn" id="btn-balloon-listen">🔊 듣기</button>
+      <div class="swatches" id="balloon-swatches"></div>
+      <button type="button" class="bigbtn" id="btn-balloon-eraser">🧼 지우개</button>
+      <button type="button" class="bigbtn" id="btn-balloon-undo">↩️ 한 획</button>
+    </div>
+  </div>
+</section>
+
 <!-- 자유 낙서장 — 도화지가 메인, 도구는 가장자리 단추를 누르면 드롭판으로 펼쳐진다 -->
 <section class="screen" id="scr-draw">
   <header class="bar">
