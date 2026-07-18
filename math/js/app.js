@@ -23,6 +23,7 @@ window.App = (() => {
     { id: 'chart', icon: '💯', name: '숫자표 채우기', desc: '빈칸에 쏙!', cls: 'c-chart' },
     { id: 'dots', icon: '✨', name: '점 잇기', desc: '순서대로 콕콕', cls: 'c-dots' },
     { id: 'pattern', icon: '🚂', name: '패턴 이어가기', desc: '다음 칸은 뭘까?', cls: 'c-pattern' },
+    { id: 'dice', icon: '🎲', name: '주사위 수 놀이', desc: '점을 세어 숫자 칸에', cls: 'c-dice' },
     { id: 'add-visual', icon: '🍎', name: '그림 덧셈', desc: '그림을 세면서 배워요', cls: 'c-addv', mode: 'add', visual: true },
     { id: 'sub-visual', icon: '🍏', name: '그림 뺄셈', desc: '먹은 건 몇 개?', cls: 'c-subv', mode: 'sub', visual: true },
     { id: 'add', icon: '➕', name: '덧셈 문제', desc: '3 + 4 = ?', cls: 'c-add', mode: 'add', visual: false },
@@ -71,6 +72,7 @@ window.App = (() => {
     if (modeDef.id === 'stones') return STONE_LEVELS;
     if (modeDef.id === 'pattern') return D.PATTERN_LEVELS;
     if (modeDef.id === 'count') return D.COUNT_LEVELS;
+    if (modeDef.id === 'dice') return D.DICE_LEVELS;
     if (modeDef.id === 'chart') return D.CHART_LEVELS;
     if (modeDef.id === 'dots') { // 점 잇기는 단계 대신 그림 목록
       return window.MathDots.PICTURES.map(p => ({ id: p.id, name: p.name, desc: '점 ' + p.dots.length + '개', emoji: p.emoji }));
@@ -222,6 +224,7 @@ window.App = (() => {
         if (modeDef.id === 'stones') startStoneRound(lv);
         else if (modeDef.id === 'pattern') startPatternRound(lv);
         else if (modeDef.id === 'count') startCountRound(lv);
+        else if (modeDef.id === 'dice') startDiceRound(lv);
         else if (modeDef.id === 'chart') startChart(lv);
         else if (modeDef.id === 'dots') startDots(window.MathDots.PICTURES.find(p => p.id === lv.id));
         else startRound(lv);
@@ -959,6 +962,183 @@ window.App = (() => {
     }, 1400);
   }
 
+  /* ─────────── 주사위 수 놀이 — 점을 세어 같은 숫자 칸에 끌어다 놓기 ─────────── */
+  let dc = null;     // { level, board, cells:[{n,el,filled}], pieces:[{n,color,el,placed}], placedCount, lock }
+  let dcDrag = null; // { p, ph, offX, offY, w, h }
+
+  // 주사위 눈 얼굴 — 색 사각형 + 흰 점(표준 주사위 배치)
+  function diceFaceSVG(n, color) {
+    const pips = D.pipPoints(n)
+      .map(([x, y]) => '<circle cx="' + x + '" cy="' + y + '" r="9" fill="#fff"/>').join('');
+    return '<svg viewBox="0 0 100 100" class="dice-svg" aria-hidden="true">' +
+      '<rect x="6" y="6" width="88" height="88" rx="20" fill="' + color + '"/>' + pips + '</svg>' +
+      '<b class="dice-num">' + n + '</b>';
+  }
+  function updateDiceCount() {
+    $('dice-count').textContent = dc.placedCount + ' / ' + dc.pieces.length;
+  }
+
+  function startDiceRound(level) {
+    dcDrag = null;
+    dc = { level, cells: [], pieces: [], placedCount: 0, lock: false };
+    showScreen('scr-dice');
+    const board = D.makeDiceBoard(level);
+    dc.board = board;
+
+    // 보드 — 목표 숫자가 적힌 칸 + 빈 칸(장식). 목표 칸에만 조각을 놓을 수 있다
+    const boardEl = $('dice-board');
+    boardEl.style.gridTemplateColumns = 'repeat(' + board.cols + ', 1fr)';
+    boardEl.innerHTML = '';
+    board.slots.forEach(slot => {
+      const cell = document.createElement('div');
+      if (!slot) { cell.className = 'dice-cell blank'; boardEl.appendChild(cell); return; }
+      cell.className = 'dice-cell';
+      cell.dataset.n = slot.n;
+      cell.innerHTML = '<span class="dice-goal">' + slot.n + '</span>';
+      boardEl.appendChild(cell);
+      dc.cells.push({ n: slot.n, el: cell, filled: false });
+    });
+
+    // 트레이 — 알록달록 주사위 점 조각 (순서는 칸과 무관하게 섞임)
+    const trayEl = $('dice-tray');
+    trayEl.innerHTML = '';
+    board.pieces.forEach(pc => {
+      const el = document.createElement('div');
+      el.className = 'dice-piece';
+      el.dataset.n = pc.n;
+      el.innerHTML = diceFaceSVG(pc.n, pc.color);
+      trayEl.appendChild(el);
+      dc.pieces.push({ n: pc.n, color: pc.color, el, placed: false });
+    });
+
+    updateDiceCount();
+    setTimeout(() => A.speak('주사위 점을 세어 볼까? 같은 숫자가 적힌 칸에 쏙 넣어 줘!'), 350);
+  }
+
+  // 드래그 (손가락·마우스·펜 공통 — 포인터 이벤트)
+  function diceStageDown(ev) {
+    if (!dc || dc.lock || dcDrag) return;
+    const el = ev.target.closest && ev.target.closest('.dice-piece');
+    if (!el) return;
+    const p = dc.pieces.find(q => q.el === el);
+    if (!p || p.placed) return;
+    ev.preventDefault();
+    const r = el.getBoundingClientRect();
+    // 자리를 지키는 대체 요소 — 조각을 들어 올려도 트레이가 흐트러지지 않게
+    const ph = document.createElement('div');
+    ph.className = 'dice-ph';
+    ph.style.width = r.width + 'px';
+    ph.style.height = r.height + 'px';
+    el.parentNode.insertBefore(ph, el);
+    el.classList.add('grab');
+    el.style.position = 'fixed';
+    el.style.margin = '0';
+    el.style.width = r.width + 'px';
+    el.style.height = r.height + 'px';
+    el.style.left = r.left + 'px';
+    el.style.top = r.top + 'px';
+    dcDrag = { p, ph, offX: ev.clientX - r.left, offY: ev.clientY - r.top, w: r.width, h: r.height };
+    A.sfx.pop();
+  }
+  function diceMove(ev) {
+    if (!dcDrag) return;
+    ev.preventDefault();
+    dcDrag.p.el.style.left = (ev.clientX - dcDrag.offX) + 'px';
+    dcDrag.p.el.style.top = (ev.clientY - dcDrag.offY) + 'px';
+  }
+  function diceUp() {
+    if (!dcDrag) return;
+    const d = dcDrag; dcDrag = null;
+    const p = d.p;
+    const pr = p.el.getBoundingClientRect();
+    const pcx = pr.left + pr.width / 2, pcy = pr.top + pr.height / 2;
+    // 가장 가까운 빈 목표 칸을 관대하게 찾는다
+    let best = null, bd = 1e9;
+    dc.cells.forEach(c => {
+      if (c.filled) return;
+      const cr = c.el.getBoundingClientRect();
+      const dist = Math.hypot(pcx - (cr.left + cr.width / 2), pcy - (cr.top + cr.height / 2));
+      const reach = Math.max(cr.width, cr.height) * 0.85 + 10; // 관대한 스냅 반경
+      if (dist < bd && dist < reach) { bd = dist; best = c; }
+    });
+    if (best && best.n === p.n) return diceSnap(p, d, best);
+    if (best) { // 틀린 칸 — 부드럽게 튕겨 돌아오고 격려 (무벌점)
+      diceReturn(p, d);
+      A.sfx.tap();
+      A.speak('점을 세어 볼까? 같은 숫자 칸을 찾아봐!');
+      return;
+    }
+    diceReturn(p, d); // 아무 칸도 아니면 조용히 제자리
+  }
+  function clearFixed(el) {
+    ['position', 'left', 'top', 'width', 'height', 'margin'].forEach(k => el.style.removeProperty(k));
+  }
+  function animFixed(el, x, y, done) {
+    const x0 = parseFloat(el.style.left) || 0, y0 = parseFloat(el.style.top) || 0;
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.style.left = x + 'px'; el.style.top = y + 'px'; if (done) done(); return;
+    }
+    const t0 = performance.now(), dur = 220;
+    (function step(t) {
+      let f = Math.min(1, (t - t0) / dur); f = 1 - (1 - f) * (1 - f);
+      el.style.left = (x0 + (x - x0) * f) + 'px';
+      el.style.top = (y0 + (y - y0) * f) + 'px';
+      if (f < 1) requestAnimationFrame(step); else if (done) done();
+    })(performance.now());
+  }
+  function diceReturn(p, d) {
+    const to = d.ph.getBoundingClientRect();
+    animFixed(p.el, to.left, to.top, () => {
+      if (d.ph.parentNode) d.ph.parentNode.insertBefore(p.el, d.ph);
+      d.ph.remove();
+      clearFixed(p.el);
+      p.el.classList.remove('grab');
+    });
+  }
+  function diceSnap(p, d, cell) {
+    dc.lock = true;
+    p.placed = true;
+    cell.filled = true;
+    d.ph.remove();
+    const cr = cell.el.getBoundingClientRect();
+    animFixed(p.el, cr.left + (cr.width - d.w) / 2, cr.top + (cr.height - d.h) / 2, () => {
+      p.el.classList.remove('grab');
+      clearFixed(p.el);
+      cell.el.classList.add('filled');
+      cell.el.appendChild(p.el);       // 칸 안으로 착!
+      p.el.classList.add('placed');    // 절대 채움 + 숫자 뿅
+      A.sfx.good();
+      diceCelebrate(p);                // 점을 하나씩 세어 준다
+      dc.placedCount++;
+      updateDiceCount();
+      dc.lock = false;
+      if (dc.placedCount >= dc.pieces.length) setTimeout(diceComplete, 700);
+    });
+  }
+  // 이해 단계 — 점을 하나씩 짚으며 세어 준다 ("하나, 둘, 셋… 모두 셋!")
+  function diceCelebrate(p) {
+    const items = [];
+    for (let i = 1; i <= p.n; i++) items.push({ text: countWord(i), rate: 1.05 });
+    items.push({ text: '모두 ' + p.n + '개!' });
+    A.speakSeq(items);
+  }
+  function diceComplete() {
+    const lv = dc.level;
+    const first = P.rounds('dice-' + lv.id) === 0;
+    P.recordRound('dice-' + lv.id);
+    P.addStar(dc.pieces.length);
+    if (window.Pet) {
+      Pet.awardSnack(1);
+      // 3단계를 모두 한 번씩 완주하면 식사 보상
+      if (first && D.DICE_LEVELS.every(l => P.rounds('dice-' + l.id) > 0)) Pet.awardMeal(1);
+    }
+    A.sfx.fanfare();
+    showReward('주사위 칸을 다 채웠어요!', '한 판 더 🎲', () => startDiceRound(dc.level), () => {
+      openLevels(MODES.find(m => m.id === 'dice'));
+    });
+    A.speak('와, 점을 다 세어서 숫자 칸에 쏙쏙 넣었어요! 정말 잘했어요!');
+  }
+
   /* ─────────── 보상 오버레이 ─────────── */
   let rewardNextFn = null, rewardCloseFn = null;
   function showReward(praise, nextLabel, onNext, onClose) {
@@ -1025,6 +1205,16 @@ window.App = (() => {
       if (dt && dt.timer) clearTimeout(dt.timer);
       openLevels(MODES.find(m => m.id === 'dots'));
     });
+    $('btn-dice-back').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      dcDrag = null; // 잡은 조각이 있으면 조용히 놓아준다
+      openLevels(MODES.find(m => m.id === 'dice'));
+    });
+    // 주사위 조각 드래그 — stage 에서 눌러 잡고, 창 전체에서 끌기·놓기를 듣는다 (합성 이벤트도 따라오게)
+    $('dice-stage').addEventListener('pointerdown', diceStageDown);
+    window.addEventListener('pointermove', diceMove);
+    window.addEventListener('pointerup', diceUp);
+    window.addEventListener('pointercancel', diceUp);
     window.addEventListener('resize', () => { // 화면이 돌아가면 개구리 자리 다시 맞추기
       if (st && document.getElementById('scr-stones').classList.contains('on')) {
         placeFrog(st.lock ? st.target : st.a);
@@ -1087,6 +1277,13 @@ window.App = (() => {
       count: ct ? { n: ct.n, qIdx: ct.qIdx, counted: ct.counted } : null,
       chart: ch ? { sel: ch.sel, left: ch.left } : null,
       dot: dt ? { next: dt.next, total: dt.pic.dots.length } : null,
+      dice: dc ? {
+        level: dc.level.id,
+        placed: dc.placedCount,
+        total: dc.pieces.length,
+        cells: dc.cells.map(c => ({ n: c.n, filled: c.filled })),
+        pieces: dc.pieces.map(p => ({ n: p.n, placed: p.placed })),
+      } : null,
     };
   }
 

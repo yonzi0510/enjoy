@@ -126,6 +126,53 @@ if (typeof D.makePattern !== 'function') {
   });
 }
 
+// 주사위 수 놀이: 단계 3구간, 점 범위 1~9, 판(cols×rows)에 목표 칸(cells)이 들어가고,
+// 생성기 표본 퍼징으로 "목표 숫자가 서로 다르고 조각과 1:1 → 정답 칸이 유일하게 존재"함을 확인
+if (!Array.isArray(D.DICE_LEVELS) || D.DICE_LEVELS.length !== 3) {
+  err('주사위 놀이 단계가 3구간이어야 함');
+} else {
+  D.DICE_LEVELS.forEach(lv => {
+    const tag = '주사위 ' + (lv.name || lv.id);
+    if (!lv.name || !lv.desc || !lv.emoji) err(tag + ': 이름·설명·이모지 누락');
+    if (!(lv.from >= 1 && lv.to <= 9 && lv.from < lv.to)) err(tag + ': 점 범위(1~9) 오류 — ' + lv.from + '~' + lv.to);
+    if (!(lv.cols >= 2 && lv.rows >= 2)) err(tag + ': 판 크기 오류 — ' + lv.cols + '×' + lv.rows);
+    if (!(lv.cells >= 3)) err(tag + ': 목표 칸 수가 너무 적음 — ' + lv.cells);
+    if (lv.cells > lv.cols * lv.rows) err(tag + ': 목표 칸(' + lv.cells + ')이 판(' + lv.cols * lv.rows + ')보다 많음');
+    // 서로 다른 목표 숫자를 cells개 뽑을 수 있어야 유일 해가 성립
+    if (lv.cells > (lv.to - lv.from + 1)) err(tag + ': 서로 다른 숫자로 목표 칸을 채울 수 없음(범위<칸)');
+  });
+}
+// 주사위 눈 배치(1~9)가 모두 정의되어 있고 점 개수가 숫자와 같은지
+if (typeof D.pipPoints !== 'function') err('주사위 눈 배치(pipPoints)가 없음');
+else for (let n = 1; n <= 9; n++) {
+  const pts = D.pipPoints(n);
+  if (!Array.isArray(pts) || pts.length !== n) err('주사위 눈 ' + n + ': 점 개수(' + (pts && pts.length) + ')가 숫자와 다름');
+  (pts || []).forEach(pt => { if (!Array.isArray(pt) || pt.length !== 2) err('주사위 눈 ' + n + ': 좌표 형식 오류'); });
+}
+// 생성기 표본 검사
+if (typeof D.makeDiceBoard !== 'function') {
+  err('makeDiceBoard 생성기가 없음');
+} else {
+  (D.DICE_LEVELS || []).forEach(lv => {
+    for (let t = 0; t < 300; t++) {
+      const b = D.makeDiceBoard(lv);
+      const tag = '주사위 생성(' + lv.id + '단계)';
+      if (!b || b.cols !== lv.cols || b.rows !== lv.rows) { err(tag + ': 판 크기 불일치'); break; }
+      if (!Array.isArray(b.slots) || b.slots.length !== lv.cols * lv.rows) { err(tag + ': 칸 수 오류'); break; }
+      const targets = b.slots.filter(s => s).map(s => s.n);
+      if (targets.length !== lv.cells) { err(tag + ': 목표 칸 수(' + targets.length + ') 오류'); break; }
+      if (targets.some(n => n < lv.from || n > lv.to)) { err(tag + ': 목표 숫자가 범위 밖'); break; }
+      if (new Set(targets).size !== targets.length) { err(tag + ': 목표 숫자가 중복(유일 해 깨짐)'); break; }
+      if (!Array.isArray(b.pieces) || b.pieces.length !== lv.cells) { err(tag + ': 조각 수 오류'); break; }
+      if (b.pieces.some(p => !/^#[0-9A-Fa-f]{6}$/.test(p.color || ''))) { err(tag + ': 조각 색 형식 오류'); break; }
+      // 조각 숫자 집합이 목표 숫자 집합과 완전히 같아야 각 조각의 정답 칸이 정확히 하나
+      const ps = b.pieces.map(p => p.n).sort((a, c) => a - c).join(',');
+      const ts = targets.slice().sort((a, c) => a - c).join(',');
+      if (ps !== ts) { err(tag + ': 조각과 목표 칸이 1:1 대응하지 않음 — ' + ps + ' / ' + ts); break; }
+    }
+  });
+}
+
 // 점 잇기 도안: 그림 30개 이상, 점 10~20개(번호는 배열 순서 = 1부터 연속),
 // 좌표는 viewBox 안, 점끼리 9 이상 떨어져야 한다(잘못 눌림 방지)
 if (!DOTS || !Array.isArray(DOTS.PICTURES)) {
@@ -165,4 +212,4 @@ if (errors) {
 }
 console.log('✅ 데이터 검증 통과 — 숫자 1~100, 묶음 10개, 레벨 ' + D.LEVELS.length + '단계, 수 세기 ' +
   D.COUNT_LEVELS.length + '단계, 숫자표 ' + D.CHART_LEVELS.length + '단계, 점 잇기 그림 ' + DOTS.PICTURES.length +
-  '개, 패턴 ' + D.PATTERN_LEVELS.length + '단계·소재 ' + D.PATTERN_SETS.length + '묶음');
+  '개, 패턴 ' + D.PATTERN_LEVELS.length + '단계·소재 ' + D.PATTERN_SETS.length + '묶음, 주사위 ' + D.DICE_LEVELS.length + '단계');

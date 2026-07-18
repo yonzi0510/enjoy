@@ -67,6 +67,59 @@ window.MathData = (() => {
     return { unit, shown, answer, choices };
   }
 
+  /* ─────────── 주사위 수 놀이 ───────────
+   * 점을 세어 같은 숫자 칸에 끌어다 놓는 수 세기 놀이.
+   * 계약(validate-data.js가 검사):
+   *  - 단계 3구간(쉬움·보통·어려움), 점 수 범위 1~9, 판 크기(cols×rows)에 목표 칸(cells)이 들어감
+   *  - makeDiceBoard()는 서로 다른 목표 숫자를 골라 조각과 1:1로 대응시킨다
+   *    → 어느 조각이든 정답 칸이 '정확히 하나' 존재(유일 해)
+   */
+  const DICE_COLORS = ['#FF7B7B', '#FFB24D', '#FFDA47', '#6FD48A', '#5CC7E8', '#7B93F2', '#B98BE8', '#F58BC0', '#8FD0A0'];
+  // 주사위 눈 배치(1~9) — 3×3 격자 위 표준 주사위 눈 (셀 수 있게)
+  const PIP_GRID = { // 100×100 뷰박스 기준 좌표
+    TL: [28, 28], TC: [50, 28], TR: [72, 28],
+    ML: [28, 50], C: [50, 50], MR: [72, 50],
+    BL: [28, 72], BC: [50, 72], BR: [72, 72],
+  };
+  const PIP_LAYOUT = {
+    1: ['C'], 2: ['TL', 'BR'], 3: ['TL', 'C', 'BR'], 4: ['TL', 'TR', 'BL', 'BR'],
+    5: ['TL', 'TR', 'C', 'BL', 'BR'], 6: ['TL', 'TR', 'ML', 'MR', 'BL', 'BR'],
+    7: ['TL', 'TR', 'ML', 'MR', 'BL', 'BR', 'C'],
+    8: ['TL', 'TC', 'TR', 'ML', 'MR', 'BL', 'BC', 'BR'],
+    9: ['TL', 'TC', 'TR', 'ML', 'C', 'MR', 'BL', 'BC', 'BR'],
+  };
+  function pipPoints(n) { return (PIP_LAYOUT[n] || []).map(k => PIP_GRID[k]); }
+
+  const DICE_LEVELS = [
+    { id: 1, name: '쉬움', desc: '점 1~3 · 작은 판', emoji: '🐣', cols: 2, rows: 2, cells: 3, from: 1, to: 3 },
+    { id: 2, name: '보통', desc: '점 1~6 · 3×3 판', emoji: '🐥', cols: 3, rows: 3, cells: 6, from: 1, to: 6 },
+    { id: 3, name: '어려움', desc: '점 1~9 · 큰 판', emoji: '🦖', cols: 4, rows: 4, cells: 8, from: 1, to: 9 },
+  ];
+  // 판 하나를 랜덤 생성 — { cols, rows, slots:[{n}|null…], pieces:[{n,color}…] }
+  // 목표 숫자는 서로 다르게 골라 조각과 1:1로 맞물린다 (틀린 칸이 생겨도 정답 칸은 유일)
+  function makeDiceBoard(level, rand) {
+    const rnd = rand || (n => Math.floor(Math.random() * n));
+    const total = level.cols * level.rows;
+    // from~to 에서 서로 다른 목표 숫자 cells개 뽑기
+    const poolN = [];
+    for (let v = level.from; v <= level.to; v++) poolN.push(v);
+    for (let i = poolN.length - 1; i > 0; i--) { const j = rnd(i + 1);[poolN[i], poolN[j]] = [poolN[j], poolN[i]]; }
+    const nums = poolN.slice(0, level.cells);
+    // 목표를 놓을 칸 위치 cells개 뽑기 (나머지는 빈 칸)
+    const idxs = [];
+    for (let i = 0; i < total; i++) idxs.push(i);
+    for (let i = idxs.length - 1; i > 0; i--) { const j = rnd(i + 1);[idxs[i], idxs[j]] = [idxs[j], idxs[i]]; }
+    const spots = idxs.slice(0, level.cells);
+    const slots = new Array(total).fill(null);
+    spots.forEach((s, i) => { slots[s] = { n: nums[i] }; });
+    // 조각 — 목표 숫자를 알록달록 색과 함께 섞어서 트레이에 (순서는 칸과 무관)
+    const cols = DICE_COLORS.slice();
+    for (let i = cols.length - 1; i > 0; i--) { const j = rnd(i + 1);[cols[i], cols[j]] = [cols[j], cols[i]]; }
+    const pieces = nums.map((n, i) => ({ n, color: cols[i % cols.length] }));
+    for (let i = pieces.length - 1; i > 0; i--) { const j = rnd(i + 1);[pieces[i], pieces[j]] = [pieces[j], pieces[i]]; }
+    return { cols: level.cols, rows: level.rows, slots, pieces };
+  }
+
   // 1~100 한자어 읽기: 칠, 십칠, 사십칠, 백
   function numName(n) {
     if (n === 100) return '백';
@@ -109,6 +162,8 @@ window.MathData = (() => {
     ],
     // 패턴 이어가기 — 단계·소재·생성기
     PATTERN_LEVELS, PATTERN_SETS, makePattern,
+    // 주사위 수 놀이 — 단계·색·눈 배치·생성기
+    DICE_LEVELS, DICE_COLORS, pipPoints, makeDiceBoard,
     ROUND: 5, // 한 판 문제 수
   };
 })();
