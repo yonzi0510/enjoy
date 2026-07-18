@@ -85,6 +85,20 @@ window.App = (() => {
       menu.appendChild(b);
     });
 
+    if (D.balloons) { // 요리조리 풍선 줄 카드
+      const done = balloonDone(), total = balloonTotal();
+      const bl = document.createElement('button');
+      bl.type = 'button';
+      bl.className = 'menu-card c-balloon';
+      bl.innerHTML =
+        '<span class="mc-icon">' + D.balloons.icon + '</span>' +
+        '<span class="mc-name">' + D.balloons.name + '</span>' +
+        '<span class="mc-desc">' + D.balloons.desc + '</span>' +
+        '<span class="mc-prog">' + (done >= total ? '🏅 완성!' : '⭐ ' + done + ' / ' + total) + '</span>';
+      bl.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openBalloonLevels(); });
+      menu.appendChild(bl);
+    }
+
     const draw = document.createElement('button');
     draw.type = 'button';
     draw.className = 'menu-card c-draw';
@@ -469,6 +483,12 @@ window.App = (() => {
 
   function rewardNext() {
     document.getElementById('reward').classList.remove('on');
+    if (bcur) { // 풍선 줄 흐름 — 다음 풍선 또는 단계 목록으로
+      if (bcur.idx < bcur.level.pages.length - 1) { openBalloonPage(bcur.idx + 1); return; }
+      openBalloonLevels();
+      A.speak('풍선 줄을 다 그렸다! 정말 대단해요!');
+      return;
+    }
     const scope = cur.scope;
     if (cur.idx < scope.pages.length - 1) { openPage(cur.idx + 1); return; }
     // 화면 전환이 A.stop()으로 말을 끊으므로, 전환을 먼저 하고 말한다
@@ -476,6 +496,161 @@ window.App = (() => {
     if (cur.parent) openItems(cur.parent);
     else showScreen('scr-home');
     A.speak(scope.name + ' 다 썼다! 정말 대단해요!');
+  }
+
+  /* ─────────── 요리조리 풍선 줄 — 본보기 카드의 줄을 보고 똑같이 그리기 ───────────
+   * 판정: ink.js coverage 재사용. 1~2단계(trace)는 안내선을 흐리게 깔고 판정 굵기 60,
+   * 3단계(보고 그리기)는 안내선을 숨기고 판정 굵기 120 + 임계 완화로 "비슷하면 통과". */
+  const BL_JUDGE = {
+    trace: { w: 60, min: 0.55 },  // 따라 그리기
+    free: { w: 120, min: 0.35 },  // 보고 그리기 — 더 너그럽게
+  };
+  let bPad = null;
+  let bcur = null; // { level, li, idx, col, dirty, failStamp }
+  let balloonColor = COLORS[9]; // 남색 — 본보기의 검은 줄과 비슷한 기본색
+  let balloonTool = 'pen';
+
+  function balloonDone() { return D.balloons.levels.reduce((n, lv) => n + doneIn(lv), 0); }
+  function balloonTotal() { return D.balloons.levels.reduce((n, lv) => n + lv.pages.length, 0); }
+  function setBalloonTool(tool) {
+    balloonTool = tool;
+    document.getElementById('btn-balloon-eraser').classList.toggle('on', tool === 'erase');
+  }
+  function balloonJudge() { return bcur.level.trace ? BL_JUDGE.trace : BL_JUDGE.free; }
+
+  function initBalloon() {
+    bPad = Ink.BalloonPad(document.getElementById('balloon-pad'), {
+      color: () => balloonColor, tool: () => balloonTool, onTouchReject: penHint(),
+      onChange: () => { if (bcur) bcur.dirty = true; },
+    });
+    makeSwatches(document.getElementById('balloon-swatches'), balloonColor, c => {
+      balloonColor = c;
+      setBalloonTool('pen');
+    });
+    window.addEventListener('resize', renderBalloonSampleNow);
+  }
+  function renderBalloonSampleNow() {
+    if (!bcur) return;
+    const page = bcur.level.pages[bcur.idx];
+    Ink.renderBalloonSample(document.getElementById('balloon-sample'), page.p, bcur.col);
+  }
+
+  // 단계 목록 — 동요·동화 목록 화면(scr-items)을 같이 쓴다
+  function openBalloonLevels() {
+    bcur = null;
+    curChapter = null;
+    document.getElementById('items-title').textContent = D.balloons.icon + ' ' + D.balloons.name;
+    const list = document.getElementById('items-list');
+    list.innerHTML = '';
+    D.balloons.levels.forEach(lv => {
+      const done = doneIn(lv), total = lv.pages.length;
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'item-main';
+      b.innerHTML =
+        '<span class="it-emoji">' + lv.e + '</span>' +
+        '<span class="it-texts"><span class="it-name">' + lv.name + '</span>' +
+        '<span class="it-kind">' + lv.kind + '</span></span>' +
+        '<span class="it-prog">' + (done >= total ? '🏅' : '⭐ ' + done + ' / ' + total) + '</span>';
+      b.addEventListener('click', ev => {
+        ev.preventDefault();
+        A.sfx.tap();
+        openBalloon(lv, firstTodo(lv));
+      });
+      row.appendChild(b);
+      list.appendChild(row);
+    });
+    showScreen('scr-items');
+  }
+
+  function openBalloon(level, idx) {
+    flushDraft(); // 필사 화면에서 쓰다 만 초안이 있으면 저장
+    bcur = { level, li: D.balloons.levels.indexOf(level), idx };
+    document.getElementById('balloon-title').textContent = '🎈 ' + level.name;
+    setBalloonTool('pen');
+    showScreen('scr-balloon');
+    bPad.resize();
+    openBalloonPage(idx);
+  }
+
+  function openBalloonPage(idx) {
+    const level = bcur.level;
+    bcur.idx = idx;
+    bcur.dirty = false;
+    bcur.failStamp = null;
+    bcur.col = (bcur.li * 10 + idx) % Ink.BALLOON_N; // 페이지마다 풍선 색 순환
+    const page = level.pages[idx];
+    document.getElementById('balloon-prev').disabled = idx === 0;
+    const dots = document.getElementById('balloon-dots');
+    dots.innerHTML = '';
+    level.pages.forEach((_, i) => {
+      const d = document.createElement('span');
+      d.className = 'dot' + (i === idx ? ' on' : '') + (P.isDone(pageId(level, i)) ? ' done' : '');
+      dots.appendChild(d);
+    });
+    bPad.setCurve(page.p, level.trace ? 'show' : 'hide', bcur.col);
+    renderBalloonSampleNow();
+    const art = P.artOf(pageId(level, idx));
+    if (art && art.k === 'bl' && art.st) bPad.setStrokes(art.st); // 전에 그린 줄 다시 보여주기
+    bcur.dirty = false;
+    setTimeout(() => A.speak(page.say || page.name), 350);
+  }
+
+  function balloonStamp() {
+    return bPad.strokeCount() + ':' + Math.round(bPad.inkLength());
+  }
+  /* ▶ = 다 그렸어요 + 다음. 안 그렸으면 그냥 넘기고,
+   * 판정 실패 후 같은 상태로 두 번 누르면 좌절하지 않게 보내 준다 (필사와 같은 규칙). */
+  function balloonNext() {
+    if (!bcur) return;
+    const level = bcur.level;
+    const next = () => { if (bcur.idx < level.pages.length - 1) openBalloonPage(bcur.idx + 1); };
+    if (bPad.strokeCount() === 0) { A.sfx.tap(); next(); return; } // 안 그렸으면 구경만
+    if (!bcur.dirty && P.isDone(pageId(level, bcur.idx))) { A.sfx.tap(); next(); return; }
+    const j = balloonJudge();
+    if (bPad.coverage(j.w) < j.min) {
+      const stamp = balloonStamp();
+      if (bcur.failStamp === stamp) { A.sfx.tap(); next(); return; } // 두 번째 누름 → 보내주기
+      bcur.failStamp = stamp;
+      A.sfx.tap();
+      wiggle('balloon-mine');
+      A.speak(level.trace
+        ? '풍선 꼭지부터 점선을 따라 그려 볼까?'
+        : '본보기 풍선 줄을 잘 보고 똑같이 그려 볼까?');
+      return;
+    }
+    finishBalloonPage();
+  }
+
+  function finishBalloonPage() {
+    const level = bcur.level, idx = bcur.idx;
+    const page = level.pages[idx];
+    P.completePage(pageId(level, idx), { // 완성작은 갤러리에 저장된다
+      t: page.name, e: '🎈', k: 'bl', col: bcur.col, curve: page.p, st: bPad.strokes(),
+    });
+    if (window.Pet) { // 펫 먹이: 페이지 = 간식, 단계(10장) 완주 = 식사
+      Pet.awardSnack(1);
+      if (doneIn(level) >= level.pages.length) Pet.awardMeal(1);
+    }
+    // 풍선이 두둥실 떠오르는 축하 → 보상 카드
+    const fly = document.getElementById('balloon-fly');
+    fly.className = 'bl-fly blc-' + bcur.col;
+    fly.hidden = false;
+    void fly.offsetWidth;
+    fly.classList.add('fly');
+    A.sfx.fanfare();
+    const praise = D.praises[Math.floor(Math.random() * D.praises.length)];
+    document.getElementById('reward-praise').textContent = praise;
+    document.getElementById('reward-next').textContent = idx >= level.pages.length - 1 ? '완성! 🎉' : '다음 ▶';
+    clearTimeout(finishBalloonPage.t);
+    finishBalloonPage.t = setTimeout(() => {
+      fly.classList.remove('fly');
+      fly.hidden = true;
+      document.getElementById('reward').classList.add('on');
+      A.speak(praise);
+    }, 950);
   }
 
   /* ─────────── 자유 낙서장 ─────────── */
@@ -688,6 +863,7 @@ window.App = (() => {
     document.addEventListener('selectstart', e => { if (e.target.id !== 'ask-type') e.preventDefault(); });
 
     initLines();
+    initBalloon();
     initDraw();
     makeSwatches(document.getElementById('swatches'), writeColor, c => {
       writeColor = c;
@@ -749,11 +925,45 @@ window.App = (() => {
     document.getElementById('reward-again').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap();
       document.getElementById('reward').classList.remove('on');
+      if (bcur) { // 풍선 줄: 같은 곡선을 빈 카드로 다시
+        const page = bcur.level.pages[bcur.idx];
+        bcur.dirty = false;
+        bcur.failStamp = null;
+        bPad.setCurve(page.p, bcur.level.trace ? 'show' : 'hide', bcur.col);
+        return;
+      }
       if (cur.dict) { dictRetry(); return; }
       cur.dirty = false;
       cur.failStamp = null;
       traceLine.setText(cur.l1, 'show');
       freeLine.setText(cur.scope.pages[cur.idx].text, 'hide');
+    });
+
+    // 요리조리 풍선 줄 조작
+    document.getElementById('btn-balloon-back').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); openBalloonLevels();
+    });
+    document.getElementById('balloon-prev').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); if (bcur && bcur.idx > 0) openBalloonPage(bcur.idx - 1);
+    });
+    document.getElementById('balloon-next').addEventListener('click', ev => {
+      ev.preventDefault(); balloonNext();
+    });
+    document.getElementById('btn-balloon-listen').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      if (!bcur) return;
+      const p = bcur.level.pages[bcur.idx];
+      A.speak(p.say || p.name);
+    });
+    document.getElementById('btn-balloon-eraser').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      setBalloonTool(balloonTool === 'erase' ? 'pen' : 'erase');
+    });
+    document.getElementById('btn-balloon-undo').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap(); bPad.undo();
+    });
+    document.getElementById('balloon-clear').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.pop(); bPad.clear();
     });
 
     document.getElementById('ask-mic').addEventListener('click', ev => {
@@ -791,6 +1001,15 @@ window.App = (() => {
       padItems: pad ? pad.count() : 0,
       drawTool, drawColor, drawPen, drawSticker,
       drawDrop: openDropName(), // 열려 있는 드롭판 이름 (없으면 null)
+      balloon: bcur ? { // 풍선 줄 상태 (e2e용)
+        level: bcur.level.id,
+        idx: bcur.idx,
+        col: bcur.col,
+        guide: bPad.guideShown(),
+        strokes: bPad.strokeCount(),
+        coverage: bPad.coverage(balloonJudge().w),
+        judge: balloonJudge(),
+      } : null,
     };
   }
 

@@ -99,9 +99,10 @@ async function srEnd() {
 
 await page.goto(BASE);
 
-await check('홈: 챕터 7개 + 낙서장·물어보기·갤러리 카드', async () => {
+await check('홈: 챕터 7개 + 풍선 줄·낙서장·물어보기·갤러리 카드', async () => {
   await page.waitForSelector('#scr-home.on');
-  expect(await page.locator('#menu .menu-card').count() === 10, '메뉴 카드 수');
+  expect(await page.locator('#menu .menu-card').count() === 11, '메뉴 카드 수');
+  expect(await page.locator('.menu-card.c-balloon').count() === 1, '풍선 줄 카드');
 });
 
 await check('가나다라: ㅏㅓㅗㅜㅡㅣ 여섯 줄 / 낱말: 묶음 여섯 개', async () => {
@@ -506,6 +507,119 @@ await check('새로고침 후 장식·배치·방 유지 (마이그레이션 겸
   expect(await page.locator('#pet-room .pet-deco-slot.filled').count() === 1, '자리 표시 유지');
   expect(await page.locator('#pet-room .pet-mini').count() === 1, '도감 친구 유지');
   await page.click('#pet-close');
+});
+
+/* ─────────── 요리조리 풍선 줄 ─────────── */
+
+// 목표 곡선을 캔버스 비율 좌표로 바꿔 준다 (offX/offY 는 논리 px 어긋남 — 관대 판정 검사용)
+async function balloonCurveFracs(li, idx, offX = 0, offY = 0) {
+  return await page.evaluate(({ li, idx, offX, offY }) => {
+    const p = WriteData.balloons.levels[li].pages[idx].p;
+    const out = [];
+    for (let i = 0; i < p.length; i += 2) out.push([(p[i] + offX) / Ink.BW, (p[i + 1] + offY) / Ink.BH]);
+    return out;
+  }, { li, idx, offX, offY });
+}
+
+await check('풍선 줄: 홈 카드 → 3단계 목록', async () => {
+  await page.click('.menu-card.c-balloon');
+  await page.waitForSelector('#scr-items.on');
+  const names = await page.locator('.item-main .it-name').allTextContents();
+  expect(names.length === 3, '단계 수: ' + names.length);
+  expect(names[0].includes('1단계') && names[2].includes('3단계'), '단계 이름: ' + names);
+  expect(await page.locator('.item-play').count() === 0, '풍선 줄엔 전체 듣기 버튼 없음');
+});
+
+let starsBeforeBalloon = 0;
+await check('풍선 줄 1단계: 본보기+내 카드, 흐린 안내선 → 따라 그리면 풍선 축하·별', async () => {
+  starsBeforeBalloon = await page.evaluate(() => Progress.stars());
+  await page.locator('.item-main').first().click();
+  await page.waitForSelector('#scr-balloon.on');
+  expect(await page.locator('#balloon-sample').isVisible(), '본보기 카드');
+  expect(await page.locator('#balloon-pad').isVisible(), '내 카드');
+  let d = await page.evaluate(() => App.debug().balloon);
+  expect(d.level === 'line1' && d.idx === 0, '1단계 첫 장: ' + JSON.stringify(d));
+  expect(d.guide === true, '1~2단계는 안내선이 보여야 함');
+  await stroke(page, '#balloon-pad', await balloonCurveFracs(0, 0), 'pen');
+  d = await page.evaluate(() => App.debug().balloon);
+  expect(d.strokes === 1 && d.coverage >= 0.55, '따라 그리기 판정: ' + d.coverage.toFixed(2));
+  await page.click('#balloon-next');
+  await page.waitForSelector('#balloon-fly.fly', { timeout: 2000 }); // 풍선이 두둥실
+  await page.waitForSelector('#reward.on', { timeout: 3000 });
+  await page.click('#reward-next');
+  await page.waitForFunction(() => !document.getElementById('reward').classList.contains('on'));
+  d = await page.evaluate(() => App.debug().balloon);
+  expect(d.idx === 1, '다음 풍선으로: ' + d.idx);
+  expect(await page.locator('#balloon-dots .dot.done').count() === 1, '완료 점 표시');
+});
+
+await check('풍선 줄: 엉뚱한 줄은 머물고, 같은 상태로 ▶ 두 번이면 보내 준다', async () => {
+  await stroke(page, '#balloon-pad', [[0.85, 0.1], [0.9, 0.15], [0.88, 0.2]], 'pen'); // 구석 낙서
+  await page.click('#balloon-next');
+  let d = await page.evaluate(() => App.debug().balloon);
+  expect(d.idx === 1, '판정 실패면 머물러야 함: ' + d.idx);
+  expect(!(await page.locator('#reward.on').count() &&
+    await page.locator('#reward.on').isVisible()), '보상이 뜨면 안 됨');
+  await page.click('#balloon-next'); // 같은 상태로 두 번째 → 좌절 금지, 그냥 다음
+  d = await page.evaluate(() => App.debug().balloon);
+  expect(d.idx === 2, '두 번째 ▶ 는 보내 줘야 함: ' + d.idx);
+});
+
+await check('풍선 줄 3단계: 안내선 숨김 + 어긋나게 그려도 너그럽게 통과', async () => {
+  await page.click('#btn-balloon-back');
+  await page.waitForSelector('#scr-items.on');
+  await page.locator('.item-main').nth(2).click();
+  await page.waitForSelector('#scr-balloon.on');
+  let d = await page.evaluate(() => App.debug().balloon);
+  expect(d.level === 'line3' && d.guide === false, '3단계는 안내선 숨김: ' + JSON.stringify(d));
+  expect(d.judge.w === 120 && d.judge.min === 0.35, '너그러운 판정값: ' + JSON.stringify(d.judge));
+  // 목표 곡선에서 30px(논리) 어긋난 선 — 따라 그리기 판정이면 떨어질 정확도지만 3단계는 통과
+  await stroke(page, '#balloon-pad', await balloonCurveFracs(2, 0, 30, 0), 'pen');
+  d = await page.evaluate(() => App.debug().balloon);
+  expect(d.coverage >= 0.35, '보고 그리기 판정: ' + d.coverage.toFixed(2));
+  await page.click('#balloon-next');
+  await page.waitForSelector('#reward.on', { timeout: 3000 });
+  await page.click('#reward-next');
+  await page.waitForFunction(() => !document.getElementById('reward').classList.contains('on'));
+});
+
+await check('풍선 줄: 3해상도(패드 가로·폰 가로·폰 세로) 잘림 없음', async () => {
+  for (const vp of [{ w: 1180, h: 820 }, { w: 844, h: 390 }, { w: 390, h: 844 }]) {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await page.waitForTimeout(250);
+    const r = await page.evaluate(() => {
+      const scr = document.getElementById('scr-balloon');
+      const cards = [...document.querySelectorAll('.bl-card')].map(c => c.getBoundingClientRect());
+      return {
+        noScroll: scr.scrollHeight <= scr.clientHeight + 1,
+        cards: cards.map(c => ({ t: c.top, b: c.bottom, l: c.left, r: c.right })),
+        iw: window.innerWidth, ih: window.innerHeight,
+      };
+    });
+    expect(r.noScroll, vp.w + '×' + vp.h + ': 숨은 세로 스크롤');
+    r.cards.forEach((c, i) => {
+      expect(c.t >= 0 && c.b <= r.ih + 1 && c.l >= 0 && c.r <= r.iw + 1,
+        vp.w + '×' + vp.h + ' 카드 ' + i + ' 잘림: ' + JSON.stringify(c));
+    });
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.waitForTimeout(250);
+});
+
+await check('풍선 줄: 새로고침 후 진행도·갤러리 작품 유지', async () => {
+  const stars = await page.evaluate(() => Progress.stars());
+  expect(stars === starsBeforeBalloon + 2, '풍선 별 2개 추가: ' + starsBeforeBalloon + ' → ' + stars);
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  expect(await page.evaluate(() => Progress.stars()) === stars, '별 유지');
+  const prog = await page.locator('.menu-card.c-balloon .mc-prog').textContent();
+  expect(prog.includes('2 / 30'), '풍선 줄 진행도: ' + prog);
+  const art = await page.evaluate(() => Progress.artOf('line1-0'));
+  expect(art && art.k === 'bl' && art.st.length === 1, '풍선 작품 갤러리 저장: ' + JSON.stringify(art && art.k));
+  await page.click('.menu-card.c-balloon');
+  await page.waitForSelector('#scr-items.on');
+  const lv1 = await page.locator('.item-main .it-prog').first().textContent();
+  expect(lv1.includes('1 / 10'), '1단계 진행도: ' + lv1);
 });
 
 await check('콘솔 오류 0', async () => {
