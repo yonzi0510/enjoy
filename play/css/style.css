@@ -897,9 +897,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 /* ═══════════ 🃏 짝꿍 카드 ═══════════ */
-.memory-level-btns { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 430px) {
-  .memory-level-btns { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+/* 단계 4개 — 폰 세로는 2×2, 가로(패드)에서는 한 줄 4열 */
+.memory-level-btns { grid-template-columns: repeat(2, 1fr); }
+@media (orientation: landscape) {
+  .memory-level-btns { grid-template-columns: repeat(4, 1fr); }
 }
 
 .memory-body {
@@ -928,22 +929,34 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   justify-content: center;
   overflow: hidden;
 }
-/* 단계별 판 배치 (가로) */
-.mem-board[data-level="1"] { grid-template-columns: repeat(2, 1fr); }
-.mem-board[data-level="2"] { grid-template-columns: repeat(4, 1fr); }
-.mem-board[data-level="3"] { grid-template-columns: repeat(4, 1fr); }
-/* 세로(폰): 열을 줄여 카드를 크게 */
+/* 단계별 판 배치 (가로·패드 1차 기준) — 8·16·24·36장 */
+.mem-board { grid-auto-rows: minmax(0, 1fr); } /* 칸 높이에 맞춰 카드가 줄어 잘림이 없다 */
+.mem-board[data-level="1"] { grid-template-columns: repeat(4, 1fr); } /* 8장 → 4×2 */
+.mem-board[data-level="2"] { grid-template-columns: repeat(4, 1fr); } /* 16장 → 4×4 */
+.mem-board[data-level="3"] { grid-template-columns: repeat(6, 1fr); } /* 24장 → 6×4 */
+.mem-board[data-level="4"] { grid-template-columns: repeat(6, 1fr); } /* 36장 → 6×6 */
+/* 세로(폰): 열을 줄여 카드를 크게 — 큰 판도 칸 높이에 맞춰 다 보인다 */
 @media (orientation: portrait) {
-  .mem-board[data-level="2"] { grid-template-columns: repeat(2, 1fr); }
-  .mem-board[data-level="3"] { grid-template-columns: repeat(3, 1fr); }
+  .mem-board[data-level="1"] { grid-template-columns: repeat(2, 1fr); } /* 8장 → 2×4 */
+  .mem-board[data-level="2"] { grid-template-columns: repeat(4, 1fr); } /* 16장 → 4×4 */
+  .mem-board[data-level="3"] { grid-template-columns: repeat(4, 1fr); } /* 24장 → 4×6 */
+  .mem-board[data-level="4"] { grid-template-columns: repeat(4, 1fr); } /* 36장 → 4×9 */
 }
 .mem-card {
-  width: 100%;
-  max-width: clamp(96px, 22vmin, 170px);
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: clamp(120px, 26vmin, 220px); /* 작은 판에서 카드가 지나치게 커지지 않게 */
   aspect-ratio: 3 / 4;
+  margin: auto;
   perspective: 700px;
   -webkit-tap-highlight-color: transparent;
 }
+/* 큰 판일수록 그림·물음표를 작게 — 좁은 칸에서 넘치지 않게 */
+.mem-board[data-level="3"] .mem-front { font-size: clamp(30px, 6.5vmin, 60px); }
+.mem-board[data-level="3"] .mem-back { font-size: clamp(24px, 5vmin, 44px); }
+.mem-board[data-level="4"] .mem-front { font-size: clamp(24px, 5.2vmin, 52px); }
+.mem-board[data-level="4"] .mem-back { font-size: clamp(20px, 4vmin, 38px); }
 .mem-inner {
   position: relative;
   display: block;
@@ -1218,14 +1231,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     height: auto;
   }
 
-  /* 짝꿍 카드: 칸 높이(1fr)에 맞춰 카드가 줄어들어 판 위아래 잘림이 없다 */
-  .mem-board { grid-auto-rows: minmax(0, 1fr); }
-  .mem-card {
-    width: auto;
-    height: 100%;
-    max-height: calc(clamp(96px, 22vmin, 170px) * 4 / 3); /* 기존 최대 크기 유지 (3:4) */
-    max-width: 100%;
-  }
+  /* 짝꿍 카드는 판 배치·카드 크기를 기본 규칙(칸 높이 1fr에 맞춤)에서 이미 처리한다 */
 }
 
 /* 낮은 가로 화면(폰 가로): 세로 공간이 귀하다 — 2단 재배치로 스크롤·잘림 없이 다 보이게 */
@@ -1250,8 +1256,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   }
   #letters-progress { grid-area: progress; }
 
-  /* 짝꿍 카드 3단계(12장): 4×3 대신 6×2 — 카드가 크고 잘리지 않는다 */
-  .mem-board[data-level="3"] { grid-template-columns: repeat(6, 1fr); }
+  /* 짝꿍 카드: 폰 가로는 세로 공간이 귀하다 — 열을 늘려 줄 수를 줄이면 카드가 커지고 안 잘린다 */
+  .mem-board[data-level="1"] { grid-template-columns: repeat(4, 1fr); }  /* 8장 → 4×2 */
+  .mem-board[data-level="2"] { grid-template-columns: repeat(8, 1fr); }  /* 16장 → 8×2 */
+  .mem-board[data-level="3"] { grid-template-columns: repeat(8, 1fr); }  /* 24장 → 8×3 */
+  .mem-board[data-level="4"] { grid-template-columns: repeat(9, 1fr); }  /* 36장 → 9×4 */
 
   /* 완료 카드: 제목·별·버튼(좌) + 새 스티커(우) 2단 — 스크롤 없이 한눈에 */
   .complete-card {
