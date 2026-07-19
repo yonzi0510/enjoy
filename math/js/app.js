@@ -876,7 +876,8 @@ window.App = (() => {
   }
   function startDots(pic) {
     if (dt && dt.timer) clearTimeout(dt.timer);
-    dt = { pic, next: 1, lock: false, timer: null };
+    // drawing: 지금 선을 긋는 중인지 / justConnected: 방금 포인터로 이어서 뒤따르는 click을 무시
+    dt = { pic, next: 1, lock: false, timer: null, drawing: false, justConnected: false };
     $('dots-title').textContent = pic.emoji + ' ' + pic.name + ' 점 잇기';
     showScreen('scr-dots');
     const svg = $('dots-svg');
@@ -892,6 +893,12 @@ window.App = (() => {
     line.setAttribute('class', 'dots-line');
     line.setAttribute('stroke', pic.color);
     svg.appendChild(line);
+    // 손가락을 따라오는 고무줄 안내선 (마지막 이은 점 → 현재 위치). 안 그릴 땐 숨긴다
+    const rubber = document.createElementNS(SVG_NS, 'line');
+    rubber.setAttribute('class', 'dots-rubber');
+    rubber.setAttribute('stroke', pic.color);
+    rubber.style.display = 'none';
+    svg.appendChild(rubber);
     // 번호표는 그림 무게중심에서 바깥쪽으로 밀어 붙인다 (선과 겹치지 않게)
     const cx = pic.dots.reduce((s, p) => s + p[0], 0) / pic.dots.length;
     const cy = pic.dots.reduce((s, p) => s + p[1], 0) / pic.dots.length;
@@ -917,21 +924,13 @@ window.App = (() => {
       svg.appendChild(g);
     });
     $('dots-count').textContent = '0 / ' + pic.dots.length;
-    setTimeout(() => A.speak('1부터 순서대로 점을 이어 봐! 무슨 그림이 나올까?'), 350);
+    setTimeout(() => A.speak('1번 점에 콕 대고 쭉 이어 봐! 무슨 그림이 나올까?'), 350);
   }
-  function tapDot(n) {
-    if (!dt || dt.lock) return;
+
+  // 다음 순번 점 하나를 실제로 잇는다 (탭·드래그 공용). 마지막 점이면 완성 처리까지.
+  function connectDot(n) {
     const svg = $('dots-svg');
     const g = svg.querySelector('.dot-g[data-n="' + n + '"]');
-    if (n !== dt.next) { // 틀린 점 — 부드럽게 흔들고 다음 번호를 알려준다
-      g.classList.remove('shake');
-      void g.getBoundingClientRect();
-      g.classList.add('shake');
-      A.sfx.tap();
-      A.speak('다음은 ' + dt.next + iya(dt.next) + '!');
-      return;
-    }
-    // 맞는 점 — 선을 잇는다
     const [x, y] = dt.pic.dots[n - 1];
     const line = svg.querySelector('.dots-line');
     line.setAttribute('points', (line.getAttribute('points') + ' ' + x + ',' + y).trim());
@@ -947,6 +946,7 @@ window.App = (() => {
     }
     // 마지막 점! 처음 점과 이어서 그림이 색으로 채워진다
     dt.lock = true;
+    hideRubber();
     const [x0, y0] = dt.pic.dots[0];
     line.setAttribute('points', line.getAttribute('points') + ' ' + x0 + ',' + y0);
     svg.querySelector('.dots-fill').classList.add('on');
@@ -960,6 +960,85 @@ window.App = (() => {
         openLevels(MODES.find(m => m.id === 'dots'));
       });
     }, 1400);
+  }
+
+  // 탭 폴백 — 드래그가 서툰 아이를 위해 다음 점을 그냥 탭해도 이어진다.
+  // 포인터로 방금 이은 경우(justConnected) 뒤따라오는 click은 무시(중복 방지).
+  function tapDot(n) {
+    if (!dt || dt.lock) return;
+    if (dt.justConnected) { dt.justConnected = false; return; }
+    if (n === dt.next) { connectDot(n); return; }
+    // 틀린 점 — 부드럽게 흔들고 다음 번호를 알려준다
+    const g = $('dots-svg').querySelector('.dot-g[data-n="' + n + '"]');
+    g.classList.remove('shake');
+    void g.getBoundingClientRect();
+    g.classList.add('shake');
+    A.sfx.tap();
+    A.speak('다음은 ' + dt.next + iya(dt.next) + '!');
+  }
+
+  /* 선 긋기 — 점 1(또는 마지막 이은 점) 근처에서 시작해, 지나가는 점을 순서대로 잇는다 */
+  const DOT_HIT = 7; // 히트 반경(SVG 좌표, 점 간격 9보다 작아 오연결 방지). dot-hit(r=6.5)과 비슷
+  function svgPointOf(svg, ev) { // 화면 좌표 → SVG 로컬 좌표 (getScreenCTM 역행렬)
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const pt = svg.createSVGPoint();
+    pt.x = ev.clientX; pt.y = ev.clientY;
+    return pt.matrixTransform(ctm.inverse());
+  }
+  function dotDist(p, i) { // 포인터 p 와 i번째(0기준) 점 사이 거리
+    const d = dt.pic.dots[i];
+    return Math.hypot(p.x - d[0], p.y - d[1]);
+  }
+  function showRubber(p) { // 마지막 이은 점 → 현재 위치 고무줄 선
+    if (dt.next < 2) return; // 아직 이은 점이 없으면 그리지 않는다
+    const [x0, y0] = dt.pic.dots[dt.next - 2];
+    const r = $('dots-svg').querySelector('.dots-rubber');
+    r.setAttribute('x1', x0); r.setAttribute('y1', y0);
+    r.setAttribute('x2', p.x); r.setAttribute('y2', p.y);
+    r.style.display = '';
+  }
+  function hideRubber() {
+    const r = $('dots-svg').querySelector('.dots-rubber');
+    if (r) r.style.display = 'none';
+  }
+  // 포인터가 지금 위치에서 이을 수 있는 다음 점들을 순서대로 잇는다
+  function reachDots(p) {
+    let guard = 0;
+    while (!dt.lock && dt.next <= dt.pic.dots.length &&
+           dotDist(p, dt.next - 1) <= DOT_HIT && guard++ < 40) {
+      dt.justConnected = true;
+      connectDot(dt.next);
+    }
+  }
+  function dotsDown(ev) {
+    if (!dt || dt.lock) return;
+    dt.justConnected = false; // 새 제스처 시작 — 이전 플래그를 씻어낸다
+    const svg = $('dots-svg');
+    const p = svgPointOf(svg, ev);
+    if (!p) return;
+    // 시작은 다음 순번 점(dt.next) 또는 마지막 이은 점(dt.next-1) 근처에서만 — 아무 데서나면 무시
+    const nearNext = dt.next <= dt.pic.dots.length && dotDist(p, dt.next - 1) <= DOT_HIT;
+    const nearLast = dt.next > 1 && dotDist(p, dt.next - 2) <= DOT_HIT;
+    if (!nearNext && !nearLast) return;
+    ev.preventDefault();
+    dt.drawing = true;
+    if (svg.setPointerCapture) { try { svg.setPointerCapture(ev.pointerId); } catch (e) {} }
+    if (nearNext) reachDots(p); // 시작점이 곧 다음 점이면 바로 잇는다
+    if (!dt.lock) showRubber(p);
+  }
+  function dotsMove(ev) {
+    if (!dt || !dt.drawing || dt.lock) return;
+    const p = svgPointOf($('dots-svg'), ev);
+    if (!p) return;
+    ev.preventDefault();
+    reachDots(p);
+    if (!dt.lock) showRubber(p);
+  }
+  function dotsUp() {
+    if (!dt || !dt.drawing) return;
+    dt.drawing = false;
+    hideRubber(); // 이은 데까지는 유지, 고무줄만 지운다
   }
 
   /* ─────────── 주사위 수 놀이 — 점을 세어 같은 숫자 칸에 끌어다 놓기 ─────────── */
@@ -1210,6 +1289,11 @@ window.App = (() => {
       dcDrag = null; // 잡은 조각이 있으면 조용히 놓아준다
       openLevels(MODES.find(m => m.id === 'dice'));
     });
+    // 점 잇기 — SVG에서 눌러 시작하고, 창 전체에서 끌기·놓기를 듣는다 (손가락·펜·마우스 공통)
+    $('dots-svg').addEventListener('pointerdown', dotsDown);
+    window.addEventListener('pointermove', dotsMove);
+    window.addEventListener('pointerup', dotsUp);
+    window.addEventListener('pointercancel', dotsUp);
     // 주사위 조각 드래그 — stage 에서 눌러 잡고, 창 전체에서 끌기·놓기를 듣는다 (합성 이벤트도 따라오게)
     $('dice-stage').addEventListener('pointerdown', diceStageDown);
     window.addEventListener('pointermove', diceMove);

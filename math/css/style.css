@@ -827,9 +827,11 @@ h1 {
     inset 0 0 0 1px rgba(255,255,255,.65),
     0 7px 0 var(--chunk),
     0 16px 26px rgba(var(--accent), .18);
-  touch-action: manipulation;
+  touch-action: none; /* 선을 긋는 동안 화면이 스크롤되지 않게 (점 잇기 화면 한정) */
 }
 .dots-line { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+/* 손가락을 따라오는 고무줄 안내선 — 마지막으로 이은 점에서 현재 위치까지 */
+.dots-rubber { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 1.6 4; opacity: .55; pointer-events: none; }
 .dots-fill { opacity: 0; transition: opacity .9s; }
 .dots-fill.on { opacity: .8; }
 .dot-g { cursor: pointer; }
@@ -1058,7 +1060,16 @@ h1 {
     max-width: 1000px;
     flex: 1;
   }
-  .chart-grid { grid-area: board; width: min(100%, calc((100vh - 150px) * 1.9)); } /* 5줄 판도 세로로 안 잘리게 */
+  /* 판은 board 트랙을 채우되(%가 아니라 stretch — 엔진 간 트랙 기준이 흔들리지 않게
+     보기 열을 침범하지 않는다), 5줄 판이 세로로 잘리지 않도록 폭 상한만 둔다.
+     상한이 걸리면 margin-auto 로 트랙 안에서 가운데 정렬 */
+  .chart-grid {
+    grid-area: board;
+    justify-self: stretch;
+    max-width: calc((100vh - 150px) * 1.9);
+    margin-inline: auto;
+    min-width: 0;
+  }
   .chart-choices { grid-area: choices; flex-direction: column; }
 
   /* 점 잇기 — 판을 화면 높이에 꽉 차게 가운데 크게 */
