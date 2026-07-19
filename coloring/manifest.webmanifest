@@ -1,0 +1,16 @@
+{
+  "name": "색칠공부",
+  "short_name": "색칠",
+  "description": "밑그림을 물통으로 채우거나 크레용으로 자유롭게 칠하는 색칠공부 — 5세 색칠 놀이 30장",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FCE7F1",
+  "theme_color": "#E85D9A",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
