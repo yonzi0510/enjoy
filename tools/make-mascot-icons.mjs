@@ -180,16 +180,24 @@ const APPS = {
     ${sparkle(150, 150, 6, '#FF9EBD')}`,
     top: sparkle(150, 60, 7, '#BCE38A'),
   },
-  // 🎒 가방 — 배낭
+  // 💡 생각 놀이터 — 반짝이는 전구(아이디어)
   bag: {
-    dir: 'bag', bg: ['#FFE9F0', '#FFF6FA'],
-    front: `<g transform="translate(98 126)">
-      <rect x="-2" y="12" width="50" height="46" rx="14" fill="#7FC8E8" stroke="#3E8FB5" stroke-width="3"/>
-      <path d="M8 22 q0 -18 15 -18 q15 0 15 18" fill="none" stroke="#3E8FB5" stroke-width="3"/>
-      <rect x="10" y="30" width="26" height="20" rx="6" fill="#EAF7FE" stroke="#3E8FB5" stroke-width="2.5"/>
-      <circle cx="23" cy="40" r="3.5" fill="#F2A93B"/>
-      <path d="M-2 30 h50" stroke="#3E8FB5" stroke-width="2.5"/>
-    </g>`,
+    dir: 'bag', bg: ['#FFF6E4', '#FFFBF2'],
+    front: `
+      ${sparkle(74, 128, 5, '#FFCE4D')}
+      ${sparkle(126, 130, 5, '#FFCE4D')}
+      ${sparkle(100, 108, 6, '#FFE08A')}
+      <!-- 전구 유리 -->
+      <circle cx="100" cy="147" r="23" fill="#FFF3B0" stroke="#E0A93B" stroke-width="3"/>
+      <!-- 목 -->
+      <path d="M89 165 h22 l-2 6 h-18 z" fill="#FFF3B0" stroke="#E0A93B" stroke-width="3" stroke-linejoin="round"/>
+      <!-- 하이라이트 -->
+      <path d="M90 139 a13 13 0 0 1 9 -9" fill="none" stroke="#FFFBE6" stroke-width="4" stroke-linecap="round"/>
+      <!-- 미소 필라멘트 -->
+      <path d="M92 149 q8 9 16 0" fill="none" stroke="#E0A93B" stroke-width="2.6" stroke-linecap="round"/>
+      <!-- 나사 베이스 -->
+      <rect x="90" y="171" width="20" height="6" rx="2.5" fill="#CDD2D9" stroke="#8A8F98" stroke-width="2"/>
+      <rect x="92" y="177" width="16" height="6" rx="2.5" fill="#CDD2D9" stroke="#8A8F98" stroke-width="2"/>`,
   },
   // 🎨 색칠공부 — 크레용 + 팔레트
   coloring: {
