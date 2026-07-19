@@ -103,6 +103,7 @@ h1 {
 }
 .menu .menu-card:nth-child(1) { animation-delay: .05s; }
 .menu .menu-card:nth-child(2) { animation-delay: .10s; }
+.menu .menu-card:nth-child(3) { animation-delay: .15s; }
 .mc-icon { font-size: clamp(40px, 9vmin, 64px); line-height: 1.15; }
 .mc-name { font-size: clamp(17px, 3.4vmin, 25px); font-weight: 900; color: #4A3417; }
 .mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #8A6A44; }
@@ -117,6 +118,7 @@ h1 {
 /* 놀이 카드마다 자기 색 블록 */
 .c-spoon { --tint: #FFEFE1; --chunk: #E39A5B; }
 .c-straw { --tint: #EAF6E7; --chunk: #7FC06B; }
+.c-square { --tint: #FFF1E0; --chunk: #F0A64E; }
 
 /* ─────────── 상단 바 ─────────── */
 .bar {
@@ -257,7 +259,7 @@ h1 {
   display: flex;
   justify-content: center;
 }
-#spoon-stage, #straw-stage {
+#spoon-stage, #straw-stage, #square-stage {
   width: 100%;
   height: 100%;
   touch-action: none; /* 드래그 중 화면이 밀리지 않게 */
@@ -280,6 +282,14 @@ h1 {
   30%, 70% { opacity: .45; }
   50% { opacity: .8; }
 }
+/* 네모 조각 놀이 — 톡 눌러 90°씩 회전 */
+.sq-piece { cursor: pointer; transition: transform .22s cubic-bezier(.34,1.4,.5,1); }
+.sq-tile { fill: rgba(255,255,255,.5); stroke: rgba(240,166,78,.55); stroke-width: 1; }
+.sq-cell { fill: #F3E7D3; stroke: rgba(255,255,255,.85); stroke-width: .7; }
+.sq-cell.on { fill: #FF8C1A; stroke: #fff; stroke-width: .9; }
+.sq-piece.sq-lock .sq-tile { fill: rgba(129,199,132,.28); stroke: #7FC06B; stroke-width: 1.4; }
+.sq-piece.grab, .sq-piece:active { filter: drop-shadow(0 1.6px 1.2px rgba(122,78,30,.35)); }
+
 /* 빨대 놀이 */
 .string { stroke: #C9B89C; stroke-width: 1.2; stroke-linecap: round; }
 .peg { fill: #A5763A; }

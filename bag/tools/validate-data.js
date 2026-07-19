@@ -1,6 +1,7 @@
 /* 데이터 검증 — node bag/tools/validate-data.js
  * 숟가락(물건 2~6개·위치 판 안·각도·id 유일·단계별 개수), 빨대(슬라이더 3~5개·목표 0~1·색 유일),
- * 두 놀이 각각 30개 이상인지 정적 검사한다.
+ * 네모 조각(조각 2×2칸·주황 수·회전만으로 풀리는지 시뮬·해답 각도 유일·본보기 일치),
+ * 세 놀이 각각 30개 이상인지 정적 검사한다.
  */
 'use strict';
 
@@ -80,8 +81,55 @@ D.straws.forEach(pz => {
   }
 });
 
+/* ─────────── 네모 조각 ─────────── */
+// 2×2 칸 회전([a,b,c,d] → [c,a,d,b]) — data.js가 내보낸 것을 쓰되 없으면 자체 구현
+const rotCells = D.rotCells || (c => [c[2], c[0], c[3], c[1]]);
+function rotDeg(cells, deg) { let c = cells.slice(); for (let i = 0; i < ((deg / 90) % 4 + 4) % 4; i++) c = rotCells(c); return c; }
+function eqCells(a, b) { return a.length === b.length && a.every((v, i) => v === b[i]); }
+
+if (!Array.isArray(D.squares) || D.squares.length < 30) err('네모 조각 도안이 30개 미만: ' + (D.squares || []).length);
+uniqueIds(D.squares, '네모');
+levelCounts(D.squares, '네모', 10);
+const SQ_PIECES_BY_LEVEL = { 1: 1, 2: 4, 3: 4 };   // 판 크기: 1단계 2×2(조각1), 2·3단계 4×4(조각4)
+const SQ_SIZE_BY_LEVEL = { 1: 2, 2: 4, 3: 4 };
+const SQ_ORANGE_MAX = { 1: 1, 2: 2, 3: 3 };        // 단계별 조각당 주황 칸 상한
+D.squares.forEach(pz => {
+  if (pz.size !== SQ_SIZE_BY_LEVEL[pz.level]) err('네모 ' + pz.id + ': ' + pz.level + '단계 판 크기는 ' + SQ_SIZE_BY_LEVEL[pz.level] + ' (' + pz.size + ')');
+  if (!Array.isArray(pz.pieces) || pz.pieces.length !== SQ_PIECES_BY_LEVEL[pz.level]) {
+    err('네모 ' + pz.id + ': ' + pz.level + '단계 조각 수는 ' + SQ_PIECES_BY_LEVEL[pz.level] + '개 (' + (pz.pieces || []).length + ')');
+  }
+  // 조각 수 = (size/2)^2 (판을 2×2 조각으로 빈틈없이 채움)
+  if (pz.pieces && pz.pieces.length !== (pz.size / 2) * (pz.size / 2)) {
+    err('네모 ' + pz.id + ': 조각 수가 판을 채우지 못함 (' + pz.pieces.length + ')');
+  }
+  (pz.pieces || []).forEach((pc, i) => {
+    // 칸: 길이 4, 값 0/1
+    if (!Array.isArray(pc.cells) || pc.cells.length !== 4 || pc.cells.some(v => v !== 0 && v !== 1)) {
+      return err('네모 ' + pz.id + ' 조각 ' + i + ': cells는 0/1 4칸 (' + JSON.stringify(pc.cells) + ')');
+    }
+    const nOr = pc.cells.reduce((a, v) => a + v, 0);
+    if (nOr < 1 || nOr > SQ_ORANGE_MAX[pz.level]) {
+      err('네모 ' + pz.id + ' 조각 ' + i + ': 주황 칸은 1~' + SQ_ORANGE_MAX[pz.level] + '개 (' + nOr + ')');
+    }
+    // 시작 각도: 90·180·270 중 하나
+    if (![90, 180, 270].includes(pc.startRot)) err('네모 ' + pz.id + ' 조각 ' + i + ': startRot은 90·180·270 (' + pc.startRot + ')');
+    // 회전만으로 풀리는지 시뮬레이션 — 시작 각도에서 +90씩 최대 4번, 본보기(제자리 무늬)와 같아지는 각도가 나와야 함
+    let reached = false, needsTurn = !eqCells(rotDeg(pc.cells, pc.startRot), pc.cells);
+    for (let t = 0; t <= 4; t++) {
+      const deg = (pc.startRot + t * 90) % 360;
+      if (eqCells(rotDeg(pc.cells, deg), pc.cells)) { reached = true; break; }
+    }
+    if (!reached) err('네모 ' + pz.id + ' 조각 ' + i + ': 회전만으로 본보기와 맞출 수 없음');
+    if (!needsTurn) err('네모 ' + pz.id + ' 조각 ' + i + ': 처음부터 정답이라 돌릴 필요가 없음(재미 없음)');
+    // 네 방향이 모두 달라야(해답 각도 유일) — 대각선·꽉참·빈칸 무늬 금지
+    const rots = [0, 90, 180, 270].map(d => rotDeg(pc.cells, d));
+    const solvedCount = rots.filter(r => eqCells(r, pc.cells)).length;
+    if (solvedCount !== 1) err('네모 ' + pz.id + ' 조각 ' + i + ': 해답 각도가 유일하지 않음(대칭 무늬) — ' + JSON.stringify(pc.cells));
+  });
+});
+
 if (errors) {
   console.error('\n검증 실패: 오류 ' + errors + '개');
   process.exit(1);
 }
-console.log('✅ 데이터 검증 통과 — 숟가락 ' + D.spoons.length + '개, 빨대 ' + D.straws.length + '개');
+console.log('✅ 데이터 검증 통과 — 숟가락 ' + D.spoons.length + '개, 빨대 ' + D.straws.length + '개, 네모 ' + D.squares.length + '개');
