@@ -1,0 +1,16 @@
+{
+  "name": "가방 놀이터",
+  "short_name": "가방",
+  "description": "본보기를 보고 똑같이 맞추는 5세 관찰·조작 놀이 — 요리조리 숟가락(방향)·요리조리 빨대(높이)",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F6ECDD",
+  "theme_color": "#C99A5B",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
