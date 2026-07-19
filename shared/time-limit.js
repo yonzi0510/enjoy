@@ -107,6 +107,49 @@
   }
   function hideLock() { if (overlay) overlay.classList.add('tl-hidden'); }
 
+  /* ─────────── 상단 남은 시간 막대 (항상 보이는 시각 신호) ───────────
+   * 5세는 시계를 못 읽으니 색·길이로 남은 시간을 느끼게 한다.
+   * 화면 맨 위 얇은 띠 — 남은 비율만큼 채워지고, 초록→노랑→주황→빨강으로 줄어든다.
+   * 옆의 작은 ⏳ 라벨(남은 분)은 부모 참고용. pointer-events:none 이라 조작을 막지 않는다. */
+  let bar = null, barFill = null, barMin = null;
+  function buildBar() {
+    bar = document.createElement('div');
+    bar.id = 'tl-bar';
+    bar.className = 'tl-bar tl-hidden';
+    bar.setAttribute('aria-hidden', 'true');   // 아이용 시각 신호 — 스크린리더는 건너뜀
+    bar.innerHTML =
+      '<div class="tl-bar-track"><div class="tl-bar-fill"></div></div>' +
+      '<div class="tl-bar-tag"><span>⏳</span><span class="tl-bar-min"></span></div>';
+    document.body.appendChild(bar);
+    barFill = bar.querySelector('.tl-bar-fill');
+    barMin = bar.querySelector('.tl-bar-min');
+  }
+
+  function updateBar() {
+    if (!bar) buildBar();
+    const lim = limitMs();
+    // 제한 없음(limitMin 0) → 막대 자체를 숨김
+    if (lim <= 0) { bar.classList.add('tl-hidden'); return; }
+    // 소진되어 잠기면 잠금 오버레이가 대신하므로 막대는 감춘다
+    if (isLocked()) { bar.classList.add('tl-hidden'); return; }
+    const allowed = lim + st.extraMs;
+    const remain = Math.max(0, allowed - st.used);
+    const ratio = allowed > 0 ? remain / allowed : 0;
+    const remainMin = Math.ceil(remain / 60000);
+    bar.classList.remove('tl-hidden');
+    barFill.style.width = (ratio * 100).toFixed(1) + '%';
+    // 색: 남을수록 초록 → 줄면 노랑 → 주황 → 얼마 안 남으면 빨강
+    let color;
+    if (ratio > 0.6) color = '#6BBE4E';       // 넉넉 — 초록
+    else if (ratio > 0.3) color = '#F5C518';  // 절반쯤 — 노랑
+    else if (ratio > 0.12) color = '#F0912B'; // 줄어듦 — 주황
+    else color = '#E8503A';                   // 얼마 안 남음 — 빨강
+    barFill.style.background = color;
+    barMin.textContent = remainMin + '분';
+    // 곧 끝나요 — 5분 이하로 남으면 살짝 깜빡여 "이제 곧 끝나요"를 느끼게
+    bar.classList.toggle('tl-low', remainMin <= 5);
+  }
+
   function pressKey(k) {
     if (k === '←') { pinInput = pinInput.slice(0, -1); renderDots(); return; }
     if (k === '✓') { submitPin(); return; }
@@ -122,6 +165,7 @@
       st.extraMs += EXTEND_MS;
       save();
       hideLock();
+      updateBar();   // 연장 후 남은 시간 막대 갱신
       speak('30분 더 놀 수 있어요! 신난다!');
     } else {
       pinInput = '';
@@ -135,14 +179,21 @@
   /* ─────────── 시간 누적 ─────────── */
   setInterval(() => {
     if (document.visibilityState !== 'visible') return;
-    if (st.date !== today()) { st = { date: today(), used: 0, extraMs: 0 }; hideLock(); }
-    if (isLocked()) return;
-    st.used += TICK_MS;
-    save();
+    if (st.date !== today()) { st = { date: today(), used: 0, extraMs: 0 }; hideLock(); } // 날짜 바뀌면 초기화
+    if (!isLocked()) { st.used += TICK_MS; save(); }
     if (isLocked()) showLock();
+    updateBar();   // 매 tick 남은 시간 막대 갱신
   }, TICK_MS);
 
-  function start() { if (isLocked()) showLock(); }
+  // 화면을 다시 볼 때(다른 탭·앱에서 돌아옴) 즉시 갱신
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (st.date !== today()) { st = { date: today(), used: 0, extraMs: 0 }; hideLock(); }
+      updateBar();
+    }
+  });
+
+  function start() { updateBar(); if (isLocked()) showLock(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 
@@ -150,6 +201,6 @@
   window.TimeLimit = {
     isLocked,
     usedMs() { return st.used; },
-    _debug(usedMs) { st.used = usedMs; save(); if (isLocked()) showLock(); else hideLock(); }
+    _debug(usedMs) { st.used = usedMs; save(); if (isLocked()) showLock(); else hideLock(); updateBar(); }
   };
 })();

@@ -77,3 +77,63 @@
 }
 .tl-key:active { transform: translateY(2px); box-shadow: 0 1px 0 #D5C9AE; }
 .tl-key.tl-ok { background: linear-gradient(180deg, #A8E28A, #7CBF5C); color: #fff; box-shadow: 0 3px 0 #5C9C40; }
+
+/* ⏳ 상단 남은 시간 막대 — 항상 보이는 시각 신호 (shared/time-limit.js가 생성)
+ * 화면 맨 위 얇은 띠. 남은 비율만큼 채워지고 초록→노랑→주황→빨강으로 변한다.
+ * z-index는 잠금 오버레이(900)보다 낮게, pointer-events:none 으로 헤더 조작을 통과시킨다. */
+.tl-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 800;
+  padding-top: env(safe-area-inset-top, 0px);   /* 노치 아래로 */
+  pointer-events: none;
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+}
+.tl-bar.tl-hidden { display: none; }
+.tl-bar-track {
+  width: 100%;
+  height: 7px;
+  background: rgba(0, 0, 0, .10);
+}
+.tl-bar-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 0 4px 4px 0;
+  background: #6BBE4E;
+  transition: width .6s ease, background-color .6s ease;
+}
+/* 남은 분 라벨 — 부모 참고용, 작게 접어 우측 상단에 */
+.tl-bar-tag {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 9px);
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .82);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .14);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.5;
+  color: #6B5E82;
+}
+.tl-bar-tag .tl-bar-min { font-variant-numeric: tabular-nums; }
+
+/* 가로 화면에선 막대를 조금 더 두껍게 */
+@media (orientation: landscape) {
+  .tl-bar-track { height: 9px; }
+}
+
+/* 곧 끝나요 — 5분 이하면 살짝 깜빡여 강조 */
+.tl-bar.tl-low .tl-bar-fill,
+.tl-bar.tl-low .tl-bar-tag { animation: tl-bar-blink 1s ease-in-out infinite; }
+@keyframes tl-bar-blink { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+
+/* 움직임 최소화 설정 존중 — 깜빡임·전환 끔 */
+@media (prefers-reduced-motion: reduce) {
+  .tl-bar-fill { transition: none; }
+  .tl-bar.tl-low .tl-bar-fill,
+  .tl-bar.tl-low .tl-bar-tag { animation: none; }
+}
