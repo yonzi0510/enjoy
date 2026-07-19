@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* 종단 테스트 — node play/tools/e2e.mjs
  * 실제 Chromium으로 홈 → 숨은그림 완주 → 다른그림 완주 → 글자 찾기 완주 → 스티커북/스티커 놀이
- * → 짝꿍 카드(짝 맞춤·오답 재뒤집기·3단계 완주 → 펫 식사) → 동물의 집(오답 재시도·정답 드래그·판 완주)
+ * → 짝꿍 카드(4단계·5초 공개→뒤집힘·짝 맞춤·오답 재뒤집기·4단계 완주 → 펫 식사·36장 판 잘림 없음)
+ * → 동물의 집(오답 재시도·정답 드래그·판 완주)
  * → 주제 데이터 계약(동물 30·탈것 18·음식 15+) → 음식의 자리(새 주제 진입·정답 드래그)
  * → 새로고침 후 진행도 유지까지 검증한다. 콘솔 오류 0이 기본 기대치.
  * 저장소 루트에서 정적 서버를 띄운 뒤 실행 (예: python3 -m http.server 8777)
@@ -171,8 +172,8 @@ await check('스티커북 → 스티커 놀이 진입 스모크', async () => {
 
 /* ── 8~10. 짝꿍 카드 ── */
 async function playMemoryBoard() {
-  // 2초 미리보기가 끝날 때까지
-  await page.waitForFunction(() => !window.MemoryGame.state.peeking && window.MemoryGame.state.playing, { timeout: 6000 });
+  // 5초 미리보기가 끝날 때까지 (여유 있게 대기)
+  await page.waitForFunction(() => !window.MemoryGame.state.peeking && window.MemoryGame.state.playing, { timeout: 9000 });
   const pairs = await page.evaluate(() => window.MemoryGame.state.pairs);
   for (let p = 0; p < pairs; p++) {
     await page.evaluate(() => {
@@ -185,14 +186,27 @@ async function playMemoryBoard() {
     await page.waitForTimeout(120);
   }
 }
-await check('짝꿍 카드 1단계: 2초 미리보기 → 뒤집힘 (4장)', async () => {
+await check('짝꿍 카드: 단계 4개(8·16·24·36장) + 그림 18종 이상', async () => {
   await tap('#btn-memory');
   await page.locator('#memory-overlay:not(.hidden)').waitFor({ timeout: 3000 });
+  expect(await page.locator('#memory-overlay .letters-level-btn').count() === 4, '단계 버튼 4개');
+  const poolInfo = await page.evaluate(() => {
+    const P = window.MemoryGame.POOL;
+    const keys = new Set(P.map(it => it[0]));
+    return { len: P.length, uniq: keys.size, badField: P.some(it => !it[0] || !it[1]) };
+  });
+  expect(poolInfo.len >= 18 && poolInfo.uniq === poolInfo.len, '겹침 없는 그림 18종 이상: ' + poolInfo.len + '/' + poolInfo.uniq);
+  expect(!poolInfo.badField, '그림·이름 필드 누락 없음');
+});
+await check('짝꿍 카드 1단계: 5초 미리보기 → 일제히 뒤집힘 (8장)', async () => {
   await tap('#memory-overlay .letters-level-btn[data-mlevel="1"]');
   expect(await activeScreen() === 'screen-memory');
-  expect(await page.locator('.mem-card').count() === 4, '카드 4장');
-  expect(await page.locator('.mem-card.up').count() === 4, '처음엔 다 보여야 함');
-  await page.waitForFunction(() => document.querySelectorAll('.mem-card.up').length === 0, { timeout: 6000 });
+  expect(await page.locator('.mem-card').count() === 8, '카드 8장');
+  expect(await page.locator('.mem-card.up').count() === 8, '처음엔 다 보여야 함');
+  // 5초 전에는 아직 안 뒤집혀 있어야 하고(공개 유지), 5초 뒤 전부 뒤집힘
+  await page.waitForTimeout(3500);
+  expect(await page.locator('.mem-card.up').count() === 8, '공개 5초 동안은 계속 보여야 함');
+  await page.waitForFunction(() => document.querySelectorAll('.mem-card.up').length === 0, { timeout: 5000 });
 });
 await check('짝꿍 카드: 틀린 짝은 흔들리고 다시 뒤집힘', async () => {
   await page.evaluate(() => {
@@ -206,7 +220,7 @@ await check('짝꿍 카드: 틀린 짝은 흔들리고 다시 뒤집힘', async 
   await page.waitForFunction(() => document.querySelectorAll('.mem-card.up').length === 0, { timeout: 3000 });
   expect(await page.evaluate(() => window.MemoryGame.state.playing), '벌점 없이 계속 진행');
 });
-await check('짝꿍 카드: 짝 맞춤 → 판 완성 별 + 펫 간식, 3단계 완주 → 펫 식사', async () => {
+await check('짝꿍 카드: 짝 맞춤 → 판 완성 별 + 펫 간식, 4단계 완주 → 펫 식사', async () => {
   const before = await petState();
   // 1단계 마무리
   await playMemoryBoard();
@@ -214,7 +228,7 @@ await check('짝꿍 카드: 짝 맞춤 → 판 완성 별 + 펫 간식, 3단계 
   expect(await page.locator('#memory-stars .star.on').count() >= 1, '별 1개 이상');
   let now = await petState();
   expect(now.snacks === before.snacks + 1, '판 완성 간식 +1');
-  // 2단계 → 3단계 완주하면 식사
+  // 2 → 3 → 4단계까지 완주해야 식사 (4단계 완주 전에는 식사 없음)
   await tap('#memory-done-next');
   await playMemoryBoard();
   await page.locator('#memory-done:not(.hidden)').waitFor({ timeout: 5000 });
@@ -222,11 +236,51 @@ await check('짝꿍 카드: 짝 맞춤 → 판 완성 별 + 펫 간식, 3단계 
   await playMemoryBoard();
   await page.locator('#memory-done:not(.hidden)').waitFor({ timeout: 5000 });
   now = await petState();
-  expect(now.snacks === before.snacks + 3, '판마다 간식 +1 (총 +3)');
-  expect(now.meals === before.meals + 1, '3단계 모두 첫 완주 → 식사 +1: ' + before.meals + ' → ' + now.meals);
+  expect(now.meals === before.meals, '4단계 전에는 아직 식사 없음: ' + before.meals + ' → ' + now.meals);
+  await tap('#memory-done-next');
+  await playMemoryBoard();
+  await page.locator('#memory-done:not(.hidden)').waitFor({ timeout: 5000 });
+  now = await petState();
+  expect(now.snacks === before.snacks + 4, '판마다 간식 +1 (총 +4)');
+  expect(now.meals === before.meals + 1, '4단계 모두 첫 완주 → 식사 +1: ' + before.meals + ' → ' + now.meals);
+  expect(await page.evaluate(() => window.Progress.getStars('memory_L4') > 0), 'memory_L4 별 저장');
   expect(await page.evaluate(() => window.Progress.getStars('memory_L3') > 0), 'memory_L3 별 저장');
   await tap('#memory-done-home');
   expect(await activeScreen() === 'screen-home');
+});
+/* ── 36장(4단계) 판이 세 해상도에서 잘림·넘침 없는지 ── */
+await check('짝꿍 카드 4단계(36장): 패드 가로·폰 세로·폰 가로 모두 잘림 없음', async () => {
+  const sizes = [
+    { name: '패드 가로', w: 1180, h: 820 },
+    { name: '폰 세로', w: 390, h: 844 },
+    { name: '폰 가로', w: 844, h: 390 },
+  ];
+  for (const s of sizes) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await tap('#btn-memory');
+    await page.locator('#memory-overlay:not(.hidden)').waitFor({ timeout: 3000 });
+    await tap('#memory-overlay .letters-level-btn[data-mlevel="4"]');
+    expect(await activeScreen() === 'screen-memory', s.name + ' 게임 진입');
+    expect(await page.locator('.mem-card').count() === 36, s.name + ' 카드 36장');
+    // 판이 스크롤 없이 다 담기고, 카드가 판 밖으로 나가지 않아야 함
+    const fit = await page.evaluate(() => {
+      const board = document.getElementById('memory-board');
+      const br = board.getBoundingClientRect();
+      const noScroll = board.scrollHeight <= board.clientHeight + 1 && board.scrollWidth <= board.clientWidth + 1;
+      const overflow = Array.from(document.querySelectorAll('.mem-card')).some(c => {
+        const r = c.getBoundingClientRect();
+        return r.left < br.left - 1 || r.right > br.right + 1 || r.top < br.top - 1 || r.bottom > br.bottom + 1;
+      });
+      const docNoHScroll = document.documentElement.scrollWidth <= window.innerWidth + 1;
+      return { noScroll, overflow, docNoHScroll };
+    });
+    expect(fit.noScroll, s.name + ' 판 스크롤 없음');
+    expect(!fit.overflow, s.name + ' 카드가 판 밖으로 안 나감');
+    expect(fit.docNoHScroll, s.name + ' 가로 스크롤 없음');
+    await tap('#memory-back');
+    expect(await activeScreen() === 'screen-home', s.name + ' 홈 복귀');
+  }
+  await page.setViewportSize({ width: 1024, height: 768 });
 });
 
 /* ── 11~14. 동물의 집 찾기 ── */
@@ -327,7 +381,7 @@ await check('새로고침 후 별·집찾기 기록·펫 먹이 유지', async (
     hidden: window.Progress.getStars((window.SCENES[0].id) + '_hidden_L1'),
     diff: window.Progress.getStars((window.SCENES[0].id) + '_diff_L1'),
     letters: window.Progress.getStars('letters_L1'),
-    memory: [1, 2, 3].map(l => window.Progress.getStars('memory_L' + l)),
+    memory: [1, 2, 3, 4].map(l => window.Progress.getStars('memory_L' + l)),
     habitatStars: window.Progress.getStars('habitat_animals'),
     habitatDone: window.Progress.habitatDoneCount('animals'),
     habitatFood: window.Progress.habitatDoneCount('food'),

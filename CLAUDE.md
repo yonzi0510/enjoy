@@ -23,8 +23,9 @@
 | `shape/` | 🔷 도형 놀이터 | 칠교(높은 단계만 탭 회전)·블록 퍼즐·도형 맞추기 — 드래그 스냅 퍼즐 |
 | `market/` | 🛒 시장 놀이터 | 손님 주문 → 상품 담기 → 동전 지불 3단계 (돈 개념) |
 | `lab/` | 🧪 색깔 실험실 | 물감 혼색 미션 12색 도감 + 자유 실험 (RYB 혼색 엔진 `js/mix.js`) |
-| `bag/` | 🎒 가방 놀이터 | 본보기 보고 맞추기 — 숟가락 방향(드래그+회전)·빨대 슬라이더 높이 (지퍼백 놀이 키트) |
+| `bag/` | 🎒 생각 놀이터 | 본보기 보고 맞추기 — 숟가락 방향(드래그+회전)·빨대 슬라이더 높이·네모 조각 회전·풍선 줄 따라 그리기 (URL은 `/bag/`) |
 | `coloring/` | 🎨 색칠공부 | 밑그림 30장 자유 색칠 — 물통 채우기(flood fill)·크레용, 갤러리 보관 |
+| `burger/` | 🍔 햄버거 가게 | 미션 카드 순서대로 재료 쌓기 — 재료 12종·미션 30개 (순서·기억) |
 | `color/` | (리다이렉트) | 픽셀 놀이터로 이동만 함 — 수정할 일 없음 |
 | `parent/` | 🔑 부모님 페이지 | PIN 게이트 뒤에서 하루 제한·앱 노출·마이크 허용을 설정하고 진행도 백업 |
 | `shared/` | 공용 모듈 | 목소리 설정(`voice-settings.js`) · 부모 설정(`parent-settings.js`) · 하루 시간 제한(`time-limit.js`) · 학습 펫(`pet.js`, 다마고치식 공용 펫 — 펫 방에서 모은 펫들이 함께 지내고 간식을 조르며, 학습으로 얻는 장식 14종으로 방을 꾸민다) · 오프라인 SW 등록(`sw-register.js`, 루트 `sw.js`) |
@@ -46,7 +47,7 @@
 - 사용 중인 키: `chatgi-playground-v1`·`chatgi-stickerboard-v1`·`chatgi-muted`(play),
   `english-playground-v1`, `pixel-playground-v1`·`pixel-muted`, `hangul-playground-v1`,
   `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`, `math-playground-v1`,
-  `shape-playground-v1`·`market-playground-v1`·`lab-playground-v1`·`bag-playground-v1`·`coloring-playground-v1`,
+  `shape-playground-v1`·`market-playground-v1`·`lab-playground-v1`·`bag-playground-v1`·`coloring-playground-v1`·`burger-playground-v1`,
   `enjoy-voice-ko`·`enjoy-rate-factor`·`enjoy-timelimit-v1`·`enjoy-parent-v1`·`enjoy-profile`(공용),
   `enjoy-pet-v1`(학습 펫 — `Profile.key()` 적용, 아이별로 각자 키움).
   (`chatgi-timelimit-v1`은 예전 play 전용 시간제한 키 — `shared/time-limit.js`가 이어받는다.)

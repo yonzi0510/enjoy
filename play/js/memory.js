@@ -1,31 +1,34 @@
 /* 🃏 짝꿍 카드 — 같은 그림 두 장 찾기 (기억력 놀이)
- * 판이 시작되면 카드가 2초간 다 보였다가 뒤집히고, 두 장을 눌러 짝을 맞춘다.
+ * 판이 시작되면 카드가 5초간 다 보였다가("잘 기억해!") 일제히 뒤집히고, 두 장을 눌러 짝을 맞춘다.
  * 맞으면 팡파르+카드 폴짝+그림 이름 소리, 틀리면 살짝 흔들리고 다시 뒤집힘(벌점 없음).
- * 1단계 4장(2쌍) → 2단계 8장(4쌍) → 3단계 12장(6쌍). 테마(과일·동물·탈것)는 판마다 순환.
- * 판 완성 = 별 + 펫 간식, 3단계 모두 처음 완주하면 펫 식사.
+ * 1단계 8장(4쌍) → 2단계 16장(8쌍) → 3단계 24장(12쌍) → 4단계 36장(18쌍).
+ * 그림은 과일·동물·탈것·사물을 섞은 한 벌(POOL)에서 판마다 겹치지 않게 뽑는다.
+ * 판 완성 = 별 + 펫 간식, 4단계까지 모두 처음 완주하면 펫 식사.
  */
 (() => {
   const $ = id => document.getElementById(id);
 
-  const THEMES = [
-    { id: 'fruit', name: '과일', items: [
-      ['🍎', '사과'], ['🍌', '바나나'], ['🍇', '포도'], ['🍓', '딸기'],
-      ['🍉', '수박'], ['🍊', '귤'], ['🍑', '복숭아'], ['🍍', '파인애플']
-    ] },
-    { id: 'animal', name: '동물', items: [
-      ['🐶', '강아지'], ['🐱', '고양이'], ['🐰', '토끼'], ['🐼', '판다'],
-      ['🦁', '사자'], ['🐸', '개구리'], ['🐷', '돼지'], ['🐵', '원숭이']
-    ] },
-    { id: 'vehicle', name: '탈것', items: [
-      ['🚗', '자동차'], ['🚌', '버스'], ['🚂', '기차'], ['✈️', '비행기'],
-      ['🚢', '배'], ['🚲', '자전거'], ['🚁', '헬리콥터'], ['🚀', '로켓']
-    ] }
+  // 서로 다른 그림 한 벌 — 4단계(18쌍)를 겹침 없이 채우려면 18종 이상 필요.
+  // 과일·동물·탈것·사물을 섞어 두어 한 판 안에서 다양한 그림이 나온다.
+  const POOL = [
+    // 과일
+    ['🍎', '사과'], ['🍌', '바나나'], ['🍇', '포도'], ['🍓', '딸기'],
+    ['🍉', '수박'], ['🍊', '귤'], ['🍑', '복숭아'], ['🍍', '파인애플'],
+    // 동물
+    ['🐶', '강아지'], ['🐱', '고양이'], ['🐰', '토끼'], ['🐼', '판다'],
+    ['🦁', '사자'], ['🐸', '개구리'], ['🐷', '돼지'], ['🐵', '원숭이'],
+    // 탈것
+    ['🚗', '자동차'], ['🚌', '버스'], ['🚂', '기차'], ['✈️', '비행기'],
+    ['🚢', '배'], ['🚲', '자전거'], ['🚁', '헬리콥터'], ['🚀', '로켓'],
+    // 사물
+    ['⚽', '축구공'], ['🎈', '풍선'], ['🎁', '선물'], ['⭐', '별'],
+    ['🌈', '무지개'], ['🌸', '꽃'], ['☂️', '우산'], ['🔔', '종']
   ];
-  const PAIRS = { 1: 2, 2: 4, 3: 6 };   // 단계별 짝 수 (4장 → 8장 → 12장)
-  const PEEK_MS = 2000;                 // 시작할 때 카드를 보여 주는 시간
-  let themeIdx = 0;                     // 판마다 과일 → 동물 → 탈것 순환
+  const PAIRS = { 1: 4, 2: 8, 3: 12, 4: 18 };  // 단계별 짝 수 (8·16·24·36장)
+  const MAX_LEVEL = 4;
+  const PEEK_MS = 5000;                         // 시작할 때 카드를 보여 주는 시간(5초)
 
-  const st = { level: 1, pairs: 2, found: 0, wrongs: 0, picked: [], busy: false, peeking: false, playing: false, themeName: '' };
+  const st = { level: 1, pairs: 4, found: 0, wrongs: 0, picked: [], busy: false, peeking: false, playing: false };
 
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -84,13 +87,10 @@
     st.busy = false;
     st.playing = true;
 
-    const theme = THEMES[themeIdx % THEMES.length];
-    themeIdx++;
-    st.themeName = theme.name;
-    $('memory-title').textContent = '🃏 짝꿍 카드 · ' + theme.name + ' ' + level + '단계';
+    $('memory-title').textContent = '🃏 짝꿍 카드 · ' + level + '단계';
 
-    // 짝 카드 만들기: 테마에서 짝 수만큼 뽑아 2장씩
-    const chosen = shuffle(theme.items.slice()).slice(0, st.pairs);
+    // 짝 카드 만들기: 한 벌에서 짝 수만큼 겹침 없이 뽑아 2장씩
+    const chosen = shuffle(POOL.slice()).slice(0, st.pairs);
     const cards = shuffle(chosen.concat(chosen).map(it => ({ e: it[0], name: it[1] })));
 
     const board = $('memory-board');
@@ -98,7 +98,7 @@
     board.innerHTML = '';
     cards.forEach(c => {
       const b = document.createElement('button');
-      b.className = 'mem-card up'; // 처음 2초는 다 보여 준다
+      b.className = 'mem-card up'; // 처음 5초는 다 보여 준다
       b.dataset.k = c.e;
       b.dataset.name = c.name;
       b.setAttribute('aria-label', '카드');
@@ -121,9 +121,9 @@
     }
 
     showScreen('screen-memory');
-    Sound.speak(theme.name + ' 카드 ' + (st.pairs * 2) + '장! 잘 봐 두세요!');
+    Sound.speak('카드 ' + (st.pairs * 2) + '장이에요! 잘 기억해!');
 
-    // 2초 뒤 전부 뒤집기 → 놀이 시작
+    // 5초 뒤 전부 뒤집기 → 놀이 시작
     st.peeking = true;
     setTimeout(() => {
       if (!st.playing) return;
@@ -180,10 +180,11 @@
     const firstClear = Progress.getStars('memory_L' + st.level) === 0; // 이번이 첫 완주인지
     Progress.setStars('memory_L' + st.level, stars);
 
-    // 펫 먹이: 판 완성 = 간식, 3단계를 처음 모두 깨면 식사
+    // 펫 먹이: 판 완성 = 간식, 모든 단계를 처음 다 깨면 식사
     if (window.Pet) {
       Pet.awardSnack(1);
-      if (firstClear && [1, 2, 3].every(l => Progress.getStars('memory_L' + l) > 0)) Pet.awardMeal(1);
+      const allCleared = [1, 2, 3, 4].every(l => Progress.getStars('memory_L' + l) > 0);
+      if (firstClear && allCleared) Pet.awardMeal(1);
     }
 
     const starsEl = $('memory-stars');
@@ -194,13 +195,13 @@
       s.textContent = '⭐';
       starsEl.appendChild(s);
     }
-    $('memory-done-next').textContent = st.level < 3 ? '다음 단계 ▶' : '한 번 더 ▶';
+    $('memory-done-next').textContent = st.level < MAX_LEVEL ? '다음 단계 ▶' : '한 번 더 ▶';
 
     setTimeout(() => {
       $('memory-done').classList.remove('hidden');
       confetti();
       Sound.tada();
-      Sound.speak('와, ' + st.themeName + ' 짝꿍을 다 찾았어요! 참 잘했어요!');
+      Sound.speak('와, 짝꿍을 다 찾았어요! 참 잘했어요!');
     }, 600);
   }
 
@@ -232,9 +233,9 @@
   $('memory-done-home').addEventListener('click', goHome);
   $('memory-done-next').addEventListener('click', () => {
     $('memory-done').classList.add('hidden');
-    startGame(st.level < 3 ? st.level + 1 : st.level);
+    startGame(st.level < MAX_LEVEL ? st.level + 1 : st.level);
   });
 
   // 테스트 훅
-  window.MemoryGame = { startGame, state: st };
+  window.MemoryGame = { startGame, state: st, POOL, MAX_LEVEL };
 })();

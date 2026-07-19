@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#F6ECDD">
-<title>가방 놀이터</title>
+<title>생각 놀이터</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -18,7 +18,7 @@
 <!-- 홈 -->
 <section class="screen on" id="scr-home">
   <header class="home-head">
-    <h1>🎒 가방 놀이터</h1>
+    <h1>🎒 생각 놀이터</h1>
     <div class="stats">
       <span class="stat">⭐ <b id="home-stars">0</b></span>
       <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
@@ -92,6 +92,37 @@
   </div>
 </section>
 
+<!-- 요리조리 풍선 줄 놀이 — 본보기 풍선 카드의 줄 모양을 보고 똑같이 그리는 운필력 놀이 -->
+<section class="screen" id="scr-balloon">
+  <header class="bar">
+    <button type="button" class="back" id="btn-balloon-back">◀</button>
+    <h2 id="balloon-title">🎈 요리조리 풍선 줄</h2>
+    <span class="dots" id="balloon-dots"></span>
+  </header>
+  <button type="button" class="side-nav prev" id="balloon-prev" aria-label="이전 풍선">◀</button>
+  <button type="button" class="side-nav next" id="balloon-next" aria-label="다 그리고 다음 풍선">▶</button>
+  <div class="bl-stage">
+    <div class="bl-cards">
+      <div class="bl-card" id="balloon-sample-card">
+        <span class="bl-tag">👀 본보기</span>
+        <canvas id="balloon-sample"></canvas>
+      </div>
+      <div class="bl-card mine" id="balloon-mine">
+        <span class="bl-tag mine">✏️ 내 풍선</span>
+        <canvas id="balloon-pad"></canvas>
+        <button type="button" class="line-clear" id="balloon-clear" aria-label="내 줄 지우기">🧽</button>
+        <span class="bl-fly" id="balloon-fly" hidden>🎈</span>
+      </div>
+    </div>
+    <div class="bl-toolbar">
+      <button type="button" class="bigbtn" id="btn-balloon-listen">🔊 듣기</button>
+      <div class="swatches" id="balloon-swatches"></div>
+      <button type="button" class="bigbtn" id="btn-balloon-eraser">🧼 지우개</button>
+      <button type="button" class="bigbtn" id="btn-balloon-undo">↩️ 한 획</button>
+    </div>
+  </div>
+</section>
+
 <!-- 색종이 축하 -->
 <div id="confetti" aria-hidden="true"></div>
 
@@ -109,6 +140,7 @@
 
 <script src="../shared/profile.js"></script>
 <script src="js/data.js"></script>
+<script src="js/ink.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/app.js"></script>
