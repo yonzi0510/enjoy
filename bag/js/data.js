@@ -1,4 +1,4 @@
-/* 가방 놀이터 데이터 — 두 놀이(숟가락·빨대) 도안을 규칙에 따라 생성한다.
+/* 가방 놀이터 데이터 — 세 놀이(숟가락·빨대·네모 조각) 도안을 규칙에 따라 생성한다.
  *
  * ── 숟가락(방향·위치 맞추기) 좌표계 ──
  * 100×100 놀이판. 물건은 { type, x, y, rot }:
@@ -11,6 +11,14 @@
  * 세로 끈 여러 개에 색 슬라이더가 하나씩. 슬라이더는 { color, target }:
  *   target = 목표 높이(0=맨 아래 ~ 1=맨 위). ±0.08 안이면 착!
  *   단계: 1=3개(성긴 높이), 2=5개(성긴 높이), 3=5개(미세한 높이).
+ *
+ * ── 네모 조각(회전 맞추기) 좌표계 ──
+ * 정사각 조각(각 조각은 2×2 칸)을 판의 고정 자리에 두고 톡 눌러 90°씩 돌린다.
+ * 조각은 { cells: [TL,TR,BL,BR](0/1 주황), startRot: 처음 각도(90·180·270) }.
+ *   본보기 = 모든 조각이 rot 0(제자리)일 때의 4×4(또는 2×2) 무늬.
+ *   조각 무늬는 네 방향이 모두 다른 것만 쓰므로(대각선·꽉참·빈칸 제외) 해답 각도는 rot 0 하나뿐 —
+ *   회전만으로 반드시 풀리고, 톡톡 돌려 제자리(rot 0)로 되돌리면 본보기와 똑같아진다.
+ *   단계: 1=2×2판 조각 1개(주황 1칸), 2=4×4 조각 4개(주황 1~2칸), 3=4×4 조각 4개(주황 2~3칸).
  *
  * 도안은 씨앗 고정 난수로 만들어 늘 같은 결과가 나온다(브라우저·node 동일).
  */
@@ -120,6 +128,54 @@
     return list;
   }
 
+  /* ─────────── 네모 조각 놀이 ─────────── */
+  // 주황 칸 색 / 빈 칸 색
+  const SQ_ORANGE = '#FF8C1A', SQ_EMPTY = '#F3E7D3';
+  // 2×2 조각 무늬 후보 — 네 방향이 모두 달라 해답 각도가 하나뿐인 것만(대각선·꽉참·빈칸 제외).
+  // 칸 순서: [TL, TR, BL, BR]
+  const SQ_PATTERNS = {
+    1: [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]],       // 주황 1칸(모서리)
+    2: [[1, 1, 0, 0], [0, 0, 1, 1], [1, 0, 1, 0], [0, 1, 0, 1]],       // 주황 2칸(변, 대각선 제외)
+    3: [[1, 1, 1, 0], [1, 1, 0, 1], [1, 0, 1, 1], [0, 1, 1, 1]],       // 주황 3칸(ㄱ자)
+  };
+  // 2×2 칸을 시계방향 90° 돌린 결과 — [a,b,c,d] → [c,a,d,b]
+  function rotCells(c) { return [c[2], c[0], c[3], c[1]]; }
+  function rotN(cells, deg) { let c = cells.slice(); for (let i = 0; i < (deg / 90) % 4; i++) c = rotCells(c); return c; }
+  function sameCells(a, b) { return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3]; }
+
+  function genSquare() {
+    const list = [];
+    // size=판 한 변 칸수, oranges=조각마다 고를 주황 칸 수 후보
+    const LEVELS = [
+      { size: 2, oranges: [1] },       // 1단계: 2×2 판(조각 1개)
+      { size: 4, oranges: [1, 2] },    // 2단계: 4×4 판(조각 4개)
+      { size: 4, oranges: [2, 3] },    // 3단계: 4×4 판(조각 4개)
+    ];
+    LEVELS.forEach((lv, li) => {
+      for (let k = 0; k < 10; k++) {
+        const rng = rngOf(9000 + li * 100 + k);
+        const nPieces = (lv.size / 2) * (lv.size / 2); // 2×2판=1개, 4×4판=4개
+        const pieces = [];
+        for (let pi = 0; pi < nPieces; pi++) {
+          const kOr = lv.oranges[Math.floor(rng() * lv.oranges.length)];
+          const pool = SQ_PATTERNS[kOr];
+          const cells = pool[Math.floor(rng() * pool.length)].slice();
+          // 처음 각도 — 제자리(rot 0)와 다른 무늬가 되도록(반드시 돌려야 풀리게)
+          const opts = [90, 180, 270].filter(d => !sameCells(rotN(cells, d), cells));
+          const startRot = opts[Math.floor(rng() * opts.length)];
+          pieces.push({ cells, startRot });
+        }
+        list.push({
+          id: 'sq' + (li + 1) + '-' + (k + 1),
+          name: (li + 1) + '단계 ' + (k + 1) + '번',
+          emoji: NAME_EMOJI[k],
+          level: li + 1, size: lv.size, pieces,
+        });
+      }
+    });
+    return list;
+  }
+
   const praises = [
     '참 잘했어요!', '우아, 똑같아요!', '멋지다!', '척척박사네!',
     '눈이 반짝반짝!', '최고예요!', '와, 딱 맞췄어요!', '대단해요!',
@@ -127,8 +183,10 @@
 
   root.BagData = {
     SPOON_TYPES, OBJ_COLORS, STRAW_COLORS,
+    SQ_ORANGE, SQ_EMPTY, rotCells, rotN, sameCells,
     spoons: genSpoon(),
     straws: genStraw(),
+    squares: genSquare(),
     praises,
   };
 })(typeof window !== 'undefined' ? window : this);

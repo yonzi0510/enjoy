@@ -1,4 +1,4 @@
-/* 가방 놀이터 셸 — 홈/도안 목록/두 놀이(숟가락·빨대) 화면 전환과 드래그 엔진.
+/* 가방 놀이터 셸 — 홈/도안 목록/세 놀이(숟가락·빨대·네모 조각) 화면 전환과 드래그·회전 엔진.
  * 포인터 이벤트(pointerdown/move/up)로 손가락·마우스·펜을 같은 코드로 다룬다.
  * 화면 배치(본보기 왼쪽/위 + 놀이판 오른쪽/아래)는 CSS가 방향에 맞게 바꾸므로
  * 여기서는 방향을 신경 쓰지 않는다 — 놀이판 좌표계는 언제나 0~100이다. */
@@ -83,6 +83,7 @@ window.App = (() => {
   const MODES = [
     { id: 'spoon', game: 'spoon', icon: '🥄', name: '요리조리 숟가락', desc: '본보기 보고 방향 맞추기', cls: 'c-spoon', list: () => D.spoons },
     { id: 'straw', game: 'straw', icon: '🎚️', name: '요리조리 빨대', desc: '슬라이더 높이 맞추기', cls: 'c-straw', list: () => D.straws },
+    { id: 'square', game: 'square', icon: '🟧', name: '네모 조각 맞추기', desc: '톡 눌러 조각 돌리기', cls: 'c-square', list: () => D.squares },
   ];
 
   function renderHome() {
@@ -116,7 +117,9 @@ window.App = (() => {
       const done = P.isDone(m.id, pz.id);
       const kind = m.game === 'spoon'
         ? '물건 ' + pz.objs.length + '개 · ' + (pz.rotStep ? '방향 맞추기' : '자리 맞추기')
-        : '슬라이더 ' + pz.sliders.length + '개';
+        : m.game === 'straw'
+          ? '슬라이더 ' + pz.sliders.length + '개'
+          : '조각 ' + pz.pieces.length + '개 · 톡 돌리기';
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'item-main';
@@ -138,7 +141,8 @@ window.App = (() => {
 
   function openPuzzle(m, pz) {
     if (m.game === 'spoon') openSpoon(m, pz);
-    else openStraw(m, pz);
+    else if (m.game === 'straw') openStraw(m, pz);
+    else openSquare(m, pz);
   }
 
   /* ═══════════ 숟가락 놀이 (방향·위치 맞추기) ═══════════ */
@@ -367,7 +371,106 @@ window.App = (() => {
   }
   function strawTargetEl(idx) { return cur.boardLayer.querySelector('.straw-target[data-slot="' + idx + '"]'); }
 
-  /* ─────────── 포인터 (두 놀이 공통 입구) ─────────── */
+  /* ═══════════ 네모 조각 놀이 (회전 맞추기) ═══════════ */
+  const SQ_M = 6;         // 판 바깥 여백(0~100 안)
+  let sqStart = null;     // 톡/끌기 구분용 시작점
+
+  // 조각 하나(2×2 칸)를 그린다 — 가운데 원점, 칸 반크기 half
+  function buildSquarePiece(cells, half) {
+    const g = el('g', {});
+    const gap = half * 0.28;          // 칸 사이 틈
+    const r = half - gap;             // 칸 반쪽 크기
+    const size = r * 2;
+    // 조각 바탕 타일(2×2를 감싸는 둥근 판) — 조각 경계가 눈에 보이게
+    g.appendChild(el('rect', {
+      x: -half * 2 + gap * 0.4, y: -half * 2 + gap * 0.4,
+      width: half * 4 - gap * 0.8, height: half * 4 - gap * 0.8,
+      rx: half * 0.5, class: 'sq-tile',
+    }));
+    const off = [[-half, -half], [half, -half], [-half, half], [half, half]]; // TL,TR,BL,BR
+    cells.forEach((v, i) => {
+      g.appendChild(el('rect', {
+        x: off[i][0] - r, y: off[i][1] - r, width: size, height: size,
+        rx: r * 0.34, class: v ? 'sq-cell on' : 'sq-cell',
+      }));
+    });
+    return g;
+  }
+  // 본보기(정지 무늬)를 그린다 — 조각들이 제자리(rot 0)일 때의 전체 격자
+  function drawSquareSample(svg, pz) {
+    svg.innerHTML = '';
+    const per = pz.size / 2;              // 한 변 조각 수 (1 또는 2)
+    const span = (100 - SQ_M * 2) / per;  // 조각 한 칸(2×2) 크기
+    const half = span / 4;                // 칸 반크기
+    pz.pieces.forEach((pc, idx) => {
+      const qx = idx % per, qy = Math.floor(idx / per);
+      const cx = SQ_M + (qx + 0.5) * span, cy = SQ_M + (qy + 0.5) * span;
+      const g = buildSquarePiece(pc.cells, half);
+      g.setAttribute('transform', 'translate(' + cx + ' ' + cy + ')');
+      svg.appendChild(g);
+    });
+  }
+
+  function openSquare(m, pz) {
+    cur = { game: 'square', mode: m.id, puzzle: pz, svg: $('square-stage'), pieces: [], placedCount: 0 };
+    $('square-title').textContent = pz.emoji + ' ' + pz.name;
+    $('square-count').textContent = '0 / ' + pz.pieces.length;
+    showScreen('scr-square');
+
+    drawSquareSample($('square-sample'), pz);
+
+    const svg = cur.svg;
+    svg.innerHTML = '';
+    const per = pz.size / 2;
+    const span = (100 - SQ_M * 2) / per;
+    const half = span / 4;
+    pz.pieces.forEach((pc, idx) => {
+      const qx = idx % per, qy = Math.floor(idx / per);
+      const cx = SQ_M + (qx + 0.5) * span, cy = SQ_M + (qy + 0.5) * span;
+      const p = {
+        id: 'r' + idx, idx, cells: pc.cells, cx, cy,
+        rot: pc.startRot, matched: false,
+      };
+      p.el = el('g', { class: 'piece sq-piece', 'data-id': p.id });
+      p.el.appendChild(buildSquarePiece(pc.cells, half));
+      svg.appendChild(p.el);
+      cur.pieces.push(p);
+      renderSquare(p);
+    });
+
+    setTimeout(() => A.speak(pz.pieces.length > 1
+      ? '본보기랑 똑같이! 네모 조각을 톡톡 눌러 돌려서 맞춰 봐.'
+      : '네모를 톡톡 눌러 돌려서 본보기랑 똑같이 만들어 볼까?'), 350);
+  }
+  // p.rot은 누적 각도(계속 커진다) — 뒤로 튕기지 않고 늘 앞으로 돈다. 판정은 360으로 접어서 본다.
+  function renderSquare(p) {
+    p.el.setAttribute('transform', 'translate(' + p.cx + ' ' + p.cy + ') rotate(' + p.rot + ')');
+  }
+  // 지금 각도의 무늬가 본보기(제자리)와 같은지 — 누적 각도를 0~359로 접어서 본다
+  function squareMatched(p) { return D.sameCells(D.rotN(p.cells, ((p.rot % 360) + 360) % 360), p.cells); }
+
+  function rotateSquare(p) {
+    p.rot += 90;
+    // 스르륵 도는 느낌 — CSS transition이 transform을 부드럽게 이어준다
+    renderSquare(p);
+    A.sfx.spin();
+    if (squareMatched(p)) snapSquare(p);
+  }
+  function snapSquare(p) {
+    p.matched = true;
+    p.el.classList.add('placed', 'sq-lock');
+    cur.placedCount++;
+    $('square-count').textContent = cur.placedCount + ' / ' + cur.pieces.length;
+    A.sfx.pop();
+    if (cur.placedCount >= cur.pieces.length) setTimeout(complete, 420);
+  }
+  function squareDown(p) { grabbed = p; moved = 0; sqStart = null; }
+  function squareUp() {
+    const p = grabbed; grabbed = null;
+    if (moved < 3) rotateSquare(p); // 끌지 않고 톡 → 회전
+  }
+
+  /* ─────────── 포인터 (세 놀이 공통 입구) ─────────── */
   function svgPoint(ev, svg) {
     const m = svg.getScreenCTM();
     if (!m) return { x: 0, y: 0 };
@@ -379,21 +482,26 @@ window.App = (() => {
     const g = ev.target.closest && ev.target.closest('.piece');
     if (!g) return;
     const p = cur.pieces.find(q => q.el === g);
-    if (!p || p.placed) return;
+    if (!p || p.placed || p.matched) return;
     ev.preventDefault();
     const pt = svgPoint(ev, cur.svg);
     if (cur.game === 'spoon') { grabOff = { x: p.pos.x - pt.x, y: p.pos.y - pt.y }; spoonDown(p); }
-    else { grabOff = { x: 0, y: hToY(p.h) - pt.y }; strawDown(p); }
+    else if (cur.game === 'straw') { grabOff = { x: 0, y: hToY(p.h) - pt.y }; strawDown(p); }
+    else { sqStart = pt; squareDown(p); }
   }
   function onMove(ev) {
     if (!grabbed) return;
     ev.preventDefault();
     const pt = svgPoint(ev, cur.svg);
-    if (cur.game === 'spoon') spoonMove(pt); else strawMove(pt);
+    if (cur.game === 'spoon') spoonMove(pt);
+    else if (cur.game === 'straw') strawMove(pt);
+    else { if (sqStart) { moved += dist(pt, sqStart); sqStart = pt; } } // 톡/끌기 구분만
   }
   function onUp() {
     if (!grabbed) return;
-    if (cur.game === 'spoon') spoonUp(); else strawUp();
+    if (cur.game === 'spoon') spoonUp();
+    else if (cur.game === 'straw') strawUp();
+    else squareUp();
   }
 
   function wiggle(e) {
@@ -459,7 +567,7 @@ window.App = (() => {
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('selectstart', e => e.preventDefault());
 
-    ['spoon-stage', 'straw-stage'].forEach(id => $(id).addEventListener('pointerdown', onDown));
+    ['spoon-stage', 'straw-stage', 'square-stage'].forEach(id => $(id).addEventListener('pointerdown', onDown));
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
@@ -469,6 +577,7 @@ window.App = (() => {
     });
     $('btn-spoon-back').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(curMode); });
     $('btn-straw-back').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(curMode); });
+    $('btn-square-back').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(curMode); });
     $('reward-next').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap();
       $('reward').classList.remove('on');
@@ -493,7 +602,7 @@ window.App = (() => {
       rewardOn: $('reward').classList.contains('on'),
       pieces: [],
     };
-    if (cur && (screenId === 'scr-spoon' || screenId === 'scr-straw')) {
+    if (cur && (screenId === 'scr-spoon' || screenId === 'scr-straw' || screenId === 'scr-square')) {
       const m = cur.svg.getScreenCTM();
       const toClient = (x, y) => { const q = new DOMPoint(x, y).matrixTransform(m); return { x: q.x, y: q.y }; };
       if (cur.game === 'spoon') {
@@ -501,10 +610,15 @@ window.App = (() => {
           id: p.id, placed: p.placed, rot: p.rot, rotTarget: p.rotTarget, rotStep: cur.puzzle.rotStep,
           client: toClient(p.pos.x, p.pos.y), targetClient: toClient(p.target.x, p.target.y),
         }));
-      } else {
+      } else if (cur.game === 'straw') {
         out.pieces = cur.pieces.map(p => ({
           id: p.id, placed: p.placed, h: p.h, target: p.target,
           client: toClient(p.x, hToY(p.h)), targetClient: toClient(p.x, hToY(p.target)),
+        }));
+      } else {
+        out.pieces = cur.pieces.map(p => ({
+          id: p.id, placed: p.matched, matched: p.matched, rot: p.rot,
+          client: toClient(p.cx, p.cy),
         }));
       }
     }
