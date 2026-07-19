@@ -225,7 +225,55 @@ await check('도형 맞추기: 같은 모양 자리에 착! → 완성', async (
   await page.click('#reward-close');
 });
 
+// 조각 하나를 놓아도, 그 조각과 겹치는 이웃 빈 자리 안내(문·창문)가 계속 보이는지
+// 세 해상도(가로 패드·세로 패드·폰 세로)에서 확인한다. 놓은 조각이 안내를 가리면 실패.
+async function slotGuidesVisibleAfterPlacing(label) {
+  await page.waitForSelector('#scr-list.on');
+  await page.click('#puzzle-list .item-main[data-puzzle="house"]');
+  await page.waitForSelector('#scr-play.on');
+  // 몸통(s1)만 제 자리에 놓는다 — 문(s2)·창문(s3)은 몸통 안쪽이라 겹친다
+  const body = (await dbg(page)).pieces.find(q => q.id === 's1');
+  await dragPiece(page, 's1', body.targetClient);
+  const r = await page.evaluate(() => {
+    const q = s => document.querySelector(s);
+    const piece = q('.piece[data-id="s1"]');
+    const inspect = idx => {
+      const slot = q('[data-slot="' + idx + '"]');
+      const bb = slot.getBoundingClientRect();
+      // 안내(slot)가 놓인 조각보다 나중에 그려지면(문서상 뒤) 위에 보인다
+      const rel = slot.compareDocumentPosition(piece);
+      return {
+        visible: bb.width > 1 && bb.height > 1,
+        onTop: !!(rel & Node.DOCUMENT_POSITION_PRECEDING),
+      };
+    };
+    return { placed: piece.classList.contains('placed'), door: inspect(2), win: inspect(3) };
+  });
+  expect(r.placed, label + ': 몸통이 안 놓임');
+  expect(r.door.visible && r.door.onTop, label + ': 문 자리 안내가 안 보임/가려짐');
+  expect(r.win.visible && r.win.onTop, label + ': 창문 자리 안내가 안 보임/가려짐');
+  await page.click('#btn-play-back');
+  await page.waitForSelector('#scr-list.on');
+}
+
+await check('도형 맞추기: 조각 놓아도 남은 자리 안내 보임 (가로 패드 1180×820)', async () => {
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await slotGuidesVisibleAfterPlacing('가로 패드');
+});
+await check('도형 맞추기: 조각 놓아도 남은 자리 안내 보임 (세로 패드 834×1194)', async () => {
+  await page.setViewportSize({ width: 834, height: 1194 });
+  await page.waitForTimeout(350);
+  await slotGuidesVisibleAfterPlacing('세로 패드');
+});
+await check('도형 맞추기: 조각 놓아도 남은 자리 안내 보임 (폰 세로 390×844)', async () => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(350);
+  await slotGuidesVisibleAfterPlacing('폰 세로');
+});
+
 await check('가로↔세로 회전: 판·트레이 재배치 + 진행 유지 + 양쪽에서 스냅', async () => {
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.waitForTimeout(350);
   await page.waitForSelector('#scr-list.on');
   await page.click('#puzzle-list .item-main[data-puzzle="train"]');
   await page.waitForSelector('#scr-play.on');

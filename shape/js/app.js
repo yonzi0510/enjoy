@@ -122,8 +122,13 @@ window.App = (() => {
     // 트레이 바탕 — 위치·크기는 applyOrientation()이 방향에 맞게 넣는다
     cur.trayBg = el('rect', { rx: 5, class: 'tray-bg' });
     svg.appendChild(cur.trayBg);
+    // 레이어 순서(아래→위): 놓인 도형 → 회색 자리 안내 → 트레이·집는 조각
+    // 도형 맞추기는 부품 자리가 서로 겹쳐서(문·창문이 몸통 안), 놓은 조각을
+    // 안내 아래(placedLayer)로 내려야 아직 안 놓은 빈 자리 안내가 안 가려진다.
+    const placedLayer = el('g', {}); svg.appendChild(placedLayer);
     const boardLayer = el('g', {}); svg.appendChild(boardLayer);
     const pieceLayer = el('g', {}); svg.appendChild(pieceLayer);
+    cur.placedLayer = placedLayer;
     cur.boardLayer = boardLayer;
     cur.pieceLayer = pieceLayer;
 
@@ -452,6 +457,8 @@ window.App = (() => {
     if (p.kind === 'shape') {
       cur.slots[p.slotIdx].filled = true;
       cur.slots[p.slotIdx].el.classList.add('filled');
+      // 놓은 도형은 안내 실루엣 아래 레이어로 — 겹치는 이웃 빈 자리 안내가 계속 보이게
+      cur.placedLayer.appendChild(p.el);
     }
     animMove(p, to, 1);
     cur.placedCount++;
