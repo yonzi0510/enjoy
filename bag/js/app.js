@@ -104,6 +104,20 @@ window.App = (() => {
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(m); });
       menu.appendChild(b);
     });
+
+    if (D.balloons) { // 요리조리 풍선 줄 (canvas 운필력)
+      const done = balloonDone(), total = balloonTotal();
+      const bl = document.createElement('button');
+      bl.type = 'button';
+      bl.className = 'menu-card c-balloon';
+      bl.innerHTML =
+        '<span class="mc-icon">' + D.balloons.icon + '</span>' +
+        '<span class="mc-name">' + D.balloons.name + '</span>' +
+        '<span class="mc-desc">' + D.balloons.desc + '</span>' +
+        '<span class="mc-prog">' + (done >= total ? '🏅 완성!' : (done ? '⭐ ' + done + ' / ' + total : '처음이야!')) + '</span>';
+      bl.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openBalloonLevels(); });
+      menu.appendChild(bl);
+    }
   }
 
   /* ─────────── 도안 목록 ─────────── */
@@ -562,6 +576,181 @@ window.App = (() => {
     $('reward').classList.add('on');
   }
 
+  /* ═══════════ 요리조리 풍선 줄 놀이 (canvas 운필력) ═══════════
+   * 본보기 풍선 카드의 줄을 보고 내 카드에 풍선 꼭지부터 줄을 그린다.
+   * 판정: ink.js judge(band) 의 재현율(coverage)·정밀도(precision)를 함께 본다.
+   *   통과 = coverage ≥ cmin AND precision ≥ pmin.
+   *   1·2단계(따라 그리기)는 밴드를 좁혀 곡선을 잘 따라와야 통과,
+   *   3단계(보고 그리기)는 밴드를 넓히고 임계를 낮춰 관대하되,
+   *   마구 칠하기·곡선 무시 직선·점 몇 개는 정밀도(precision)에서 떨어진다. */
+  const BL_JUDGE = {
+    trace: { band: 54, cmin: 0.55, pmin: 0.55 },  // 따라 그리기(1·2단계)
+    free:  { band: 72, cmin: 0.42, pmin: 0.42 },  // 보고 그리기(3단계) — 너그럽게
+  };
+  // 크레용 색 (본보기 검은 줄과 비슷한 남색이 기본)
+  const COLORS = ['#E8354D', '#F2762E', '#E5A800', '#3FBF77', '#31B7D8', '#4E6FE3', '#8B5BD6', '#F25CA2', '#8A5A3B', '#3B3B4A'];
+  let bPad = null;
+  let bcur = null;   // { level, li, idx, col, dirty, failStamp }
+  let balloonColor = COLORS[9];
+  let balloonTool = 'pen';
+
+  function makeSwatches(container, current, onPick) {
+    container.innerHTML = '';
+    COLORS.forEach(c => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch' + (c === current ? ' on' : '');
+      b.style.background = c === 'rb' ? 'conic-gradient(red,orange,gold,green,blue,violet,red)' : c;
+      b.addEventListener('click', ev => {
+        ev.preventDefault(); A.sfx.tap(); onPick(c);
+        container.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s === b));
+      });
+      container.appendChild(b);
+    });
+  }
+
+  function balloonPageId(level, idx) { return level.id + '-' + idx; }
+  function balloonDoneIn(level) {
+    let n = 0;
+    level.pages.forEach((_, i) => { if (P.isDone('balloon', balloonPageId(level, i))) n++; });
+    return n;
+  }
+  function balloonDone() { return D.balloons.levels.reduce((n, lv) => n + balloonDoneIn(lv), 0); }
+  function balloonTotal() { return D.balloons.levels.reduce((n, lv) => n + lv.pages.length, 0); }
+  function balloonFirstTodo(level) {
+    for (let i = 0; i < level.pages.length; i++) if (!P.isDone('balloon', balloonPageId(level, i))) return i;
+    return 0;
+  }
+  function setBalloonTool(tool) {
+    balloonTool = tool;
+    $('btn-balloon-eraser').classList.toggle('on', tool === 'erase');
+  }
+  function balloonJudge() { return bcur.level.trace ? BL_JUDGE.trace : BL_JUDGE.free; }
+
+  function initBalloon() {
+    bPad = Ink.BalloonPad($('balloon-pad'), {
+      color: () => balloonColor, tool: () => balloonTool,
+      onChange: () => { if (bcur) bcur.dirty = true; },
+    });
+    makeSwatches($('balloon-swatches'), balloonColor, c => { balloonColor = c; setBalloonTool('pen'); });
+    window.addEventListener('resize', renderBalloonSampleNow);
+  }
+  function renderBalloonSampleNow() {
+    if (!bcur) return;
+    const page = bcur.level.pages[bcur.idx];
+    Ink.renderBalloonSample($('balloon-sample'), page.p, bcur.col);
+  }
+
+  // 단계 목록 — 도안 목록 화면(scr-list)을 재사용한다
+  function openBalloonLevels() {
+    bcur = null;
+    curMode = null;
+    $('list-title').textContent = D.balloons.icon + ' ' + D.balloons.name;
+    const list = $('play-list');
+    list.innerHTML = '';
+    D.balloons.levels.forEach(lv => {
+      const done = balloonDoneIn(lv), total = lv.pages.length;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'item-main';
+      b.dataset.level = lv.id;
+      b.innerHTML =
+        '<span class="it-emoji">' + lv.e + '</span>' +
+        '<span class="it-texts"><span class="it-name">' + lv.name + '</span>' +
+        '<span class="it-kind">' + lv.kind + '</span></span>' +
+        '<span class="it-prog">' + (done >= total ? '🏅' : '⭐ ' + done + ' / ' + total) + '</span>';
+      b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openBalloon(lv, balloonFirstTodo(lv)); });
+      list.appendChild(b);
+    });
+    showScreen('scr-list');
+  }
+
+  function openBalloon(level, idx) {
+    bcur = { level, li: D.balloons.levels.indexOf(level), idx };
+    $('balloon-title').textContent = '🎈 ' + level.name;
+    setBalloonTool('pen');
+    showScreen('scr-balloon');
+    bPad.resize();
+    openBalloonPage(idx);
+  }
+
+  function openBalloonPage(idx) {
+    const level = bcur.level;
+    bcur.idx = idx;
+    bcur.dirty = false;
+    bcur.failStamp = null;
+    bcur.col = (bcur.li * 10 + idx) % Ink.BALLOON_N; // 페이지마다 풍선 색 순환
+    const page = level.pages[idx];
+    $('balloon-prev').disabled = idx === 0;
+    $('balloon-next').disabled = false;
+    const dots = $('balloon-dots');
+    dots.innerHTML = '';
+    level.pages.forEach((_, i) => {
+      const d = document.createElement('span');
+      d.className = 'dot' + (i === idx ? ' on' : '') + (P.isDone('balloon', balloonPageId(level, i)) ? ' done' : '');
+      dots.appendChild(d);
+    });
+    bPad.setCurve(page.p, level.trace ? 'show' : 'hide', bcur.col);
+    renderBalloonSampleNow();
+    bcur.dirty = false;
+    setTimeout(() => A.speak(page.say || page.name), 350);
+  }
+
+  function balloonStamp() { return bPad.strokeCount() + ':' + Math.round(bPad.inkLength()); }
+  /* ▶ = 다 그렸어요 + 다음. 안 그렸으면 그냥 넘기고,
+   * 판정 실패 후 같은 상태로 두 번 누르면 좌절하지 않게 보내 준다. */
+  function balloonNext() {
+    if (!bcur) return;
+    const level = bcur.level;
+    const next = () => { if (bcur.idx < level.pages.length - 1) openBalloonPage(bcur.idx + 1); else openBalloonLevels(); };
+    if (bPad.strokeCount() === 0) { A.sfx.tap(); next(); return; } // 안 그렸으면 구경만
+    if (!bcur.dirty && P.isDone('balloon', balloonPageId(level, bcur.idx))) { A.sfx.tap(); next(); return; }
+    const j = balloonJudge();
+    const r = bPad.judge(j.band);
+    if (r.coverage < j.cmin || r.precision < j.pmin) {
+      const stamp = balloonStamp();
+      if (bcur.failStamp === stamp) { A.sfx.tap(); next(); return; } // 두 번째 누름 → 보내주기
+      bcur.failStamp = stamp;
+      A.sfx.nope();
+      wiggle($('balloon-mine'));
+      A.speak(level.trace
+        ? '풍선 꼭지부터 점선을 따라 그려 볼까?'
+        : '본보기 풍선 줄을 잘 보고 똑같이 그려 볼까?');
+      return;
+    }
+    finishBalloonPage();
+  }
+
+  function finishBalloonPage() {
+    const level = bcur.level, idx = bcur.idx;
+    const pz = level.pages[idx];
+    P.recordDone('balloon', balloonPageId(level, idx));
+    P.addStar(1);
+    if (window.Pet) { // 펫 먹이: 페이지 = 간식, 단계(10장) 완주 = 식사
+      Pet.awardSnack(1);
+      if (balloonDoneIn(level) >= level.pages.length) Pet.awardMeal(1);
+    }
+    // 풍선이 두둥실 떠오르는 축하 → 보상 카드
+    const fly = $('balloon-fly');
+    fly.className = 'bl-fly blc-' + bcur.col;
+    fly.hidden = false;
+    void fly.offsetWidth;
+    fly.classList.add('fly');
+    A.sfx.fanfare();
+    confetti();
+    const praise = D.praises[Math.floor(Math.random() * D.praises.length)];
+    A.speak(pz.name + '! ' + praise);
+    const last = idx >= level.pages.length - 1;
+    clearTimeout(finishBalloonPage.t);
+    finishBalloonPage.t = setTimeout(() => {
+      fly.classList.remove('fly');
+      fly.hidden = true;
+      showReward(praise, last ? '단계 목록으로' : '다음 🎈 ▶',
+        () => { if (last) openBalloonLevels(); else openBalloonPage(idx + 1); },
+        () => openBalloonLevels());
+    }, 950);
+  }
+
   /* ─────────── 초기화 ─────────── */
   function init() {
     document.addEventListener('contextmenu', e => e.preventDefault());
@@ -571,6 +760,23 @@ window.App = (() => {
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
+
+    initBalloon();
+    $('btn-balloon-back').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openBalloonLevels(); });
+    $('balloon-prev').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); if (bcur && bcur.idx > 0) openBalloonPage(bcur.idx - 1); });
+    $('balloon-next').addEventListener('click', ev => { ev.preventDefault(); balloonNext(); });
+    $('btn-balloon-listen').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      if (!bcur) return;
+      const p = bcur.level.pages[bcur.idx];
+      A.speak(p.say || p.name);
+    });
+    $('btn-balloon-eraser').addEventListener('click', ev => {
+      ev.preventDefault(); A.sfx.tap();
+      setBalloonTool(balloonTool === 'erase' ? 'pen' : 'erase');
+    });
+    $('btn-balloon-undo').addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); bPad.undo(); });
+    $('balloon-clear').addEventListener('click', ev => { ev.preventDefault(); A.sfx.pop(); bPad.clear(); });
 
     document.querySelectorAll('[data-go]').forEach(b => {
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); showScreen(b.dataset.go); });
@@ -601,6 +807,14 @@ window.App = (() => {
       placed: cur ? cur.placedCount : 0, total: cur ? cur.pieces.length : 0,
       rewardOn: $('reward').classList.contains('on'),
       pieces: [],
+      balloon: bcur ? (() => {
+        const r = bPad.judge(balloonJudge().band);
+        return {
+          level: bcur.level.id, idx: bcur.idx, col: bcur.col,
+          guide: bPad.guideShown(), strokes: bPad.strokeCount(),
+          coverage: r.coverage, precision: r.precision, judge: balloonJudge(),
+        };
+      })() : null,
     };
     if (cur && (screenId === 'scr-spoon' || screenId === 'scr-straw' || screenId === 'scr-square')) {
       const m = cur.svg.getScreenCTM();

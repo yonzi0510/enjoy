@@ -128,8 +128,56 @@ D.squares.forEach(pz => {
   });
 });
 
+/* ─────────── 요리조리 풍선 줄 ───────────
+ * 3단계 × 10개 = 30개, 시작점은 풍선 꼭지(260,244) 근처, 모든 점이 카드(520×640) 안,
+ * 1~2단계는 따라 그리기(trace: true), 3단계는 보고 그리기(trace: false), 곡선 중복 금지 */
+let curveCount = 0;
+(function checkBalloons() {
+  const B = D.balloons;
+  const KX = 260, KY = 244, BW = 520, BH = 640;
+  if (!B || !Array.isArray(B.levels)) { err('balloons(요리조리 풍선 줄) 없음'); return; }
+  if (!B.icon || !B.name || !B.desc) err('balloons: icon/name/desc 필요');
+  if (B.levels.length !== 3) { err('balloons: 단계는 3개여야 함 (현재 ' + B.levels.length + ')'); return; }
+  const ids = new Set(), seen = new Set();
+  B.levels.forEach((lv, li) => {
+    const at = '풍선 ' + (lv.id || '?');
+    if (!lv.id || !/^line\d+$/.test(lv.id)) err(at + ': id는 line* 형식이어야 함');
+    if (ids.has(lv.id)) err(at + ': id 중복');
+    ids.add(lv.id);
+    if (!lv.e || !lv.name || !lv.kind) err(at + ': e/name/kind 필요');
+    if (li < 2 && lv.trace !== true) err(at + ': 1~2단계는 따라 그리기(trace: true)여야 함');
+    if (li === 2 && lv.trace !== false) err(at + ': 3단계는 보고 그리기(trace: false)여야 함');
+    if (!Array.isArray(lv.pages) || lv.pages.length !== 10) {
+      err(at + ': 단계마다 곡선 10개여야 함 (현재 ' + (lv.pages ? lv.pages.length : 0) + ')');
+      return;
+    }
+    lv.pages.forEach((p, i) => {
+      curveCount++;
+      const pat = at + ' pages[' + i + ']';
+      if (!p.name || !p.say) err(pat + ': name/say 필요');
+      const pts = p.p;
+      if (!Array.isArray(pts) || pts.length < 8 || pts.length % 2) { err(pat + ': 점열(p)이 이상함'); return; }
+      if (Math.hypot(pts[0] - KX, pts[1] - KY) > 20) {
+        err(pat + ': 시작점(' + pts[0] + ',' + pts[1] + ')이 풍선 꼭지(260,244) 근처가 아님');
+      }
+      let len = 0;
+      for (let j = 0; j < pts.length; j += 2) {
+        if (!Number.isFinite(pts[j]) || !Number.isFinite(pts[j + 1]) ||
+            pts[j] < 0 || pts[j] > BW || pts[j + 1] < 0 || pts[j + 1] > BH) {
+          err(pat + ': 점(' + pts[j] + ',' + pts[j + 1] + ')이 카드(520×640) 밖');
+        }
+        if (j >= 2) len += Math.hypot(pts[j] - pts[j - 2], pts[j + 1] - pts[j - 1]);
+      }
+      if (len < 300) err(pat + ': 줄이 너무 짧음 (' + Math.round(len) + ', 최소 300)');
+      const key = pts.join(',');
+      if (seen.has(key)) err(pat + ': 곡선이 다른 페이지와 중복');
+      seen.add(key);
+    });
+  });
+})();
+
 if (errors) {
   console.error('\n검증 실패: 오류 ' + errors + '개');
   process.exit(1);
 }
-console.log('✅ 데이터 검증 통과 — 숟가락 ' + D.spoons.length + '개, 빨대 ' + D.straws.length + '개, 네모 ' + D.squares.length + '개');
+console.log('✅ 데이터 검증 통과 — 숟가락 ' + D.spoons.length + '개, 빨대 ' + D.straws.length + '개, 네모 ' + D.squares.length + '개, 풍선 줄 곡선 ' + curveCount + '개');

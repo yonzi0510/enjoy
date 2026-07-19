@@ -104,6 +104,7 @@ h1 {
 .menu .menu-card:nth-child(1) { animation-delay: .05s; }
 .menu .menu-card:nth-child(2) { animation-delay: .10s; }
 .menu .menu-card:nth-child(3) { animation-delay: .15s; }
+.menu .menu-card:nth-child(4) { animation-delay: .20s; }
 .mc-icon { font-size: clamp(40px, 9vmin, 64px); line-height: 1.15; }
 .mc-name { font-size: clamp(17px, 3.4vmin, 25px); font-weight: 900; color: #4A3417; }
 .mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #8A6A44; }
@@ -119,6 +120,7 @@ h1 {
 .c-spoon { --tint: #FFEFE1; --chunk: #E39A5B; }
 .c-straw { --tint: #EAF6E7; --chunk: #7FC06B; }
 .c-square { --tint: #FFF1E0; --chunk: #F0A64E; }
+.c-balloon { --tint: #FFE4EA; --chunk: #D6486B; }
 
 /* ─────────── 상단 바 ─────────── */
 .bar {
@@ -366,6 +368,158 @@ h1 {
 .reward-praise { font-size: clamp(20px, 4.6vmin, 34px); font-weight: 900; color: #7A4E1E; }
 .reward-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 
+/* ─────────── 요리조리 풍선 줄 — 본보기 카드 + 내 카드 ───────────
+ * 세로: 본보기 위 · 내 카드 아래. 가로(landscape)에서 좌우 나란히.
+ * 카드 폭은 화면 높이에서 바·툴바 몫을 뺀 값으로 잡아 잘림(숨은 스크롤)을 막는다. */
+.bl-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.6vmin, 14px);
+  width: 100%;
+  padding: 0 clamp(58px, 9vw, 96px); /* 양옆 큰 화살표 자리 */
+}
+.bl-cards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2.2vmin, 20px);
+  width: 100%;
+}
+.bl-card {
+  position: relative;
+  width: min(72vw, calc((100vh - 340px) / 2 * 0.813)); /* 0.813 = 카드 비율 520/640 */
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  --tint: #FFF6EE;
+  border-radius: 22px;
+  padding: clamp(6px, 1.2vmin, 10px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 7px 0 var(--chunk-soft),
+    0 16px 26px rgba(var(--accent), .16);
+}
+.bl-card canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 520 / 640;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: inset 0 0 0 2px #F0EAD8;
+}
+.bl-card.mine canvas { touch-action: none; cursor: crosshair; } /* 필기 중 스크롤·줌 방지 */
+.bl-tag {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font-size: clamp(11px, 2.2vmin, 15px);
+  font-weight: 800;
+  color: #B279C6;
+  background: rgba(255,255,255,.85);
+  border-radius: 999px;
+  padding: 2px 10px;
+  pointer-events: none;
+  z-index: 3;
+}
+.bl-tag.mine { color: #5FA06F; }
+/* 내 줄 지우기 — 카드 오른쪽 아래 작은 단추 */
+.line-clear {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: clamp(34px, 6vmin, 44px);
+  height: clamp(34px, 6vmin, 44px);
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,.9);
+  font-size: clamp(16px, 3.2vmin, 22px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 3px 0 var(--chunk-soft), 0 6px 10px rgba(var(--accent), .16);
+  cursor: pointer;
+  z-index: 4;
+}
+.line-clear:active { transform: translateY(2px) scale(.95); }
+/* 통과 축하 — 풍선이 카드에서 두둥실 떠오른다 */
+.bl-fly {
+  position: absolute;
+  left: 50%;
+  top: 5%;
+  transform: translateX(-50%);
+  font-size: clamp(64px, 15vmin, 120px);
+  pointer-events: none;
+  z-index: 6;
+}
+.bl-fly[hidden] { display: none; }
+.bl-fly.fly { animation: bl-fly 1s ease-in forwards; }
+@keyframes bl-fly {
+  0%   { transform: translate(-50%, 10%) scale(.95) rotate(0deg); opacity: 1; }
+  100% { transform: translate(-50%, -150%) scale(1.2) rotate(-12deg); opacity: 0; }
+}
+/* 풍선 6색 — 🎈(빨강) 이모지를 hue-rotate 로 물들여 카드 색과 맞춘다 */
+.blc-1 { filter: hue-rotate(30deg); }
+.blc-2 { filter: hue-rotate(52deg) saturate(.85); }
+.blc-3 { filter: hue-rotate(140deg); }
+.blc-4 { filter: hue-rotate(215deg); }
+.blc-5 { filter: hue-rotate(268deg); }
+
+/* 진행 점(현재 곡선 위치) */
+.dots { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.dots .dot {
+  width: clamp(8px, 1.6vmin, 11px);
+  height: clamp(8px, 1.6vmin, 11px);
+  border-radius: 50%;
+  background: rgba(122,78,30,.22);
+}
+.dots .dot.on { background: #D6486B; transform: scale(1.25); }
+.dots .dot.done { background: #7FC06B; }
+
+/* 양옆 큰 화살표 (이전/다음 곡선) */
+.side-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(46px, 8vmin, 66px);
+  height: clamp(46px, 8vmin, 66px);
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  font-size: clamp(20px, 4vmin, 30px);
+  font-weight: 900;
+  color: #7A4E1E;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.65),
+    0 4px 0 var(--chunk),
+    0 10px 18px rgba(var(--accent), .16);
+  cursor: pointer;
+  z-index: 8;
+}
+.side-nav:active { transform: translateY(-50%) scale(.94); }
+.side-nav.prev { left: clamp(6px, 2vw, 20px); }
+.side-nav.next { right: clamp(6px, 2vw, 20px); }
+.side-nav:disabled { opacity: .35; pointer-events: none; }
+
+/* 도구 줄 (듣기·색·지우개·한 획) */
+.bl-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(6px, 1.4vmin, 12px);
+  width: 100%;
+}
+.bl-toolbar .bigbtn.on { background: linear-gradient(180deg, #D9A867 0%, #C99A5B 100%); color: #fff; }
+
+/* 크레용 색 고르기 */
+.swatches { display: flex; gap: clamp(5px, 1.2vmin, 9px); flex-wrap: wrap; justify-content: center; max-width: 260px; }
+.swatch {
+  width: clamp(28px, 5.4vmin, 40px);
+  height: clamp(28px, 5.4vmin, 40px);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.7), 0 3px 0 rgba(122,78,30,.2);
+}
+.swatch.on { outline: 3px solid #7A4E1E; outline-offset: 2px; }
+
 /* ─────────── 가로모드 우선 (태블릿 가로가 기본 사용 환경) ───────────
  * 세로로 쌓인 놀이판을 2단으로: 왼쪽 본보기 + 오른쪽 놀이판. 세로모드 규칙은 그대로. */
 @media (orientation: landscape) {
@@ -391,6 +545,27 @@ h1 {
     align-self: center;
   }
   .board-wrap { flex: 1; height: 100%; }
+
+  /* 풍선 줄: 본보기 왼쪽 · 내 카드 오른쪽 (가로모드 2단 배치) */
+  .bl-cards { flex-direction: row; }
+  .bl-card { width: min(34vw, calc((100vh - 300px) * 0.813)); }
+}
+
+/* 아주 낮은 가로 화면(폰 가로): 카드 두 장 왼쪽 + 도구 오른쪽 열 */
+@media (orientation: landscape) and (max-height: 480px) {
+  .bl-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(140px, 190px);
+    grid-template-areas: "cards tool";
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(8px, 1.6vw, 14px);
+    padding: 0 clamp(52px, 8vw, 72px);
+  }
+  .bl-cards { grid-area: cards; flex-direction: row; gap: clamp(8px, 1.6vw, 14px); }
+  .bl-toolbar { grid-area: tool; flex-direction: column; gap: clamp(6px, 1.4vmin, 10px); }
+  .bl-toolbar .swatches { max-width: 180px; }
+  .bl-card { width: min(26vw, calc((100vh - 120px) * 0.813)); padding: 4px; border-radius: 16px; }
 }
 
 /* ─────────── 등장 모션 + 모션 줄이기 설정 존중 ─────────── */
@@ -402,5 +577,6 @@ h1 {
   .home-head, .menu-card, .item-main, .sample-card { animation: none; }
   .menu-card, .item-main, .back, .bigbtn { transition: none; }
   .piece.wiggle, .slot.hint, .straw-target.hint rect { animation: none; }
+  .bl-fly.fly { animation: none; }
   #confetti .cf { display: none; }
 }
