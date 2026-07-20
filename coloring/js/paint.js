@@ -11,10 +11,14 @@ window.Paint = (() => {
   const RES = 500;                 // 내부 래스터 한 변(px)
   const VB = 100;                  // 그림 좌표계 한 변
   const SCALE = RES / VB;          // 5
-  const LINE_W = 1.1;              // 선 굵기(그림 공간) → 래스터 5.5px 벽
+  const LINE_W = 1.1;              // 벽(마스크) 굵기(그림 공간) → 래스터 5.5px — 실선·연속(색이 새지 않게)
   const BARRIER_A = 50;            // 이 알파를 넘으면 벽으로 본다
   const TOL = 100;                 // flood fill 색 비교 임계(3채널 절대차 합)
   const MAX_UNDO = 16;
+  // 보이는 밑그림 = 아이가 "따라 그리는" 흐린 점선 안내선 (벽은 실선으로 따로 유지)
+  const GUIDE_COLOR = '#C0BACF';   // 흐린 회보라
+  const GUIDE_W = 0.9;             // 안내선 굵기(그림 공간) → 래스터 4.5px
+  const GUIDE_DASH = [2.4, 2.2];   // 점선 간격(그림 공간)
 
   function makeCanvas() {
     const c = document.createElement('canvas');
@@ -44,6 +48,7 @@ window.Paint = (() => {
     const vctx = canvas.getContext('2d');
     const pcanvas = makeCanvas(), pctx = pcanvas.getContext('2d', { willReadFrequently: true });
     const lcanvas = makeCanvas(), lctx = lcanvas.getContext('2d', { willReadFrequently: true });
+    const mcanvas = makeCanvas(), mctx = mcanvas.getContext('2d', { willReadFrequently: true }); // 벽 계산용(안 보임)
     let mask = new Uint8Array(RES * RES);
     let undoStack = [];
     let cur = null, pid = null, rbBase = 0;
@@ -56,26 +61,45 @@ window.Paint = (() => {
       vctx.drawImage(lcanvas, 0, 0);
     }
 
-    // 밑그림 선 레이어 + 벽 마스크를 만든다
+    // 보이는 안내선(흐린 점선) + 벽 마스크(실선·안 보임)를 만든다.
+    // 안내선은 아이가 따라 그리도록 흐린 점선, 벽은 색이 점선 틈으로 새지 않게 실선·연속으로 따로 계산한다.
     function drawLines(pic) {
+      // 1) 벽 마스크 — 오프스크린에 실선·연속으로 그려 알파를 벽으로 삼는다
+      mctx.setTransform(1, 0, 0, 1, 0, 0);
+      mctx.clearRect(0, 0, RES, RES);
+      mctx.save();
+      mctx.scale(SCALE, SCALE);
+      mctx.lineJoin = 'round';
+      mctx.lineCap = 'round';
+      mctx.strokeStyle = '#000';
+      mctx.fillStyle = '#000';
+      mctx.lineWidth = LINE_W;
+      mctx.setLineDash([]);
+      for (const it of pic.items) {
+        const d = typeof it === 'string' ? it : it.d;
+        const p = new Path2D(d);
+        if (typeof it === 'object' && it.f) mctx.fill(p);
+        mctx.stroke(p);
+      }
+      mctx.restore();
+      const md = mctx.getImageData(0, 0, RES, RES).data;
+      mask = new Uint8Array(RES * RES);
+      for (let i = 0; i < mask.length; i++) mask[i] = md[i * 4 + 3] > BARRIER_A ? 1 : 0;
+
+      // 2) 보이는 밑그림 — 흐린 점선 안내선(아이가 따라 그린다). 채움 영역도 점선 윤곽만.
       lctx.clearRect(0, 0, RES, RES);
       lctx.save();
       lctx.scale(SCALE, SCALE);
       lctx.lineJoin = 'round';
       lctx.lineCap = 'round';
-      lctx.strokeStyle = '#2c2c34';
-      lctx.fillStyle = '#2c2c34';
-      lctx.lineWidth = LINE_W;
+      lctx.strokeStyle = GUIDE_COLOR;
+      lctx.lineWidth = GUIDE_W;
+      lctx.setLineDash(GUIDE_DASH);
       for (const it of pic.items) {
         const d = typeof it === 'string' ? it : it.d;
-        const p = new Path2D(d);
-        if (typeof it === 'object' && it.f) lctx.fill(p);
-        lctx.stroke(p);
+        lctx.stroke(new Path2D(d));
       }
       lctx.restore();
-      const ld = lctx.getImageData(0, 0, RES, RES).data;
-      mask = new Uint8Array(RES * RES);
-      for (let i = 0; i < mask.length; i++) mask[i] = ld[i * 4 + 3] > BARRIER_A ? 1 : 0;
     }
 
     function clearColor() {
@@ -253,6 +277,15 @@ window.Paint = (() => {
         const x = Math.round(vbx * SCALE), y = Math.round(vby * SCALE);
         const d = pctx.getImageData(x, y, 1, 1).data;
         return [d[0], d[1], d[2], d[3]];
+      },
+      // 안내선(점선) 픽셀 통계 (테스트용): 보이는 픽셀 수 + 어두운(진한) 픽셀 수
+      guideStats() {
+        const d = lctx.getImageData(0, 0, RES, RES).data;
+        let count = 0, dark = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          if (d[i + 3] > 40) { count++; if (d[i] + d[i + 1] + d[i + 2] < 360) dark++; }
+        }
+        return { count, dark };
       },
       // 흰색이 아닌(=칠해진) 픽셀 수 (테스트용)
       paintedCount() {
