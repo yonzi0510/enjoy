@@ -96,10 +96,11 @@ await check('크레용 드래그: 자유롭게 칠하면 색이 더 늘어난다
   expect(px[2] > 150 && px[0] < 150, '파랑 크레용 자국: ' + px);
 });
 
-await check('밑그림 선이 채색 후에도 남아있다', async () => {
-  // 강아지 얼굴 윤곽 맨 위(50,26)는 선 위 — 여전히 어두워야 한다
-  const px = await page.evaluate(() => App.canvasPixel(50, 26));
-  expect(dark(px), '윤곽선이 남아있어야: ' + px);
+await check('밑그림 안내선이 흐린 점선으로 남아있다 (따라 그리기용)', async () => {
+  // 안내선은 아이가 따라 그리도록 흐린 점선 — 보이되(픽셀 존재) 진하지 않아야(어두운 픽셀 0) 한다
+  const g = await page.evaluate(() => App._painter().guideStats());
+  expect(g.count > 500, '안내선 점선이 보여야(픽셀 존재): ' + g.count);
+  expect(g.dark === 0, '안내선은 흐려야 하는데 진한 픽셀이 있음: ' + g.dark);
 });
 
 await check('되돌리기: 마지막 크레용 획이 사라진다', async () => {
