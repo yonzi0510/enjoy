@@ -18,7 +18,13 @@
   const EXTEND_MS = 30 * 60 * 1000;   // 연장 단위 30분
   const TICK_MS = 10000;
 
-  function today() { return new Date().toISOString().slice(0, 10); }
+  // 로컬(기기 시간대) 날짜 — 자정에 하루가 바뀐다.
+  // toISOString()은 UTC라 KST(+9)에선 오전 9시에 날짜가 넘어가 밤·아침 사용이 이어지는 버그가 있었다.
+  function today() {
+    const d = new Date();
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
   function limitMs() {
     const min = window.ParentSettings ? +ParentSettings.get('limitMin') : 30;
     return (isFinite(min) ? min : 30) * 60 * 1000;
@@ -201,6 +207,8 @@
   window.TimeLimit = {
     isLocked,
     usedMs() { return st.used; },
+    // 오늘 사용 시간을 0으로 되돌린다(연장분도 리셋). 잠겨 있으면 잠금도 풀린다.
+    reset() { st = { date: today(), used: 0, extraMs: 0 }; save(); hideLock(); updateBar(); },
     _debug(usedMs) { st.used = usedMs; save(); if (isLocked()) showLock(); else hideLock(); updateBar(); }
   };
 })();

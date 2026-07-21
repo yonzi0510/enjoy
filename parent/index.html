@@ -92,6 +92,18 @@ h1 {
     inset 0 0 0 1px rgba(255,255,255,.25),
     0 1px 0 #544C70;
 }
+.reset-btn {
+  border: none; cursor: pointer; flex-shrink: 0;
+  padding: 9px 15px; border-radius: 12px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  color: #574E75; font-weight: 900; font-size: 14px; white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 2px 0 #C6C0D6;
+  transition: transform .12s, box-shadow .12s;
+}
+.reset-btn:active {
+  transform: translateY(1px) scale(.98);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 1px 0 #C6C0D6;
+}
 .switch {
   border: none; cursor: pointer; flex-shrink: 0;
   width: 58px; height: 32px; border-radius: 16px;
@@ -266,6 +278,10 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
       <span class="big-num" id="used-min">0분</span>
     </div>
     <div class="row">
+      <span class="lbl">사용 시간 초기화<span class="sub">지금 0분으로 되돌려요. 잠겨 있어도 다시 놀 수 있어요. (매일 자정에 자동으로도 초기화돼요.)</span></span>
+      <button type="button" class="reset-btn" id="reset-usage">🔄 지금 초기화</button>
+    </div>
+    <div class="row">
       <span class="lbl">하루 제한<span class="sub">모든 놀이터가 함께 소진해요 (은아·서하 공용 — 기기 기준). 다 쓰면 잠기고, 확인 번호로 30분씩 연장돼요.</span></span>
       <span class="seg" id="limit-seg"></span>
     </div>
@@ -375,7 +391,11 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
   }
 
   /* ─────────── 오늘 사용 시간 / 하루 제한 ─────────── */
-  function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function todayStr() { // 로컬(기기 시간대) 날짜 — 자정에 바뀜(UTC 아님)
+    const d = new Date();
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
   function usedMin() {
     try {
       const t = JSON.parse(localStorage.getItem('enjoy-timelimit-v1'));
@@ -508,6 +528,18 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
     r.readAsText(f);
     $('import-file').value = '';
   });
+
+  /* 사용 시간 초기화 — 오늘 사용량을 0으로. 부모 페이지는 time-limit.js를 돌리지 않으므로
+   * localStorage를 직접 되돌린다(진행 중인 tick이 덮어쓸 염려 없음). 앱으로 돌아가면 새로 읽어 잠금이 풀린다. */
+  function resetUsage() {
+    try {
+      localStorage.setItem('enjoy-timelimit-v1', JSON.stringify({ date: todayStr(), used: 0, extraMs: 0 }));
+      localStorage.removeItem('chatgi-timelimit-v1'); // 예전 play 전용 키가 오늘 값을 되살리지 않게
+    } catch (e) {}
+    $('used-min').textContent = usedMin() + '분';
+    toast('오늘 사용 시간을 초기화했어요 🔄');
+  }
+  $('reset-usage').addEventListener('click', resetUsage);
 
   function render() {
     $('used-min').textContent = usedMin() + '분';
