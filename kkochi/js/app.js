@@ -102,7 +102,6 @@ window.App = (() => {
       row.innerHTML =
         '<span class="rc-num">' + CIRC[i] + '</span>' +
         '<span class="rc-ing">' + D.ING[id].draw('rc' + cur.ms.id + id + i) + '</span>' +
-        '<span class="rc-name">' + D.ING[id].name + '</span>' +
         '<span class="rc-mark">' + (i < cur.placed.length ? '✅' : (i === cur.placed.length ? '👉' : '')) + '</span>';
       box.appendChild(row);
     }
@@ -126,9 +125,7 @@ window.App = (() => {
     b.type = 'button';
     b.className = 'tray-item';
     b.dataset.id = id;
-    b.innerHTML =
-      '<span class="ti-ing">' + D.ING[id].draw('ti' + id) + '</span>' +
-      '<span class="ti-name">' + D.ING[id].name + '</span>';
+    b.innerHTML = '<span class="ti-ing">' + D.ING[id].draw('ti' + id) + '</span>';
     b.addEventListener('pointerdown', ev => trayDown(ev, b));
     return b;
   }
