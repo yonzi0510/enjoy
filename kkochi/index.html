@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FBEAD8">
+<title>꼬치 가게</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../shared/voice-settings.css">
+<link rel="stylesheet" href="../shared/time-limit.css">
+<link rel="stylesheet" href="../shared/pet.css">
+</head>
+<body>
+
+<!-- 홈 -->
+<section class="screen on" id="scr-home">
+  <header class="home-head">
+    <h1>🍢 꼬치 가게</h1>
+    <div class="stats">
+      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+      <span id="pet-slot"></span>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+    </div>
+  </header>
+  <div class="menu" id="menu"></div>
+</section>
+
+<!-- 미션 목록 -->
+<section class="screen" id="scr-missions">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home">◀</button>
+    <h2 id="missions-title">🍢 쉬운 꼬치</h2>
+    <span class="page-count" id="missions-count">0 / 10</span>
+  </header>
+  <div class="missions-list" id="missions-list"></div>
+</section>
+
+<!-- 놀이(꿰기) -->
+<section class="screen" id="scr-play">
+  <header class="bar">
+    <button type="button" class="back" id="btn-play-back">◀</button>
+    <h2 id="play-title">🍢 꼬치 만들기</h2>
+    <button type="button" class="bigbtn small" id="btn-listen">🔊 듣기</button>
+  </header>
+  <div class="play-stage" id="play-stage">
+    <!-- 미션 카드(순서 안내) -->
+    <div class="recipe-card" id="recipe-card">
+      <div class="recipe-cap">🧑‍🍳 이 순서로 꿰어요!</div>
+      <div class="recipe-list" id="recipe-list"></div>
+    </div>
+    <!-- 꼬치 스틱(꿰는 곳) -->
+    <div class="peg-col" id="peg-col">
+      <div class="peg-wrap" id="peg-wrap">
+        <div class="peg-stick" aria-hidden="true"></div>
+        <div class="peg-stack" id="peg-stack"></div>
+        <div class="peg-handle" aria-hidden="true"></div>
+      </div>
+    </div>
+    <!-- 재료 트레이 -->
+    <div class="tray" id="tray"></div>
+  </div>
+  <!-- 드래그 중 따라다니는 재료 -->
+  <div class="drag-ghost" id="drag-ghost" hidden></div>
+</section>
+
+<!-- 보상 오버레이 -->
+<div class="reward" id="reward">
+  <div class="reward-card">
+    <div class="reward-burger" id="reward-burger">🍢</div>
+    <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
+    <div class="reward-btns">
+      <button type="button" class="bigbtn" id="reward-close">그만할래</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 색종이 축하 -->
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<script src="../shared/profile.js"></script>
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/app.js"></script>
+<script src="../shared/parent-settings.js"></script>
+<script src="../shared/voice-settings.js"></script>
+<script src="../shared/pet-avatar.js"></script>
+<script src="../shared/pet.js"></script>
+<script src="../shared/time-limit.js"></script>
+<script src="../shared/sw-register.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "꼬치 가게",
+  "short_name": "꼬치",
+  "description": "미션 카드 순서(반복 패턴)대로 재료를 스틱에 꿰어 꼬치를 완성하는 순서·패턴 놀이 — 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FBEAD8",
+  "theme_color": "#E68C3C",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
