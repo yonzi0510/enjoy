@@ -181,31 +181,36 @@ h1 {
 /* 미션 카드(순서 안내) */
 .recipe-card {
   width: 100%; max-width: 560px;
+  display: flex; flex-direction: column; min-height: 0;
   background: linear-gradient(180deg, #FFFFFF 0%, #FFF4E8 100%);
   border-radius: 22px; padding: clamp(8px, 1.6vmin, 14px);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 6px 0 #E6BE97, 0 14px 22px rgba(var(--accent), .16);
   animation: card-in .35s ease-out backwards;
 }
 .recipe-cap {
+  flex: none;
   text-align: center; font-size: clamp(14px, 2.8vmin, 20px); font-weight: 900; color: #A05713;
   margin-bottom: 6px;
 }
-.recipe-list { display: flex; flex-direction: column; align-items: stretch; gap: 3px; }
+/* 본보기: 글씨 없이 그림만 크게. 세로모드=고정 높이로 쌓기, 가로모드=세로 공간을 나눠 더 크게(아래 landscape) */
+.recipe-list { display: flex; flex-direction: column; align-items: stretch; gap: clamp(2px, 1vmin, 8px); }
 .rc-row {
-  display: flex; align-items: center; gap: clamp(6px, 1.4vmin, 12px);
-  padding: clamp(2px, .6vmin, 5px) clamp(6px, 1.4vmin, 12px); border-radius: 14px;
+  display: flex; align-items: center; gap: clamp(4px, 1.2vmin, 10px);
+  padding: clamp(2px, .6vmin, 6px) clamp(6px, 1.4vmin, 12px); border-radius: 16px;
   transition: background .2s;
 }
 .rc-row.next { background: #FFE8B0; box-shadow: inset 0 0 0 2px #F0B33F; }
-.rc-row.placed { opacity: .5; }
+.rc-row.placed { opacity: .45; }
 .rc-num {
-  flex: none; width: clamp(22px, 4.4vmin, 30px); text-align: center;
-  font-size: clamp(16px, 3.4vmin, 24px); font-weight: 900; color: #B4701C;
+  flex: none; width: clamp(20px, 4vmin, 30px); text-align: center;
+  font-size: clamp(15px, 3.2vmin, 24px); font-weight: 900; color: #B4701C;
 }
-.rc-ing { flex: none; width: clamp(52px, 12vmin, 84px); line-height: 0; }
-.rc-ing svg { display: block; }
-.rc-name { flex: 1; font-size: clamp(14px, 2.8vmin, 20px); font-weight: 800; color: #6A3B12; }
-.rc-mark { flex: none; font-size: clamp(15px, 3vmin, 22px); min-width: 24px; text-align: center; }
+.rc-ing {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; justify-content: center; line-height: 0;
+}
+.rc-ing svg { display: block; width: auto; height: clamp(40px, 9vmin, 74px); max-width: 100%; }
+.rc-mark { flex: none; font-size: clamp(16px, 3.4vmin, 26px); min-width: 26px; text-align: center; }
 
 /* 꼬치 스틱 + 재료 */
 .peg-col { display: flex; justify-content: center; align-items: flex-end; flex: 1; min-height: 0; width: 100%; }
@@ -274,9 +279,8 @@ h1 {
 .tray-item.lift { opacity: .35; }
 .tray-item.bump { animation: bump .3s; }
 @keyframes bump { 0%,100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-6px) scale(1.08); } }
-.ti-ing { width: clamp(54px, 11vmin, 82px); line-height: 0; }
+.ti-ing { width: clamp(62px, 12vmin, 90px); line-height: 0; }
 .ti-ing svg { display: block; }
-.ti-name { font-size: clamp(11px, 2.2vmin, 15px); font-weight: 800; color: #6E3D12; }
 .tray-item.shake { animation: shake .4s; }
 @keyframes shake {
   0%,100% { transform: translateX(0) rotate(0); }
@@ -307,7 +311,12 @@ h1 {
     align-content: stretch; column-gap: clamp(12px, 2.4vw, 28px); row-gap: clamp(8px, 1.6vmin, 16px);
     max-width: 1120px;
   }
-  .recipe-card { grid-area: recipe; align-self: start; max-width: none; }
+  .recipe-card { grid-area: recipe; align-self: stretch; max-width: none; }
+  /* 가로모드: 본보기 그림이 카드 세로 공간을 나눠 최대한 크게 */
+  .recipe-list { flex: 1; min-height: 0; }
+  .rc-row { flex: 1 1 0; min-height: 0; }
+  .rc-ing { height: 100%; }
+  .rc-ing svg { height: 100%; }
   .peg-col { grid-area: peg; align-items: flex-end; padding-bottom: clamp(6px, 3vmin, 28px); }
   .tray { grid-area: tray; align-self: end; max-width: none; }
 }
@@ -315,7 +324,6 @@ h1 {
 @media (orientation: landscape) and (max-height: 480px) {
   .peg-wrap { width: clamp(84px, 22vmin, 124px); padding-bottom: clamp(16px, 4vmin, 24px); }
   .peg-stack { gap: clamp(2px, .7vmin, 5px); }
-  .rc-ing { width: clamp(44px, 10vmin, 64px); }
   .tray-item { width: clamp(58px, 12vmin, 80px); }
 }
 
