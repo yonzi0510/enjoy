@@ -1,0 +1,16 @@
+{
+  "name": "방향·색 놀이터",
+  "short_name": "방향·색",
+  "description": "색과 방향 격자를 조각으로 맞추는 놀이 — 색+방향 두 속성 짝맞추기 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E6F5EC",
+  "theme_color": "#43A85F",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
