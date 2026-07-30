@@ -1,0 +1,16 @@
+{
+  "name": "동물 주사위 찾기",
+  "short_name": "주사위찾기",
+  "description": "카드에 나온 동물을 굴린 주사위들 중에서 찾아 탭하는 주의력·시각찾기 놀이 — 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E8F6EC",
+  "theme_color": "#3E9B5B",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
