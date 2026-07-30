@@ -1,0 +1,16 @@
+{
+  "name": "네 색 슬라이드",
+  "short_name": "네 색 슬라이드",
+  "description": "색 조각을 4개 열로 옮겨 카드처럼 한 색으로 정리하는 색·순서 놀이 — 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FDE6E0",
+  "theme_color": "#E94E34",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
