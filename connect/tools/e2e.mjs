@@ -1,0 +1,195 @@
+#!/usr/bin/env node
+/* 종단 테스트 — node connect/tools/e2e.mjs
+ * 실제 Chromium 으로 홈(단계3) → 목록(10) → 진입 → 순서대로 점을 이어 완성·축하·별·펫,
+ * 틀린 점 무벌점(완성 안 됨), 단계별 점 개수, 새로고침 진행도 유지, 3해상도 잘림까지 검증한다.
+ * 저장소 루트에서 정적 서버를 띄운 뒤 실행 (예: python3 -m http.server 8777)
+ */
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+
+const BASE = process.env.BASE_URL || 'http://127.0.0.1:8777/connect/';
+let passed = 0, failed = 0;
+function ok(name) { passed++; console.log('  ✅ ' + name); }
+function fail(name, extra) { failed++; console.error('  ❌ ' + name + (extra ? ' — ' + extra : '')); }
+async function check(name, fn) { try { await fn(); ok(name); } catch (e) { fail(name, e.message); } }
+function expect(cond, msg) { if (!cond) throw new Error(msg || 'expect 실패'); }
+
+// 순서대로 다음 점을 이어 끝까지 완성
+async function connectAll(page) {
+  for (;;) {
+    const nid = await page.evaluate(() => App.debug().nextId);
+    if (nid === null || nid === undefined) break;
+    await page.evaluate(i => App._attempt(i), nid);
+    await page.waitForTimeout(50);
+  }
+}
+
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1180, height: 820 } });
+const consoleErrors = [];
+page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+page.on('pageerror', e => consoleErrors.push(String(e)));
+
+await page.goto(BASE);
+
+await check('홈: 단계 카드 3개 + 별 0', async () => {
+  await page.waitForSelector('#scr-home.on');
+  expect(await page.locator('#menu .menu-card').count() === 3, '단계 카드 수');
+  expect((await page.locator('#home-stars').textContent()) === '0', '별 수');
+});
+
+await check('목록: 단계1 퍼즐 10개', async () => {
+  await page.click('.menu-card.c-l1');
+  await page.waitForSelector('#scr-list.on');
+  expect(await page.locator('#list .puzzle-card').count() === 10, '퍼즐 수');
+  expect((await page.locator('#list-count').textContent()).includes('0 / 10'), '진행 표기');
+});
+
+await check('진입: 판에 점 4개, 순서 본보기 4칸, 다음 점 안내', async () => {
+  await page.click('#list .puzzle-card');
+  await page.waitForSelector('#scr-play.on');
+  const d = await page.evaluate(() => App.debug());
+  expect(d.dotCount === 4, '단계1 점 개수: ' + d.dotCount);
+  expect(d.nextId === d.order[0], '첫 점은 order[0]: ' + d.nextId);
+  expect(await page.locator('#board .dot').count() === 4, '판 점 수');
+  expect(await page.locator('#board .dot.next').count() === 1, '다음 점 강조 1개');
+  expect(await page.locator('#guide .g-dot').count() === 4, '본보기 칸 수');
+});
+
+await check('틀린 점 무벌점: 순서 아닌 점은 선이 안 그어지고 완성 안 됨', async () => {
+  const d0 = await page.evaluate(() => App.debug());
+  const wrong = d0.order[2]; // 첫 점이 아닌 점
+  await page.evaluate(i => App._attempt(i), wrong);
+  await page.waitForTimeout(120);
+  const d = await page.evaluate(() => App.debug());
+  expect(d.placed.length === 0, '틀린 탭인데 이어짐: ' + JSON.stringify(d.placed));
+  expect(d.lineCount === 0, '선이 그어짐');
+  expect(!(await page.locator('#reward').evaluate(el => el.classList.contains('on'))), '틀렸는데 축하가 뜸');
+});
+
+await check('순서대로 이어 완성 → 축하·별·펫 간식', async () => {
+  const petBefore = await page.evaluate(() => window.Pet ? Pet.state().snacks : 0);
+  await connectAll(page);
+  await page.waitForSelector('#reward.on', { timeout: 5000 });
+  const d = await page.evaluate(() => App.debug());
+  expect(d.locked === true, '완성 잠금');
+  expect(d.placed.length === 4, '이은 점 수: ' + d.placed.length);
+  expect(d.lineCount === 3, '선 개수(점4=3): ' + d.lineCount);
+  expect(d.stars === 1, '별: ' + d.stars);
+  expect(d.done === true, '퍼즐 완료 저장');
+  const petAfter = await page.evaluate(() => window.Pet ? Pet.state().snacks : 0);
+  expect(petAfter === petBefore + 1, '펫 간식: ' + petBefore + '→' + petAfter);
+});
+
+await check('완성 표시: 목록에 done + 진행 1 / 10', async () => {
+  await page.click('#reward-close');
+  await page.waitForSelector('#scr-list.on');
+  expect(await page.locator('#list .puzzle-card.done').count() === 1, '완성 퍼즐 수');
+  expect((await page.locator('#list-count').textContent()).includes('1 / 10'), '진행 표기');
+});
+
+await check('DOM 탭으로도 이어짐 (elementFromPoint 히트)', async () => {
+  await page.click('#list .puzzle-card:not(.done)');
+  await page.waitForSelector('#scr-play.on');
+  const box = await page.locator('#board .dot.next .face').boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(120);
+  const d = await page.evaluate(() => App.debug());
+  expect(d.placed.length === 1, '탭으로 첫 점 이어짐: ' + JSON.stringify(d.placed));
+  await page.click('#btn-play-back');
+  await page.waitForSelector('#scr-list.on');
+});
+
+await check('단계2: 점 6개', async () => {
+  await page.click('#scr-list .back');
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-l2');
+  await page.waitForSelector('#scr-list.on');
+  await page.click('#list .puzzle-card');
+  await page.waitForSelector('#scr-play.on');
+  const d = await page.evaluate(() => App.debug());
+  expect(d.dotCount === 6, '단계2 점 개수: ' + d.dotCount);
+  expect(await page.locator('#guide .g-dot').count() === 6, '본보기 칸 수');
+});
+
+await check('단계2 완성: 별이 1 늘어난다', async () => {
+  const before = await page.evaluate(() => App.debug().stars);
+  await connectAll(page);
+  await page.waitForSelector('#reward.on', { timeout: 5000 });
+  const after = await page.evaluate(() => App.debug().stars);
+  expect(after === before + 1, '별 증가: ' + before + '→' + after);
+  await page.click('#reward-close');
+  await page.waitForSelector('#scr-list.on');
+});
+
+await check('단계3: 점 8개', async () => {
+  await page.click('#scr-list .back');
+  await page.click('.menu-card.c-l3');
+  await page.waitForSelector('#scr-list.on');
+  await page.click('#list .puzzle-card');
+  await page.waitForSelector('#scr-play.on');
+  const d = await page.evaluate(() => App.debug());
+  expect(d.dotCount === 8, '단계3 점 개수: ' + d.dotCount);
+  await page.click('#btn-play-back');
+  await page.waitForSelector('#scr-list.on');
+});
+
+await check('새로고침 후 진행도 유지', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  expect((await page.locator('#home-stars').textContent()) === '2', '별 수(1+1)');
+  const l1 = await page.locator('.menu-card.c-l1 .mc-prog').textContent();
+  expect(l1.includes('1 / 10'), '단계1 진행: ' + l1);
+  const l2 = await page.locator('.menu-card.c-l2 .mc-prog').textContent();
+  expect(l2.includes('1 / 10'), '단계2 진행: ' + l2);
+});
+
+await check('3해상도 잘림 없음 (점8 판, 가로 스크롤·세로 넘침)', async () => {
+  const sizes = [
+    { w: 1180, h: 820, name: '패드 가로' },
+    { w: 844, h: 390, name: '폰 가로' },
+    { w: 390, h: 844, name: '폰 세로' },
+  ];
+  for (const s of sizes) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    await page.click('.menu-card.c-l3'); // 점 8개(가장 빡셈)
+    await page.waitForSelector('#scr-list.on');
+    await page.click('#list .puzzle-card');
+    await page.waitForSelector('#scr-play.on');
+    await page.waitForTimeout(120);
+    const m = await page.evaluate(() => {
+      const b = document.querySelector('#board').getBoundingClientRect();
+      return {
+        horiz: document.documentElement.scrollWidth - window.innerWidth,
+        boardTop: b.top, boardBottom: b.bottom, boardW: b.width, boardH: b.height,
+        ih: window.innerHeight, iw: window.innerWidth,
+      };
+    });
+    expect(m.horiz <= 1, s.name + ': 가로 스크롤 ' + m.horiz + 'px');
+    expect(m.boardTop >= -2, s.name + ': 판이 위로 잘림 ' + m.boardTop);
+    expect(m.boardBottom <= m.ih + 2, s.name + ': 판이 아래로 잘림 ' + m.boardBottom + ' > ' + m.ih);
+    expect(m.boardW >= 120 && m.boardH >= 120, s.name + ': 판이 너무 작음 ' + m.boardW + 'x' + m.boardH);
+    // 점 8개가 모두 판 안에 있는지
+    const inside = await page.evaluate(() => {
+      const b = document.querySelector('#board').getBoundingClientRect();
+      const dots = [...document.querySelectorAll('#board .dot .face')];
+      return dots.every(f => {
+        const r = f.getBoundingClientRect();
+        return r.left >= b.left - 1 && r.right <= b.right + 1 && r.top >= b.top - 1 && r.bottom <= b.bottom + 1;
+      });
+    });
+    expect(inside, s.name + ': 점이 판 밖으로 잘림');
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
+});
+
+await check('콘솔 오류 0', async () => {
+  expect(consoleErrors.length === 0, consoleErrors.join(' | '));
+});
+
+await browser.close();
+console.log(`\n${failed ? '❌' : '✅'} 통과 ${passed} · 실패 ${failed}`);
+process.exit(failed ? 1 : 0);

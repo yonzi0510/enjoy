@@ -1,0 +1,16 @@
+{
+  "name": "시험관 구슬",
+  "short_name": "시험관",
+  "description": "본보기 카드를 보고 여러 시험관에 색 구슬을 아래→위 순서대로 담는 색 순서 놀이 — 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E9EEFA",
+  "theme_color": "#4C86D6",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
