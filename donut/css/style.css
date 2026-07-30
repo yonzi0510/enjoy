@@ -1,0 +1,322 @@
+/* 도넛 짝맞추기 — 5세용 큰 버튼, 도넛(갈색 도우 + 분홍 아이싱) 파스텔 톤.
+   포근한 장난감 방: 카드 = 장난감 블록, 틴트 표면 + 유채색 단면 그림자.
+   가로모드 우선: 자리판(왼쪽) + 도넛 트레이(오른쪽). 3×3 도 잘림 없이. */
+:root {
+  --accent: 224,92,134;   /* 도넛 분홍 대표색 rgb 삼중값 (#E05C86) */
+  --chunk: #C24A72;       /* 바닥 단면색 */
+  --chunk-soft: #E7A9C0;  /* 작은 정보 알약용 옅은 단면색 */
+  --tint: #FCE7EE;        /* 표면에 스미는 옅은 틴트 */
+}
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+html, body { height: 100%; }
+body {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background:
+    radial-gradient(ellipse at 15% 8%,  rgba(255,180,205,.5),  transparent 60%),
+    radial-gradient(ellipse at 88% 90%, rgba(255,150,190,.4),  transparent 58%),
+    radial-gradient(rgba(255,255,255,.5) 1.2px, transparent 1.3px),
+    linear-gradient(160deg, #FFF0F6 0%, #FFE1EC 55%, #FFF6E8 100%);
+  background-size: auto, auto, 24px 24px, auto;
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+/* ─────────── 화면 ─────────── */
+.screen {
+  display: none; position: fixed; inset: 0;
+  flex-direction: column; align-items: center;
+  padding: clamp(10px, 2.5vmin, 24px);
+  gap: clamp(10px, 2vmin, 18px);
+  overflow-y: auto;
+}
+.screen.on { display: flex; }
+
+/* ─────────── 홈 ─────────── */
+.home-head {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 2vmin;
+  animation: card-in .35s ease-out backwards;
+}
+h1 {
+  font-size: clamp(26px, 6vmin, 48px); font-weight: 900;
+  color: #C33C6A; text-shadow: 0 2px 0 rgba(255,255,255,.85); text-align: center;
+}
+.stats { display: flex; gap: 12px; align-items: center; }
+.stat {
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  border-radius: 999px; padding: 6px 16px;
+  font-size: clamp(15px, 3vmin, 20px); font-weight: 800; color: #A23960;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 3px 0 var(--chunk-soft), 0 8px 14px rgba(var(--accent), .14);
+}
+.vs-btn {
+  width: clamp(38px, 8vmin, 48px); height: clamp(38px, 8vmin, 48px);
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 999px; cursor: pointer;
+  font-size: clamp(18px, 4vmin, 24px);
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 3px 0 var(--chunk-soft), 0 8px 14px rgba(var(--accent), .14);
+}
+.vs-btn:active { transform: translateY(3px); }
+
+.menu {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: clamp(12px, 2.5vmin, 24px); max-width: 900px;
+}
+.menu-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: clamp(150px, 27vmin, 220px); padding: clamp(14px, 3vmin, 22px);
+  border: none; border-radius: 28px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 7px 0 var(--chunk), 0 16px 26px rgba(var(--accent), .18);
+  cursor: pointer; transition: transform .12s, box-shadow .12s; font-family: inherit;
+  animation: card-in .35s ease-out backwards;
+}
+.menu-card:active {
+  transform: translateY(4px) scale(.98);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 3px 0 var(--chunk), 0 9px 14px rgba(var(--accent), .12);
+}
+.menu .menu-card:nth-child(1) { animation-delay: .05s; }
+.menu .menu-card:nth-child(2) { animation-delay: .10s; }
+.menu .menu-card:nth-child(3) { animation-delay: .15s; }
+.mc-icon { line-height: 0; width: 100%; display: flex; justify-content: center; }
+.mc-name { font-size: clamp(18px, 3.6vmin, 26px); font-weight: 900; color: #6A2F48; }
+.mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #9C5A76; }
+.mc-prog {
+  font-size: clamp(12px, 2.4vmin, 16px); font-weight: 800; color: #A23960;
+  background: rgba(255,255,255,.75); border-radius: 999px; padding: 3px 12px;
+}
+.c-l1 { --tint: #FFF0E4; --chunk: #E9A64F; }
+.c-l2 { --tint: #FCE3EE; --chunk: #D9709A; }
+.c-l3 { --tint: #F1E4FA; --chunk: #A876CE; }
+
+/* 작은 도넛판 미리보기 (홈·목록) — 자리를 격자로 늘어놓는다 */
+.mini-board {
+  display: grid; grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 5%; width: clamp(84px, 17vmin, 120px);
+  padding: 6%; border-radius: 16px;
+  background: radial-gradient(circle at 50% 40%, #FFFFFF, #FBE9F1);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.7);
+}
+.mini-donut { display: block; line-height: 0; }
+.mini-donut svg { display: block; }
+
+/* ─────────── 상단 바 ─────────── */
+.bar {
+  width: 100%; max-width: 1080px;
+  display: flex; align-items: center; gap: 10px; padding: 2px 4px;
+  animation: card-in .3s ease-out backwards;
+}
+.bar h2 {
+  flex: 1; text-align: center;
+  font-size: clamp(19px, 4vmin, 30px); font-weight: 900; color: #C33C6A;
+  text-shadow: 0 2px 0 rgba(255,255,255,.8);
+}
+.back {
+  width: clamp(42px, 9vmin, 54px); height: clamp(42px, 9vmin, 54px); flex: none;
+  border: none; border-radius: 999px; cursor: pointer;
+  font-size: clamp(18px, 4vmin, 26px); font-weight: 900; color: #A23960;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 4px 0 var(--chunk-soft), 0 9px 14px rgba(var(--accent), .14);
+}
+.back:active { transform: translateY(3px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 2px 0 var(--chunk-soft); }
+.page-count {
+  flex: none; font-size: clamp(13px, 2.6vmin, 18px); font-weight: 800; color: #A23960;
+  background: rgba(255,255,255,.8); border-radius: 999px; padding: 5px 14px;
+}
+.bigbtn {
+  border: none; border-radius: 20px; cursor: pointer; font-family: inherit;
+  font-size: clamp(15px, 3vmin, 21px); font-weight: 900; color: #8A3355;
+  padding: 10px 20px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 5px 0 var(--chunk-soft), 0 12px 20px rgba(var(--accent), .16);
+  transition: transform .12s, box-shadow .12s;
+}
+.bigbtn.small { flex: none; padding: 8px 14px; font-size: clamp(13px, 2.6vmin, 18px); }
+.bigbtn:active { transform: translateY(3px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 2px 0 var(--chunk-soft); }
+.bigbtn.primary { color: #fff; background: linear-gradient(180deg, #F07AA2 0%, #E05C86 100%); }
+
+/* ─────────── 퍼즐 목록 ─────────── */
+.puzzle-list {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: clamp(10px, 2vmin, 18px); width: 100%; max-width: 720px;
+  padding-bottom: 12px;
+}
+.puzzle-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: clamp(10px, 2vmin, 16px) 8px; border: none; border-radius: 24px; cursor: pointer;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 6px 0 var(--chunk-soft), 0 14px 22px rgba(var(--accent), .16);
+  transition: transform .12s, box-shadow .12s; font-family: inherit;
+  animation: card-in .35s ease-out backwards;
+}
+.puzzle-card:active { transform: translateY(4px) scale(.98); box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 2px 0 var(--chunk-soft); }
+.puzzle-card.done { --tint: #FFF3E4; }
+.pz-no {
+  position: absolute; left: 8px; top: 8px;
+  width: 26px; height: 26px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900; color: #fff; background: #D9709A;
+  box-shadow: 0 2px 0 rgba(0,0,0,.06);
+}
+.puzzle-card.done .pz-no { background: #E9A64F; }
+.pz-badge { font-size: clamp(16px, 3vmin, 22px); }
+
+/* ─────────── 놀이 스테이지 ─────────── */
+.play-stage {
+  width: 100%; max-width: 1080px; flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(10px, 2vmin, 20px); min-height: 0;
+}
+
+/* 자리판 — 도넛을 놓을 격자 */
+.board-wrap {
+  display: flex; justify-content: center; align-items: center; flex: 1; min-height: 0; width: 100%;
+}
+.board {
+  display: grid; grid-template-columns: repeat(var(--cols), 1fr);
+  gap: clamp(8px, 2vmin, 20px);
+  width: min(92vw, 74vmin); max-width: 560px;
+  padding: clamp(10px, 2.4vmin, 22px);
+  border-radius: 28px;
+  background: radial-gradient(circle at 50% 36%, #FFFFFF 0%, #FBE7F0 72%, #F5D3E3 100%);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.7), 0 8px 0 #ECC6D6, 0 18px 30px rgba(var(--accent), .18);
+}
+/* 자리 한 칸 — 연한 도넛 윤곽(그림자) 위에 채워지면 진짜 도넛 */
+.slot {
+  position: relative; aspect-ratio: 1 / 1; width: 100%;
+  border: none; background: none; cursor: pointer; padding: 4%;
+  border-radius: 50%;
+  transition: transform .12s;
+}
+.slot::before {           /* 놓을 자리 구멍(연한 접시) */
+  content: ''; position: absolute; inset: 6%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, #F5DDE8 0%, #EFD0DF 70%, #E7C2D4 100%);
+  box-shadow: inset 0 4px 8px rgba(150,80,110,.16), inset 0 -2px 3px rgba(255,255,255,.5);
+}
+.slot-ghost, .slot-fill {
+  position: absolute; inset: 4%; line-height: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.slot-ghost { opacity: .32; filter: saturate(.7); }
+.slot-ghost svg, .slot-fill svg { display: block; width: 100%; }
+.slot.filled .slot-ghost { opacity: 0; }
+.slot.hover:not(.filled)::before {
+  background: radial-gradient(circle at 50% 42%, #FFF3B0 0%, #FFE486 70%, #FBD056 100%);
+  box-shadow: inset 0 0 0 3px #F5C049, inset 0 4px 8px rgba(150,80,110,.12);
+}
+.slot.drop .slot-fill { animation: donut-drop .4s cubic-bezier(.3,1.5,.6,1); }
+@keyframes donut-drop {
+  0% { transform: translateY(-38px) scale(.7); opacity: 0; }
+  70% { transform: translateY(3px) scale(1.05); opacity: 1; }
+  100% { transform: translateY(0) scale(1); }
+}
+.slot.shake { animation: shake .4s; }
+
+/* ─────────── 도넛 트레이 ─────────── */
+.tray {
+  width: 100%; max-width: 820px;
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: clamp(6px, 1.4vmin, 14px);
+  padding: clamp(8px, 1.6vmin, 14px); border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,240,246,.85));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.6), 0 6px 0 #ECCBD8, 0 12px 20px rgba(var(--accent), .12);
+}
+.tray-item {
+  display: flex; align-items: center; justify-content: center;
+  width: clamp(72px, 15vmin, 118px); padding: 6px;
+  border: none; border-radius: 50%; cursor: grab; font-family: inherit; touch-action: none;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF1F6 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 4px 0 #EBB6C8, 0 8px 14px rgba(var(--accent), .14);
+  transition: transform .12s, box-shadow .12s, opacity .3s;
+}
+.tray-item:active { transform: translateY(2px); }
+.tray-item.sel {
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: inset 0 0 0 3px #F5C049, 0 6px 0 #EBB6C8, 0 12px 18px rgba(var(--accent), .2);
+}
+.tray-item.lift { opacity: .3; }
+.tray-item.used { opacity: 0; pointer-events: none; transform: scale(.5); }
+.ti-donut { width: 100%; line-height: 0; }
+.ti-donut svg { display: block; }
+.tray-item.shake { animation: shake .4s; }
+@keyframes shake {
+  0%,100% { transform: translateX(0) rotate(0); }
+  20% { transform: translateX(-7px) rotate(-4deg); }
+  40% { transform: translateX(7px) rotate(4deg); }
+  60% { transform: translateX(-5px) rotate(-3deg); }
+  80% { transform: translateX(5px) rotate(3deg); }
+}
+
+/* 드래그 중 따라다니는 도넛 */
+.drag-ghost {
+  position: fixed; z-index: 90; width: clamp(70px, 15vmin, 110px);
+  transform: translate(-50%, -50%); pointer-events: none; line-height: 0;
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,.2));
+}
+.drag-ghost svg { display: block; }
+
+/* ─────────── 가로모드 2단 배치 (태블릿 가로 우선) ───────────
+ * 왼쪽 자리판, 오른쪽 트레이. HTML 무변경, flex 방향만 재배치. */
+@media (orientation: landscape) {
+  .play-stage {
+    flex-direction: row; align-items: stretch;
+    gap: clamp(12px, 2.4vw, 32px); max-width: 1160px;
+  }
+  .board-wrap { flex: 1.15; }
+  .board { width: 100%; max-width: min(56vw, 88vmin); }
+  .tray {
+    flex: .85; align-content: center; max-width: 420px;
+    align-self: stretch;
+  }
+}
+/* 폰 가로(낮은 화면): 트레이 도넛을 조금 줄여 잘림 없이 */
+@media (orientation: landscape) and (max-height: 480px) {
+  .board { max-width: min(48vw, 78vmin); }
+  .tray-item { width: clamp(56px, 13vmin, 92px); }
+}
+
+/* ─────────── 보상 오버레이 ─────────── */
+.reward {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  align-items: center; justify-content: center;
+  background: rgba(90,30,55,.32); backdrop-filter: blur(2px);
+}
+.reward.on { display: flex; animation: fade-in .2s ease-out; }
+.reward-card {
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  border-radius: 30px; padding: clamp(20px, 4vmin, 36px) clamp(24px, 5vmin, 46px);
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 10px 0 var(--chunk), 0 22px 40px rgba(var(--accent), .3);
+  animation: pop-in .4s cubic-bezier(.3,1.6,.5,1);
+}
+.reward-donut { font-size: clamp(56px, 14vmin, 100px); animation: bob 1.2s ease-in-out infinite; }
+.reward-praise { font-size: clamp(20px, 4.2vmin, 30px); font-weight: 900; color: #C33C6A; text-align: center; }
+.reward-btns { display: flex; gap: 12px; margin-top: 4px; }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { 0% { transform: scale(.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+/* ─────────── 색종이 축하 ─────────── */
+.confetti { position: fixed; inset: 0; z-index: 95; pointer-events: none; overflow: hidden; }
+.cf {
+  position: absolute; top: -20px; width: 12px; height: 16px; display: block;
+  animation: cf-fall linear forwards;
+}
+@keyframes cf-fall {
+  0% { transform: translateY(-20px) translateX(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(102vh) translateX(var(--dx)) rotate(var(--rot)); opacity: .9; }
+}
+
+/* ─────────── 등장 모션 + 모션 줄이기 존중 ─────────── */
+@keyframes card-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .menu-card, .puzzle-card, .home-head, .bar,
+  .slot.drop .slot-fill, .reward.on, .reward-card, .reward-donut, .cf, .tray-item.shake, .slot.shake {
+    animation: none !important;
+  }
+  * { transition: none !important; }
+}
