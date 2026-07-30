@@ -1,0 +1,363 @@
+/* 구슬 보드 — 5세용 큰 터치, 파랑 계열 accent.
+   본보기 카드의 색·위치를 보고 오른쪽 빈 격자에 같은 색 구슬을 채운다.
+   가로모드 우선: 본보기 카드 왼쪽 크게 + 보드·팔레트 오른쪽. 5×5도 잘림 없이. */
+:root {
+  --accent: 79,163,232;   /* 파랑 대표색 rgb 삼중값 (#4FA3E8) */
+  --chunk: #2E77B0;       /* 바닥 단면색(진한 파랑) */
+  --chunk-soft: #A9CCEA;  /* 작은 정보 알약용 옅은 단면색 */
+  --tint: #E4F0FB;        /* 표면에 스미는 옅은 틴트 */
+}
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+html, body { height: 100%; }
+body {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background:
+    radial-gradient(ellipse at 15% 8%,  rgba(150,200,255,.5),  transparent 60%),
+    radial-gradient(ellipse at 88% 90%, rgba(140,190,240,.4),  transparent 58%),
+    radial-gradient(rgba(255,255,255,.55) 1.2px, transparent 1.3px),
+    linear-gradient(160deg, #EAF4FE 0%, #DCEBFB 55%, #EAF6FF 100%);
+  background-size: auto, auto, 24px 24px, auto;
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+/* ─────────── 화면 ─────────── */
+.screen {
+  display: none; position: fixed; inset: 0;
+  flex-direction: column; align-items: center;
+  padding: clamp(10px, 2.5vmin, 24px);
+  gap: clamp(10px, 2vmin, 18px);
+  overflow-y: auto;
+}
+.screen.on { display: flex; }
+
+/* ─────────── 홈 ─────────── */
+.home-head {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 2vmin;
+  animation: card-in .35s ease-out backwards;
+}
+h1 {
+  font-size: clamp(26px, 6vmin, 48px); font-weight: 900;
+  color: #1F5E93; text-shadow: 0 2px 0 rgba(255,255,255,.85); text-align: center;
+}
+.stats { display: flex; gap: 12px; align-items: center; }
+.stat {
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  border-radius: 999px; padding: 6px 16px;
+  font-size: clamp(15px, 3vmin, 20px); font-weight: 800; color: #205C8C;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 3px 0 var(--chunk-soft), 0 8px 14px rgba(var(--accent), .16);
+}
+.vs-btn {
+  width: clamp(38px, 8vmin, 48px); height: clamp(38px, 8vmin, 48px);
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 999px; cursor: pointer;
+  font-size: clamp(18px, 4vmin, 24px);
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 3px 0 var(--chunk-soft), 0 8px 14px rgba(var(--accent), .16);
+}
+.vs-btn:active { transform: translateY(3px); }
+
+.menu {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: clamp(12px, 2.5vmin, 24px); max-width: 900px;
+}
+.menu-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: clamp(150px, 27vmin, 220px); padding: clamp(14px, 3vmin, 22px);
+  border: none; border-radius: 28px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 7px 0 var(--chunk), 0 16px 26px rgba(var(--accent), .2);
+  cursor: pointer; transition: transform .12s, box-shadow .12s; font-family: inherit;
+  animation: card-in .35s ease-out backwards;
+}
+.menu-card:active {
+  transform: translateY(4px) scale(.98);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 3px 0 var(--chunk), 0 9px 14px rgba(var(--accent), .14);
+}
+.menu .menu-card:nth-child(1) { animation-delay: .05s; }
+.menu .menu-card:nth-child(2) { animation-delay: .10s; }
+.menu .menu-card:nth-child(3) { animation-delay: .15s; }
+.mc-icon { line-height: 0; display: block; }
+.mc-name { font-size: clamp(18px, 3.6vmin, 26px); font-weight: 900; color: #1E5484; }
+.mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #5A83A3; }
+.mc-prog {
+  font-size: clamp(12px, 2.4vmin, 16px); font-weight: 800; color: #205C8C;
+  background: rgba(255,255,255,.75); border-radius: 999px; padding: 3px 12px;
+}
+.c-l1 { --tint: #E9F1FC; --chunk: #7FB2E4; }
+.c-l2 { --tint: #E2ECFB; --chunk: #5A93D6; }
+.c-l3 { --tint: #DCE7FA; --chunk: #3E77C0; }
+
+/* ─────────── 격자(구슬 판) — 홈·목록 미리보기, 본보기 카드, 보드 공용 ─────────── */
+.bead-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  gap: clamp(2px, 1.1vmin, 9px);
+  width: 100%; aspect-ratio: 1;
+  padding: clamp(3px, 1.2vmin, 10px);
+  border-radius: clamp(10px, 2.4vmin, 20px);
+}
+.bead-grid .cell {
+  aspect-ratio: 1; border-radius: 22%;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 0;
+}
+.bead-grid .bead { width: 100%; display: block; line-height: 0; }
+.bead-grid .bead svg { display: block; }
+
+/* 미리보기(홈·목록) — 작게, 배경 카드 톤 */
+.bead-grid.is-mini {
+  width: clamp(58px, 14vmin, 90px);
+  background: rgba(255,255,255,.5);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+}
+.bead-grid.is-mini.big { width: clamp(72px, 18vmin, 112px); }
+.bead-grid.is-mini .cell.empty { background: rgba(46,119,176,.06); }
+
+/* 본보기 카드 격자 — 크게, 색만(글씨 없음) */
+.bead-grid.is-card {
+  background: linear-gradient(180deg, #FFFFFF 0%, #EEF6FF 100%);
+  box-shadow: inset 0 0 0 2px rgba(79,163,232,.18), 0 4px 0 #CFE2F5;
+}
+.bead-grid.is-card .cell.empty { background: rgba(46,119,176,.05); }
+
+/* 놀이 보드 격자 — 빈 구멍이 파여 보이게 */
+.bead-grid.is-board {
+  background: linear-gradient(180deg, #DCEAF8 0%, #CFE1F4 100%);
+  box-shadow: inset 0 2px 6px rgba(46,119,176,.22), inset 0 0 0 2px rgba(255,255,255,.5);
+}
+.bead-grid.is-board .cell {
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(46,119,176,.24) 0%, rgba(46,119,176,.10) 55%, transparent 72%);
+  box-shadow: inset 0 2px 4px rgba(46,119,176,.28);
+  transition: transform .1s;
+}
+.bead-grid.is-board .cell.empty:active { transform: scale(.92); }
+.bead-grid.is-board .cell.filled {
+  background: none; box-shadow: none;
+}
+/* 다음 채울 칸 은은한 안내(강요 아님) */
+.bead-grid.is-board .cell.hint {
+  box-shadow: inset 0 0 0 3px #FFD34E, inset 0 2px 4px rgba(46,119,176,.2);
+  animation: hint-pulse 1.3s ease-in-out infinite;
+}
+@keyframes hint-pulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+.bead-grid.is-board.done .cell.hint { animation: none; box-shadow: none; }
+
+/* 구슬이 쏙 박히는 모션 */
+.cell.pop .bead { animation: bead-pop .34s cubic-bezier(.3,1.6,.5,1); }
+@keyframes bead-pop { 0% { transform: scale(0) rotate(-20deg); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.cell.shake { animation: shake .4s; }
+@keyframes shake {
+  0%,100% { transform: translateX(0) rotate(0); }
+  20% { transform: translateX(-6px) rotate(-4deg); }
+  40% { transform: translateX(6px) rotate(4deg); }
+  60% { transform: translateX(-4px) rotate(-3deg); }
+  80% { transform: translateX(4px) rotate(3deg); }
+}
+
+/* ─────────── 상단 바 ─────────── */
+.bar {
+  width: 100%; max-width: 1120px;
+  display: flex; align-items: center; gap: 10px; padding: 2px 4px;
+  animation: card-in .3s ease-out backwards;
+}
+.bar h2 {
+  flex: 1; text-align: center;
+  font-size: clamp(19px, 4vmin, 30px); font-weight: 900; color: #1F5E93;
+  text-shadow: 0 2px 0 rgba(255,255,255,.8);
+}
+.back {
+  width: clamp(42px, 9vmin, 54px); height: clamp(42px, 9vmin, 54px); flex: none;
+  border: none; border-radius: 999px; cursor: pointer;
+  font-size: clamp(18px, 4vmin, 26px); font-weight: 900; color: #205C8C;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 4px 0 var(--chunk-soft), 0 9px 14px rgba(var(--accent), .16);
+}
+.back:active { transform: translateY(3px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 2px 0 var(--chunk-soft); }
+.page-count {
+  flex: none; font-size: clamp(13px, 2.6vmin, 18px); font-weight: 800; color: #205C8C;
+  background: rgba(255,255,255,.8); border-radius: 999px; padding: 5px 14px;
+}
+.bigbtn {
+  border: none; border-radius: 20px; cursor: pointer; font-family: inherit;
+  font-size: clamp(15px, 3vmin, 21px); font-weight: 900; color: #1E5484;
+  padding: 10px 20px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 5px 0 var(--chunk-soft), 0 12px 20px rgba(var(--accent), .18);
+  transition: transform .12s, box-shadow .12s;
+}
+.bigbtn.small { flex: none; padding: 8px 14px; font-size: clamp(13px, 2.6vmin, 18px); }
+.bigbtn:active { transform: translateY(3px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 2px 0 var(--chunk-soft); }
+.bigbtn.primary { color: #fff; background: linear-gradient(180deg, #62AEEC 0%, #4FA3E8 100%); }
+
+/* ─────────── 퍼즐 목록 ─────────── */
+.list-box {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: clamp(10px, 2vmin, 18px); width: 100%; max-width: 720px;
+  padding-bottom: 12px;
+}
+.pz-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: clamp(10px, 2vmin, 16px) 8px; border: none; border-radius: 24px; cursor: pointer;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 6px 0 var(--chunk-soft), 0 14px 22px rgba(var(--accent), .18);
+  transition: transform .12s, box-shadow .12s; font-family: inherit;
+  animation: card-in .35s ease-out backwards;
+}
+.pz-card:active { transform: translateY(4px) scale(.98); box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 2px 0 var(--chunk-soft); }
+.pz-card.done { --tint: #E4F5EA; }
+.pz-no {
+  position: absolute; left: 8px; top: 8px;
+  width: 26px; height: 26px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900; color: #fff; background: #5A93D6;
+  box-shadow: 0 2px 0 rgba(0,0,0,.06);
+}
+.pz-card.done .pz-no { background: #4FB06B; }
+.pz-badge { font-size: clamp(16px, 3vmin, 22px); }
+
+/* ─────────── 놀이 스테이지 ─────────── */
+.play-stage {
+  width: 100%; max-width: 1120px; flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(8px, 1.8vmin, 16px); min-height: 0;
+}
+
+/* 본보기 카드 — 색·위치를 크게. 글씨(라벨) 없이 그림만 */
+.sample-card {
+  width: 100%; max-width: 460px;
+  display: flex; flex-direction: column; min-height: 0;
+  background: linear-gradient(180deg, #FFFFFF 0%, #EDF5FF 100%);
+  border-radius: 22px; padding: clamp(8px, 1.8vmin, 16px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 6px 0 #C6DDF3, 0 14px 22px rgba(var(--accent), .18);
+  animation: card-in .35s ease-out backwards;
+}
+.sample-cap {
+  flex: none; text-align: center;
+  font-size: clamp(14px, 2.8vmin, 20px); font-weight: 900; color: #1F5E93;
+  margin-bottom: 8px;
+}
+.sample-holder {
+  flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+}
+/* 세로모드 본보기 크기 제한(위 카드가 화면 절반을 넘지 않게) */
+.sample-holder .bead-grid.is-card { width: 100%; max-width: min(72vw, 46vh); }
+
+/* 오른쪽 작업 열: 보드 + 팔레트 */
+.work-col {
+  width: 100%; max-width: 560px; flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(8px, 1.8vmin, 16px);
+}
+.board-holder {
+  flex: 1; min-height: 0; width: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.board-holder .bead-grid.is-board { width: 100%; max-width: min(80vw, 46vh); }
+
+/* 색 팔레트 6종 — 크게, 고른 색 강조 */
+.palette {
+  flex: none; width: 100%;
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: clamp(6px, 1.6vmin, 14px);
+  padding: clamp(8px, 1.6vmin, 14px); border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(237,246,255,.85));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.6), 0 6px 0 #C9DEF2, 0 12px 20px rgba(var(--accent), .14);
+}
+.pal-bead {
+  width: clamp(46px, 10vmin, 70px); height: clamp(46px, 10vmin, 70px);
+  border: none; border-radius: 999px; cursor: pointer; padding: clamp(2px, .6vmin, 5px);
+  background: transparent; touch-action: none; line-height: 0;
+  transition: transform .12s;
+}
+.pal-bead .bead { width: 100%; display: block; }
+.pal-bead .bead svg { display: block; }
+.pal-bead.sel {
+  transform: translateY(-4px) scale(1.06);
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px #FFD34E, 0 6px 12px rgba(var(--accent), .3);
+}
+.pal-bead:active { transform: scale(.94); }
+.pal-bead.lift { opacity: .35; }
+
+/* 드래그 중 따라다니는 구슬 */
+.drag-ghost {
+  position: fixed; z-index: 90; width: clamp(50px, 12vmin, 76px);
+  transform: translate(-50%, -50%); pointer-events: none; line-height: 0;
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,.22));
+}
+.drag-ghost .bead { width: 100%; display: block; }
+.drag-ghost svg { display: block; }
+
+/* ─────────── 가로모드 2단 배치 (태블릿 가로 우선) ───────────
+ * 왼쪽 본보기 카드 크게 + 오른쪽 보드·팔레트. HTML 무변경, flex 방향만 재배치. */
+@media (orientation: landscape) {
+  .play-stage {
+    flex-direction: row; align-items: stretch;
+    gap: clamp(12px, 2.4vw, 32px);
+  }
+  .sample-card {
+    flex: 1 1 0; max-width: none; align-self: stretch;
+  }
+  .sample-holder .bead-grid.is-card { max-width: min(42vw, 82vh); }
+  .work-col {
+    flex: 1 1 0; max-width: none; align-self: stretch;
+    justify-content: center;
+  }
+  .board-holder .bead-grid.is-board { max-width: min(42vw, 74vh); }
+}
+/* 폰 가로(낮은 화면): 팔레트 구슬을 조금 줄여 잘림 없이 */
+@media (orientation: landscape) and (max-height: 480px) {
+  .pal-bead { width: clamp(38px, 12vmin, 56px); height: clamp(38px, 12vmin, 56px); }
+  .board-holder .bead-grid.is-board { max-width: min(40vw, 66vh); }
+  .sample-holder .bead-grid.is-card { max-width: min(40vw, 74vh); }
+}
+
+/* ─────────── 보상 오버레이 ─────────── */
+.reward {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  align-items: center; justify-content: center;
+  background: rgba(30,70,110,.32); backdrop-filter: blur(2px);
+}
+.reward.on { display: flex; animation: fade-in .2s ease-out; }
+.reward-card {
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
+  border-radius: 30px; padding: clamp(20px, 4vmin, 36px) clamp(24px, 5vmin, 46px);
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 10px 0 var(--chunk), 0 22px 40px rgba(var(--accent), .32);
+  animation: pop-in .4s cubic-bezier(.3,1.6,.5,1);
+}
+.reward-bead { font-size: clamp(56px, 14vmin, 100px); animation: bob 1.2s ease-in-out infinite; }
+.reward-praise { font-size: clamp(20px, 4.2vmin, 30px); font-weight: 900; color: #1F5E93; text-align: center; }
+.reward-btns { display: flex; gap: 12px; margin-top: 4px; }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { 0% { transform: scale(.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+/* ─────────── 색종이 축하 (동그란 구슬) ─────────── */
+.confetti { position: fixed; inset: 0; z-index: 95; pointer-events: none; overflow: hidden; }
+.cf {
+  position: absolute; top: -20px; width: 14px; height: 14px; display: block;
+  animation: cf-fall linear forwards;
+}
+@keyframes cf-fall {
+  0% { transform: translateY(-20px) translateX(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(102vh) translateX(var(--dx)) rotate(var(--rot)); opacity: .9; }
+}
+
+/* ─────────── 등장 모션 + 모션 줄이기 존중 ─────────── */
+@keyframes card-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .menu-card, .pz-card, .sample-card, .home-head, .bar,
+  .cell.pop .bead, .reward.on, .reward-card, .reward-bead, .cf, .cell.shake,
+  .bead-grid.is-board .cell.hint {
+    animation: none !important;
+  }
+  * { transition: none !important; }
+}
