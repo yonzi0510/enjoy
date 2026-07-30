@@ -1,0 +1,16 @@
+{
+  "name": "손가락 고무줄",
+  "short_name": "고무줄",
+  "description": "본보기 카드대로 손가락에 색 고리를 똑같이 끼우는 색·위치 맞추기 놀이 — 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFEAF1",
+  "theme_color": "#E86A93",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
