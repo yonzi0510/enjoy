@@ -1,0 +1,16 @@
+{
+  "name": "돌림 블록",
+  "short_name": "돌림블록",
+  "description": "나무 막대에 꿰인 원통 블록을 돌려 카드 그림 줄과 맞추는 놀이 — 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFF3E0",
+  "theme_color": "#D9812E",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
