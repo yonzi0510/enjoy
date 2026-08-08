@@ -37,16 +37,28 @@ async function traceAndComplete(page) {
  * 안내선에서 벗어나므로, 이 검사가 곧 "채점 좌표가 안 틀어졌는지" 검사이기도 하다.
  * dx,dy(논리 단위)를 주면 일부러 빗나가게 그을 수 있다. */
 async function drawGuideByHand(page, dx = 0, dy = 0) {
-  const box = await page.locator('#play-canvas').boundingBox();
+  const g = await page.evaluate(() => {
+    const el = document.querySelector('#play-canvas');
+    const r = el.getBoundingClientRect();
+    const mm = getComputedStyle(el).transform.match(/matrix\(([^)]+)\)/);
+    return {
+      cx: r.x + r.width / 2, cy: r.y + r.height / 2,   // 회전·확대는 가운데를 기준으로 도니 중심은 그대로
+      size: el.offsetWidth,                            // 변형과 무관한 배치상의 크기
+      m: mm ? mm[1].split(',').map(Number) : [1, 0, 0, 1, 0, 0],
+    };
+  });
   const paths = await page.evaluate(() => {
     const pz = window.LinesData.puzzleById(App.debug().puzzle);
     return window.LinesData.guideOf(pz);
   });
-  const k = box.width / 640; // 정사각 캔버스라 가로세로 배율이 같다
-  const at = pt => [
-    box.x + Math.max(0, Math.min(640, pt.x + dx)) * k,
-    box.y + Math.max(0, Math.min(640, pt.y + dy)) * k,
-  ];
+  const k = g.size / 640;  // 정사각 캔버스라 가로세로 배율이 같다
+  // 아이는 '눈에 보이는' 안내선을 따라간다 — 그래서 화면에 실제로 그려지는 자리(변형까지 반영)를 찍는다.
+  // 캔버스에 transform 이 걸리면 여기서 찍은 자리와 ink.js 의 좌표 환산이 어긋나 채점이 무너진다.
+  const at = pt => {
+    const lx = (Math.max(0, Math.min(640, pt.x + dx)) - 320) * k;
+    const ly = (Math.max(0, Math.min(640, pt.y + dy)) - 320) * k;
+    return [g.cx + g.m[0] * lx + g.m[2] * ly, g.cy + g.m[1] * lx + g.m[3] * ly];
+  };
   for (const p of paths) {
     if (p.length < 2) continue;
     let [x, y] = at(p[0]);

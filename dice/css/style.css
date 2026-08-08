@@ -346,6 +346,7 @@ h1 {
 h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -.2em; }
 .back .ic, .vs-btn .ic { width: 1.5em; height: 1.5em; vertical-align: middle; }
 .bigbtn .ic { width: 1.4em; height: 1.4em; }
+.ic-next { transform: scaleX(-1); } /* 뒤로 화살표를 뒤집어 "다음" 으로 */
 .mc-prog .ic { width: 1em; height: 1em; vertical-align: -.14em; }
 .die-check .ic { width: 1.5em; height: 1.5em; vertical-align: middle; } /* 찾았다 도장은 크게 */
 .rd-badge { line-height: 0; }
