@@ -17,15 +17,168 @@
 </head>
 <body>
 
+<!-- ═══════════ 아이가 그린 손그림 (인라인 SVG) ═══════════
+     이모지 대신 쓰는 그림들. 굵고 고른 획, 삐뚤한 선, 안 닫히는 동그라미,
+     색은 윤곽 밖으로 조금 삐져나간다.
+     — 획 떨림은 feTurbulence + feDisplacementMap 두 벌(윤곽용·칠용)로 낸다.
+     — 상품(과일·채소…) 그림은 여기 없다. 아이가 알아보는 놀잇감이라 이모지 그대로 둔다. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <!-- 윤곽선용 떨림 — 자로 그은 티를 없앤다 -->
+  <filter id="mk-hand" x="-18%" y="-18%" width="136%" height="136%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="2" seed="7"/>
+    <feDisplacementMap in="SourceGraphic" scale="2.4"/>
+  </filter>
+  <!-- 칠(크레용)용 떨림 — 더 크게 흔들어 윤곽 밖으로 삐져나가게 한다 -->
+  <filter id="mk-crayon" x="-28%" y="-28%" width="156%" height="156%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.026" numOctaves="2" seed="3"/>
+    <feDisplacementMap in="SourceGraphic" scale="5"/>
+  </filter>
+
+  <!-- 손으로 그은 점선 테두리. 물건 놓는 칸(장바구니·계산대·담을 자리)에 두른다.
+       늘여 써야 하므로 preserveAspectRatio=none, 선 굵기·점 간격은 non-scaling-stroke 로 지킨다.
+       색·굵기·점 간격은 CSS(.zone-frame)가 정한다 — 앱이 쓰던 칸 색을 그대로 물려받게. -->
+  <symbol id="mk-dashframe" viewBox="0 0 200 100" preserveAspectRatio="none">
+    <path vector-effect="non-scaling-stroke" fill="none" d="M15 9
+      C40 5, 62 9, 88 6 C112 4, 150 9, 176 5 C186 5, 193 9, 192 18
+      C193 32, 190 46, 193 60 C194 72, 195 84, 188 92
+      C160 96, 120 91, 92 95 C66 98, 38 92, 14 95 C7 93, 5 84, 7 72
+      C5 58, 9 44, 6 30 C5 20, 8 11, 15 9 Z"/>
+  </symbol>
+
+  <!-- 제목·보상의 시장 수레 -->
+  <symbol id="mk-cart" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.6,2.2)">
+      <path d="M13 17 H41 L36 30 H18 Z" fill="#FFC98C"/>
+      <circle cx="21" cy="38" r="4.2" fill="#FFC98C"/><circle cx="34" cy="38" r="4.2" fill="#FFC98C"/>
+    </g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 9 H11 L18 31 H37"/>
+      <path d="M13 17 H41 L36 30 H18"/>
+      <path d="M25 38 a4.6 4.6 0 1 1 -2.4 -4"/>
+      <path d="M38 38 a4.6 4.6 0 1 1 -2.4 -4"/>
+    </g>
+  </symbol>
+
+  <!-- 1단계: 동전 한 닢 -->
+  <symbol id="mk-coin" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.6,2.2)"><circle cx="24" cy="24" r="15.5" fill="#FFD34E"/></g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="4" stroke-linecap="round">
+      <path d="M28 8.6 a16 16 0 1 1 -7 .6"/>
+      <path d="M27 15.7 a8.6 8.6 0 1 1 -4.4 .3" stroke-width="2.6"/>
+    </g>
+  </symbol>
+
+  <!-- 2단계: 500원과 100원 (동전 두 닢) -->
+  <symbol id="mk-coins" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.6,2.2)">
+      <circle cx="19" cy="29" r="13" fill="#F0A55C"/><circle cx="32" cy="17" r="9.5" fill="#FFD34E"/>
+    </g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="4.2" stroke-linecap="round">
+      <path d="M19 15 a14 14 0 1 1 -4 .8"/>
+      <path d="M32 7 a10 10 0 1 1 -3 .6"/>
+    </g>
+  </symbol>
+
+  <!-- 3단계: 장 본 꾸러미 -->
+  <symbol id="mk-bag" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.6,2.2)"><path d="M12 19 H36 L34 40 H14 Z" fill="#D9C8F5"/></g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 19 H36 L34 40 H14 Z"/>
+      <path d="M18 19 C18 9, 30 9, 30 19"/>
+    </g>
+  </symbol>
+
+  <!-- 잠긴 가게 자물쇠 -->
+  <symbol id="mk-lock" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.6,2.2)"><path d="M12 22 H36 V40 H12 Z" fill="#CFC9DA"/></g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22 H36 V40 H12 Z"/>
+      <path d="M18 22 V16 C18 9, 30 9, 30 16 V22"/>
+      <path d="M24 29 v5"/>
+    </g>
+  </symbol>
+
+  <!-- 별 (모은 별·보상) -->
+  <symbol id="mk-star" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.6,2.2)">
+      <path d="M24 8 L28.1 19.3 L40.2 19.8 L30.7 27.2 L34 38.8 L24 32 L14 38.8 L17.3 27.2 L7.8 19.8 L19.9 19.3 Z" fill="#FFD34E"/>
+    </g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 8 L28.1 19.3 L40.2 19.8 L30.7 27.2 L34 38.8 L24 32 L14 38.8 L17.3 27.2 L7.8 19.8 L19.9 19.3 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 장바구니 칸 딱지 -->
+  <symbol id="mk-basket" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.6,2.2)"><path d="M7 21 H41 L35 40 H13 Z" fill="#FFCE8A"/></g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 21 H41 L35 40 H13 Z"/>
+      <path d="M15 21 C15 7, 33 7, 33 21"/>
+      <path d="M19 27 v7 M29 27 v7" stroke-width="3"/>
+    </g>
+  </symbol>
+
+  <!-- 계산대(영수증) 칸 딱지 -->
+  <symbol id="mk-receipt" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.6,2.2)">
+      <path d="M11 8 H38 V41 l-5 -4 -5 4 -5 -4 -5 4 -4 -3.5 -3 3 Z" fill="#FFE9B0"/>
+    </g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 8 H38 V41 l-5 -4 -5 4 -5 -4 -5 4 -4 -3.5 -3 3 Z"/>
+      <path d="M18 17 h13 M18 26 h9" stroke-width="3"/>
+    </g>
+  </symbol>
+
+  <!-- 뒤로 가기 화살표 -->
+  <symbol id="mk-back" viewBox="0 0 48 48">
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M29 11 L15 24 L29 37"/><path d="M16 24 H35"/>
+    </g>
+  </symbol>
+
+  <!-- 목소리 설정(말풍선) -->
+  <symbol id="mk-talk" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.6,2.2)"><path d="M7 10 H41 V30 H21 L13 38 V30 H7 Z" fill="#FFE1A8"/></g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 10 H41 V30 H21 L13 38 V30 H7 Z"/>
+      <path d="M16 20 h.6 M24 20 h.6 M32 20 h.6" stroke-width="4.6"/>
+    </g>
+  </symbol>
+
+  <!-- 하트 (접객 성공) — 칠은 CSS color 를 따라간다 -->
+  <symbol id="mk-heart" viewBox="0 0 48 48">
+    <g filter="url(#mk-crayon)" transform="translate(1.4,2)">
+      <path d="M24 41 C10 31 6 21 11 15 C16 9 23 12 24 18 C25 12 32 9 37 15 C42 21 38 31 24 41 Z" fill="currentColor"/>
+    </g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#3A2A20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 41 C10 31 6 21 11 15 C16 9 23 12 24 18 C25 12 32 9 37 15 C42 21 38 31 24 41 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 제목에서 첫 가게로 향하는 점선 화살표 — "여기부터 놀아 보자" -->
+  <symbol id="mk-arrow" viewBox="0 0 110 130">
+    <g filter="url(#mk-hand)" fill="none" stroke="#C0642F" stroke-width="6"
+       stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11 10">
+      <path d="M14 10 C6 42, 12 70, 34 92 C50 108, 68 114, 92 114"/>
+    </g>
+    <g filter="url(#mk-hand)" fill="none" stroke="#C0642F" stroke-width="6"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M76 100 L95 114 L75 126"/>
+    </g>
+  </symbol>
+</defs></svg>
+
 <!-- 홈: 가게(단계) 고르기 -->
 <section class="screen on" id="scr-home">
   <header class="home-head">
-    <h1>🛒 시장 놀이터</h1>
+    <h1><svg class="ic ic-title" aria-hidden="true"><use href="#mk-cart"/></svg> 시장 놀이터</h1>
     <div class="stats">
-      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <span class="stat"><svg class="ic" aria-hidden="true"><use href="#mk-star"/></svg> <b id="home-stars">0</b></span>
       <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
       <span id="pet-slot"></span>
-      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">
+        <svg class="ic" aria-hidden="true"><use href="#mk-talk"/></svg>
+      </button>
     </div>
   </header>
   <div class="menu" id="menu"></div>
@@ -34,7 +187,9 @@
 <!-- 가게: 손님 접객 (상품 담기 → 동전 계산) -->
 <section class="screen" id="scr-shop">
   <header class="bar">
-    <button type="button" class="back" id="btn-shop-back">◀</button>
+    <button type="button" class="back" id="btn-shop-back" aria-label="가게 고르기로">
+      <svg class="ic" aria-hidden="true"><use href="#mk-back"/></svg>
+    </button>
     <h2 id="shop-title">🛒 1단계 가게</h2>
     <span class="dots" id="shop-dots"></span>
   </header>
@@ -48,18 +203,22 @@
     <div class="shelf" id="shelf"></div>
     <div class="lower">
       <div class="dropzone basket" id="basket">
-        <span class="zone-label">🧺 장바구니</span>
+        <svg class="zone-frame" preserveAspectRatio="none" aria-hidden="true"><use href="#mk-dashframe"/></svg>
+        <span class="zone-label"><svg class="ic" aria-hidden="true"><use href="#mk-basket"/></svg> 장바구니</span>
         <div class="zone-items" id="basket-items"></div>
       </div>
       <div class="dropzone counter" id="counter">
-        <span class="zone-label">🧾 계산대</span>
+        <svg class="zone-frame" preserveAspectRatio="none" aria-hidden="true"><use href="#mk-dashframe"/></svg>
+        <span class="zone-label"><svg class="ic" aria-hidden="true"><use href="#mk-receipt"/></svg> 계산대</span>
         <div class="price-guide" id="price-guide"></div>
         <div class="zone-items" id="paid-coins"></div>
       </div>
     </div>
     <div class="pay-row" id="pay-row" hidden>
       <div class="purse" id="purse"></div>
-      <button type="button" class="bigbtn primary" id="btn-pay">💰 다 냈어요!</button>
+      <button type="button" class="bigbtn primary" id="btn-pay">
+        <svg class="ic" aria-hidden="true"><use href="#mk-coins"/></svg> 다 냈어요!
+      </button>
     </div>
   </div>
   <div class="guide" id="guide"></div>
@@ -68,7 +227,7 @@
 <!-- 보상 오버레이 -->
 <div class="reward" id="reward">
   <div class="reward-card">
-    <div class="reward-stars">⭐</div>
+    <div class="reward-stars"><svg class="ic" aria-hidden="true"><use href="#mk-star"/></svg></div>
     <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
     <div class="reward-btns">
       <button type="button" class="bigbtn" id="reward-close" hidden>그만할래</button>
