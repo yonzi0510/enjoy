@@ -24,9 +24,17 @@ body{
   margin:0 auto;
   padding:0 0 calc(26px + env(safe-area-inset-bottom));
 }
+/* 그림은 세로로 긴 비율(914:1536)이라, 화면 너비에만 맞추면 가로 화면에서
+   아래가 잘려 버튼 절반이 화면 밖으로 나간다. 그래서 화면 '높이'에도 맞춘다:
+   아래에 들어갈 찾기 막대(96px)와 부모님 링크(74px) 자리를 빼고 계산한다.
+   놀이 버튼 높이는 틀 너비의 12.26%라, 5세 터치 하한 44px 을 지키려면
+   틀이 최소 359px 이어야 한다. 그래서 366px 아래로는 줄이지 않는다
+   (그보다 짧은 화면에서는 스크롤이 생기는 편이 낫다). */
 .stage{
   position:relative;
-  width:100%;
+  container-type:inline-size;   /* 위에 얹는 표시들이 화면이 아니라 '틀' 크기를 따르게 */
+  width:min(100%, max(366px, calc((100svh - 170px) * 0.5951)));
+  margin-inline:auto;
   aspect-ratio:914 / 1536;
   overflow:hidden;
   background:#fffaf0;
@@ -73,12 +81,43 @@ body{
 .order-cat{left:4.5%;top:84.3%;width:91.0%;height:9.2%}
 .find-cat{right:0;bottom:0;width:22%;height:9.5%}
 
+/* 찾기 막대 — 그림 속 다른 묶음 막대와 같은 모양으로 맞춘다 */
+.find-bar{
+  width:min(100%, max(366px, calc((100svh - 170px) * 0.5951)));
+  margin:10px auto 0;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:9px 14px;
+  border:4px solid #d8665f;
+  border-radius:34px 26px 36px 28px;
+  background:#fdeceb;
+  color:#3e342e;
+  font:inherit;
+  font-size:clamp(16px,3vw,23px);
+  font-weight:900;
+  letter-spacing:-.03em;
+  text-align:left;
+  cursor:pointer;
+  transform:rotate(.2deg);
+}
+.find-bar:active{transform:translate(2px,2px) rotate(0)}
+.find-rabbit{width:clamp(46px,9vw,66px);height:clamp(46px,9vw,66px);flex:none;border-radius:50%}
+.find-name{flex:1;word-break:keep-all}
+.find-chev{
+  width:clamp(34px,6vw,46px);height:clamp(34px,6vw,46px);
+  display:grid;place-items:center;flex:none;
+  border:4px solid #d8665f;border-radius:50%;
+  background:rgba(255,255,255,.5);color:#d8665f;
+  font-family:sans-serif;font-size:clamp(16px,3vw,22px);font-weight:900;
+}
+
 /* dynamic state overlays */
 .state-check{
   position:absolute;
   z-index:4;
   color:#efaa24;
-  font-size:clamp(18px,4.1vw,38px);
+  font-size:4.1cqw;
   font-weight:1000;
   line-height:1;
   transform:rotate(-10deg);
@@ -92,7 +131,7 @@ body{
   z-index:4;
   left:42.0%;
   top:40.6%;
-  font-size:clamp(17px,4vw,36px);
+  font-size:4cqw;
   line-height:1;
   pointer-events:none;
 }
@@ -194,7 +233,7 @@ body{
 <body>
 <div class="page">
   <div class="stage" aria-label="은아와 서하의 놀이터">
-    <img class="design" src="./assets/home-design.png" alt="은아와 서하의 놀이터 손그림 홈 화면">
+    <img class="design" src="./assets/home-design.webp" alt="은아와 서하의 놀이터 손그림 홈 화면">
 
     <button class="hotspot euna" type="button" data-profile-name="은아" aria-label="은아 선택"></button>
     <button class="hotspot seoha" type="button" data-profile-name="서하" aria-label="서하 선택"></button>
@@ -216,6 +255,14 @@ body{
     <span class="state-check seoha-check" id="check-seoha" hidden>✓</span>
     <span class="state-lock" id="ja-lock" hidden>🔒</span>
   </div>
+
+  <!-- 이 묶음만 그림에 그려져 있지 않다. 돌고래를 눌러야 열리는데 글 못 읽는
+       아이는 그걸 알 수 없어서, 그림과 같은 모양의 막대를 밖으로 꺼냈다. -->
+  <button class="find-bar" type="button" data-drawer="find">
+    <img class="find-rabbit" src="./assets/cat-find.svg" alt="">
+    <span class="find-name">👀 찾기와 짝맞추기</span>
+    <span class="find-chev" aria-hidden="true">▾</span>
+  </button>
 
   <a class="parent-link" href="./parent/">🔑 부모님 페이지</a>
 </div>
