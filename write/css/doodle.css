@@ -237,6 +237,12 @@ h1 .di, .bar h2 .di { margin-right: .22em; }
 
 /* 색 동그라미 — 그림자 대신 연필로 두른 테 */
 .swatch { box-shadow: 0 0 0 2.5px rgba(46, 42, 36, .8); }
+/* 세로 화면에서는 색 동그라미가 30px 밖에 안 돼 다섯 살 손가락에 작았다.
+   툴바가 줄노트 아래라 한 줄 늘어도 필기 칸에는 영향이 없다.
+   (가로 화면은 툴바가 좁은 세로 열이라 그대로 둔다 — 늘리면 판이 밀린다) */
+@media (orientation: portrait) {
+  .swatch { width: clamp(44px, 8vmin, 48px); height: clamp(44px, 8vmin, 48px); }
+}
 
 /* 다섯 살 손가락이 닿는 최소 크기(44px) 맞추기 —
    공용 단추(🗣️·펫)와 낱말 입력칸이 조금 모자랐다. 이 앱에서만 키운다. */

@@ -696,3 +696,14 @@ h1 {
   #menu .c-free, #menu .c-book { min-height: 0; --ic: clamp(24px, 6.6vh, 42px); --nm: clamp(13px, 3.5vh, 19px); }
   .menu-card { padding: clamp(5px, 1.5vh, 14px) clamp(6px, 1.6vmin, 14px); gap: clamp(2px, .8vh, 6px); }
 }
+
+/* ═══════════ 위쪽 바 — 오른쪽 끝을 비워 둔다 ═══════════
+ * 오른쪽 위는 이제 공용 집 단추와 '남은 시간' 쪽지 자리다(shared/home-button.js).
+ * 폰 세로에서는 공용 층이 쪽지를 집 단추 아래로 내려 주지만, 폰 **가로**(700px 이상)
+ * 에서는 여전히 옆에 붙어서 바 오른쪽 끝을 덮었다 —
+ * 🔊 다시 듣기가 쪽지에 가려 다섯 살이 누를 수 없었고, 진행 표시도 반쯤 잘렸다.
+ * 그래서 그 둘을 뒤로가기 옆으로 옮겨 붙인다.
+ * 제목은 마지막(flex:1)이라 남은 자리를 다 먹지만 글은 왼쪽부터라 가려지지 않는다. */
+.bar .back { order: 0; }
+.bar .mini-btn, .bar .page-count { order: 1; }
+.bar h2 { order: 2; }

@@ -1,0 +1,158 @@
+/* 선 따라 그리기 — 「낙서장」 층 (스타일시트 중 가장 마지막에 불러온다)
+ *
+ * 공용 shared/crayon.css(모눈 종이·얇은 손그림 윤곽)와 shared/doodle-menu.css(첫 화면 흩뿌리기)
+ * 위에, 이 앱에만 필요한 것을 얹는다.
+ *   1) 첫 화면 단계 카드 — 자리·기울기·**크기 위계**(가장 먼저 할 '반짝반짝 선'이 가장 크다)
+ *      + 제목에서 첫 놀이로 향하는 손그림 점선 화살표
+ *   2) 손그림 아이콘(index.html <defs> 의 <symbol>) 자리 잡기 — 이모지 자리를 대신한다
+ *   3) 남아 있던 반질반질한 면(알약·번호·큰 단추·캔버스 테두리)을 종이로
+ *   4) 오른쪽 위 공용 집 단추·남은시간 쪽지와 머리줄이 겹치지 않게 자리를 비운다
+ *
+ * ⚠️ 절대 건드리지 않는 것 — 이 놀이는 **좌표로 채점**한다.
+ *    · #play-canvas 와 그 둘레(.board-wrap, .play-stage): 회전·확대·테두리 금지.
+ *      js/ink.js 의 toLogical() 이 getBoundingClientRect() 로 손가락 좌표를 캔버스 좌표로 바꾸므로,
+ *      transform 이 걸리면 잉크가 손가락과 어긋나고 coverage/adherence 판정이 통째로 틀어진다.
+ *      (border 도 금지 — box-sizing:border-box 라 그리는 면이 줄고 좌표가 밀린다. 테두리는 box-shadow 로 낸다.)
+ *    · 캔버스에 그려지는 캐릭터 얼굴(🐼🐰…)과 점선 안내선: 채점 기준 그 자체라 그대로 둔다.
+ *    흩뿌리기·기울이기는 **고르는 칸(.menu-card, .puzzle-card)** 에만 준다.
+ */
+
+/* ═══════════ 0. 채점 좌표 보호 — 어떤 층이 와도 캔버스는 변형 없음 ═══════════ */
+.play-stage, .board-wrap, #play-canvas { transform: none !important; }
+
+/* ═══════════ 1. 첫 화면 — 낙서장 배치 + 크기 위계 + 시작 화살표 ═══════════
+ * 공용 doodle-menu.css 는 칸 여덟 개를 기준으로 흩뿌린다. 여기는 단계가 셋뿐이라
+ * 셋을 하나하나 잡아 "먼저 할 것이 가장 크게" 보이도록 다시 준다.
+ * (선택자를 `.menu > .menu-card.c-sN` 로 더 구체적으로 써서 공용 값을 덮는다) */
+.menu { align-items: flex-start; }
+
+.start-arrow {            /* 제목 밑에서 첫 놀이(반짝반짝 선)로 향하는 손그림 점선 화살표 */
+  width: clamp(50px, 10vmin, 92px);
+  aspect-ratio: 110 / 130;
+  flex: none;
+  align-self: flex-start;
+  margin-top: clamp(-4px, -0.8vmin, 0px);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.menu > .menu-card.c-s1 {          /* 반짝반짝 선 — 가장 먼저, 가장 크게 */
+  width: clamp(186px, 34vmin, 286px);
+  padding: clamp(16px, 3.4vmin, 26px);
+  transform: translate(-1%, 1%) rotate(-2.2deg);
+}
+.menu > .menu-card.c-s2 {          /* 구불구불 선 */
+  width: clamp(158px, 28vmin, 228px);
+  margin-top: clamp(6px, 1.6vmin, 18px);
+  transform: translate(1%, -1%) rotate(1.8deg);
+}
+.menu > .menu-card.c-s3 {          /* 돌돌 말린 선 — 아직 먼 이야기라 가장 작게 */
+  width: clamp(138px, 24vmin, 192px);
+  margin-top: clamp(12px, 3vmin, 32px);
+  transform: translate(-1%, 2%) rotate(2.6deg);
+}
+
+/* 카드 안 안내선 미리보기도 카드 크기를 따라간다 (미리보기라 채점과 무관) */
+.c-s1 .mc-icon { width: clamp(104px, 22vmin, 148px); }
+.c-s2 .mc-icon { width: clamp(84px, 17vmin, 116px); }
+.c-s3 .mc-icon { width: clamp(70px, 14vmin, 96px); }
+.c-s1 .mc-name { font-size: clamp(20px, 4.2vmin, 30px); }
+.c-s3 .mc-name { font-size: clamp(15px, 3vmin, 21px); }
+.c-s3 .mc-desc { font-size: clamp(11px, 2.1vmin, 14px); }
+
+/* 등장 모션 차례 — 첫 칸이 화살표라 카드는 둘째부터다 */
+.menu .menu-card:nth-child(2) { animation-delay: .05s; }
+.menu .menu-card:nth-child(3) { animation-delay: .10s; }
+.menu .menu-card:nth-child(4) { animation-delay: .15s; }
+
+/* 폰 세로처럼 좁은 화면 — 화살표+첫 놀이가 한 줄을 차지하고, 나머지 둘이 아랫줄에 붙는다.
+   무엇부터 할지가 한눈에 보인다. */
+@media (max-width: 560px) {
+  .start-arrow { width: clamp(40px, 12vw, 58px); }
+  .menu > .menu-card.c-s1 { width: min(62%, 250px); margin-bottom: clamp(4px, 1.2vh, 12px); }
+  .menu > .menu-card.c-s2 { width: min(45%, 184px); margin-top: 0; }
+  .menu > .menu-card.c-s3 { width: min(39%, 160px); margin-top: clamp(8px, 2vh, 20px); }
+  .c-s1 .mc-icon { width: clamp(96px, 30vw, 140px); }
+}
+
+/* 퍼즐 목록 칸도 손으로 붙인 듯 살짝 삐뚤게 — 고르는 칸이라 안전하다 */
+.puzzle-list > .puzzle-card:nth-child(4n+1) { transform: rotate(-1.6deg); }
+.puzzle-list > .puzzle-card:nth-child(4n+2) { transform: rotate(1.3deg); }
+.puzzle-list > .puzzle-card:nth-child(4n+3) { transform: rotate(1.9deg); }
+.puzzle-list > .puzzle-card:nth-child(4n+4) { transform: rotate(-1.1deg); }
+.puzzle-list > .puzzle-card:active { transform: translate(2px, 3px) rotate(0) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu > .menu-card, .puzzle-list > .puzzle-card { transform: none !important; }
+}
+
+/* ═══════════ 2. 손그림 아이콘 자리 ═══════════
+ * index.html <defs> 의 <symbol> 을 <svg class="ic"><use …></svg> 로 가져다 쓴다.
+ * 크기는 글자 크기(em)를 따라가므로 이모지가 있던 자리에 그대로 들어간다. */
+.ic {
+  width: 1.15em; height: 1.15em;
+  display: inline-block; vertical-align: -.22em; flex: none;
+}
+.ic-title { width: 1.2em; height: 1.2em; vertical-align: -.2em; }
+.back .ic, .vs-btn .ic { width: 1.5em; height: 1.5em; vertical-align: middle; }
+.bigbtn .ic { width: 1.35em; height: 1.35em; }
+.mc-prog .ic, .stat .ic { width: 1em; height: 1em; vertical-align: -.14em; }
+.pz-badge { width: clamp(20px, 3.8vmin, 28px); height: clamp(20px, 3.8vmin, 28px); line-height: 0; }
+.pz-badge .ic { width: 100%; height: 100%; vertical-align: 0; }
+
+/* 아이콘과 글씨를 나란히 — 연필로 쓴 글씨 색으로 */
+h1, .bar h2 {
+  display: flex; align-items: center; justify-content: center; gap: .24em;
+  color: #2E2A24;
+}
+.back, .vs-btn, .bigbtn { display: inline-flex; align-items: center; justify-content: center; gap: .3em; }
+.mc-name { display: flex; align-items: center; justify-content: center; gap: .22em; color: #2E2A24; }
+.mc-desc { color: #6B6154; }
+.mc-prog, .stat { display: inline-flex; align-items: center; gap: .25em; }
+
+/* ═══════════ 3. 남은 광택 걷어내기 ═══════════ */
+.page-count, .mc-prog {
+  background: #fff !important;
+  border: 2.5px solid rgba(46, 42, 36, .75);
+  border-radius: 999px;
+  color: #2E2A24 !important;
+  box-shadow: none !important;
+}
+.pz-no {
+  background: #fff !important;
+  border: 2.5px solid rgba(46, 42, 36, .8);
+  color: #2E2A24 !important;
+  box-shadow: none !important;
+}
+.puzzle-card.done .pz-no { background: #FFD34E !important; }
+.bigbtn { background: #fff !important; color: #2E2A24 !important; }
+.bigbtn.primary { background: #7FD8C6 !important; color: #2E2A24 !important; }
+.reward-praise { color: #2E2A24; }
+
+/* 그리는 판 — 아이가 낙서하는 모눈 공책 한 장.
+   ⚠️ 테두리는 반드시 box-shadow 로 낸다(border 를 주면 그리는 면이 줄어 좌표가 밀린다).
+      border-radius·box-shadow 는 getBoundingClientRect() 를 바꾸지 않아 채점에 영향이 없다. */
+#play-canvas {
+  background:
+    repeating-linear-gradient(0deg,  rgba(120,150,180,.18) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(120,150,180,.18) 0 1px, transparent 1px 34px),
+    #FFFDF7 !important;
+  background-size: auto !important;
+  border-radius: 26px 21px 27px 22px;
+  box-shadow: 0 0 0 3px rgba(46, 42, 36, .8);
+}
+
+/* ═══════════ 4. 오른쪽 위 공용 것들과 자리 다투지 않기 ═══════════
+ * shared/home-button.js 가 `.bar, .home-head { padding-right: 집단추폭 + 22px }` 를
+ * 나중에 !important 로 끼워 넣는다. 놀이 화면 머리줄은 오른쪽 끝에 '듣기' 단추가 있어
+ * 그만큼으로는 남은시간 쪽지 밑에 깔린다 — 선택자를 한 단계 더 구체적으로 써서 더 비운다. */
+.screen > .bar { padding-right: clamp(178px, 17vw, 210px) !important; }
+.bar h2 { white-space: nowrap; }
+
+/* 폰 세로는 그만큼 비우면 제목이 깨진다 — 대신 '듣기' 단추를 제목 아랫줄 가운데로 내려
+   오른쪽 위(집 단추·남은시간 쪽지)와 아예 상관없게 만든다. (::after 는 flex 줄바꿈용 빈 칸) */
+@media (max-width: 700px) {
+  .screen > .bar { flex-wrap: wrap; padding-right: clamp(90px, 24vw, 116px) !important; }
+  .screen > .bar::after { content: ""; flex-basis: 100%; height: 0; order: 2; }
+  #btn-listen { order: 3; margin: 4px auto 0; }
+}
