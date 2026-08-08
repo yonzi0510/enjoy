@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 904 118"
+     role="img" aria-label="은아와 서하의 놀이터">
+  <defs>
+    <!-- 획을 실제로 떨리게 해 손으로 쓴 티를 낸다 -->
+    <filter id="w" x="-6%" y="-14%" width="112%" height="128%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="3" seed="6" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.62" numOctaves="2" seed="15" result="g"/>
+      <feColorMatrix in="g" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.5 .6" result="gr"/>
+      <feComposite in="gr" in2="d" operator="in" result="gi"/>
+      <feBlend in="d" in2="gi" mode="multiply"/>
+    </filter>
+  </defs>
+  <g filter="url(#w)" fill="none" stroke="#4A3B31" stroke-width="10.5"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M54 15 a17 17 0 1 1 -0.1 0 z"/>
+    <path d="M28 56 h56"/>
+    <path d="M30 66 v26 h52"/>
+    <path d="M134 34 a22 22 0 1 1 -0.1 0 z"/>
+    <path d="M168 20 v74"/>
+    <path d="M168 54.04 h18"/>
+    <path d="M220 18 a16 16 0 1 1 -0.1 0 z"/>
+    <path d="M200 62 h44"/>
+    <path d="M222 46 v16"/>
+    <path d="M262 18 v78"/>
+    <path d="M262 53.88 h18"/>
+    <path d="M342 26 l-16 62"/>
+    <path d="M342 44.599999999999994 l14 43.4"/>
+    <path d="M390 20 v74"/>
+    <path d="M372 54.04 h18"/>
+    <path d="M434 25 v-8"/>
+    <path d="M417 37 h42"/>
+    <path d="M438 45 a17 17 0 1 1 -0.1 0 z"/>
+    <path d="M478 20 v74"/>
+    <path d="M478 54.04 h18"/>
+    <path d="M526 19 a17 17 0 1 1 -0.1 0 z"/>
+    <path d="M508 68 h40"/>
+    <path d="M570 18 v76"/>
+    <path d="M646 14 v22 h30"/>
+    <path d="M634 52 h50"/>
+    <path d="M659 36 v16"/>
+    <path d="M642 66 h50 v13 h-50 v13 h50"/>
+    <path d="M746 34 a22 22 0 1 1 -0.1 0 z"/>
+    <path d="M786 20 v74"/>
+    <path d="M818 30 h40"/>
+    <path d="M818 53 h40"/>
+    <path d="M818 30 v46 h40"/>
+    <path d="M882 20 v74"/>
+    <path d="M864 54.04 h18"/>
+  </g>
+</svg>
