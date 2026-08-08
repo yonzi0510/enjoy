@@ -379,7 +379,8 @@ h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -
   box-shadow: none;
 }
 .die.tiny { border-width: 2.5px; }
-.die.cover .ic-pips { width: 62%; height: 62%; }
+/* 안 굴린 주사위의 눈 — 알 너비를 따라간다 (높이를 %로 주면 flex 안에서 늘어난다) */
+.die.cover .ic-pips { width: 62%; height: auto; aspect-ratio: 1; }
 .die-btn.found .die {
   border-color: #3E9B5B; background: #F0FAF1; box-shadow: none;
 }

@@ -395,6 +395,7 @@ h1 {
 .menu > .menu-card { animation: doodle-in .35s ease-out backwards; }
 
 @media (prefers-reduced-motion: reduce) {
+  .menu > .menu-card { animation: none; }
   .menu > .menu-card:nth-child(1),
   .menu > .menu-card:nth-child(2),
   .menu > .menu-card:nth-child(3) { transform: none; }
