@@ -182,8 +182,12 @@ window.Pet = (() => {
    * 꾸미기 자리(.ps-f1~f4)와 도감 친구 자리(MINI_SPOTS)의 한가운데를 피해 두었다 —
    * 응가가 위에 떠 있어도 그 단추들을 삼키지 않는다. */
   const POOP_SPOTS = [
-    { l: 28, b: 1 }, { l: 59, b: 1 }, { l: 20, b: 21 },
-    { l: 66, b: 21 }, { l: 44, b: 1 }, { l: 44, b: 21 },
+    { l: 28, b: 1 },   // 앞줄 — 펫 왼쪽
+    { l: 59, b: 1 },   // 앞줄 — 펫 오른쪽
+    { l: 20, b: 21 },  // 뒷줄 — 머리 왼쪽 옆 (얼굴은 가리지 않는다)
+    { l: 66, b: 21 },  // 뒷줄 — 머리 오른쪽 옆
+    { l: 44, b: 1 },   // 앞줄 가운데 (발 앞)
+    { l: 10, b: 1 },   // 앞줄 맨 왼쪽 — 여섯 개까지 쌓였을 때만 쓴다
   ];
 
   /* ─────────── 날짜 도우미 (시·분은 무시하고 날짜 경계로만 센다) ─────────── */
@@ -447,7 +451,7 @@ window.Pet = (() => {
       '        <span class="pet-acc-side" id="pet-acc-side"></span>' +
       '      </div>' +
       '      <div class="pet-poops" id="pet-poops"></div>' +
-      '      <button type="button" class="pet-med" id="pet-med" hidden aria-label="따뜻한 차 주기">' + MED_SVG + '</button>' +
+      '      <button type="button" class="pet-med pet-todo" id="pet-med" hidden aria-label="따뜻한 차 주기">' + MED_SVG + '</button>' +
       '    </div>' +
       '    <div class="pet-bar"><div class="pet-bar-fill" id="pet-bar-fill"></div></div>' +
       '    <div class="pet-bar-label" id="pet-bar-label"></div>' +
@@ -580,11 +584,13 @@ window.Pet = (() => {
       const spot = POOP_SPOTS[i];
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'pet-poop pet-todo';
+      b.className = 'pet-poop';
       b.style.left = spot.l + '%';
       b.style.bottom = spot.b + '%';
       b.setAttribute('aria-label', '응가 치우기');
-      b.innerHTML = POOP_SVG;
+      // 단추는 손가락에 맞춰 크게(44px 이상), 그림과 반짝임 테두리는 작게 —
+      // 응가가 여섯 개까지 늘어나도 펫이 가려지지 않는다
+      b.innerHTML = '<span class="pet-poop-in pet-todo">' + POOP_SVG + '</span>';
       b.addEventListener('click', cleanPoop);
       box.appendChild(b);
     }
