@@ -186,37 +186,126 @@ window.Pet = (() => {
     { l: 66, b: 21 }, { l: 44, b: 1 }, { l: 44, b: 21 },
   ];
 
+  /* ─────────── 날짜 도우미 (시·분은 무시하고 날짜 경계로만 센다) ─────────── */
+  function dayKey(ts) {
+    const d = new Date(ts);
+    const p = n => (n < 10 ? '0' : '') + n;
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+  function dayStart(ts) { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); }
+  // 두 시각의 날짜 차이(정수). 0 = 같은 날, 1 = 어제, 2 = 하루 걸렀음
+  function dayGap(a, b) { return Math.round((dayStart(b) - dayStart(a)) / 86400000); }
+
   /* ─────────── 저장 (+ 예전 형식 마이그레이션) ─────────── */
+  // 돌보기 필드가 없는 옛 데이터는 **건강한 상태**로 채운다.
+  // lastSeen 을 지금으로 두어야 옛 사용자가 열자마자 아프지 않다 (gap 0).
+  function careDefaults(now) {
+    return {
+      hunger: HUNGER_MAX, mood: MOOD_MAX, poop: 0, sick: false,
+      lastSeen: now, streak: 1, stampDay: dayKey(now), shield: 1,
+    };
+  }
   function load() {
+    const now = Date.now();
     try {
       const raw = JSON.parse(localStorage.getItem(KEY));
       if (raw && typeof raw === 'object') {
         if (!('fed' in raw)) { // 예전 형식 {g, meals, snacks} — 성장·먹이를 이어받는다
           const g = Math.min(raw.g || 0, DONE - 1);
-          return {
+          return Object.assign({
             g, meals: raw.meals || 0, snacks: raw.snacks || 0,
             species: g >= HATCH ? 'chick' : null, name: '',
             fed: g, collection: [], acc: {}, accOwned: [],
             deco: {}, decoOwned: [], lastBeg: 0,
-          };
+          }, careDefaults(now));
         }
-        // deco 필드가 없는 형식도 기본값으로 채워 이어받는다 (필드 추가만 — 기존 의미 변경 없음)
-        return {
+        // deco·돌보기 필드가 없는 형식도 기본값으로 채워 이어받는다 (필드 추가만 — 기존 의미 변경 없음)
+        const care = 'hunger' in raw ? {
+          hunger: clamp(raw.hunger, 0, HUNGER_MAX, HUNGER_MAX),
+          mood: clamp(raw.mood, 0, MOOD_MAX, MOOD_MAX),
+          poop: clamp(raw.poop, 0, POOP_MAX, 0),
+          sick: !!raw.sick,
+          lastSeen: Number(raw.lastSeen) || now,
+          streak: Math.max(1, Number(raw.streak) || 1),
+          stampDay: raw.stampDay || dayKey(now),
+          shield: clamp(raw.shield, 0, SHIELD_MAX, 1),
+        } : careDefaults(now);
+        return Object.assign({
           g: raw.g || 0, meals: raw.meals || 0, snacks: raw.snacks || 0,
           species: raw.species || null, name: raw.name || '',
           fed: raw.fed || 0, collection: raw.collection || [],
           acc: raw.acc || {}, accOwned: raw.accOwned || [],
           deco: raw.deco || {}, decoOwned: raw.decoOwned || [], lastBeg: raw.lastBeg || 0,
-        };
+        }, care);
       }
     } catch (e) { /* 손상 데이터 초기화 */ }
-    return {
+    return Object.assign({
       g: 0, meals: 0, snacks: 0, species: null, name: '', fed: 0, collection: [],
       acc: {}, accOwned: [], deco: {}, decoOwned: [], lastBeg: 0,
-    };
+    }, careDefaults(now));
+  }
+  function clamp(v, lo, hi, dflt) {
+    const n = Number(v);
+    if (!isFinite(n)) return dflt;
+    return Math.max(lo, Math.min(hi, Math.round(n)));
   }
   let state = load();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  /* ─────────── 시간 경과 · 도장 ─────────── */
+  function careLevel() { // 부모 설정이 없을 수도 있으니 안전하게 읽는다
+    const v = window.ParentSettings ? ParentSettings.get('petCare') : null;
+    return v === 'soft' || v === 'tama' ? v : 'normal';
+  }
+  let lastGap = 0; // 이번에 방을 열었을 때의 날짜 차이 (인사말·도장에서 쓴다)
+
+  // 마지막 방문 이후 흐른 날짜만큼 배고픔·기분을 줄이고 응가를 쌓는다.
+  // 성장점수·도감·꾸미기·장식은 절대 건드리지 않는다.
+  function applyElapsed() {
+    const now = Date.now();
+    const gap = dayGap(state.lastSeen || now, now);
+    lastGap = gap;
+    if (gap <= 0) { state.lastSeen = now; save(); return; }
+    const care = careLevel();
+    const mult = care === 'tama' ? 2 : 1;
+    if (care !== 'soft') { // soft 는 응가만 생기고 하트는 줄지 않는다
+      state.hunger = Math.max(0, state.hunger - gap * mult);
+      state.mood = Math.max(0, state.mood - gap * mult);
+    }
+    state.poop = Math.min(POOP_MAX, state.poop + gap * mult);
+    if (care !== 'soft' && (gap >= 2 || state.poop >= 3)) state.sick = true;
+    state.lastSeen = now;
+    save();
+  }
+
+  // 하루 한 번 도장 — 거른 날은 '봐주기'로 갚는다. streak 는 0으로 떨어지지 않는다.
+  function stampToday(gap) {
+    const today = dayKey(Date.now());
+    if (state.stampDay === today) return;
+    let used = 0;
+    if (gap <= 1) state.streak++;
+    else {
+      const miss = gap - 1;                 // 실제로 거른 날 수
+      if (state.shield >= miss) { state.shield -= miss; used = miss; state.streak++; }
+      else { state.shield = 0; state.streak = 1; }
+    }
+    state.stampDay = today;
+    const gotShield = state.streak % STREAK_SHIELD === 0 && state.shield < SHIELD_MAX;
+    if (gotShield) state.shield++;
+    save();
+    // 안내는 방을 여는 인사말이 끝난 뒤에 (speak 는 앞의 말을 끊는다)
+    if (used) {
+      toast('🛡️ 봐주기를 한 장 썼어요');
+      setTimeout(() => speak('걱정 마! 봐주기로 채워 뒀어.'), 2800);
+    }
+    if (gotShield) {
+      setTimeout(() => {
+        sfxGift();
+        toast('🛡️ 봐주기 한 장을 받았어요!');
+        speak('와! 봐주기 한 장을 받았어요!');
+      }, used ? 5200 : 2800);
+    }
+  }
 
   function stageName() {
     if (!state.species) return '알';
@@ -264,6 +353,24 @@ window.Pet = (() => {
   const sfxGrow = () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.12, 0.22, 0.25)); tone(1319, 0.5, 0.45, 0.25); };
   const sfxGift = () => { tone(880, 0, 0.12, 0.2); tone(1175, 0.12, 0.12, 0.2); tone(1568, 0.24, 0.25, 0.2); };
   const sfxTap = () => tone(660, 0, 0.09, 0.2);
+  // 쓱싹 — 응가를 치울 때. 톱니파를 빠르게 떨어뜨려 비질 소리에 가깝게 만든다
+  const sfxSweep = () => {
+    const c = ac(); if (!c) return;
+    const t = c.currentTime;
+    const osc = c.createOscillator(), gain = c.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(900, t);
+    osc.frequency.exponentialRampToValueAtTime(180, t + 0.22);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.13, t + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
+    osc.connect(gain).connect(c.destination);
+    osc.start(t);
+    osc.stop(t + 0.3);
+    tone(1200, 0.24, 0.1, 0.12, 'sine'); // 마무리 반짝
+  };
+  // 부드러운 상승 2음 — 약(따뜻한 차)을 줄 때
+  const sfxHeal = () => { tone(523, 0, 0.28, 0.18, 'sine'); tone(784, 0.2, 0.42, 0.18, 'sine'); };
 
   function speak(text) {
     if (!window.speechSynthesis) return;
@@ -323,6 +430,10 @@ window.Pet = (() => {
       '      <span class="pet-name" id="pet-name"></span>' +
       '      <button type="button" class="pet-rename" id="pet-rename" aria-label="이름 바꾸기">✏️</button>' +
       '    </div>' +
+      '    <div class="pet-meters" id="pet-meters">' +
+      '      <span class="pet-meter"><i>🍚</i><span class="pet-hearts" id="pet-hearts-hunger"></span></span>' +
+      '      <span class="pet-meter"><i>😊</i><span class="pet-hearts" id="pet-hearts-mood"></span></span>' +
+      '    </div>' +
       '    <div class="pet-room" id="pet-room">' +
       '      <div class="pet-room-bg">' + roomBg() + '</div>' +
       DECO_SLOTS.map(s =>
@@ -335,14 +446,8 @@ window.Pet = (() => {
       '        <span class="pet-acc-head" id="pet-acc-head"></span>' +
       '        <span class="pet-acc-side" id="pet-acc-side"></span>' +
       '      </div>' +
-      '    </div>' +
-      '    <div class="pet-naming" id="pet-naming" hidden>' +
-      '      <div class="pet-naming-title">💛 이름을 지어 줄래?</div>' +
-      '      <div class="pet-name-chips" id="pet-name-chips"></div>' +
-      '      <div class="pet-name-form">' +
-      '        <input type="text" id="pet-name-input" maxlength="6" placeholder="직접 짓기" autocomplete="off">' +
-      '        <button type="button" id="pet-name-ok">좋아!</button>' +
-      '      </div>' +
+      '      <div class="pet-poops" id="pet-poops"></div>' +
+      '      <button type="button" class="pet-med" id="pet-med" hidden aria-label="따뜻한 차 주기">' + MED_SVG + '</button>' +
       '    </div>' +
       '    <div class="pet-bar"><div class="pet-bar-fill" id="pet-bar-fill"></div></div>' +
       '    <div class="pet-bar-label" id="pet-bar-label"></div>' +
@@ -356,6 +461,17 @@ window.Pet = (() => {
       '    </div>' +
       '    <button type="button" class="pet-book-btn" id="pet-book-btn">📖 펫 도감 <b id="pet-book-n"></b></button>' +
       '    <div class="pet-hint" id="pet-hint"></div>' +
+      '  </div>' +
+      '</div>' +
+      '<div class="pet-overlay" id="pet-name-overlay">' +
+      '  <div class="pet-card pet-card-slim">' +
+      '    <button type="button" class="pet-close" id="pet-name-close" aria-label="닫기">✕</button>' +
+      '    <div class="pet-stage-name">✏️ 이름 바꾸기</div>' +
+      '    <div class="pet-name-chips" id="pet-name-chips"></div>' +
+      '    <div class="pet-name-form">' +
+      '      <input type="text" id="pet-name-input" maxlength="6" placeholder="직접 짓기" autocomplete="off">' +
+      '      <button type="button" id="pet-name-ok">좋아!</button>' +
+      '    </div>' +
       '  </div>' +
       '</div>' +
       '<div class="pet-overlay" id="pet-book-overlay">' +
@@ -435,19 +551,104 @@ window.Pet = (() => {
       : '🎁 꾸미기 · 다음 선물까지 ' + toGift;
 
     $('pet-book-n').textContent = state.collection.length + ' / ' + SPECIES.length;
-    $('pet-hint').textContent =
-      (state.meals + state.snacks) > 0 ? '먹이를 눌러서 냠냠!' : '공부하면 간식과 식사가 생겨요!';
-
-    // 이름 짓기: 갓 태어났는데 아직 이름이 없으면 보여준다
-    $('pet-naming').hidden = !(sp && !state.name);
-    if (sp && !state.name) renderNameChips();
+    renderMeters();
+    renderPoops();
+    renderMed();
+    renderTodo();
   }
 
-  function renderNameChips() {
+  /* ─────────── 돌보기 표시 (하트 줄 · 응가 · 약 · 도장 줄) ─────────── */
+  function hearts(box, n, max) {
+    if (!box) return;
+    let h = '';
+    for (let i = 0; i < max; i++) h += (i < n ? HEART_FULL : HEART_EMPTY);
+    box.innerHTML = h;
+  }
+  function renderMeters() {
+    hearts($('pet-hearts-hunger'), state.hunger, HUNGER_MAX);
+    hearts($('pet-hearts-mood'), state.mood, MOOD_MAX);
+  }
+
+  // 방 바닥의 응가 — 누르면 하나씩 치워진다
+  function renderPoops() {
+    const box = $('pet-poops');
+    if (!box) return;
+    const n = Math.max(0, Math.min(POOP_MAX, state.poop));
+    if (box.childElementCount === n) return; // 개수가 그대로면 다시 그리지 않는다 (반짝임 유지)
+    box.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const spot = POOP_SPOTS[i];
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pet-poop pet-todo';
+      b.style.left = spot.l + '%';
+      b.style.bottom = spot.b + '%';
+      b.setAttribute('aria-label', '응가 치우기');
+      b.innerHTML = POOP_SVG;
+      b.addEventListener('click', cleanPoop);
+      box.appendChild(b);
+    }
+  }
+  function renderMed() {
+    const el = $('pet-med');
+    if (el) el.hidden = !state.sick;
+  }
+  // 아래 한 줄은 "지금 할 일" 또는 "며칠째 함께" 도장 줄로 쓴다 (줄 수는 늘리지 않는다)
+  function todoCount() {
+    return state.poop + (state.sick ? 1 : 0) + (state.hunger === 0 ? 1 : 0);
+  }
+  function renderTodo() {
+    const n = todoCount();
+    const hint = $('pet-hint');
+    if (hint) {
+      hint.textContent = n > 0
+        ? '✋ 눌러 줄 것이 ' + n + '개 있어요'
+        : '🌤️ ' + state.streak + '일째 함께 ' +
+          '⭐'.repeat(Math.min(3, state.streak)) + '🛡️'.repeat(state.shield);
+    }
+    // 배가 고프면 먹이 단추에 "할 일" 반짝임
+    ['pet-feed-meal', 'pet-feed-snack'].forEach(id => {
+      const el = $(id);
+      if (el) el.classList.toggle('pet-todo', state.hunger === 0);
+    });
+  }
+
+  // 응가 치우기 — 기분 하트가 한 칸 찬다
+  function cleanPoop() {
+    if (state.poop <= 0) return;
+    state.poop--;
+    state.mood = Math.min(MOOD_MAX, state.mood + 1);
+    save();
+    sfxSweep();
+    renderPoops();
+    renderMeters();
+    renderTodo();
+    if (state.poop === 0 && av) av.happy();
+    speak('쓱싹! 깨끗해졌다!');
+  }
+  // 약(따뜻한 차) — 한 번이면 바로 낫는다
+  function heal() {
+    if (!state.sick) return;
+    state.sick = false;
+    state.mood = Math.min(MOOD_MAX, state.mood + 1);
+    save();
+    sfxHeal();
+    renderMed();
+    renderMeters();
+    renderTodo();
+    renderPet();          // 아픈 표정을 건강한 표정으로
+    if (av) av.celebrate();
+    speak('다 나았어! 고마워!');
+  }
+
+  /* ─────────── ✏️ 이름 바꾸기 (작은 오버레이 — 평소 화면 높이를 차지하지 않는다) ─────────── */
+  function openNamePicker() {
+    if (!state.species) return;
+    sfxTap();
     const box = $('pet-name-chips');
     box.innerHTML = '';
-    const chips = [spOf(state.species).def].concat(NAME_CHIPS.filter(n => n !== spOf(state.species).def)).slice(0, 6);
-    chips.forEach(n => {
+    const def = spOf(state.species).def;
+    [def].concat(NAME_IDEAS.filter(n => n !== def)).slice(0, 6).forEach(n => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'pet-name-chip';
@@ -455,13 +656,18 @@ window.Pet = (() => {
       b.addEventListener('click', () => setName(n));
       box.appendChild(b);
     });
+    $('pet-name-input').value = '';
+    $('pet-name-overlay').classList.add('on');
+    speak('어떤 이름이 좋을까?');
   }
+  function closeNamePicker() { $('pet-name-overlay').classList.remove('on'); }
 
   function setName(n) {
     const name = String(n || '').replace(/[^가-힣a-zA-Z0-9 ]/g, '').trim().slice(0, 6);
     if (!name) { speak('이름을 골라 줄래?'); return; }
     state.name = name;
     save();
+    closeNamePicker();
     sfxGift();
     speak(name + '! 정말 예쁜 이름이야!');
     render();
@@ -478,7 +684,11 @@ window.Pet = (() => {
   function renderPet() {
     if (av) {
       if (!state.species) av.render({ species: 'egg', crack: Math.min(1, state.g / HATCH) });
-      else av.render({ species: state.species, stage: state.g < KID ? 1 : state.g < ADULT ? 2 : 3 });
+      else av.render({
+        species: state.species,
+        stage: state.g < KID ? 1 : state.g < ADULT ? 2 : 3,
+        sick: state.sick, // 아프면 발그레한 볼 + 처진 눈 + 열 표시
+      });
       return;
     }
     // 이모지 안전망: 빈 SVG 무대는 숨기고, 예전 크기 클래스로 큼직하게
@@ -492,12 +702,17 @@ window.Pet = (() => {
   // 펫을 만지면 좋아한다 (알은 흔들흔들)
   const GIGGLES = ['히히, 간지러워!', '까르르!', '좋아 좋아!', '나랑 놀자!'];
   function petTouch() {
+    if (state.sick) { heal(); return; } // 아픈 펫을 눌러도 약을 준 것과 같다
     sfxTap();
     if (!state.species) {
       if (av) av.celebrate();
       speak('알이 흔들흔들! 곧 태어날 것 같아!');
       return;
     }
+    state.mood = Math.min(MOOD_MAX, state.mood + 1); // 쓰다듬으면 기분이 좋아진다
+    save();
+    renderMeters();
+    renderTodo();
     if (av) av.happy();
     speak(GIGGLES[Math.floor(Math.random() * GIGGLES.length)]);
   }
@@ -698,14 +913,26 @@ window.Pet = (() => {
 
   function open() {
     if (!mounted) return;
+    applyElapsed();      // 흐른 날짜만큼 배고픔·기분·응가 반영 (맨 앞에서 한 번)
+    stampToday(lastGap); // 오늘의 도장 · 봐주기
     sfxTap();
     buildMinis();
     $('pet-overlay').classList.add('on');
     render();
     if (av) av.startIdle();
     minis.forEach(m => { if (m.av) m.av.startIdle(); }); // 잔동작은 방이 열려 있을 때만
-    speak(state.species ? petName() + '가 기다리고 있어요!' : '알이 콕콕! 먹이를 주면 태어날 거예요!');
+    speak(greeting());
     maybeBeg();
+  }
+  // 인사말 — 오랜만에 와도 나무라지 않는다. 할 일이 있으면 하나만 부드럽게 알려 준다.
+  function greeting() {
+    let g;
+    if (lastGap >= 2) g = '보고 싶었어! ' + (state.species ? petName() + '가 기다렸어요!' : '알이 기다렸어요!');
+    else g = state.species ? petName() + '가 기다리고 있어요!' : '알이 콕콕! 먹이를 주면 태어날 거예요!';
+    if (state.sick) g += ' 따뜻한 차를 주면 금방 나을 거야!';
+    else if (state.poop > 0) g += ' 응가를 톡 눌러서 치워 줄래?';
+    else if (state.hunger === 0) g += ' 배가 고파! 밥을 줄래?';
+    return g;
   }
   function close() {
     $('pet-overlay').classList.remove('on');
@@ -754,9 +981,10 @@ window.Pet = (() => {
       return;
     }
     const gBefore = state.g;
-    if (isMeal) { state.meals--; state.g += MEAL_PTS; }
-    else { state.snacks--; state.g += SNACK_PTS; }
+    if (isMeal) { state.meals--; state.g += MEAL_PTS; state.hunger = Math.min(HUNGER_MAX, state.hunger + 2); }
+    else { state.snacks--; state.g += SNACK_PTS; state.hunger = Math.min(HUNGER_MAX, state.hunger + 1); }
     state.fed++;
+    if (state.fed % POOP_PER_FEED === 0) state.poop = Math.min(POOP_MAX, state.poop + 1); // 많이 먹으면 응가도 나온다
     save();
 
     // 상태 변화(부화·성장·도감)는 즉시 반영하고, 연출만 먹기 애니메이션 뒤에 이어 붙인다
@@ -766,13 +994,13 @@ window.Pet = (() => {
       const pool = SPECIES.filter(s => have.indexOf(s.id) < 0);
       const sp = (pool.length ? pool : SPECIES)[Math.floor(Math.random() * (pool.length ? pool.length : SPECIES.length))];
       state.species = sp.id;
-      state.name = '';
+      state.name = sp.def;  // 기본 이름을 바로 붙여 준다 (✏️ 로 언제든 바꿀 수 있다)
       save();
       after = () => {
         render();
         if (av) av.celebrate();
         sfxGrow();
-        speak('우와! ' + sp.name + '가 태어났어요! 이름을 지어 줄래?');
+        speak('우와! ' + sp.def + '가 태어났어요!');
       };
     } else if (state.g >= DONE) { // 🎓 다 컸다 — 도감 등록 + 새 알
       const sp = spOf(state.species);
@@ -919,14 +1147,13 @@ window.Pet = (() => {
     $('pet-overlay').addEventListener('click', ev => { if (ev.target.id === 'pet-overlay') close(); });
     $('pet-feed-meal').addEventListener('click', () => feed('meal'));
     $('pet-feed-snack').addEventListener('click', () => feed('snack'));
-    $('pet-rename').addEventListener('click', () => {
-      sfxTap();
-      state.name = ''; // 이름 짓기 화면을 다시 연다 (지어 줄 때까지 기본 이름 사용)
-      save();
-      render();
-      speak('새 이름을 지어 줄래?');
-    });
+    $('pet-rename').addEventListener('click', openNamePicker);
     $('pet-name-ok').addEventListener('click', () => setName($('pet-name-input').value));
+    $('pet-name-close').addEventListener('click', closeNamePicker);
+    $('pet-name-overlay').addEventListener('click', ev => {
+      if (ev.target.id === 'pet-name-overlay') closeNamePicker();
+    });
+    $('pet-med').addEventListener('click', heal); // 🍵 약 — 한 번이면 낫는다
     $('pet-book-btn').addEventListener('click', openBook);
     $('pet-book-close').addEventListener('click', () => $('pet-book-overlay').classList.remove('on'));
     $('pet-book-overlay').addEventListener('click', ev => {
@@ -958,6 +1185,17 @@ window.Pet = (() => {
       startBeg(minis[0]);
       return true;
     },
+    // 부모님 페이지의 "펫 지금 다 낫게 하기" — 나쁜 상태만 싹 지운다 (성장·도감은 그대로)
+    healAll() {
+      state.poop = 0;
+      state.sick = false;
+      state.hunger = HUNGER_MAX;
+      state.mood = MOOD_MAX;
+      save();
+      render();
+    },
+    // 종단 테스트용 — 마지막 방문 시각만 바꾼다 (연출 없음)
+    _setLastSeen(ms) { state.lastSeen = Number(ms) || 0; save(); },
     // 종단 테스트용
     state: () => ({
       g: state.g, meals: state.meals, snacks: state.snacks,
@@ -966,6 +1204,8 @@ window.Pet = (() => {
       decoOwned: state.decoOwned.length,
       decoPlaced: Object.keys(state.deco).filter(k => state.deco[k]).length,
       begging: !!begMini,
+      hunger: state.hunger, mood: state.mood, poop: state.poop, sick: state.sick,
+      streak: state.streak, shield: state.shield, todo: todoCount(),
     }),
   };
 })();

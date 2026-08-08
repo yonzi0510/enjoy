@@ -412,7 +412,7 @@ await check('STT 보강: interim 뒤 침묵 1.3초면 stop()으로 결과를 끌
   await page.waitForSelector('#scr-home.on');
 });
 
-await check('펫: 부화 → 이름 짓기 → 선물 → 도감 등록 → 새 알', async () => {
+await check('펫: 부화(기본 이름 자동) → 이름 바꾸기 → 선물 → 도감 등록 → 새 알', async () => {
   await page.evaluate(() => Pet.awardSnack(30));
   await page.evaluate(() => Pet.open());
   await page.waitForSelector('#pet-overlay.on');
@@ -421,9 +421,13 @@ await check('펫: 부화 → 이름 짓기 → 선물 → 도감 등록 → 새 
   await page.waitForTimeout(800);
   let p = await page.evaluate(() => Pet.state());
   expect(p.species, '부화해야 함: ' + JSON.stringify(p));
-  await page.waitForSelector('#pet-naming:not([hidden])');
+  expect(p.name && p.name.length > 0, '부화하면 기본 이름이 저절로 붙는다: ' + p.name);
+  // ✏️ 이름 바꾸기 — 평소엔 숨어 있다가 눌렀을 때만 뜨는 작은 판
+  await page.click('#pet-rename');
+  await page.waitForSelector('#pet-name-overlay.on');
   await page.fill('#pet-name-input', '반짝이');
   await page.click('#pet-name-ok');
+  await page.waitForFunction(() => !document.getElementById('pet-name-overlay').classList.contains('on'));
   p = await page.evaluate(() => Pet.state());
   expect(p.name === '반짝이', '이름: ' + p.name);
   for (let i = 0; i < 21; i++) await page.click('#pet-feed-snack'); // g 3 → 24 = 도감 등록
