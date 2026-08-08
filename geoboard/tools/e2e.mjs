@@ -234,6 +234,7 @@ await check('못판·고무줄에 변형 없음 (computed transform none)', asyn
 await check('첫 화면 낙서장 배치 — 칸마다 다른 기울기, 먼저 할 것이 가장 크다', async () => {
   await page.goto(BASE);
   await page.waitForSelector('#scr-home.on');
+  await page.waitForTimeout(500);   // 등장 모션(card-in)이 transform 을 쥐고 있는 동안은 못 잰다
   const m = await page.evaluate(() => {
     const cards = [...document.querySelectorAll('#menu .menu-card')];
     return {
@@ -295,7 +296,10 @@ await check('폰·패드: 겹침 없음 · 터치 44px · 화면 이탈 없음',
         if (home && vis(home)) floats.push(['집 단추', box(home)]);
         if (tag && vis(tag) && !tag.closest('.tl-hidden')) floats.push(['시간 쪽지', box(tag)]);
 
-        const targetSel = '.screen.on .bar, .screen.on .home-head, .screen.on .back, .screen.on #btn-listen,' +
+        // 머리줄·머리말은 '상자'가 아니라 그 안의 알맹이로 잰다 —
+        // 상자는 집 단추 자리를 비우려고 오른쪽 여백을 크게 잡아 두었으므로 겹쳐도 맞는 것이다.
+        const targetSel = '.screen.on .bar > *, .screen.on .home-head > *, .screen.on .stats > *,' +
+          '.screen.on .back, .screen.on #btn-listen,' +
           '.screen.on .menu-card, .screen.on .puzzle-card, .screen.on .tray-item,' +
           '.screen.on .vs-btn, .screen.on .stat, .screen.on .page-count, .screen.on .pz-badge, .screen.on .card-cap';
         const targets = [...document.querySelectorAll(targetSel)].filter(vis);

@@ -22,6 +22,7 @@ window.DonutIcons = (() => {
   const INK = '#2E2A24';     /* 연필심 */
   const PAPER = '#FFFDF6';   /* 종이 — 획 안쪽 칠 */
   const GOLD = '#F6C453';    /* 별의 노란 크레용 칠 */
+  const DOUGH = '#F0D9B4';   /* 도넛 아이콘의 도우 색 — 아이싱 색이 없어 아홉 도넛과 안 헷갈린다 */
 
   /* 획을 떨리게 하는 필터 — 큰 그림용/작은 그림용 두 벌.
      저사양 기기를 생각해 문서에 딱 한 번만 두고 모든 아이콘이 같은 id 를 가리킨다. */
@@ -52,15 +53,16 @@ window.DonutIcons = (() => {
     /* 도넛 — 색 없는 윤곽선. 놀잇감이 아니라 가게 간판 그림이다.
        바깥 동그라미도 가운데 구멍도 끝을 안 닫고 살짝 지나쳐 그린다. */
     donut: {
-      w: 7,
-      d: `<circle cx="53.5" cy="49" r="33" fill="${PAPER}" stroke="none"/>` +
-         `<path d="M50 18 A34 34 0 1 1 44 18.6"/>` +
-         `<path d="M50 39.5 A12.5 12.5 0 1 1 46 40.2" stroke-width="6"/>` +
+      w: 8,
+      d: /* 크레용 칠이 윤곽에서 비켜 나간 자국 — 도우 색 하나뿐, 아이싱 색은 없다 */
+         `<circle cx="53.5" cy="49" r="34" fill="${DOUGH}" stroke="none"/>` +
+         `<circle cx="50" cy="52" r="13" fill="${PAPER}" stroke="none"/>` +
+         `<path d="M50 17 A35 35 0 1 1 43.5 17.7"/>` +
+         `<path d="M50 39 A13 13 0 1 1 45.8 39.7" stroke-width="7"/>` +
          /* 설탕 가루 몇 알 — 색 없이 연필 자국으로만 */
-         `<path d="M30 34 L34.5 30" stroke-width="5.5"/>` +
-         `<path d="M68 32 L72 36.5" stroke-width="5.5"/>` +
-         `<path d="M27 66 L31.5 70" stroke-width="5.5"/>` +
-         `<path d="M70 70 L74 65.5" stroke-width="5.5"/>`,
+         `<path d="M28 35 L33.5 30" stroke-width="6.5"/>` +
+         `<path d="M67 30 L72 35.5" stroke-width="6.5"/>` +
+         `<path d="M26 68 L31.5 72" stroke-width="6.5"/>`,
     },
 
     /* 소리 — 네모 나팔에 소리 줄 둘 */

@@ -457,6 +457,16 @@ h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -
 .bigbtn.primary { background: #8BD79B; color: #22432C; }
 .reward-face .ic-reward { width: 100%; height: auto; aspect-ratio: 1; vertical-align: middle; }
 
+/* ── 윗줄 오른쪽: 남은시간 쪽지에 자리를 내준다 ──────────────────
+ * 집 단추(shared/home-button.js)가 오른쪽 위를 쓰고, 남은시간 쪽지는 그 왼쪽에 붙는다.
+ * 넓은 화면에서는 쪽지가 「듣기」 단추와 같은 줄이라 서로 겹쳤다.
+ * (폰 세로에서는 쪽지가 집 단추 아래로 내려가므로 그대로 둔다.) */
+@media (min-width: 701px) {
+  #scr-play .bar, #scr-rounds .bar {
+    padding-right: calc(clamp(60px, 8.6vw, 80px) + 98px) !important;
+  }
+}
+
 /* ── 주사위판이 화면 높이를 넘지 않게 ──────────────────────────────
  * 주사위 알을 정사각으로 맞추고 나니, 가로 화면에서 판이 세로로 넘쳐
  * 「굴리기」 단추가 화면 밖으로 밀려났다(패드 가로 -16px · 폰 가로 -31px).

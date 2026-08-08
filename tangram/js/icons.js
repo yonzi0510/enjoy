@@ -57,7 +57,9 @@ window.TangramIcons = (() => {
     /* 🗣️ 말하기 — 목소리 설정 단추 */
     voice:
       `<path d="M14,25 L86,25 L86,66 L47,66 L28,82 L31,66 L14,66 Z"
-         fill="${PAPER}" stroke="${INK}" stroke-width="7"/>
+         fill="${PAPER}" stroke="none" transform="translate(2,1.8)"/>
+       <path d="M21,25 L86,25 L86,66 L47,66 L28,82 L31,66 L14,66 L14,31"
+         stroke="${INK}" stroke-width="7"/>
        <path d="M33,45 h.6 M50,45 h.6 M67,45 h.6" stroke="${INK}" stroke-width="9"/>`,
 
     /* ◀ 뒤로 — 화살표 하나 */

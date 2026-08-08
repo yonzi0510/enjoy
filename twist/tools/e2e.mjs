@@ -320,7 +320,7 @@ await check('첫 화면 낙서장: 칸마다 다른 기울기·크기, 겹침·�
 });
 
 await check('머리 줄 겹침 없음: 듣기·제목·뒤로 ↔ 집 단추·남은시간 쪽지', async () => {
-  for (const s of [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드 가로' }]) {
+  for (const s of [{ w: 390, h: 844, name: '폰 세로' }, { w: 844, h: 390, name: '폰 가로' }, { w: 1180, h: 820, name: '패드 가로' }]) {
     await page.setViewportSize({ width: s.w, height: s.h });
     await page.goto(BASE);
     await page.waitForSelector('#scr-home.on');
