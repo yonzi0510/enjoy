@@ -84,7 +84,7 @@ const TUBE = `
   <ellipse cx="100" cy="118" rx="14" ry="4.5" fill="#F4FAFF" stroke="#8FB8E0" stroke-width="3.5"/>`;
 
 const APP = {
-  bg: ['#DCE7F8', '#F2F6FE'],
+  bg: ['#B7A1D6', '#C6B5DE'],
   front: TUBE,
   top: sparkle(150, 60, 8, '#9BC4F0') + sparkle(56, 74, 6, '#C6A6E9'),
 };

@@ -56,7 +56,7 @@ function sparkle(x, y, r, color = '#FFE08A') {
 
 /* ── 소품: 연필로 색 점을 이어 그린 길 ── */
 const APP = {
-  bg: ['#FFE1D3', '#FFF6F0'],
+  bg: ['#ECBA87', '#F0C8A1'],
   // 토끼 앞(배 위쪽)에 색 점 4개를 잇는 선 + 연필
   front: `<g transform="translate(60 128)">
     <!-- 이어진 길 -->

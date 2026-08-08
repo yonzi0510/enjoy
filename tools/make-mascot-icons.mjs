@@ -72,7 +72,7 @@ function sparkle(x, y, r, color = '#FFE08A') {
 const APPS = {
   // 🔍 찾기 — 돋보기
   play: {
-    dir: 'play', bg: ['#DDF3FF', '#F3FBFF'],
+    dir: 'play', bg: ['#DB8681', '#E19A96'],
     front: `<g transform="rotate(18 128 150)">
       <circle cx="128" cy="150" r="20" fill="#EAF7FE"/>
       <circle cx="128" cy="150" r="20" fill="none" stroke="#3FA9C4" stroke-width="7"/>
@@ -83,7 +83,7 @@ const APPS = {
   },
   // 🗣️ 영어 — 말풍선 ABC
   english: {
-    dir: 'english', bg: ['#E3F6E9', '#F5FCF7'],
+    dir: 'english', bg: ['#EAC064', '#EECB7F'],
     back: `<g transform="translate(120 34)">
       <path d="M6 4 h56 q10 0 10 10 v26 q0 10 -10 10 h-30 l-14 12 l2 -12 h-14 q-10 0 -10 -10 v-26 q0 -10 10 -10 z" fill="#fff" stroke="#E05C86" stroke-width="3"/>
       <text x="40" y="35" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-weight="900" font-size="24" text-anchor="middle">
@@ -92,7 +92,7 @@ const APPS = {
   },
   // 🧩 픽셀 — 알록달록 블록
   pixel: {
-    dir: 'pixel', bg: ['#EDE7FF', '#F8F5FF'],
+    dir: 'pixel', bg: ['#EAC064', '#EECB7F'],
     front: `<g transform="translate(104 128)">
       <rect x="0"  y="0"  width="22" height="22" rx="4" fill="#FF6F91" stroke="#fff" stroke-width="2.5"/>
       <rect x="24" y="0"  width="22" height="22" rx="4" fill="#FFC24B" stroke="#fff" stroke-width="2.5"/>
@@ -103,7 +103,7 @@ const APPS = {
   },
   // 🌟 한글 — ㄱㄴㄷ 카드 + 별
   hangul: {
-    dir: 'hangul', bg: ['#FFF0D6', '#FFFBF0'],
+    dir: 'hangul', bg: ['#E8BA56', '#ECC572'],
     front: `<g transform="translate(72 130)">
       <rect x="0" y="0" width="74" height="42" rx="9" fill="#fff" stroke="#E05C86" stroke-width="3"/>
       <g stroke="#3A2233" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
@@ -116,13 +116,13 @@ const APPS = {
   },
   // 🌸 일본어 — 벚꽃
   japanese: {
-    dir: 'japanese', bg: ['#FFE6EE', '#FFF6F9'],
+    dir: 'japanese', bg: ['#ECC572', '#F0D18D'],
     front: `<g transform="translate(150 158)">${sakura(0, 0, 30)}</g>`,
     top: petal(150, 56, '#FF9EBD') + petal(48, 80, '#FFA9C4') + petal(60, 44, '#FFC1D5'),
   },
   // ✍️ 글씨 — 공책 + 연필
   write: {
-    dir: 'write', bg: ['#E1F0FF', '#F4FAFF'],
+    dir: 'write', bg: ['#70A5CF', '#87B4D7'],
     front: `<g transform="translate(78 128)">
       <rect x="0" y="4" width="52" height="44" rx="6" fill="#fff" stroke="#E05C86" stroke-width="3"/>
       <g stroke="#BFD6E8" stroke-width="3" stroke-linecap="round"><path d="M10 18 h32 M10 28 h32 M10 38 h24"/></g>
@@ -136,7 +136,7 @@ const APPS = {
   },
   // 🔢 산수 — 숫자 블록
   math: {
-    dir: 'math', bg: ['#E6F7F1', '#F5FCFA'],
+    dir: 'math', bg: ['#EECB7F', '#F1D69B'],
     front: `<g font-family="Liberation Sans, DejaVu Sans, sans-serif" font-weight="900" font-size="24" text-anchor="middle">
       <rect x="70"  y="132" width="30" height="30" rx="6" fill="#FF6F91" stroke="#fff" stroke-width="2.5"/>
       <text x="85"  y="154" fill="#fff">1</text>
@@ -148,7 +148,7 @@ const APPS = {
   },
   // 🔷 도형 — 칠교 조각
   shape: {
-    dir: 'shape', bg: ['#E7ECFF', '#F6F8FF'],
+    dir: 'shape', bg: ['#7CB578', '#91C18E'],
     front: `<g stroke="#fff" stroke-width="2.5" stroke-linejoin="round" transform="translate(98 130)">
       <path d="M0 0 L36 0 L18 18 Z" fill="#FF6F91"/>
       <path d="M36 0 L36 36 L18 18 Z" fill="#4FC0E8"/>
@@ -159,7 +159,7 @@ const APPS = {
   },
   // 🛒 시장 — 장바구니 + 동전
   market: {
-    dir: 'market', bg: ['#FFEEDD', '#FFF8F1'],
+    dir: 'market', bg: ['#E8BA56', '#ECC572'],
     front: `<g transform="translate(96 130)">
       <path d="M4 8 h44 l-6 30 q-1 6 -8 6 h-16 q-7 0 -8 -6 z" fill="#FF8FA8" stroke="#E05C86" stroke-width="3" stroke-linejoin="round"/>
       <path d="M12 8 q0 -14 14 -14 q14 0 14 14" fill="none" stroke="#E05C86" stroke-width="3"/>
@@ -170,7 +170,7 @@ const APPS = {
   },
   // 🧪 색깔 실험실 — 물감병
   lab: {
-    dir: 'lab', bg: ['#E9F6D9', '#F6FCEE'],
+    dir: 'lab', bg: ['#A083C8', '#AF97D1'],
     front: `<g transform="translate(112 124)">
       <path d="M8 2 h16 v18 l12 30 q4 12 -8 12 h-24 q-12 0 -8 -12 l12 -30 z" fill="#EAF7FE" stroke="#3FA9C4" stroke-width="3" stroke-linejoin="round"/>
       <path d="M2 44 q10 -6 14 0 t14 0 v6 q0 8 -8 8 h-12 q-8 0 -8 -8 z" fill="#FF6F91"/>
@@ -182,7 +182,7 @@ const APPS = {
   },
   // 💡 생각 놀이터 — 반짝이는 전구(아이디어)
   bag: {
-    dir: 'bag', bg: ['#FFF6E4', '#FFFBF2'],
+    dir: 'bag', bg: ['#DE908B', '#E4A4A0'],
     front: `
       ${sparkle(74, 128, 5, '#FFCE4D')}
       ${sparkle(126, 130, 5, '#FFCE4D')}
@@ -201,7 +201,7 @@ const APPS = {
   },
   // 🎨 색칠공부 — 크레용 + 팔레트
   coloring: {
-    dir: 'coloring', bg: ['#FFF0F6', '#FFF8FB'],
+    dir: 'coloring', bg: ['#87B4D7', '#9FC3DF'],
     front: `<g transform="translate(92 128)">
       <path d="M28 6 a28 24 0 1 0 0 48 a10 10 0 0 0 0 -20 a6 6 0 0 1 0 -12 a8 8 0 0 0 0 -16 z" fill="#fff" stroke="#E05C86" stroke-width="3"/>
       <circle cx="16" cy="18" r="4.5" fill="#FF6F91"/><circle cx="12" cy="34" r="4.5" fill="#4FC0E8"/>
@@ -214,7 +214,7 @@ const APPS = {
   },
   // 🎙️ 프랙티카 — 헤드셋 마이크
   practika: {
-    dir: 'practika', bg: ['#EDE6FF', '#F8F5FF'],
+    dir: 'practika', bg: ['#ECC572', '#F0D18D'],
     front: `<g transform="translate(100 132)" stroke-linejoin="round">
       <path d="M-26 18 a26 26 0 0 1 52 0" fill="none" stroke="#8A6FE0" stroke-width="7"/>
       <rect x="-32" y="14" width="14" height="26" rx="7" fill="#8A6FE0"/>

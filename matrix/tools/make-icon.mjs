@@ -73,7 +73,7 @@ const PAD = `<g transform="translate(100 151)">
 </g>`;
 
 const APP = {
-  bg: ['#D6F1E1', '#F3FCF7'],
+  bg: ['#DB8681', '#E19A96'],
   front: PAD,
   top: sparkle(150, 60, 8, '#9FE0BE') + sparkle(56, 74, 6, '#FFC7DE'),
 };

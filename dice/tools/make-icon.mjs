@@ -18,7 +18,7 @@ function svg(size) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   html,body{margin:0;padding:0}
   .box{width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(160deg,#E7F7EB,#B9E8C6)}
+    background:linear-gradient(160deg,#E4A4A0,#DE908B)}
   svg{width:86%;height:86%}
   </style></head><body>
   <div class="box"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">

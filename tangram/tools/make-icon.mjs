@@ -68,7 +68,7 @@ const RAINBOW = ['#FF5A5F', '#FF9F40', '#FFD93D', '#4ECDC4', '#4FA3E8', '#3B5FC0
 const ringProp = [0, 1, 2, 3].map(i => ring(100, 152, 12, 26, i * 90, i * 90 + 90, RAINBOW[i])).join('');
 
 function page(size) {
-  const [c0, c1] = ['#FFDFB0', '#FFF6E4'];
+  const [c0, c1] = ['#87BB83', '#9CC799'];
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   html,body{margin:0;padding:0}
   .box{width:${size}px;height:${size}px;

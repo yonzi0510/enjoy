@@ -78,7 +78,7 @@ function skewer() {
     </g>`;
 }
 
-const BG = ['#FFE7D6', '#FFF6EE']; // 분식 국물빛 따뜻한 파스텔
+const BG = ['#E8AB6D', '#ECBA87']; // 분식 국물빛 따뜻한 파스텔
 
 function page(size) {
   const [c0, c1] = BG;

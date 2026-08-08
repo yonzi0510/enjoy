@@ -74,7 +74,7 @@ const PROP = `
   ${bead(136, 168, 11, '#9BD86B', '#5CB85C', '#3E8E3E', 'bd-g')}`;
 
 const APP = {
-  bg: ['#D6E9FB', '#F1F8FF'],
+  bg: ['#A78DCD', '#B7A1D6'],
   front: PROP,
   top: sparkle(150, 60, 8, '#9CC9F2') + sparkle(56, 74, 6, '#FFC7DE'),
 };
