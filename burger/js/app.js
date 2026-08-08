@@ -85,7 +85,7 @@ window.App = (() => {
 
   function openPlay(ms) {
     cur = { ms, placed: [], locked: false };
-    $('play-title').innerHTML = DD.icon('burger') + ' ' + D.levelDef(ms.level).name;
+    $('play-title').innerHTML = DD.icon('burger') + ' <span class="pt-name">' + D.levelDef(ms.level).name + '</span>';
     renderRecipe();
     renderTray();
     resetPeg();

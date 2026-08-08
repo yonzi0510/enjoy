@@ -1331,6 +1331,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .round-btn.home-dup { display: none; }
 
+/* 좁은 폰에서는 머리글이 두 줄로 접히는데, 그 첫 줄이 공용 남은시간 딱지와
+   겹친다. 딱지 높이만큼 머리글을 아래로 내려 준다. */
+@media (max-width: 520px) {
+  #screen-home .home-header { padding-top: 32px; }
+}
+
 /* 펫 단추도 다른 머리글 단추와 같은 손가락 크기로 (기본 42px 은 5세에게 작다) */
 #pet-slot .pet-btn {
   width: clamp(48px, 8vmin, 64px);
@@ -1410,17 +1416,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
  * 그래야 원래 있던 등장 애니메이션(card-in)의 transform 과 겹쳐 쓸 수 있다.
  */
 .theme-grid {
-  gap: clamp(22px, 3.6vmin, 34px);
-  padding: clamp(14px, 2.4vmin, 26px);
+  gap: clamp(28px, 5.2vmin, 44px);
+  padding: clamp(16px, 2.8vmin, 30px);
+  /* 왼쪽 아래 프로필 딱지가 마지막 줄의 별을 가리지 않게 아래를 비워 둔다 */
+  padding-bottom: clamp(58px, 8vmin, 78px);
 }
-.theme-grid .theme-card:nth-child(8n+1) { rotate: -1.9deg; scale: 1.03; translate: -1%  .8%; }
-.theme-grid .theme-card:nth-child(8n+2) { rotate:  1.5deg; scale:  .98; translate:  1% -.8%; }
-.theme-grid .theme-card:nth-child(8n+3) { rotate:  2deg;   scale: 1.01; translate: -.6% -1.2%; }
-.theme-grid .theme-card:nth-child(8n+4) { rotate: -1.2deg; scale:  .99; translate:  1.2%  .6%; }
-.theme-grid .theme-card:nth-child(8n+5) { rotate:  1deg;   scale: 1.02; translate: -1.2%  0; }
-.theme-grid .theme-card:nth-child(8n+6) { rotate: -2deg;   scale:  .98; translate:  .6%  1.2%; }
-.theme-grid .theme-card:nth-child(8n+7) { rotate:  1.7deg; scale: 1.01; translate:  1%  -.6%; }
-.theme-grid .theme-card:nth-child(8n+8) { rotate: -1deg;   scale:  .99; translate: -1%   .8%; }
+/* 가로 화면에서 그림칸이 0으로 눌려 카드가 이름표만 남던 것을 막는다 —
+   다섯 살은 이름이 아니라 그림을 보고 고른다. */
+.theme-thumb { flex: 0 0 auto; }
+/* 자리 옮김은 %가 아니라 px 로 준다 — 패드처럼 칸이 커져도 어긋남이 같이 커지지 않게 */
+.theme-grid .theme-card:nth-child(8n+1) { rotate: -2.2deg; scale: 1.035; translate: -5px  4px; }
+.theme-grid .theme-card:nth-child(8n+2) { rotate:  1.8deg; scale:  .975; translate:  5px -4px; }
+.theme-grid .theme-card:nth-child(8n+3) { rotate:  2.1deg; scale: 1.015; translate: -3px -6px; }
+.theme-grid .theme-card:nth-child(8n+4) { rotate: -1.4deg; scale:  .985; translate:  6px  3px; }
+.theme-grid .theme-card:nth-child(8n+5) { rotate:  1.2deg; scale: 1.025; translate: -6px  1px; }
+.theme-grid .theme-card:nth-child(8n+6) { rotate: -2deg;   scale:  .98;  translate:  3px  6px; }
+.theme-grid .theme-card:nth-child(8n+7) { rotate:  1.9deg; scale: 1.01;  translate:  4px -3px; }
+.theme-grid .theme-card:nth-child(8n+8) { rotate: -1.1deg; scale:  .99;  translate: -4px  4px; }
 /* 누르면 기울기가 잠깐 펴지며 종이에 눌린다 */
 .theme-grid .theme-card:active {
   rotate: 0deg;

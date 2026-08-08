@@ -282,6 +282,8 @@ h1 {
   #paint-canvas { width: min(72vh, 56vw, 660px); height: min(72vh, 56vw, 660px); }
   .paint-tools { justify-content: center; }
   .palette { max-width: 380px; }
+  /* 도구 열이 300px 이면 팔레트 7칸이 한 알 38px 로 쪼그라든다 — 44px 을 넘기게 넓힌다 */
+  .paint-stage { grid-template-columns: minmax(0, 1fr) clamp(344px, 36vw, 440px); }
   .pic-grid { grid-template-columns: repeat(5, 1fr); max-width: 900px; }
   .cat-chips { max-width: 900px; }
   .gallery-grid { grid-template-columns: repeat(4, 1fr); max-width: 900px; }
@@ -338,6 +340,20 @@ h1 {
 .pic-card:nth-child(8n+7), .art-card:nth-child(8n+7) { transform: translate( 1.5%, -1.5%) rotate( 2.6deg); }
 .pic-card:nth-child(8n+8), .art-card:nth-child(8n+8) { transform: translate(-1%,    1%)   rotate(-1.6deg); }
 
+/* 갤러리 작품 칸은 썸네일보다 두세 배 커서, 같은 각도라도 이웃을 훨씬 많이 침범한다.
+   그래서 비율(%) 대신 고정 px 로 옮기고 기울기도 절반만 준다. */
+.art-card:nth-child(8n+1) { transform: translate(-4px,  4px) rotate(-1.7deg); }
+.art-card:nth-child(8n+2) { transform: translate( 4px, -3px) rotate( 1.3deg); }
+.art-card:nth-child(8n+3) { transform: translate(-3px, -4px) rotate( 1.8deg); }
+.art-card:nth-child(8n+4) { transform: translate( 4px,  4px) rotate(-1.1deg); }
+.art-card:nth-child(8n+5) { transform: translate(-4px, -2px) rotate( 0.9deg); }
+.art-card:nth-child(8n+6) { transform: translate( 3px,  4px) rotate(-1.8deg); }
+.art-card:nth-child(8n+7) { transform: translate( 4px, -3px) rotate( 1.5deg); }
+.art-card:nth-child(8n+8) { transform: translate(-3px,  3px) rotate(-1deg);   }
+
+/* 갤러리 첫 줄이 오른쪽 위 집 단추 밑으로 밀려 들어가지 않게 한 칸 띄운다 */
+.gallery-grid { padding-top: clamp(24px, 2.4vh, 32px); }
+
 /* 나타나는 동작이 transform 을 덮어써 흩뿌림이 풀리지 않게, 칸은 흐림만으로 등장시킨다 */
 .pic-card, .art-card { animation-name: fade-in; }
 
@@ -368,6 +384,8 @@ h1 {
    흰 종이 + 얇고 삐뚤한 손그림 윤곽만 남긴다.
    놀잇감 색(팔레트 12색·완성작 그림)은 그대로 둔다. */
 .cat-chip {
+  /* 다섯 살 손가락 기준 44px 을 채운다 (전에는 33px 이라 자꾸 빗나갔다) */
+  padding: 9px 17px; min-height: 46px;
   background: rgba(255,255,255,.86);
   border: 3px solid rgba(46,42,36,.8);
   box-shadow: none;

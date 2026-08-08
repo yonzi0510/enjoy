@@ -3,6 +3,8 @@
  * 실제 Chromium 으로 홈 → 미션 목록 → 카드 순서대로 스틱에 꿰기 → 완성·별·펫 간식,
  * 틀린 재료 무벌점, 단계별 알 개수, 2·3단계 반복 패턴 미션 존재, 새로고침 진행도 유지,
  * 3해상도(태블릿 가로/폰 가로/폰 세로) 잘림까지 검증한다.
+ * 「낙서장」 디자인도 함께 검사한다 — 첫 화면 흩뿌리기·크기 위계, 화면 틀의 손그림 SVG(이모지 0),
+ * 그리고 꿰는 판(#peg-wrap·#tray·재료)에 회전·확대가 걸리지 않았는지(좌표 판정 보호).
  * 저장소 루트에서 정적 서버를 띄운 뒤 실행 (예: python3 -m http.server 8777)
  */
 import { createRequire } from 'node:module';
@@ -209,6 +211,10 @@ const NO_EMOJI = `(sel) => {
   }));
   return hit;
 }`;
+// 문자열로 넘겨 브라우저 안에서 되살린다(모듈 스코프 함수는 evaluate 안으로 들어가지 않는다)
+async function emojiHit(sels) {
+  return page.evaluate(([f, s]) => (new Function('return ' + f))()(s), [NO_EMOJI, sels]);
+}
 
 await check('첫 화면: 낙서장 배치(칸마다 다른 기울기) + 크기 위계 + 겹침 없음', async () => {
   await page.goto(BASE);
@@ -238,7 +244,7 @@ await check('첫 화면: 낙서장 배치(칸마다 다른 기울기) + 크기 �
 });
 
 await check('손그림 아이콘: 홈·미션 목록의 화면 틀에 이모지가 없다', async () => {
-  const homeHit = await page.evaluate(NO_EMOJI + '(["\.home-head h1", "\.stat", "#menu"])');
+  const homeHit = await emojiHit(['.home-head h1', '.stat', '#menu']);
   expect(homeHit.length === 0, '홈에 이모지: ' + homeHit.join(', '));
   const icons = await page.locator('#scr-home svg.kk-ico').count();
   expect(icons >= 3, '홈 손그림 아이콘 수: ' + icons);
@@ -247,7 +253,7 @@ await check('손그림 아이콘: 홈·미션 목록의 화면 틀에 이모지�
   await page.click('.menu-card.c-l1');
   await page.waitForSelector('#scr-missions.on');
   await page.waitForTimeout(150);
-  const missHit = await page.evaluate(NO_EMOJI + '(["#scr-missions .bar", "#missions-list"])');
+  const missHit = await emojiHit(['#scr-missions .bar', '#missions-list']);
   expect(missHit.length === 0, '미션 목록에 이모지: ' + missHit.join(', '));
   expect(await page.locator('#missions-list .mission-card.next').count() === 1,
     '다음에 할 미션(크게 그릴 칸)은 딱 하나여야 한다');
@@ -286,12 +292,12 @@ await check('놀이판 무변형: 꿰는 판에는 회전·확대가 없다(좌�
 });
 
 await check('손그림 아이콘: 놀이·보상 화면의 화면 틀에 이모지가 없다', async () => {
-  const playHit = await page.evaluate(NO_EMOJI + '(["#scr-play .bar", "\.recipe-cap", "\.rc-num", "\.rc-mark"])');
+  const playHit = await emojiHit(['#scr-play .bar', '.recipe-cap', '.rc-num', '.rc-mark']);
   expect(playHit.length === 0, '놀이 화면에 이모지: ' + playHit.join(', '));
   expect(await page.locator('.rc-mark svg.kk-ico').count() >= 1, '다음 차례 표시(손그림)가 없다');
   await skewerAll(page);
   await page.waitForSelector('#reward.on', { timeout: 5000 });
-  const rwHit = await page.evaluate(NO_EMOJI + '([".reward-card"])');
+  const rwHit = await emojiHit(['.reward-card']);
   expect(rwHit.length === 0, '보상 화면에 이모지: ' + rwHit.join(', '));
   expect(await page.locator('#reward-burger svg.kk-ico').count() === 1, '보상 그림이 손그림 SVG 가 아니다');
   await page.click('#reward-close');

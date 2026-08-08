@@ -209,10 +209,9 @@ body {
   border-radius: 24px 19px 26px 21px !important;
   box-shadow: none !important;
 }
-/* 손으로 붙인 듯 살짝 삐뚤게 — 메뉴 카드에만 준다
-   (놀이판 조각을 돌리면 끌어 놓기 좌표가 틀어진다) */
-.menu-card { transform: rotate(-.7deg); }
-.menu-card:nth-child(even) { transform: rotate(.8deg); }
+/* 삐뚤게 놓는 일은 shared/doodle-menu.css 가 맡는다.
+   여기서 nth-child 로 회전을 주면 같은 무게(0,2,0)라 뒤에 오는 흩뿌림 규칙을
+   덮어 버린다 — bag 팀이 이 충돌을 찾아냈다. */
 .menu-card:active, .theme-card:active { transform: translateY(2px) rotate(0); }
 
 /* 작은 단추들도 같은 손으로 */

@@ -63,15 +63,21 @@ b { font-weight: 900; }
 /* 오른쪽 위는 공용 집 단추(shared/home-button.js)가 고정으로 차지한다.
    그 앱은 `.bar`·`.home-head` 만 밀어 주는데 이 앱의 바는 이름이 달라 안 걸린다.
    그래서 여기서 직접 자리를 비워 둔다 — 안 비우면 앱의 🏠 가 그 밑에 깔린다. */
-.stat-bar, .top-bar { padding-right: calc(clamp(60px, 8.6vw, 80px) + 34px + env(safe-area-inset-right, 0px)); }
+/* 오른쪽 위 남은 시간 꼬리표(shared/time-limit.css .tl-bar-tag)도 그 줄에 붙어 있어서
+   바를 한 줄 아래에서 시작한다 — 안 그러면 폰 세로에서 꼬리표가 단추 위에 겹친다. */
+.stat-bar, .top-bar {
+  padding-right: calc(clamp(60px, 8.6vw, 80px) + 34px + env(safe-area-inset-right, 0px));
+  padding-top: 30px;
+}
 .top-bar {
   display: flex; align-items: center; justify-content: space-between;
-  padding-top: 12px; padding-bottom: 6px; padding-left: 16px; gap: 10px; flex: 0 0 auto;
+  padding-bottom: 6px; padding-left: 16px; gap: 10px; flex: 0 0 auto;
 }
 .app-title {
   font-size: clamp(19px, 4vmin, 30px); font-weight: 900; color: #4A3F8C;
   text-shadow: none; text-align: center; letter-spacing: -.03em;
 }
+.app-title [data-ico] { font-size: 1.35em; }
 /* 손으로 그린 동그라미 단추 — 컴퍼스로 그린 원처럼 반듯하지 않게 */
 .round-btn {
   width: clamp(48px, 8vmin, 62px); height: clamp(48px, 8vmin, 62px);
@@ -88,7 +94,7 @@ b { font-weight: 900; }
 /* ─────────── 게임화 스탯 바 ─────────── */
 .stat-bar {
   display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
-  padding-top: 12px; padding-bottom: 4px; padding-left: 16px; flex: 0 0 auto;
+  padding-bottom: 4px; padding-left: 16px; flex: 0 0 auto;
 }
 /* 공용 단추(목소리·펫)는 42px 이라 다섯 살 손가락에 작다 — 이 앱에서는 48px 이상으로 */
 .stat-bar .vs-btn, .stat-bar .pet-btn {
@@ -250,6 +256,7 @@ b { font-weight: 900; }
   transition: transform .12s;
   animation: card-fade .35s ease-out .30s backwards;
 }
+.review-btn [data-ico] { font-size: 1.7em; }
 .review-btn:active { transform: translate(2px, 3px) rotate(0) scale(.99); }
 .review-btn b { background: rgba(255,255,255,.6); border: 2px solid var(--ink); border-radius: 999px; padding: 0 9px; }
 
@@ -337,7 +344,7 @@ b { font-weight: 900; }
   text-decoration: underline wavy; text-underline-offset: 4px;
   padding: 8px 12px; min-height: 46px;   /* 손가락으로 누르는 것이라 44px 아래로 안 내려가게 */
 }
-.hint-btn [data-ico] { font-size: 1.6em; }
+.hint-btn [data-ico] { font-size: 2.1em; }
 .user-model {
   font-size: clamp(16px, 3.4vmin, 21px); font-weight: 800; color: #1C6B41; background: #E6F7EC;
   border: 2.5px solid var(--ink);
@@ -356,6 +363,7 @@ b { font-weight: 900; }
   transform: rotate(-2deg);
   transition: transform .12s;
 }
+.mic-btn [data-ico] { font-size: 1.7em; }   /* 단추 안을 넉넉히 채우게 */
 .mic-btn:active { transform: translate(2px, 3px) rotate(0) scale(.99); }
 .mic-btn.listening { animation: micpulse 1s ease-in-out infinite; }
 @keyframes micpulse {
@@ -477,7 +485,8 @@ b { font-weight: 900; }
 @media (orientation: landscape) {
 
   /* ── 홈: 판을 넓히고 트랙 카드를 2열로 ── */
-  .home-body { max-width: 1000px; }
+  .home-body { max-width: 1000px; gap: clamp(8px, 1.8vmin, 16px); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .stat-bar, .top-bar { padding-top: 22px; }
   .home-hero { flex-direction: row; gap: clamp(12px, 2vw, 20px); }
   /* 말풍선 꼬리를 왼쪽(아바타 쪽)으로 돌린다 — 먹선·종이 두 장을 함께 돌린다 */
   .hero-bubble::before {

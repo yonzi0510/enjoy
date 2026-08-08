@@ -150,15 +150,18 @@ h1 {
 #scr-home .menu { align-items: flex-start; }
 
 /* 화살표 자리 — 칸 왼쪽 위에 붙어 칸을 따라 기울어진다.
-   흐름에서 빠져 있으므로(absolute) 위쪽에 자리를 따로 비워 준다. */
-#scr-home .menu { margin-top: clamp(32px, 6.5vmin, 76px); }
+   흐름에서 빠져 있으므로(absolute) 위쪽에 그만큼 자리를 비워 둔다.
+   비워 둘 높이와 화살표 높이를 같은 값(--arrow-h)에서 뽑아, 화면이 어떻든
+   화살표가 머리줄(제목·점수 칸)까지 올라가는 일이 없게 못 박는다. */
+#scr-home { --arrow-h: clamp(70px, 15vmin, 132px); }
+#scr-home .menu { margin-top: var(--arrow-h); }
 #scr-home .m-learn { position: relative; }
 .mc-arrow {
   position: absolute;
   left: -9%;
   bottom: calc(100% - 4px);
-  width: 62%;
-  height: auto;
+  height: calc(var(--arrow-h) - 8px);
+  width: auto;
   overflow: visible;
   pointer-events: none;
 }
@@ -670,14 +673,14 @@ h1 {
   .first-stage { gap: clamp(8px, 2vmin, 14px); }
   /* 세로가 짧으면 다섯 칸을 한 줄로 눕혀 스크롤을 없앤다.
      위계는 그대로 — 가로로 나란히 있어도 배우기가 가장 크다. */
-  #scr-home .menu { margin-top: 0; gap: clamp(18px, 2.4vw, 30px) !important; }
+  #scr-home { --arrow-h: clamp(40px, 10vmin, 54px); }
+  #scr-home .menu { gap: clamp(18px, 2.4vw, 30px) !important; }
   #scr-home .m-learn { width: clamp(160px, 19vw, 210px); }
   #scr-home .m-trace { width: clamp(120px, 14.5vw, 155px); }
   #scr-home .m-play  { width: clamp(114px, 13.5vw, 145px); }
   #scr-home .m-song  { width: clamp(108px, 12.5vw, 135px); }
   #scr-home .m-cards { width: clamp(102px, 11.5vw, 126px); }
   #scr-home .m-learn .mc-emoji { font-size: clamp(44px, 9vmin, 66px); }
-  .mc-arrow { width: 42%; }
 }
 
 /* 위쪽 줄 정리 — 오른쪽 위는 남은 시간표(⏳)와 집 단추의 자리다.
@@ -700,8 +703,8 @@ h1 {
 /* 세로가 짧은 폰(구형 4.7인치 등): 여백만 조여 스크롤 없이 다섯 칸이 다 보이게 한다.
    크기 위계는 그대로 둔다 — 줄일 것은 빈 곳이지 그림이 아니다. */
 @media (orientation: portrait) and (max-height: 700px) {
+  #scr-home { --arrow-h: clamp(54px, 11vmin, 72px); }
   #scr-home .home-head { margin-top: clamp(22px, 4vmin, 30px); }
-  #scr-home .menu { margin-top: clamp(20px, 4vmin, 28px); }
   #scr-home .menu-card { padding: clamp(10px, 2.2vmin, 18px); }
   #scr-home .m-learn .mc-emoji { font-size: clamp(58px, 13vmin, 92px); }
 }

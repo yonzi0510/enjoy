@@ -379,6 +379,11 @@ h1 {
 .menu > .menu-card:nth-child(3n+2) { transform: translate( 2.5%, -2%) rotate( 1.8deg); }
 .menu > .menu-card:nth-child(3n+3) { transform: translate(-1%,    4%) rotate( 2.6deg); }
 
+/* 들어올 때는 스르르 나타나기만 한다 — 원래의 card-in 은 transform 을 덮어써서
+   기울기가 잠깐 펴졌다가 툭 하고 기우는 게 보였다. */
+@keyframes menu-card-in { from { opacity: 0; } to { opacity: 1; } }
+.menu-card { animation-name: menu-card-in; }
+
 /* 카드 안의 작은 격자 미리보기는 카드가 기운 만큼 되돌려 똑바로 세운다.
    (조각 방향이 곧 정답이라, 미리보기가 기울면 아이가 잘못 배운다) */
 .mc-icon { display: block; line-height: 0; transform-origin: 50% 50%; }

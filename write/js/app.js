@@ -75,7 +75,9 @@ window.App = (() => {
         '<span class="mc-icon">' + ch.icon + '</span>' +
         '<span class="mc-name">' + ch.name + '</span>' +
         '<span class="mc-desc">' + ch.desc + '</span>' +
-        '<span class="mc-prog">' + (done >= total ? '🏅 완성!' : '⭐ ' + done + ' / ' + total) + '</span>';
+        '<span class="mc-prog">' + (done >= total
+          ? '<i class="di di-medal" aria-hidden="true"></i>완성!'
+          : '<i class="di di-star" aria-hidden="true"></i>' + done + ' / ' + total) + '</span>';
       b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
@@ -102,7 +104,9 @@ window.App = (() => {
     ask.innerHTML =
       '<span class="mc-icon">🎤</span><span class="mc-name">물어보고 쓰기</span>' +
       '<span class="mc-desc">"토끼는 어떻게 써?"</span>' +
-      '<span class="mc-prog">' + (askedN ? '💬 ' + askedN + ' 낱말' : '뭐든 물어봐!') + '</span>';
+      '<span class="mc-prog">' + (askedN
+        ? '<i class="di di-voice" aria-hidden="true"></i>' + askedN + ' 낱말'
+        : '뭐든 물어봐!') + '</span>';
     ask.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openAsk(); });
     menu.appendChild(ask);
 
@@ -146,7 +150,9 @@ window.App = (() => {
         '<span class="it-emoji">' + it.e + '</span>' +
         '<span class="it-texts"><span class="it-name">' + it.name + '</span>' +
         '<span class="it-kind">' + it.kind + '</span></span>' +
-        '<span class="it-prog">' + (done >= total ? '🏅' : '⭐ ' + done + ' / ' + total) + '</span>';
+        '<span class="it-prog">' + (done >= total
+          ? '<i class="di di-medal" aria-hidden="true"></i>'
+          : '<i class="di di-star" aria-hidden="true"></i>' + done + ' / ' + total) + '</span>';
       b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();

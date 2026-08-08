@@ -34,9 +34,17 @@
 /* 앱 안에 있던 작은 🏠 는 숨긴다 — 집 단추가 둘이면 아이가 헷갈린다 */
 a.vs-btn[href="../"], .home-head a[href="../"]{ display:none !important }
 
-/* 앱들이 오른쪽 위에 두던 것들을 집 단추 왼쪽으로 밀어 준다 */
-.tl-bar-tag{ right:calc(108px + env(safe-area-inset-right,0px)) !important }
-.bar, .home-head{ padding-right:104px !important }
+/* 앱들이 오른쪽 위에 두던 것들에 집 단추 자리를 내준다.
+   넓은 화면은 옆으로 비키면 되지만, 폰 세로에서는 옆에 자리가 없어
+   남은시간 쪽지를 집 단추 '아래'로 내린다 (tubes 팀이 겹침을 찾아 줬다). */
+.bar, .home-head{ padding-right:calc(clamp(60px,8.6vw,80px) + 22px) !important }
+.tl-bar-tag{ right:calc(clamp(60px,8.6vw,80px) + 26px + env(safe-area-inset-right,0px)) !important }
+@media (max-width:700px){
+  .tl-bar-tag{
+    right:calc(12px + env(safe-area-inset-right,0px)) !important;
+    top:calc(clamp(60px,8.6vw,80px) + 18px + env(safe-area-inset-top,0px)) !important;
+  }
+}
 @media (prefers-reduced-motion: reduce){ .enjoy-home-btn:active{ transform:none } }
 `;
 

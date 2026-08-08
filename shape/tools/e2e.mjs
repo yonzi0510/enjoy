@@ -407,6 +407,25 @@ await check('가로↔세로 회전: 판·트레이 재배치 + 진행 유지 + 
   expect((await dbg(page)).placed === 2, '복귀 후 진행이 풀림');
 });
 
+// 놀이판 머리띠: '0 / 7' 이 공용 남은시간 알림표·집 단추에 가려지면 안 된다
+for (const [w, h, tag] of [[390, 844, '폰 390×844'], [1180, 820, '패드 1180×820']]) {
+  await check('머리띠 겹침 없음: 개수 표시 ↔ 남은시간·집 단추 (' + tag + ')', async () => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForTimeout(350);
+    const r = await page.evaluate(() => {
+      const box = s => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom }; };
+      const hit = (a, b) => !!a && !!b && Math.min(a.r, b.r) - Math.max(a.l, b.l) > 0.5 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 0.5;
+      const c = box('#play-count'), tl = box('.tl-bar-tag'), hm = box('.enjoy-home-btn'), ti = box('#play-title');
+      return { c, onScreen: !!c && c.l >= 0 && c.r <= window.innerWidth + .5, vsTime: hit(c, tl), vsHome: hit(c, hm), vsTitle: hit(c, ti) };
+    });
+    expect(r.c, '개수 표시가 없다');
+    expect(r.onScreen, '개수 표시가 화면 밖으로 나갔다');
+    expect(!r.vsTime, '개수 표시가 남은시간 알림표에 가린다');
+    expect(!r.vsHome, '개수 표시가 집 단추에 가린다');
+    expect(!r.vsTitle, '개수 표시가 제목과 겹친다');
+  });
+}
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });

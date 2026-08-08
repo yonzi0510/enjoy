@@ -77,10 +77,10 @@
 
     /* 🗂️ 낱말 카드 두 장 — 어휘 복습 */
     cards: { wob: 1, w: 5.5, fill:
-      `<rect x="30" y="34" width="52" height="46" rx="8" fill="#C7B9F2" transform="translate(-6 6) rotate(5 56 57)"/>`,
-      line: `<rect x="20" y="20" width="52" height="46" rx="8" transform="rotate(-9 46 43)"/>
-             <rect x="30" y="34" width="52" height="46" rx="8" transform="rotate(5 56 57)"/>
-             <path d="M42 52h28M42 64h18" stroke-width="4.5" transform="rotate(5 56 57)"/>` },
+      `<rect x="30" y="36" width="50" height="44" rx="8" fill="#C7B9F2" transform="translate(-7 6) rotate(6 55 58)"/>`,
+      line: `<rect x="18" y="17" width="48" height="42" rx="8" transform="rotate(-12 42 38)"/>
+             <rect x="30" y="36" width="50" height="44" rx="8" transform="rotate(6 55 58)"/>
+             <path d="M43 56h25" stroke-width="4.5" transform="rotate(6 55 58)"/>` },
 
     /* 🔒 자물쇠 — 아직 안 열린 레슨 */
     lock: { wob: 2, w: 6, fill:

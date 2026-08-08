@@ -115,6 +115,17 @@ h1 { display: flex; }
 
 /* ─────────── 놀이판 — 재질만 종이로, 자리와 크기는 그대로 ───────────
    여기서는 회전·확대를 절대 쓰지 않는다(위 머리말 참고). */
+
+/* ⚠️ 폰에서 줄이 화면보다 길 때 **첫 칸이 영영 안 보이던 것**을 고친다.
+   가로로 넘치는 스크롤 상자를 justify-content:center 로 가운데 두면
+   왼쪽으로 넘친 부분은 스크롤해도 닿지 않는다(scrollLeft 이 0 이 최소라서).
+   390px 폰에서 실제로 맨 앞 조각이 23px 잘려 있었다 — 규칙을 읽는 놀이인데
+   규칙의 시작을 못 보는 셈이다.
+   대신 시작 정렬 + margin auto 로 바꾼다: 자리가 남으면 가운데, 넘치면
+   왼쪽 끝부터 놓여 끝까지 밀어 볼 수 있다. */
+.strip-wrap { justify-content: flex-start; }
+.strip { margin-inline: auto; }
+
 .strip {
   background: rgba(255, 255, 255, .72);
   border: 3px solid rgba(46, 42, 36, .8);
@@ -163,6 +174,29 @@ h1 { display: flex; }
 }
 /* 목록 카드는 안에 패턴 미리보기를 담고 있어 기울이지 않는다 */
 .puzzle-card { transform: none; }
+
+/* ─────────── 좁은 폰 세로: 머리줄이 서로 겹치던 것 ───────────
+   공용 집 단추(shared/home-button.js)가 `.bar` 오른쪽을 104px 비우고,
+   남은 시간 알림표(.tl-bar-tag)를 right:108px 에 붙인다. 390px 폰에서는
+   그 자리가 곧 「듣기」 단추 자리라 둘이 52px 겹쳤고, 밀려난 제목은
+   "어려운 패/턴" 처럼 낱말 가운데서 끊겼다.
+   여기서는 이 앱 화면에서만 알림표를 머리줄 아래로 내리고, 그만큼
+   오른쪽 여백을 줄여 제목이 한 줄로 들어가게 한다. */
+@media (max-width: 560px) {
+  /* 클래스를 두 번 겹쳐 적어 우선순위를 한 칸 올린다 — 안 그러면 아래 집 단추 쪽
+     설명대로 실행 중에 붙는 공용 <style> 에 밀린다. 자리는 집 단추 바로 아래. */
+  .tl-bar-tag.tl-bar-tag {
+    top: calc(88px + env(safe-area-inset-top, 0px)) !important;
+    right: calc(12px + env(safe-area-inset-right, 0px)) !important;
+  }
+  /* 공용 집 단추는 자기 <style> 을 실행 중에 <head> 끝에 붙여서 같은 !important 라도
+     늘 이긴다. 그래서 여기서는 한 단계 더 좁혀(.screen >) 잡아야 넘어온다. */
+  .screen > .bar, .screen > .home-head {
+    padding-right: calc(84px + env(safe-area-inset-right, 0px)) !important;
+  }
+}
+/* 제목도 낱말 가운데서 끊기지 않게 */
+.bar h2 { word-break: keep-all; }
 
 /* ─────────── 모션 줄이기 존중 ─────────── */
 @media (prefers-reduced-motion: reduce) {
