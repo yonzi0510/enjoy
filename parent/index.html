@@ -7,6 +7,9 @@
 <title>부모님 페이지 — 은아의 놀이터</title>
 <link rel="icon" href="../icon-192.png">
 <link rel="stylesheet" href="../shared/time-limit.css">
+<!-- 학습 펫 모듈을 「펫 다 낫게 하기」에 쓰므로 펫 스타일도 함께 불러온다
+     (안 불러오면 pet.js가 넣는 펫 화면이 안 숨겨지고 페이지 아래에 그대로 펼쳐진다) -->
+<link rel="stylesheet" href="../shared/pet.css">
 <style>
 /* ── "포근한 장난감 방" — DESIGN.md, 부모님 페이지(차분한 회보라) ──
    카드 = 장난감 블록: 틴트 표면 + 유채색 chunk 단면 + 대표색 원거리 그림자.
@@ -37,6 +40,7 @@ body {
 .page > *:nth-child(5) { animation-delay: .19s; }
 .page > *:nth-child(6) { animation-delay: .23s; }
 .page > *:nth-child(7) { animation-delay: .27s; }
+.page > *:nth-child(8) { animation-delay: .31s; }
 @keyframes card-in {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -92,6 +96,17 @@ h1 {
     inset 0 0 0 1px rgba(255,255,255,.25),
     0 1px 0 #544C70;
 }
+/* 여러 갈래 중 하나 고르기(세로로 쌓인 라디오) — 기존 .seg 생김새를 그대로 쓰되
+   설명 문구가 붙으므로 한 줄에 하나씩 놓는다. 부모용이라 글자로 설명해도 된다. */
+.row.stack { flex-direction: column; align-items: stretch; }
+.seg.opts { flex-direction: column; width: 100%; margin-top: 8px; }
+.seg.opts button {
+  width: 100%; min-height: 44px;           /* 터치 하한 */
+  display: flex; flex-direction: column; gap: 3px;
+  text-align: left; padding: 10px 14px;
+}
+.seg.opts .opt-t { font-size: 15px; font-weight: 900; }
+.seg.opts .opt-d { font-size: 12.5px; font-weight: 700; line-height: 1.5; opacity: .85; }
 .reset-btn {
   border: none; cursor: pointer; flex-shrink: 0;
   padding: 9px 15px; border-radius: 12px;
@@ -104,6 +119,10 @@ h1 {
   transform: translateY(1px) scale(.98);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 1px 0 #C6C0D6;
 }
+.reset-btn.tall { min-height: 44px; }   /* 터치 하한 — 새로 넣은 단추 */
+/* 아이용으로 화면 구석에 떠 있는 펫 단추는 부모님 페이지에 어울리지 않아 숨긴다
+   (shared/pet.css는 건드리지 않고 여기서만 덮어쓴다) */
+.pet-btn { display: none !important; }
 .switch {
   border: none; cursor: pointer; flex-shrink: 0;
   width: 58px; height: 32px; border-radius: 16px;
@@ -308,6 +327,20 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
   </div>
 
   <div class="card">
+    <h2>🐣 학습 펫 돌보기</h2>
+    <p class="note">펫은 어떤 경우에도 죽지 않고, 모은 도감·장식은 사라지지 않아요. 나쁜 상태는 아이가 한 번 눌러서 바로 고칠 수 있어요.</p>
+    <div class="row stack">
+      <span class="lbl">돌보기 세기<span class="sub">펫이 얼마나 자주 돌봄을 필요로 할지 정해요.</span></span>
+      <span class="seg opts" id="petcare-seg" role="radiogroup" aria-label="돌보기 세기"></span>
+    </div>
+    <div class="row">
+      <span class="lbl">펫 지금 다 낫게 하기<span class="sub">응가를 치우고 감기를 낫게 하고 배고픔·기분을 가득 채워요.
+        지금 고른 <b id="petcare-kid">🐰 은아</b>의 펫에만 적용돼요 — 도감·꾸미기·장식·성장은 그대로예요.</span></span>
+      <button type="button" class="reset-btn tall" id="pet-heal">💊 다 낫게 하기</button>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>🎤 음성 인식(마이크)</h2>
     <div class="row">
       <span class="lbl">마이크로 말하기 사용<span class="sub">영어·글씨·프랙티카 놀이터가 씁니다.</span></span>
@@ -347,6 +380,13 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
 <div class="toast" id="toast"></div>
 
 <script src="../shared/parent-settings.js"></script>
+<!-- 학습 펫 — 「펫 다 낫게 하기」에 Pet.healAll()을 쓴다.
+     pet.js는 지금 고른 아이(Profile)의 펫을 다루므로 profile.js가 먼저 와야 한다.
+     부모님 페이지에는 아이용 프로필 배지를 띄우지 않는다. -->
+<script>window.EnjoyProfileBadge = false;</script>
+<script src="../shared/profile.js"></script>
+<script src="../shared/pet-avatar.js"></script>
+<script src="../shared/pet.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -421,6 +461,46 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
       seg.appendChild(b);
     });
   }
+
+  /* ─────────── 학습 펫 돌보기 ─────────── */
+  // [값, 이름, 설명] — 값은 shared/parent-settings.js의 petCare('soft'|'normal'|'tama')
+  const PET_CARE_CHOICES = [
+    ['soft',   '🌱 순한맛',            '응가만 생겨요. 배고픔·감기는 없어요.'],
+    ['normal', '🐣 보통 <b>(기본)</b>', '하루에 하트 한 칸씩 줄고, 하루를 거르면 감기에 걸려요.'],
+    ['tama',   '🥚 다마고치',          '반나절에 한 칸씩 줄고 응가도 두 배로 쌓여요.']
+  ];
+  function renderPetCare() {
+    const cur = ParentSettings.get('petCare') || 'normal';
+    const seg = $('petcare-seg');
+    seg.innerHTML = '';
+    PET_CARE_CHOICES.forEach(([val, label, desc]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('role', 'radio');
+      b.innerHTML = '<span class="opt-t">' + label + '</span><span class="opt-d">' + desc + '</span>';
+      const on = cur === val;
+      b.classList.toggle('sel', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.addEventListener('click', () => {
+        ParentSettings.set('petCare', val);
+        renderPetCare();
+        toast('펫 돌보기: ' + b.querySelector('.opt-t').textContent.trim());
+      });
+      seg.appendChild(b);
+    });
+    // 「다 낫게 하기」는 지금 고른 아이의 펫에만 적용된다 — 누구인지 보여 준다
+    const m = window.Profile ? Profile.meta() : null;
+    $('petcare-kid').textContent = m ? (m.emoji + ' ' + m.name) : '🐰 은아';
+  }
+  // 응가 0 · 감기 해제 · 배고픔·기분 가득. 모은 것(도감·꾸미기·장식·성장점수)은 건드리지 않는다.
+  $('pet-heal').addEventListener('click', () => {
+    if (window.Pet && typeof Pet.healAll === 'function') {
+      Pet.healAll();
+      toast('✅ 펫이 건강해졌어요');
+    } else {
+      toast('펫을 아직 못 불러왔어요 — 잠시 뒤 다시 눌러 주세요');
+    }
+  });
 
   /* ─────────── 토글 ─────────── */
   function renderSwitches() {
@@ -544,6 +624,7 @@ table.sum td:last-child { text-align: right; font-weight: 800; }
   function render() {
     $('used-min').textContent = usedMin() + '분';
     renderLimit();
+    renderPetCare();
     renderSwitches();
     renderSummary();
   }
