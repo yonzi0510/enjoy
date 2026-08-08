@@ -58,39 +58,71 @@ h1 {
   width: 100%;
   max-width: 1040px;
 }
+/* 묶음 하나 = 상자 하나. 머리표(토끼)를 누르면 그 묶음만 펼쳐진다.
+   한 번에 하나만 열려 있어 여섯 묶음이 늘 한 화면에 들어온다. */
 .cat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(10px, 2vmin, 18px);
   width: 100%;
-}
-.cat-head {
-  /* 카드와 같은 장난감 블록 질감 — 묶음색 chunk 단면 + 대표색 원거리 그림자 */
-  display: flex;
-  align-items: center;
-  gap: clamp(8px, 1.8vmin, 14px);
-  padding: clamp(5px, 1.1vmin, 9px) clamp(18px, 3.2vmin, 30px) clamp(5px, 1.1vmin, 9px) clamp(5px, 1.1vmin, 9px);
-  border-radius: 999px;
+  border-radius: clamp(18px, 3.4vmin, 26px);
   background: linear-gradient(180deg, #FFFFFF 0%, var(--cat-tint) 100%);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.65),
-    0 5px 0 var(--cat-chunk),
-    0 12px 20px rgba(var(--cat-accent), .18);
+    0 6px 0 var(--cat-chunk),
+    0 14px 22px rgba(var(--cat-accent), .18);
   animation: card-in .35s ease-out backwards;
 }
+.cat-title { margin: 0; }
+.cat-head {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.8vmin, 14px);
+  width: 100%;
+  padding: clamp(6px, 1.2vmin, 10px) clamp(12px, 2.4vmin, 20px) clamp(6px, 1.2vmin, 10px) clamp(6px, 1.2vmin, 10px);
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.cat-head:focus-visible { outline: 3px solid var(--cat-chunk); outline-offset: -3px; }
 .cat-rabbit {
   display: block;
-  width: clamp(46px, 9vmin, 66px);
-  height: clamp(46px, 9vmin, 66px);
+  flex: none;
+  width: clamp(52px, 10.5vmin, 78px);
+  height: clamp(52px, 10.5vmin, 78px);
   border-radius: 50%;
 }
 .cat-name {
+  flex: 1;
   font-size: clamp(17px, 3.6vmin, 27px);
   font-weight: 900;
   color: var(--cat-ink);
-  white-space: nowrap;
+  word-break: keep-all; /* '모양 만들/기'처럼 낱말 중간에서 꺾이지 않게 */
 }
+/* 펼침 화살표 — 글을 못 읽는 아이에게 '누르면 열린다'를 알려주는 유일한 신호라
+   동그란 배지로 키워 눈에 띄게 한다 */
+.cat-chev {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(30px, 6vmin, 42px);
+  height: clamp(30px, 6vmin, 42px);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 0 0 0 2px var(--cat-chunk), 0 2px 0 rgba(var(--cat-accent), .35);
+  font-size: clamp(15px, 3vmin, 21px);
+  line-height: 1;
+  color: var(--cat-chunk);
+  transition: transform .24s ease;
+}
+.cat.open .cat-chev { transform: rotate(180deg); }
+/* 접힘/펼침 — grid 1fr 트릭으로 높이를 몰라도 부드럽게 여닫는다 */
+.cat-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .26s ease;
+}
+.cat.open .cat-body { grid-template-rows: 1fr; }
 /* 묶음별 색 (DESIGN.md chunk 공식 — 같은 hue에서 명도 −18~25%p) */
 .cat-learn { --cat-accent: 245,179,1;   --cat-chunk: #C68C00; --cat-tint: #FFF4D6; --cat-ink: #7A5A08; }
 .cat-draw  { --cat-accent: 92,184,232;  --cat-chunk: #2F8CC2; --cat-tint: #E4F3FC; --cat-ink: #1D5A85; }
@@ -98,34 +130,42 @@ h1 {
 .cat-color { --cat-accent: 138,123,224; --cat-chunk: #5F50B8; --cat-tint: #EDEAFB; --cat-ink: #493C8F; }
 .cat-order { --cat-accent: 230,140,60;  --cat-chunk: #B4701C; --cat-tint: #FBEAD8; --cat-ink: #8A4A16; }
 .cat-find  { --cat-accent: 232,93,154;  --cat-chunk: #C13B78; --cat-tint: #FCE7F1; --cat-ink: #8B3A5B; }
+/* 놀이 버튼 — 상자 안에 격자로 깔린다.
+   overflow:hidden 은 접힘 애니메이션(0fr↔1fr)에서 내용이 삐져나오지 않게 하는 것 */
 .cat-cards {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: clamp(12px, 3vmin, 36px);
-  width: 100%;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(128px, 40vw, 172px), 1fr));
+  gap: clamp(7px, 1.6vmin, 12px);
+  padding: 0 clamp(9px, 1.8vmin, 15px);
 }
+.cat.open .cat-cards { padding-bottom: clamp(10px, 2vmin, 16px); }
 .app-card {
-  /* 기본은 메인홈 라벤더 — 아래에서 카드마다 자기 앱 색으로 덮는다 */
+  /* 기본은 메인홈 라벤더 — 아래에서 버튼마다 자기 앱 색으로 덮는다 */
   --accent: 201,188,232; /* 원거리 그림자용 rgb 삼중값 */
-  --chunk: #B7A6DE;      /* 카드색을 짙게 만든 바닥 단면색 */
+  --chunk: #B7A6DE;      /* 버튼색을 짙게 만든 바닥 단면색 */
   --tint: #F4EFFC;       /* 표면에 스미는 옅은 틴트 */
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  /* 폰에서는 42vw로 두 장씩, 넓은 화면에서는 최대 300px */
-  width: clamp(150px, 42vw, 300px);
-  padding: clamp(14px, 3.4vmin, 32px) clamp(10px, 2.4vmin, 28px);
-  border-radius: 32px;
+  gap: clamp(5px, 1.2vmin, 9px);
+  min-height: 48px; /* 5세 터치 영역 하한 */
+  padding: clamp(8px, 1.7vmin, 12px) clamp(8px, 1.6vmin, 12px);
+  border-radius: 14px;
   background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.65),
-    0 7px 0 var(--chunk),
-    0 16px 26px rgba(var(--accent), .18);
+    inset 0 0 0 1px rgba(255,255,255,.75),
+    0 3px 0 var(--chunk),
+    0 7px 12px rgba(var(--accent), .16);
   text-decoration: none;
   transition: transform .12s, box-shadow .12s;
-  animation: card-in .35s ease-out backwards;
+}
+.ge { font-size: clamp(19px, 4vmin, 27px); line-height: 1; flex: none; }
+.gn {
+  font-size: clamp(11px, 2.5vmin, 15px);
+  font-weight: 800;
+  color: #43391E;
+  line-height: 1.25;
+  word-break: keep-all;
 }
 /* 카드별 대표색 (DESIGN.md 색표) — HTML을 안 고치고 href로 입힌다 */
 .app-card[href="./play/"]     { --accent: 255,217,61;  --chunk: #D9A800; --tint: #FFF6D9; }
@@ -157,39 +197,34 @@ h1 {
 .app-card[href="./geoboard/"] { --accent: 124,108,224;  --chunk: #6C5CE7; --tint: #ECEAFB; }
 .app-card[href="./lines/"]    { --accent: 88,178,164;   --chunk: #3F9C87; --tint: #E5F5F1; }
 .app-card[href="./practika/"] { --accent: 138,123,224; --chunk: #5F50B8; --tint: #EDEAFB; }
-/* 스태거 등장 — 0.05s 간격 */
-.cat-cards .app-card:nth-child(1) { animation-delay: .05s; }
-.cat-cards .app-card:nth-child(2) { animation-delay: .10s; }
-.cat-cards .app-card:nth-child(3) { animation-delay: .15s; }
-.cat-cards .app-card:nth-child(4) { animation-delay: .20s; }
-.cat-cards .app-card:nth-child(5) { animation-delay: .25s; }
-.cat-cards .app-card:nth-child(6) { animation-delay: .30s; }
-.cat-cards .app-card:nth-child(7) { animation-delay: .35s; }
-.cat-cards .app-card:nth-child(8) { animation-delay: .40s; }
-.cat-cards .app-card:nth-child(n+9) { animation-delay: .40s; } /* 8개 넘는 카드는 마지막 지연값을 같이 쓴다 */
+/* 묶음 상자 자체는 스태거로 등장한다 (버튼은 접혀 있어 개별 지연이 의미 없다) */
+.apps .cat:nth-child(1) { animation-delay: .05s; }
+.apps .cat:nth-child(2) { animation-delay: .11s; }
+.apps .cat:nth-child(3) { animation-delay: .17s; }
+.apps .cat:nth-child(4) { animation-delay: .23s; }
+.apps .cat:nth-child(5) { animation-delay: .29s; }
+.apps .cat:nth-child(n+6) { animation-delay: .35s; }
 .app-card:active {
-  /* chunk가 7px→3px로 줄며 블록이 눌리는 느낌 */
-  transform: translateY(4px) scale(.98);
+  /* chunk가 3px→1px로 줄며 블록이 눌리는 느낌 */
+  transform: translateY(2px) scale(.97);
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.65),
-    0 3px 0 var(--chunk),
-    0 9px 14px rgba(var(--accent), .12);
+    inset 0 0 0 1px rgba(255,255,255,.75),
+    0 1px 0 var(--chunk),
+    0 4px 8px rgba(var(--accent), .12);
 }
 .app-card[hidden] { display: none; } /* hidden 속성이 위 display:flex에 밀리지 않게 */
-.app-card img { width: 70%; border-radius: 26%; }
-.app-name { font-size: clamp(16px, 4vmin, 28px); font-weight: 900; color: #43391E; white-space: nowrap; }
-.app-desc { font-size: clamp(11px, 2.6vmin, 16px); font-weight: 700; color: #8B7DAB; text-align: center; line-height: 1.5; }
-/* 잠긴 카드(일본어 — 한글 카드 10장을 모으면 열림) */
+.app-name { display: contents; } /* koName()이 읽는 래퍼 — 배치는 .ge/.gn 이 맡는다 */
+/* 잠긴 버튼(일본어 — 한글 카드 10장을 모으면 열림) */
 .app-card.locked {
   position: relative;
   opacity: .8;
   --accent: 150,142,170; --chunk: #C7C0D4; --tint: #F1EFF6; /* 회색 처리 */
 }
-.app-card.locked img { filter: grayscale(.9); }
+.app-card.locked .ge { filter: grayscale(.9); }
 .lock-badge {
   position: absolute;
-  top: 10px; right: 12px;
-  font-size: clamp(20px, 4.5vmin, 34px);
+  top: 3px; right: 5px;
+  font-size: clamp(12px, 2.6vmin, 17px);
 }
 @keyframes card-in {
   from { opacity: 0; transform: translateY(14px); }
@@ -255,30 +290,32 @@ h1 {
 .profile-btn.sel::after { content: '✔'; color: #FFB800; font-size: .8em; }
 /* 모션 줄이기 설정 존중 */
 @media (prefers-reduced-motion: reduce) {
-  h1, .profiles, .parent-link, .app-card, .app-card.nope, .cat-head { animation: none; }
+  h1, .profiles, .parent-link, .app-card, .app-card.nope, .cat { animation: none; }
   .app-card, .profile-btn { transition: none; }
+  .cat-body, .cat-chev { transition: none; }
 }
 /* ── 가로 모드 (태블릿 가로가 1차 기준 — DESIGN.md "가로모드 우선") ──
    HTML은 그대로 두고 배치만 바꾼다. 세로모드는 위 기본 규칙 그대로.
    카드 폭을 줄여 3~4열로 펼치고, 아이콘 크기는 화면 높이(vh) 기준으로 낮춰
    한 화면에 카드가 최대한 들어오게 한다. */
 @media (orientation: landscape) {
-  .wrap { gap: clamp(14px, 2.6vh, 26px); }
-  .apps { gap: clamp(12px, 2.2vh, 22px); max-width: 1100px; }
-  /* 가로에서는 머리표를 낮춰 카드가 한 화면에 더 들어오게 한다
-     (카드 자체는 줄이지 않는다 — 5세 터치 영역이 우선) */
-  .cat { gap: clamp(5px, .9vh, 9px); }
-  .cat-cards { gap: clamp(10px, 1.5vw, 18px); }
-  .cat-head { padding: 4px 20px 4px 4px; gap: 9px; }
-  .cat-rabbit { width: clamp(34px, 5.4vh, 46px); height: clamp(34px, 5.4vh, 46px); }
-  .cat-name { font-size: clamp(14px, 2.3vh, 19px); }
-  .app-card {
-    width: clamp(150px, 22vw, 240px);
-    padding: clamp(8px, 1.6vh, 16px) clamp(10px, 1.6vw, 20px);
-    gap: 7px;
+  .wrap { gap: clamp(12px, 2.2vh, 22px); }
+  .apps { gap: clamp(9px, 1.6vh, 16px); max-width: 1100px; }
+  /* 가로는 세로 공간이 귀하다 — 머리표를 낮추고 버튼을 한 줄에 더 많이 */
+  .cat-head { padding: 5px 16px 5px 5px; gap: 10px; }
+  .cat-rabbit { width: clamp(42px, 7.4vh, 62px); height: clamp(42px, 7.4vh, 62px); }
+  .cat-name { font-size: clamp(15px, 2.6vh, 22px); }
+  .cat-chev {
+    width: clamp(26px, 4.6vh, 38px);
+    height: clamp(26px, 4.6vh, 38px);
+    font-size: clamp(13px, 2.3vh, 18px);
   }
-  .app-card img { width: clamp(56px, 10vh, 88px); }
-  .app-desc { line-height: 1.35; }
+  .cat-cards {
+    grid-template-columns: repeat(auto-fill, minmax(clamp(120px, 15vw, 168px), 1fr));
+    gap: clamp(6px, 1vh, 11px);
+    padding: 0 clamp(8px, 1vw, 14px);
+  }
+  .app-card { min-height: 44px; padding: clamp(6px, 1.1vh, 10px) clamp(7px, .9vw, 11px); }
 }
 /* 넓은 가로(패드) — 프로필·제목·부모 링크를 한 줄에 모아 세로 공간을 아낀다.
    재배치는 grid-template-areas로만 한다 (선례: shared/pet.css 끝부분).
@@ -309,198 +346,88 @@ h1 {
 <h1>🌈 은아와 서하의 놀이터</h1>
 <div class="profiles" id="profile-picker"><!-- 스크립트가 은아·서하 버튼 생성 --></div>
 <div class="apps">
-  <section class="cat cat-learn">
-    <h2 class="cat-head">
+  <section class="cat cat-learn open">
+    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="true">
       <img class="cat-rabbit" src="./assets/cat-learn.png" alt="">
       <span class="cat-name">📚 배우기</span>
-    </h2>
-    <div class="cat-cards">
-    <a class="app-card" href="./hangul/">
-        <img src="./hangul/icon-192.png" alt="가나다 한글 놀이터 연필 든 초록 토끼">
-        <span class="app-name">🌟 한글 놀이터</span>
-        <span class="app-desc">ㄱㄴㄷ 소리 · 따라쓰기<br>한글 게임 · 낱말 카드</span>
-      </a>
-    <a class="app-card" href="./english/">
-        <img src="./english/icon-192.png" alt="영어 놀이터 핑크 토끼">
-        <span class="app-name">🗣️ 영어 놀이터</span>
-        <span class="app-desc">토끼에게 물어보면<br>영어로 대답해줘요</span>
-      </a>
-    <a class="app-card" href="./japanese/">
-        <img src="./japanese/icon-192.png" alt="일본어 놀이터 벚꽃 든 흰 토끼">
-        <span class="app-name">🌸 일본어 놀이터</span>
-        <span class="app-desc">あいうえお 소리 · 따라쓰기<br>히라가나 게임 · 낱말 카드</span>
-      </a>
-    <a class="app-card" href="./math/">
-        <img src="./math/icon-192.png" alt="산수 놀이터 숫자 블록 든 주황 토끼">
-        <span class="app-name">🔢 산수 놀이터</span>
-        <span class="app-desc">숫자 따라 쓰고<br>그림으로 셈해요</span>
-      </a>
-    <a class="app-card" href="./market/">
-        <img src="./market/icon-192.png" alt="시장 놀이터 가게와 동전">
-        <span class="app-name">🛒 시장 놀이터</span>
-        <span class="app-desc">손님 주문 듣고<br>동전으로 계산해요</span>
-      </a>
-    <a class="app-card" href="./pixel/">
-        <img src="./pixel/icon-192.png" alt="픽셀 놀이터 픽셀 토끼">
-        <span class="app-name">🧩 픽셀 놀이터</span>
-        <span class="app-desc">숫자 픽셀을 쓱쓱<br>그림이 짠! 나타나요</span>
-      </a>
-    <a class="app-card" href="./practika/" id="card-practika" hidden>
-        <img src="./practika/icon-192.png" alt="프랙티카 놀이터 헤드셋 낀 보라 튜터">
-        <span class="app-name">🎙️ 프랙티카 놀이터</span>
-        <span class="app-desc">AI 튜터와 영·일·중 대화<br>말하기 연습 · 어휘 복습</span>
-      </a>
-    </div>
+      <span class="cat-chev" aria-hidden="true">▾</span>
+    </button></h2>
+    <div class="cat-body"><div class="cat-cards">
+    <a class="app-card" href="./hangul/"><span class="app-name"><span class="ge">🌟</span><span class="gn">한글 놀이터</span></span></a>
+    <a class="app-card" href="./english/"><span class="app-name"><span class="ge">🗣️</span><span class="gn">영어 놀이터</span></span></a>
+    <a class="app-card" href="./japanese/"><span class="app-name"><span class="ge">🌸</span><span class="gn">일본어 놀이터</span></span></a>
+    <a class="app-card" href="./math/"><span class="app-name"><span class="ge">🔢</span><span class="gn">산수 놀이터</span></span></a>
+    <a class="app-card" href="./market/"><span class="app-name"><span class="ge">🛒</span><span class="gn">시장 놀이터</span></span></a>
+    <a class="app-card" href="./pixel/"><span class="app-name"><span class="ge">🧩</span><span class="gn">픽셀 놀이터</span></span></a>
+    <a class="app-card" href="./practika/" id="card-practika" hidden><span class="app-name"><span class="ge">🎙️</span><span class="gn">프랙티카 놀이터</span></span></a>
+    </div></div>
   </section>
   <section class="cat cat-draw">
-    <h2 class="cat-head">
+    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-draw.png" alt="">
       <span class="cat-name">✏️ 그리기와 쓰기</span>
-    </h2>
-    <div class="cat-cards">
-    <a class="app-card" href="./write/">
-        <img src="./write/icon-192.png" alt="글씨 놀이터 연필 든 파란 토끼">
-        <span class="app-name">✍️ 글씨 놀이터</span>
-        <span class="app-desc">펜슬로 따라 쓰고<br>혼자 써 봐요</span>
-      </a>
-    <a class="app-card" href="./lines/">
-        <img src="./lines/icon-192.png" alt="선 따라 그리기 크레용 든 토끼">
-        <span class="app-name">✏️ 선 따라 그리기</span>
-        <span class="app-desc">점선을 따라<br>선을 그려요</span>
-      </a>
-    <a class="app-card" href="./coloring/">
-        <img src="./coloring/icon-192.png" alt="색칠공부 크레용과 팔레트">
-        <span class="app-name">🎨 색칠공부</span>
-        <span class="app-desc">밑그림을 보고<br>크레용으로 칠해요</span>
-      </a>
-    </div>
+      <span class="cat-chev" aria-hidden="true">▾</span>
+    </button></h2>
+    <div class="cat-body"><div class="cat-cards">
+    <a class="app-card" href="./write/"><span class="app-name"><span class="ge">✍️</span><span class="gn">글씨 놀이터</span></span></a>
+    <a class="app-card" href="./lines/"><span class="app-name"><span class="ge">✏️</span><span class="gn">선 따라 그리기</span></span></a>
+    <a class="app-card" href="./coloring/"><span class="app-name"><span class="ge">🎨</span><span class="gn">색칠공부</span></span></a>
+    </div></div>
   </section>
   <section class="cat cat-shape">
-    <h2 class="cat-head">
+    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-shape.png" alt="">
       <span class="cat-name">🔷 모양 만들기</span>
-    </h2>
-    <div class="cat-cards">
-    <a class="app-card" href="./shape/">
-        <img src="./shape/icon-192.png" alt="도형 놀이터 알록달록 칠교 조각">
-        <span class="app-name">🔷 도형 놀이터</span>
-        <span class="app-desc">조각을 끌어다<br>그림 퍼즐을 맞춰요</span>
-      </a>
-    <a class="app-card" href="./tangram/">
-        <img src="./tangram/icon-192.png" alt="무지개 탱그램 곡선 조각 든 토끼">
-        <span class="app-name">🌈 무지개 탱그램</span>
-        <span class="app-desc">곡선 조각을 모아<br>그림을 완성해요</span>
-      </a>
-    <a class="app-card" href="./geoboard/">
-        <img src="./geoboard/icon-192.png" alt="지오보드 고무줄 든 토끼">
-        <span class="app-name">📌 지오보드</span>
-        <span class="app-desc">못판에 고무줄 걸어<br>도형을 만들어요</span>
-      </a>
-    <a class="app-card" href="./cups/">
-        <img src="./cups/icon-192.png" alt="컵 쌓기 색깔 컵 든 토끼">
-        <span class="app-name">🥤 컵 쌓기</span>
-        <span class="app-desc">본보기대로 색 컵을<br>피라미드로 쌓아요</span>
-      </a>
-    </div>
+      <span class="cat-chev" aria-hidden="true">▾</span>
+    </button></h2>
+    <div class="cat-body"><div class="cat-cards">
+    <a class="app-card" href="./shape/"><span class="app-name"><span class="ge">🔷</span><span class="gn">도형 놀이터</span></span></a>
+    <a class="app-card" href="./tangram/"><span class="app-name"><span class="ge">🌈</span><span class="gn">무지개 탱그램</span></span></a>
+    <a class="app-card" href="./geoboard/"><span class="app-name"><span class="ge">📌</span><span class="gn">지오보드</span></span></a>
+    <a class="app-card" href="./cups/"><span class="app-name"><span class="ge">🥤</span><span class="gn">컵 쌓기</span></span></a>
+    </div></div>
   </section>
   <section class="cat cat-color">
-    <h2 class="cat-head">
+    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-color.png" alt="">
       <span class="cat-name">🌈 색 맞추기</span>
-    </h2>
-    <div class="cat-cards">
-    <a class="app-card" href="./lab/">
-        <img src="./lab/icon-192.png" alt="색깔 실험실 물감 유리병">
-        <span class="app-name">🧪 색깔 실험실</span>
-        <span class="app-desc">물감을 섞으면<br>새 색이 짠! 나와요</span>
-      </a>
-    <a class="app-card" href="./beads/">
-        <img src="./beads/icon-192.png" alt="구슬 보드 색 구슬 든 토끼">
-        <span class="app-name">🔵 구슬 보드</span>
-        <span class="app-desc">본보기대로 색 구슬을<br>구멍에 채워요</span>
-      </a>
-    <a class="app-card" href="./rings/">
-        <img src="./rings/icon-192.png" alt="손가락 고무줄 색 고리 든 토끼">
-        <span class="app-name">💍 손가락 고무줄</span>
-        <span class="app-desc">카드처럼 손가락에<br>색 고리를 끼워요</span>
-      </a>
-    <a class="app-card" href="./tubes/">
-        <img src="./tubes/icon-192.png" alt="시험관 구슬 구슬 시험관 든 토끼">
-        <span class="app-name">⚗️ 시험관 구슬</span>
-        <span class="app-desc">본보기 순서대로 구슬을<br>시험관에 담아요</span>
-      </a>
-    <a class="app-card" href="./slide/">
-        <img src="./slide/icon-192.png" alt="네 색 슬라이드 색 조각 든 토끼">
-        <span class="app-name">🔴 네 색 슬라이드</span>
-        <span class="app-desc">색 조각을 옮겨<br>카드처럼 정리해요</span>
-      </a>
-    </div>
+      <span class="cat-chev" aria-hidden="true">▾</span>
+    </button></h2>
+    <div class="cat-body"><div class="cat-cards">
+    <a class="app-card" href="./lab/"><span class="app-name"><span class="ge">🧪</span><span class="gn">색깔 실험실</span></span></a>
+    <a class="app-card" href="./beads/"><span class="app-name"><span class="ge">🔵</span><span class="gn">구슬 보드</span></span></a>
+    <a class="app-card" href="./rings/"><span class="app-name"><span class="ge">💍</span><span class="gn">손가락 고무줄</span></span></a>
+    <a class="app-card" href="./tubes/"><span class="app-name"><span class="ge">⚗️</span><span class="gn">시험관 구슬</span></span></a>
+    <a class="app-card" href="./slide/"><span class="app-name"><span class="ge">🔴</span><span class="gn">네 색 슬라이드</span></span></a>
+    </div></div>
   </section>
   <section class="cat cat-order">
-    <h2 class="cat-head">
+    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-order.png" alt="">
       <span class="cat-name">🔁 순서와 규칙</span>
-    </h2>
-    <div class="cat-cards">
-    <a class="app-card" href="./burger/">
-        <img src="./burger/icon-192.png" alt="햄버거 가게 햄버거 든 토끼">
-        <span class="app-name">🍔 햄버거 가게</span>
-        <span class="app-desc">미션 카드 순서대로<br>재료를 쌓아요</span>
-      </a>
-    <a class="app-card" href="./kkochi/">
-        <img src="./kkochi/icon-192.png" alt="꼬치 가게 꼬치 든 토끼">
-        <span class="app-name">🍢 꼬치 가게</span>
-        <span class="app-desc">순서대로 재료를<br>꼬치에 꿰어요</span>
-      </a>
-    <a class="app-card" href="./pattern/">
-        <img src="./pattern/icon-192.png" alt="패턴 놀이터 패턴 타일 든 토끼">
-        <span class="app-name">🔁 패턴 놀이터</span>
-        <span class="app-desc">빈칸에 알맞은 조각을<br>넣어 패턴을 이어요</span>
-      </a>
-    <a class="app-card" href="./connect/">
-        <img src="./connect/icon-192.png" alt="점 잇기 연필 든 토끼">
-        <span class="app-name">✏️ 점 잇기</span>
-        <span class="app-desc">순서대로 점을<br>선으로 이어요</span>
-      </a>
-    </div>
+      <span class="cat-chev" aria-hidden="true">▾</span>
+    </button></h2>
+    <div class="cat-body"><div class="cat-cards">
+    <a class="app-card" href="./burger/"><span class="app-name"><span class="ge">🍔</span><span class="gn">햄버거 가게</span></span></a>
+    <a class="app-card" href="./kkochi/"><span class="app-name"><span class="ge">🍢</span><span class="gn">꼬치 가게</span></span></a>
+    <a class="app-card" href="./pattern/"><span class="app-name"><span class="ge">🔁</span><span class="gn">패턴 놀이터</span></span></a>
+    <a class="app-card" href="./connect/"><span class="app-name"><span class="ge">✏️</span><span class="gn">점 잇기</span></span></a>
+    </div></div>
   </section>
   <section class="cat cat-find">
-    <h2 class="cat-head">
+    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-find.png" alt="">
       <span class="cat-name">👀 찾기와 짝맞추기</span>
-    </h2>
-    <div class="cat-cards">
-    <a class="app-card" href="./play/">
-        <img src="./play/icon-192.png" alt="찾기 놀이터 보라 토끼">
-        <span class="app-name">🔍 찾기 놀이터</span>
-        <span class="app-desc">숨은그림 · 다른그림<br>글자 찾기 · 스티커 놀이</span>
-      </a>
-    <a class="app-card" href="./dice/">
-        <img src="./dice/icon-192.png" alt="동물 주사위 주사위 든 토끼">
-        <span class="app-name">🎲 동물 주사위</span>
-        <span class="app-desc">카드 동물을<br>주사위에서 찾아요</span>
-      </a>
-    <a class="app-card" href="./donut/">
-        <img src="./donut/icon-192.png" alt="도넛 짝맞추기 도넛 든 토끼">
-        <span class="app-name">🍩 도넛 짝맞추기</span>
-        <span class="app-desc">같은 무늬 도넛을<br>제자리에 놓아요</span>
-      </a>
-    <a class="app-card" href="./twist/">
-        <img src="./twist/icon-192.png" alt="돌림 블록 실린더 든 토끼">
-        <span class="app-name">🎡 돌림 블록</span>
-        <span class="app-desc">블록을 돌려<br>카드처럼 맞춰요</span>
-      </a>
-    <a class="app-card" href="./matrix/">
-        <img src="./matrix/icon-192.png" alt="방향·색 놀이터 화살표 든 토끼">
-        <span class="app-name">🧭 방향·색 놀이터</span>
-        <span class="app-desc">색과 방향을 맞춰<br>조각을 놓아요</span>
-      </a>
-    <a class="app-card" href="./bag/">
-        <img src="./bag/icon-192.png" alt="생각 놀이터 전구 든 토끼">
-        <span class="app-name">💡 생각 놀이터</span>
-        <span class="app-desc">본보기 보고 맞추기<br>풍선 줄 따라 그리기</span>
-      </a>
-    </div>
+      <span class="cat-chev" aria-hidden="true">▾</span>
+    </button></h2>
+    <div class="cat-body"><div class="cat-cards">
+    <a class="app-card" href="./play/"><span class="app-name"><span class="ge">🔍</span><span class="gn">찾기 놀이터</span></span></a>
+    <a class="app-card" href="./dice/"><span class="app-name"><span class="ge">🎲</span><span class="gn">동물 주사위</span></span></a>
+    <a class="app-card" href="./donut/"><span class="app-name"><span class="ge">🍩</span><span class="gn">도넛 짝맞추기</span></span></a>
+    <a class="app-card" href="./twist/"><span class="app-name"><span class="ge">🎡</span><span class="gn">돌림 블록</span></span></a>
+    <a class="app-card" href="./matrix/"><span class="app-name"><span class="ge">🧭</span><span class="gn">방향·색 놀이터</span></span></a>
+    <a class="app-card" href="./bag/"><span class="app-name"><span class="ge">💡</span><span class="gn">생각 놀이터</span></span></a>
+    </div></div>
   </section>
 </div>
 <a class="parent-link" href="./parent/">🔑 부모님 페이지</a>
@@ -564,6 +491,25 @@ h1 {
     jaCard.classList.add('locked');
     jaCard.insertAdjacentHTML('beforeend', '<span class="lock-badge">🔒</span>');
   }
+
+  // ── 묶음 펼치기 — 토끼를 누르면 그 묶음만 열린다 (한 번에 하나) ──
+  // 아이는 글을 못 읽으므로 화살표가 돌아가는 모습 + 묶음 이름을 읽어 주는 소리로 알린다.
+  document.querySelectorAll('.cat-head').forEach(head => {
+    head.addEventListener('click', () => {
+      const cat = head.closest('.cat');
+      const wasOpen = cat.classList.contains('open');
+      document.querySelectorAll('.cat').forEach(c => {
+        c.classList.remove('open');
+        c.querySelector('.cat-head').setAttribute('aria-expanded', 'false');
+      });
+      if (!wasOpen) {
+        cat.classList.add('open');
+        head.setAttribute('aria-expanded', 'true');
+        const nm = head.querySelector('.cat-name');
+        speak(nm ? nm.textContent.replace(/[^가-힣0-9 ]/g, '').trim() : '');
+      }
+    });
+  });
 
   document.querySelectorAll('.app-card').forEach(card => {
     card.addEventListener('click', e => {
