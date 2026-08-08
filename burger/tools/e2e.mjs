@@ -167,6 +167,72 @@ await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침 검사)',
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+await check('낙서장: 손그림 아이콘이 이모지를 대신한다', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  // 홈·목록·놀이 어디에도 UI 이모지가 남아 있으면 안 된다 (재료 그림은 SVG라 무관, 펫은 공용)
+  const rx = '[\\u{2190}-\\u{27BF}\\u{2B00}-\\u{2BFF}\\u{1F300}-\\u{1FAFF}]';
+  const leftover = sel => page.evaluate(([s, r]) => {
+    const re = new RegExp(r, 'u'); const out = [];
+    document.querySelectorAll(s + ' *').forEach(el => {
+      if (el.children.length || el.offsetParent === null || el.closest('#pet-slot')) return;
+      const t = (el.textContent || '').trim();
+      if (t && re.test(t)) out.push(el.className + ':' + t.slice(0, 10));
+    });
+    return out;
+  }, [sel, rx]);
+  expect((await page.locator('#scr-home .dd-ic svg').count()) >= 3, '홈 손그림 아이콘 수');
+  expect((await leftover('#scr-home')).length === 0, '홈 이모지 잔재: ' + (await leftover('#scr-home')).join(','));
+  await page.click('.menu-card.c-l1');
+  await page.waitForSelector('#scr-missions.on');
+  expect((await leftover('#scr-missions')).length === 0, '목록 이모지 잔재');
+  expect(await page.locator('#missions-list .mission-card.next').count() === 1, '이번에 할 미션 표시는 하나');
+  await page.click('#missions-list .mission-card');
+  await page.waitForSelector('#scr-play.on');
+  expect((await leftover('#scr-play')).length === 0, '놀이 이모지 잔재');
+  expect(await page.locator('.rc-num svg').count() === 3, '차례 숫자 손그림');
+});
+
+await check('낙서장: 첫 화면만 기울고 쌓는 판은 반듯하다', async () => {
+  // 쌓는 판(놀이 화면)을 먼저 재고
+  const board = await page.evaluate(() => {
+    const tf = el => getComputedStyle(el).transform;
+    return [document.querySelector('#peg-wrap'), document.querySelector('#peg-stack'),
+            document.querySelector('#tray'), ...document.querySelectorAll('.tray-item')]
+      .map(tf).filter(t => t !== 'none');
+  });
+  // 첫 화면으로 돌아가 고르는 칸의 기울기를 잰다 (숨은 화면은 계산이 안 된다)
+  await page.click('#btn-play-back');
+  await page.waitForSelector('#scr-missions.on');
+  await page.click('#scr-missions .back');
+  await page.waitForSelector('#scr-home.on');
+  const m = await page.evaluate(([boardMoved]) => {
+    const tf = el => getComputedStyle(el).transform;
+    const menu = [...document.querySelectorAll('#menu .menu-card')].map(tf);
+    return { tilted: menu.filter(t => t !== 'none' && t !== 'matrix(1, 0, 0, 1, 0, 0)').length,
+             menuN: menu.length, boardMoved };
+  }, [board]);
+  expect(m.tilted === m.menuN, '고르는 칸이 기울지 않음: ' + m.tilted + '/' + m.menuN);
+  expect(m.boardMoved.length === 0, '쌓는 판에 변형이 걸림: ' + m.boardMoved.join(' | '));
+});
+
+await check('손가락 하한 44px (폰 세로)', async () => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const home = await page.evaluate(() => Math.min(...[...document.querySelectorAll('#menu .menu-card, #scr-home .vs-btn')]
+    .map(e => { const r = e.getBoundingClientRect(); return Math.min(r.width, r.height); }).filter(v => v > 0)));
+  expect(home >= 44, '홈 최소 터치 ' + Math.round(home));
+  await page.click('.menu-card.c-l3');
+  await page.waitForSelector('#scr-missions.on');
+  await page.click('#missions-list .mission-card');
+  await page.waitForSelector('#scr-play.on');
+  const play = await page.evaluate(() => Math.min(...[...document.querySelectorAll('#scr-play .tray-item, #scr-play .back, #scr-play .bigbtn')]
+    .map(e => { const r = e.getBoundingClientRect(); return Math.min(r.width, r.height); }).filter(v => v > 0)));
+  expect(play >= 44, '놀이 최소 터치 ' + Math.round(play));
+  await page.setViewportSize({ width: 1180, height: 820 });
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });

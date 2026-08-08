@@ -63,9 +63,20 @@
 .c-ask,
 .c-gallery { width: clamp(130px, 30vmin, 180px); --mci: clamp(34px,   7vmin, 48px); }
 
-/* 첫 칸은 이름도 한 뼘 크게 — 아이 눈이 여기부터 간다 */
+/* 이름 글씨도 같이 작아진다 — 위계가 두 배로 또렷해지고,
+   좁아진 칸에서 놀이 이름이 두 줄로 꺾이지 않는다 */
 .c-jaum .mc-name { font-size: clamp(21px, 4.4vmin, 31px); }
 .c-moum .mc-name { font-size: clamp(19px, 3.9vmin, 28px); }
+.c-song .mc-name,
+.c-tale .mc-name,
+.c-dict .mc-name { font-size: clamp(16px, 3.1vmin, 22px); }
+.c-draw .mc-name,
+.c-gallery .mc-name { font-size: clamp(15px, 2.9vmin, 19px); }
+/* 이름이 가장 긴 칸 — 한 줄에 들어가게 조금 더 좁혀 쓴다 */
+.c-ask .mc-name { font-size: clamp(14px, 2.7vmin, 17px); letter-spacing: -.02em; }
+.c-draw .mc-desc,
+.c-ask .mc-desc,
+.c-gallery .mc-desc { font-size: clamp(11px, 2vmin, 13px); }
 
 /* 가로 화면(패드 가로가 기본 사용 환경)은 세로 여유가 적다.
  * 위계는 지키되 한 뼘씩 줄여 **두 줄 안에** 열 칸이 다 들어오게 맞춘다
@@ -156,7 +167,8 @@ h1 .di, .bar h2 .di { margin-right: .22em; }
 /* 낙서장 도구 단추 — 아이콘 하나만 들어가는 칸이라 꽉 채운다 */
 .dock-btn .di,
 .pen-btn .di,
-.navbtn .di {
+.navbtn .di,
+.line-clear .di {
   width: 1em;
   height: 1em;
   vertical-align: -.14em;
@@ -220,3 +232,14 @@ h1 .di, .bar h2 .di { margin-right: .22em; }
    레이아웃에 영향이 없는 그림자만 종이 윤곽으로 바꾼다. */
 .note { box-shadow: 0 0 0 3px rgba(46, 42, 36, .8); }
 .line-clear { box-shadow: 0 0 0 2.5px rgba(46, 42, 36, .8); }
+.line-clear .di { width: 1.35em; height: 1.35em; } /* 단추 크기·자리는 그대로, 그림만 바뀐다 */
+
+/* 앞·뒤 장 넘김 단추 — 종이 위에 그린 동그라미 */
+.side-nav {
+  border: 3px solid rgba(46, 42, 36, .82);
+  box-shadow: none;
+  background-image: none;
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+}
+.side-nav.prev { background-color: #fff; }
+.side-nav:not(:disabled):active { box-shadow: none; }

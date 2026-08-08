@@ -705,12 +705,3 @@ h1 {
 .bar .back { order: 0; }
 .bar .mini-btn, .bar .page-count { order: 1; }
 .bar h2 { order: 2; text-align: left; }
-
-/* 좁은 폰에서 제목 끝이 오른쪽 위 '남은 시간' 쪽지에 닿는다 —
-   공용 집 단추가 잡아 준 104px 로는 쪽지 폭(약 160px)까지 못 비킨다.
-   머리 전체를 조금 더 왼쪽으로 밀어 준다.
-   (#scr-home 을 붙인 까닭 — home-button.js 가 <style> 을 나중에 끼워 넣어
-    같은 무게의 !important 끼리는 그쪽이 이긴다.) */
-@media (max-width: 460px) {
-  #scr-home .home-head { padding-right: 150px !important; }
-}

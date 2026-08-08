@@ -418,9 +418,9 @@ h1 {
 .item-main.next-up .it-emoji { font-size: clamp(34px, 6.6vmin, 52px); }
 .item-main.next-up .it-name { font-size: clamp(21px, 4.2vmin, 30px); }
 
-/* 남은 시간 알림표(공용 shared/time-limit.js)가 오른쪽 위에 붙박이로 뜨는데,
-   좁은 화면에서는 '0 / 7' 이 그 밑에 깔려 숫자가 안 보였다. 개수 표시를 왼쪽으로 비켜 준다. */
-.page-count { margin-right: clamp(68px, 8vw, 96px); }
+/* 오른쪽 위에는 공용 붙박이 둘(집 단추·남은시간 쪽지)이 떠 있다.
+   '0 / 7' 이 그 밑에 깔려 숫자가 안 보이던 것을 왼쪽으로 비켜 준다. */
+.page-count { margin-right: clamp(52px, 7vw, 92px); }
 
 /* ─────────── 손그림 아이콘 (js/doodle.js) ─────────── */
 .dood {

@@ -321,3 +321,132 @@ h1 {
   }
   * { transition: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 낙서장 마무리 — 「시안 3 · 낙서장」
+ *
+ * 1) 손그림 아이콘(.ic): index.html <defs> 의 <symbol> 을 글자 크기(em)에 맞춰 놓는다.
+ *    이모지가 있던 자리를 그대로 쓰므로 칸 크기를 다시 잡을 필요가 없다.
+ * 2) 첫 화면 크기 위계: 가장 먼저 할 「쉬운 주사위」가 제일 크고 3단계로 갈수록 작아진다.
+ *    제목에서 첫 놀이로 향하는 점선 화살표가 "여기부터" 를 알려 준다.
+ *    칸이 흩뿌려지는 것은 shared/doodle-menu.css 가 맡는다.
+ * 3) 굴린 주사위는 조금씩 기울어 놓인다 — 종이에 툭 던져 놓은 것처럼.
+ *    ⚠️ 기울기는 **누르는 단추(.die-btn) 자체**에 준다. 안쪽 그림만 돌리면
+ *    보이는 자리와 탭 판정 자리가 어긋난다. :active·반짝임·흔들림 애니메이션도
+ *    전부 rotate(var(--tilt)) 를 물고 가야 눌렀을 때 제자리로 튀지 않는다.
+ *    기울기는 최대 2.2°  — 칸 사이 여백(gap)보다 튀어나오지 않는 한도다.
+ * 4) 주사위에 그려진 동물 얼굴은 놀잇감이라 손대지 않는다. 여기서 바꾸는 건 틀뿐이다.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 손그림 아이콘 ── */
+.ic {
+  width: 1.15em; height: 1.15em;
+  display: inline-block; vertical-align: -.22em; flex: none;
+}
+h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -.2em; }
+.back .ic, .vs-btn .ic { width: 1.5em; height: 1.5em; vertical-align: middle; }
+.bigbtn .ic { width: 1.4em; height: 1.4em; }
+.mc-prog .ic { width: 1em; height: 1em; vertical-align: -.14em; }
+.die-check .ic { width: 1em; height: 1em; vertical-align: middle; }
+.rd-badge { line-height: 0; }
+.back { display: inline-flex; align-items: center; justify-content: center; }
+
+/* ── 첫 화면: 크기 위계 + 시작 화살표 ── */
+.menu { align-items: center; max-width: 1040px; }
+.start-arrow { /* 제목 밑에서 첫 놀이(쉬운 주사위)로 향하는 손그림 점선 화살표 */
+  width: clamp(52px, 10vmin, 92px);
+  aspect-ratio: 110 / 130;
+  flex: none; align-self: flex-start;
+  margin-top: clamp(-6px, -1vmin, 0px);
+  overflow: visible; pointer-events: none;
+}
+.c-l1 { width: clamp(190px, 36vmin, 290px); }
+.c-l2 { width: clamp(160px, 29vmin, 234px); }
+.c-l3 { width: clamp(138px, 25vmin, 196px); }
+.c-l1 .die.mini { width: clamp(76px, 16vmin, 116px); }
+.c-l2 .die.mini { width: clamp(60px, 12.5vmin, 92px); }
+.c-l3 .die.mini { width: clamp(50px, 10.5vmin, 76px); }
+.c-l1 .mc-name { font-size: clamp(21px, 4.2vmin, 30px); }
+.c-l3 .mc-name { font-size: clamp(16px, 3.2vmin, 22px); }
+.c-l3 .mc-desc { font-size: clamp(11px, 2.1vmin, 15px); }
+.mc-prog { background: none; padding: 2px 4px; } /* 알약을 걷고 연필로 적어 둔 것처럼 */
+
+/* ── 주사위 알: 두툼한 단면·광택을 걷고 손으로 그은 네모만 ── */
+.die {
+  background: #fff;
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 26% 21% 27% 22%;
+  box-shadow: none;
+}
+.die.tiny { border-width: 2.5px; }
+.die.cover .ic-pips { width: 62%; height: 62%; }
+.die-btn.found .die {
+  border-color: #3E9B5B; background: #F0FAF1; box-shadow: none;
+}
+
+/* ── 굴린 주사위를 조금씩 기울여 놓는다 (탭 판정 영역까지 같이 기운다) ── */
+.die-btn { --tilt: 0deg; transform: rotate(var(--tilt)); animation-name: die-in; }
+.dice-grid .die-btn:nth-child(6n+1) { --tilt: -2.2deg; }
+.dice-grid .die-btn:nth-child(6n+2) { --tilt:  1.7deg; }
+.dice-grid .die-btn:nth-child(6n+3) { --tilt: -1.1deg; }
+.dice-grid .die-btn:nth-child(6n+4) { --tilt:  2.2deg; }
+.dice-grid .die-btn:nth-child(6n+5) { --tilt: -1.8deg; }
+.dice-grid .die-btn:nth-child(6n+6) { --tilt:  1.2deg; }
+.die-btn:active { transform: rotate(var(--tilt)) scale(.94); }
+@keyframes die-in {
+  from { opacity: 0; transform: translateY(14px) rotate(var(--tilt)); }
+  to   { opacity: 1; transform: translateY(0)    rotate(var(--tilt)); }
+}
+@keyframes sparkle {
+  0%   { transform: rotate(var(--tilt)) scale(1); }
+  40%  { transform: rotate(var(--tilt)) scale(1.16); }
+  100% { transform: rotate(var(--tilt)) scale(1); }
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0)    rotate(var(--tilt)); }
+  20%     { transform: translateX(-7px) rotate(calc(var(--tilt) - 4deg)); }
+  40%     { transform: translateX(7px)  rotate(calc(var(--tilt) + 4deg)); }
+  60%     { transform: translateX(-5px) rotate(calc(var(--tilt) - 3deg)); }
+  80%     { transform: translateX(5px)  rotate(calc(var(--tilt) + 3deg)); }
+}
+
+/* ── 라운드 목록: 손으로 붙인 딱지처럼 살짝 삐뚤게 ── */
+.round-card { --tilt: 0deg; transform: rotate(var(--tilt)); }
+.rounds-list .round-card:nth-child(4n+1) { --tilt: -1.4deg; }
+.rounds-list .round-card:nth-child(4n+2) { --tilt:  1.2deg; }
+.rounds-list .round-card:nth-child(4n+3) { --tilt:  1.5deg; }
+.rounds-list .round-card:nth-child(4n+4) { --tilt: -1.1deg; }
+.rd-no {
+  width: 28px; height: 28px;
+  background: #fff; color: var(--ink, #2E2A24);
+  border: 2.5px solid rgba(46, 42, 36, .85);
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+  box-shadow: none;
+}
+.round-card.done .rd-no { background: #C6EBC6; color: var(--ink, #2E2A24); }
+
+/* ── 놀이 화면: 단면 그림자·광택을 걷고 손그림 윤곽만 ── */
+.find-card {
+  background: rgba(255, 255, 255, .72);
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 26px 21px 27px 22px;
+  box-shadow: none;
+  transform: rotate(-.8deg);
+}
+.page-count {
+  background: #fff;
+  border: 2.5px solid rgba(46, 42, 36, .8);
+  border-radius: 20px 16px 21px 17px;
+  color: var(--ink, #2E2A24);
+}
+.bigbtn {
+  background: rgba(255, 255, 255, .9);
+  color: var(--ink, #2E2A24);
+  display: inline-flex; align-items: center; justify-content: center; gap: .35em;
+}
+.bigbtn.primary { background: #8BD79B; color: #22432C; }
+.reward-face .ic-reward { width: 100%; height: auto; aspect-ratio: 1; vertical-align: middle; }
+
+@media (prefers-reduced-motion: reduce) {
+  .find-card, .round-card, .die-btn { transform: none !important; }
+}

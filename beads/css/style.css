@@ -479,10 +479,7 @@ h1 { display: flex; align-items: center; justify-content: center; gap: .18em; }
    제목을 왼쪽에 붙여 공책에 적어 둔 머리말처럼 둔다. */
 @media (max-width: 520px) {
   .bar { gap: 6px; }
-  /* 오른쪽 위(집 단추·남은 시간 쪽지)는 공용이라 폭이 고정이다. 좁은 폰에서는
-     제목을 아랫줄로 내려보내 어떤 폰 폭에서도 겹치지 않게 한다. */
-  .bar { flex-wrap: wrap; row-gap: 0; }
-  .bar h2 { flex: 1 0 100%; order: 1; font-size: 17px; }
+  .bar h2 { font-size: 18px; }
   /* 듣기는 나팔 그림만 남긴다 — 글자를 못 읽는 나이라 그림이 더 잘 통하고, 자리도 넓어진다 */
   #btn-listen .btn-label { display: none; }
   #btn-listen { width: 46px; height: 46px; padding: 0; border-radius: 22px 17px 24px 19px; }

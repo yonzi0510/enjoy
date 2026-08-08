@@ -73,6 +73,15 @@ b { font-weight: 900; }
   display: flex; align-items: center; justify-content: space-between;
   padding-bottom: 6px; padding-left: 16px; gap: 10px; flex: 0 0 auto;
 }
+/* 넓은 화면(701px 이상)에서는 남은시간 쪽지가 집 단추 '왼쪽'에 선다.
+   바 오른쪽 끝의 🏠 와 겹치므로 쪽지 폭만큼 더 비운다. */
+@media (min-width: 701px) {
+  .top-bar { padding-right: calc(clamp(60px, 8.6vw, 80px) + 110px + env(safe-area-inset-right, 0px)); }
+}
+/* 폰(700px 미만)에서는 쪽지가 집 단추 '아래'로 내려온다 — 목록 첫 칸이 그 밑에서 시작하게 */
+@media (max-width: 700px) {
+  .lesson-list { padding-top: 26px; }
+}
 .app-title {
   font-size: clamp(19px, 4vmin, 30px); font-weight: 900; color: #4A3F8C;
   text-shadow: none; text-align: center; letter-spacing: -.03em;
