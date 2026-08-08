@@ -165,10 +165,10 @@ h1 {
   transition: transform .12s, box-shadow .12s;
 }
 .bigbtn.small { flex: none; padding: 8px 14px; font-size: clamp(13px, 2.6vmin, 18px); }
-/* 오른쪽 위는 🏠 집 단추와 ⏳ 남은 시간 쪽지가 이미 차지하고 있다.
-   좁은 화면에서는 바의 오른쪽 것(진행 표기·듣기)을 그 아래로 내려 겹치지 않게 한다. */
+/* 오른쪽 위는 공용 집 단추와 남은 시간 쪽지가 이미 차지하고 있다.
    바(최대 1080px)는 가운데 정렬이고 쪽지는 화면 오른쪽 끝에 붙으므로,
-   화면이 1420px보다 좁으면 쪽지가 바 안쪽까지 들어온다. 그 구간에서만 내린다. */
+   화면이 1420px보다 좁으면 쪽지가 바 안쪽까지 들어와 겹친다.
+   그 구간에서만 바의 오른쪽 것(진행 표기·듣기)을 쪽지 아래로 내린다. */
 @media (max-width: 1420px) {
   .bar .page-count, .bar .bigbtn.small { margin-top: 26px; }
 }

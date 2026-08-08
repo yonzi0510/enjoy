@@ -17,18 +17,18 @@
   overflow: visible;          /* 떨린 획이 테두리에서 잘리지 않게 */
   flex: none;
 }
-h1 .kk-ico { width: 1.05em; height: 1.05em; }
+h1 .kk-ico { width: 1.15em; height: 1.15em; vertical-align: -.22em; }
 .vs-btn .kk-ico { width: 1.25em; height: 1.25em; vertical-align: -.28em; }
 /* 뒤로 단추는 글자가 없어졌으니 동그라미 안에서 비율로 크기를 잡는다 */
 .back { display: grid; place-items: center; padding: 0; }
 .back .kk-ico { width: 62%; height: 62%; vertical-align: 0; }
 .bigbtn .kk-ico { vertical-align: -.2em; margin-right: .1em; }
-.reward-burger .kk-ico { width: 1em; height: 1em; }
+.reward-burger .kk-ico { width: 1.2em; height: 1.2em; }
 .ms-badge .kk-ico { width: 1.35em; height: 1.35em; }
 .rc-mark .kk-ico { width: 1.25em; height: 1.25em; }
 .mc-prog .kk-ico { width: 1.15em; height: 1.15em; vertical-align: -.22em; }
 .stat .kk-ico { width: 1.15em; height: 1.15em; vertical-align: -.2em; }
-.recipe-cap .kk-ico { width: 1.3em; height: 1.3em; vertical-align: -.3em; }
+.recipe-cap .kk-ico { width: 1.7em; height: 1.7em; vertical-align: -.5em; }
 
 /* ─────────── 1) 단계 고르기 — 낙서장 배치 + 크기 위계 ───────────
  * 흩뿌리기(기울기·자리)는 shared/doodle-menu.css 가 맡는다. 여기서는 크기만 손본다.
@@ -79,10 +79,8 @@ h1 .kk-ico { width: 1.05em; height: 1.05em; }
 /* 완성한 미션은 살짝 뒤로 물러난다 — 남은 것이 먼저 눈에 들어오게 */
 .mission-card.done { opacity: .82; }
 
-/* ─────────── 3) 남은 광택 걷어내기 ───────────
- * 낙서장 층은 "두툼한 색 단면 + 반질반질한 채움"을 걷는 것이 핵심인데,
- * 이 앱에만 있는 부품들(작은 알약·트레이 알·미션 카드 판)이 아직 남아 있었다. */
-/* 상단 바의 오른쪽 끝은 집 단추와 '남은 시간' 쪽지가 이미 차지하고 있다.
+/* ─────────── 3) 상단 바 자리 정리 ───────────
+ * 상단 바의 오른쪽 끝은 집 단추와 '남은 시간' 쪽지가 이미 차지하고 있다.
    거기 두던 진행 표시(0/10)·듣기 단추를 뒤로가기 옆으로 옮겨 겹침을 없앤다.
    (세로로 밀어 내리면 폰 가로에서 트레이가 화면 밖으로 나간다) */
 .bar .back { order: -2; }
@@ -105,6 +103,9 @@ h1 .kk-ico { width: 1.05em; height: 1.05em; }
 }
 .rc-row.next .rc-num i { border-width: 3.5px; background: #FFF7E0; }
 
+/* ─────────── 4) 남은 광택 걷어내기 ───────────
+ * 낙서장 층은 "두툼한 색 단면 + 반질반질한 채움"을 걷는 것이 핵심인데,
+ * 이 앱에만 있는 부품들(작은 알약·트레이 알·미션 카드 판)이 아직 남아 있었다. */
 .mc-prog, .page-count {
   background: rgba(255,255,255,.6);
   box-shadow: none;

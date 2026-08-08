@@ -60,9 +60,13 @@ b { font-weight: 900; }
 .screen.active { display: flex; }
 
 /* ─────────── 상단 바 ─────────── */
+/* 오른쪽 위는 공용 집 단추(shared/home-button.js)가 고정으로 차지한다.
+   그 앱은 `.bar`·`.home-head` 만 밀어 주는데 이 앱의 바는 이름이 달라 안 걸린다.
+   그래서 여기서 직접 자리를 비워 둔다 — 안 비우면 앱의 🏠 가 그 밑에 깔린다. */
+.stat-bar, .top-bar { padding-right: calc(clamp(60px, 8.6vw, 80px) + 34px + env(safe-area-inset-right, 0px)); }
 .top-bar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px 6px; gap: 10px; flex: 0 0 auto;
+  padding-top: 12px; padding-bottom: 6px; padding-left: 16px; gap: 10px; flex: 0 0 auto;
 }
 .app-title {
   font-size: clamp(19px, 4vmin, 30px); font-weight: 900; color: #4A3F8C;
@@ -82,7 +86,16 @@ b { font-weight: 900; }
 .round-btn:active { transform: translate(2px, 3px); }
 
 /* ─────────── 게임화 스탯 바 ─────────── */
-.stat-bar { display: flex; justify-content: center; gap: 12px; padding: 12px 16px 4px; flex: 0 0 auto; }
+.stat-bar {
+  display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+  padding-top: 12px; padding-bottom: 4px; padding-left: 16px; flex: 0 0 auto;
+}
+/* 공용 단추(목소리·펫)는 42px 이라 다섯 살 손가락에 작다 — 이 앱에서는 48px 이상으로 */
+.stat-bar .vs-btn, .stat-bar .pet-btn {
+  width: clamp(48px, 8vmin, 58px); height: clamp(48px, 8vmin, 58px);
+  font-size: clamp(21px, 3.8vmin, 27px);
+}
+.stat-bar .vs-btn [data-ico] { font-size: 1.25em; }
 .stat {
   display: flex; align-items: center; gap: 6px;
   background: var(--sheet);
@@ -140,7 +153,8 @@ b { font-weight: 900; }
   background: var(--sheet); color: #4A3F8C;
   border: var(--line) solid var(--ink);
   border-radius: 20px 15px 21px 16px;
-  padding: 6px 14px; font-size: clamp(13px, 3vmin, 17px); font-weight: 900;
+  padding: 8px 15px; min-height: 46px;   /* 다섯 살 손가락 — 44px 아래로 내려가지 않게 */
+  font-size: clamp(13px, 3vmin, 17px); font-weight: 900;
   box-shadow: none;
   transition: transform .12s;
   animation: card-fade .35s ease-out backwards;
@@ -320,7 +334,8 @@ b { font-weight: 900; }
 .hint-btn {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: clamp(13px, 2.8vmin, 16px); font-weight: 800; color: #4A3F8C;
-  text-decoration: underline wavy; text-underline-offset: 4px; padding: 6px 8px;
+  text-decoration: underline wavy; text-underline-offset: 4px;
+  padding: 8px 12px; min-height: 46px;   /* 손가락으로 누르는 것이라 44px 아래로 안 내려가게 */
 }
 .hint-btn [data-ico] { font-size: 1.6em; }
 .user-model {
@@ -476,6 +491,7 @@ b { font-weight: 900; }
   .track-list {
     display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: clamp(13px, 2vmin, 22px); align-content: start;
+    padding: 4px 10px 6px;   /* 가로 화면은 세로가 빠듯하다 — 위아래 여백을 줄인다 */
   }
 
   /* ── 코스맵: 레슨 카드를 2열로 ── */

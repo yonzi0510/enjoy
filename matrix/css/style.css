@@ -366,6 +366,8 @@ h1 {
 /* ── 1) 첫 화면 흩뿌리기 ─────────────────────────────────────────── */
 .menu {
   align-items: center;
+  align-content: center;   /* 남는 세로 공간 한가운데에 종이처럼 놓이게 */
+  flex: 1;
   gap: clamp(16px, 3vmin, 32px);
   padding: clamp(8px, 1.6vh, 20px) clamp(4px, 1.2vw, 16px);
 }
@@ -402,6 +404,12 @@ h1 {
 /* 머리의 동그란 단추 — 폰 세로에서 42px 까지 줄어 손가락 하한(44px)을 밑돌았다.
    (공용 voice-settings.css 의 `.vs-btn` 보다 구체적이어야 이긴다) */
 .stats .vs-btn { width: clamp(46px, 8vmin, 52px); height: clamp(46px, 8vmin, 52px); }
+
+/* 머리줄을 한 칸 내린다 — 오른쪽 위의 '남은 시간' 쪽지(공용 .tl-bar-tag, 아래 32px 까지 차지)와
+   제목·듣기 단추가 겹치던 것을 푼다. 놀이 화면은 격자 위 여백만 줄어들 뿐
+   격자·트레이 자리는 그대로다(트레이는 아래에 붙어 있다). */
+.home-head { margin-top: max(2vmin, 26px); }
+.bar { margin-top: 22px; }
 
 /* ── 3) 손그림 아이콘 자리 ───────────────────────────────────────── */
 .ic {

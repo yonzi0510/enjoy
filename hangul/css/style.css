@@ -691,4 +691,17 @@ h1 {
    (집 단추가 오른쪽 104px 를 차지한다 — shared/home-button.js) */
 @media (max-width: 460px) {
   #scr-home h1 { font-size: clamp(21px, 5.4vmin, 30px); }
+  /* 집 단추가 오른쪽 104px 을 가져가 머리줄이 좁다. 점수 칸도 같이 조여
+     한 줄로 들어가게 한다 — 두 줄이 되면 화살표가 지날 자리가 없어진다 */
+  #scr-home .stats { gap: 8px; }
+  #scr-home .stats .stat { padding: 6px 11px; }
+}
+
+/* 세로가 짧은 폰(구형 4.7인치 등): 여백만 조여 스크롤 없이 다섯 칸이 다 보이게 한다.
+   크기 위계는 그대로 둔다 — 줄일 것은 빈 곳이지 그림이 아니다. */
+@media (orientation: portrait) and (max-height: 700px) {
+  #scr-home .home-head { margin-top: clamp(22px, 4vmin, 30px); }
+  #scr-home .menu { margin-top: clamp(20px, 4vmin, 28px); }
+  #scr-home .menu-card { padding: clamp(10px, 2.2vmin, 18px); }
+  #scr-home .m-learn .mc-emoji { font-size: clamp(58px, 13vmin, 92px); }
 }

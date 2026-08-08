@@ -361,7 +361,10 @@ h1 .ico { width: 1.1em; height: 1.1em; }
 .bar h2 .ico { width: 1.15em; height: 1.15em; }
 .pz-badge .ico { width: 1.5em; height: 1.5em; vertical-align: -.3em; }
 .card-cap .ico { width: 1.5em; height: 1.5em; vertical-align: -.36em; }
-.reward-icon .ico { width: 1em; height: 1em; vertical-align: middle; }
+.reward-icon .ico { width: 1.3em; height: 1.3em; vertical-align: middle; }
+/* 파란 단추 위에서는 화살표를 흰 크레용으로 */
+#reward-next .ico { width: 1.1em; height: 1.1em; vertical-align: -.2em; }
+#reward-next .ico svg g { stroke: #FFFFFF; }
 /* 동그란 단추 안에서는 가운데로 */
 .back { display: inline-flex; align-items: center; justify-content: center; }
 .back .ico { width: 1.5em; height: 1.5em; vertical-align: 0; }

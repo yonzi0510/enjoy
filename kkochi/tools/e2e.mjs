@@ -197,6 +197,107 @@ await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침 검사)',
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+/* ─── 낙서장 디자인 검사 ─── */
+// 화면 틀(제목·단추·표시)에는 이모지를 쓰지 않는다 — js/icons.js 의 손그림 SVG 로만.
+// (펫·프로필 배지·남은 시간 쪽지는 shared/ 공용 부품이라 검사 대상이 아니다)
+const NO_EMOJI = `(sel) => {
+  const RE = /[\\u{1F300}-\\u{1FAFF}\\u{2190}-\\u{27BF}\\u{2B00}-\\u{2BFF}]/u;
+  const hit = [];
+  sel.forEach(s => document.querySelectorAll(s).forEach(el => {
+    const t = (el.textContent || '').trim();
+    if (RE.test(t)) hit.push(s + ' → ' + t.slice(0, 24));
+  }));
+  return hit;
+}`;
+
+await check('첫 화면: 낙서장 배치(칸마다 다른 기울기) + 크기 위계 + 겹침 없음', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  await page.waitForTimeout(200);
+  const d = await page.evaluate(() => {
+    const cards = Array.from(document.querySelectorAll('#menu .menu-card'));
+    const tf = cards.map(c => getComputedStyle(c).transform);
+    const r = cards.map(c => c.getBoundingClientRect());
+    let over = 0;
+    for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) {
+      const ox = Math.min(r[i].right, r[j].right) - Math.max(r[i].left, r[j].left);
+      const oy = Math.min(r[i].bottom, r[j].bottom) - Math.max(r[i].top, r[j].top);
+      if (ox > 1 && oy > 1) over++;
+    }
+    return {
+      tf, over, w: r.map(x => Math.round(x.width)),
+      outside: r.filter(x => x.left < -1 || x.right > innerWidth + 1).length,
+      hscroll: document.documentElement.scrollWidth - innerWidth,
+    };
+  });
+  expect(d.tf.every(t => t && t !== 'none'), '흩뿌리기(transform)가 없다: ' + d.tf.join(' | '));
+  expect(new Set(d.tf).size === d.tf.length, '칸마다 기울기가 달라야 한다');
+  expect(d.w[0] > d.w[1] && d.w[1] > d.w[2], '크기 위계(1단계가 가장 크게): ' + d.w.join('>'));
+  expect(d.over === 0, '단계 카드가 서로 겹친다');
+  expect(d.outside === 0 && d.hscroll <= 1, '단계 카드가 화면 밖으로 나감');
+});
+
+await check('손그림 아이콘: 홈·미션 목록의 화면 틀에 이모지가 없다', async () => {
+  const homeHit = await page.evaluate(NO_EMOJI + '(["\.home-head h1", "\.stat", "#menu"])');
+  expect(homeHit.length === 0, '홈에 이모지: ' + homeHit.join(', '));
+  const icons = await page.locator('#scr-home svg.kk-ico').count();
+  expect(icons >= 3, '홈 손그림 아이콘 수: ' + icons);
+  expect(await page.locator('[data-ico]:empty').count() === 0, '채워지지 않은 data-ico 자리가 있다');
+
+  await page.click('.menu-card.c-l1');
+  await page.waitForSelector('#scr-missions.on');
+  await page.waitForTimeout(150);
+  const missHit = await page.evaluate(NO_EMOJI + '(["#scr-missions .bar", "#missions-list"])');
+  expect(missHit.length === 0, '미션 목록에 이모지: ' + missHit.join(', '));
+  expect(await page.locator('#missions-list .mission-card.next').count() === 1,
+    '다음에 할 미션(크게 그릴 칸)은 딱 하나여야 한다');
+  // 상단 바가 '남은 시간' 쪽지와 겹치지 않는다
+  const bar = await page.evaluate(() => {
+    const g = document.createRange(); g.selectNodeContents(document.querySelector('#missions-title'));
+    const t = g.getBoundingClientRect();
+    const tag = document.querySelector('.tl-bar-tag');
+    const c = document.querySelector('#missions-count').getBoundingClientRect();
+    if (!tag) return 0;
+    const q = tag.getBoundingClientRect();
+    const ov = a => Math.min(a.right, q.right) - Math.max(a.left, q.left) > 2 &&
+                    Math.min(a.bottom, q.bottom) - Math.max(a.top, q.top) > 2;
+    return (ov(t) ? 1 : 0) + (ov(c) ? 2 : 0);
+  });
+  expect(bar === 0, '상단 바가 남은 시간 쪽지와 겹친다(코드 ' + bar + ')');
+});
+
+await check('놀이판 무변형: 꿰는 판에는 회전·확대가 없다(좌표 판정 보호)', async () => {
+  await page.click('#missions-list .mission-card');
+  await page.waitForSelector('#scr-play.on');
+  await page.waitForTimeout(200);
+  const d = await page.evaluate(() => {
+    const tf = el => getComputedStyle(el).transform;
+    return {
+      peg: tf(document.querySelector('#peg-wrap')),
+      stack: tf(document.querySelector('#peg-stack')),
+      tray: tf(document.querySelector('#tray')),
+      items: [...new Set(Array.from(document.querySelectorAll('.tray-item')).map(tf))],
+      stage: tf(document.querySelector('#play-stage')),
+    };
+  });
+  expect(d.peg === 'none' && d.stack === 'none', '꼬치 스틱에 변형이 걸림: ' + d.peg + ' / ' + d.stack);
+  expect(d.tray === 'none' && d.stage === 'none', '트레이·스테이지에 변형이 걸림');
+  expect(d.items.every(t => t === 'none'), '트레이 재료에 변형이 걸림: ' + d.items.join(' | '));
+});
+
+await check('손그림 아이콘: 놀이·보상 화면의 화면 틀에 이모지가 없다', async () => {
+  const playHit = await page.evaluate(NO_EMOJI + '(["#scr-play .bar", "\.recipe-cap", "\.rc-num", "\.rc-mark"])');
+  expect(playHit.length === 0, '놀이 화면에 이모지: ' + playHit.join(', '));
+  expect(await page.locator('.rc-mark svg.kk-ico').count() >= 1, '다음 차례 표시(손그림)가 없다');
+  await skewerAll(page);
+  await page.waitForSelector('#reward.on', { timeout: 5000 });
+  const rwHit = await page.evaluate(NO_EMOJI + '([".reward-card"])');
+  expect(rwHit.length === 0, '보상 화면에 이모지: ' + rwHit.join(', '));
+  expect(await page.locator('#reward-burger svg.kk-ico').count() === 1, '보상 그림이 손그림 SVG 가 아니다');
+  await page.click('#reward-close');
+  await page.waitForSelector('#scr-missions.on');
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });

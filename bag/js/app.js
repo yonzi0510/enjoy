@@ -127,7 +127,7 @@ window.App = (() => {
   let curMode = null;
   function openList(m) {
     curMode = m;
-    $('list-title').textContent = m.icon + ' ' + m.name;
+    $('list-title').innerHTML = doodle(m.sym) + ' ' + m.name;
     const list = $('play-list');
     list.innerHTML = '';
     m.list().forEach(pz => {
@@ -648,7 +648,7 @@ window.App = (() => {
   function openBalloonLevels() {
     bcur = null;
     curMode = null;
-    $('list-title').textContent = D.balloons.icon + ' ' + D.balloons.name;
+    $('list-title').innerHTML = doodle('bg-balloon') + ' ' + D.balloons.name;
     const list = $('play-list');
     list.innerHTML = '';
     D.balloons.levels.forEach(lv => {

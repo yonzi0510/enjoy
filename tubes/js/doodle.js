@@ -67,15 +67,18 @@ window.Doodle = (() => {
       '<circle cx="39" cy="52" r="4.6" fill="' + INK + '" stroke="none"/>' +
       '<circle cx="62" cy="51" r="4.6" fill="' + INK + '" stroke="none"/></g>'),
 
-    // 축하 — 시험관에 반짝이
+    // 축하 — 색을 다 담은 시험관
     reward: svg('<g ' + F + ' stroke="' + INK + '" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M35 22 L35 68 Q35 86 50 86 Q65 86 65 68 L65 22" fill="#F0F6FE"/>' +
-      '<circle cx="50" cy="74" r="10" fill="#E24B3B" stroke-width="5"/>' +
-      '<circle cx="50" cy="55" r="10" fill="#F6C744" stroke-width="5"/>' +
-      '<circle cx="50" cy="36" r="10" fill="#4C86D6" stroke-width="5"/>' +
-      '<path d="M26 20 L76 19" fill="none"/>' +
-      '<path d="M13 30 L13 46 M5 38 L21 38" fill="none" stroke-width="6"/>' +
-      '<path d="M88 46 L88 62 M80 54 L96 54" fill="none" stroke-width="6"/></g>'),
+      '<path d="M27 16 L27 66 Q27 88 50 88 Q73 88 73 66 L73 15" fill="#F0F6FE"/>' +
+      '<circle cx="50" cy="73" r="11.5" fill="#E24B3B" stroke-width="5"/>' +
+      '<circle cx="50" cy="50" r="11.5" fill="#F6C744" stroke-width="5"/>' +
+      '<circle cx="50" cy="30" r="11.5" fill="#4C86D6" stroke-width="5"/>' +
+      '<path d="M16 15 L84 14" fill="none"/></g>'),
+
+    // 다음으로 — 오른쪽 화살표
+    fwd: svg('<g ' + F + ' fill="none" stroke="' + INK +
+      '" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M37 15 L71 50 L37 85"/></g>'),
   };
 
   ICONS.tube1 = tube(1);

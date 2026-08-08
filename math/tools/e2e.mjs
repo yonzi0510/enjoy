@@ -637,7 +637,14 @@ await check('첫 화면: 네 화면 모두 스크롤 없이 11칸 · 겹침 없�
       const hb = document.querySelector('.enjoy-home-btn').getBoundingClientRect();
       const underHome = rects.filter(q =>
         Math.min(hb.right, q.r) - Math.max(hb.left, q.x) > 1 && Math.min(hb.bottom, q.b) - Math.max(hb.top, q.y) > 1).map(q => q.n);
-      return {
+      // 왼쪽 아래 고정된 아이 이름표가 카드 글씨를 덮지 않아야 한다
+      const badge = document.querySelector('.enjoy-profile-badge');
+      const bg = badge && badge.getBoundingClientRect();
+      const underBadge = !bg ? [] : [...document.querySelectorAll('#menu .mc-name, #menu .mc-prog')].filter(t => {
+        const q = t.getBoundingClientRect();
+        return Math.min(bg.right, q.right) - Math.max(bg.left, q.left) > 1 && Math.min(bg.bottom, q.bottom) - Math.max(bg.top, q.top) > 1;
+      }).map(t => t.textContent);
+      return { underBadge,
         count: rects.length,
         overflowY: scr.scrollHeight - scr.clientHeight,
         overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -653,6 +660,7 @@ await check('첫 화면: 네 화면 모두 스크롤 없이 11칸 · 겹침 없�
     expect(m.overflowX === 0, name + ': 가로 스크롤 ' + m.overflowX + 'px');
     expect(m.overlaps.length === 0, name + ': 카드 겹침 ' + m.overlaps.join(', '));
     expect(m.underHome.length === 0, name + ': 집 단추에 가린 카드 ' + m.underHome.join(', '));
+    expect(m.underBadge.length === 0, name + ': 이름표에 가린 글씨 ' + m.underBadge.join(', '));
     expect(m.tooSmall.length === 0, name + ': 터치 하한 44px 미달 ' + m.tooSmall.join(', '));
     expect(m.offscreen.length === 0, name + ': 화면 밖 ' + m.offscreen.join(', '));
     expect(m.arts === 11, name + ': 손그림 아이콘 ' + m.arts + ' / 11');

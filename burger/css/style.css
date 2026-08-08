@@ -432,3 +432,14 @@ h1 .dd-title { width: 1.25em; height: 1.25em; vertical-align: -.24em; }
 /* ── ④ 손가락 하한 44px — 작은 단추들이 폰에서 아슬아슬했다 ─────────── */
 .vs-btn, .back { min-width: 46px; min-height: 46px; }
 .bigbtn.small { min-height: 44px; }
+
+/* ── ⑤ 공용 「남은 시간」 알림표와 겹치지 않게 ─────────────────────────
+ * 알림표(../shared/time-limit.js)는 오른쪽 위에 고정으로 떠 있는데,
+ * 집 단추가 비워 주는 자리(104px)보다 조금 더 왼쪽까지 온다.
+ * 세로가 넉넉한 화면(홈·미션 목록)에서만 비켜 준다 — 놀이 화면은 세로가 빠듯해
+ * 줄을 늘리면 트레이가 잘린다. */
+.home-head { padding-right: 124px !important; }
+#scr-missions .bar { padding-top: 22px; }
+/* 듣기 단추는 왼쪽(뒤로 옆)으로 — 알림표 자리를 아예 비운다 */
+#scr-play .back { order: -2; }
+#scr-play #btn-listen { order: -1; }

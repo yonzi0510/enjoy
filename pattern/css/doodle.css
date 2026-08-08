@@ -76,7 +76,12 @@ h1 { display: flex; }
   gap: clamp(22px, 3.4vmin, 38px);
   padding: clamp(8px, 1.6vh, 20px) clamp(6px, 1.4vw, 18px);
   align-items: flex-start;   /* 키를 억지로 맞추지 않는다 — 밑줄이 들쭉날쭉해야 낙서장 */
+  /* 남는 세로 공간을 위아래로 나눠 가운데에 놓는다 — 종이 한복판에 그린 것처럼,
+     그리고 다섯 살 손가락이 닿기 좋은 높이로. 자리가 모자라면 저절로 0 이 된다. */
+  margin-block: auto;
 }
+/* 이름·설명이 낱말 가운데서 끊기지 않게 (한국어는 띄어쓰기에서만 끊는다) */
+.mc-name, .mc-desc { word-break: keep-all; overflow-wrap: break-word; }
 
 /* 칸마다 다른 손버릇 — 자리도 기울기도 다 다르게 */
 .menu > .menu-card:nth-child(1) { transform: translate(-2%,  3%) rotate(-2.4deg); }

@@ -59,6 +59,13 @@ window.PatternIcons = (() => {
       '<path d="M21 50 H74" stroke-width="9"/>' +
       '<path d="M53 26 L79 50 L53 74" stroke-width="9"/>',
 
+    /* 집 — 놀이터 홈으로. 평소엔 공용 집 단추(shared/home-button.js)가 가려 주지만,
+       그 스크립트가 못 뜬 기기에서는 이 그림이 대신 보인다 */
+    home:
+      '<path d="M11 51 L50 14 L89 51" stroke-width="8"/>' +
+      '<path d="M22 46 L23 84 L78 83 L77 45" stroke-width="8"/>' +
+      '<path d="M41 84 L40 60 L60 59 L61 83" fill="#F6C453" stroke-width="6"/>',
+
     /* 축하 — 고깔에서 색종이가 터진다 */
     party:
       '<path d="M11 89 L43 33 L71 59 Z" fill="#FF8FA3" stroke-width="7"/>' +
