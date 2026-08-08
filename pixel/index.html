@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="../shared/time-limit.css">
 <link rel="stylesheet" href="../shared/pet.css">
 <link rel="stylesheet" href="../shared/crayon.css">
+<link rel="stylesheet" href="css/doodle.css">
 </head>
 <body>
 
@@ -26,9 +27,9 @@
     <div class="header-btns">
       <a href="../" class="round-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
       <span id="pet-slot"></span>
-      <button id="btn-voice" class="round-btn" aria-label="목소리 설정">🗣️</button>
-      <button id="btn-works" class="round-btn" aria-label="내 작품">🖼️</button>
-      <button id="btn-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
+      <button id="btn-voice" class="round-btn" aria-label="목소리 설정"><span class="ic" data-ic="voice"></span></button>
+      <button id="btn-works" class="round-btn" aria-label="내 작품"><span class="ic" data-ic="works"></span></button>
+      <button id="btn-mute" class="round-btn" aria-label="소리 켜기/끄기"><span class="ic" data-ic="sound"></span></button>
     </div>
   </header>
   <div id="cat-chips" class="cat-chips"><!-- 엔진이 카테고리 칩 생성 --></div>
@@ -38,11 +39,11 @@
 <!-- ═══════════ 채색 화면 ═══════════ -->
 <div id="screen-paint" class="screen">
   <header class="game-header">
-    <button id="paint-back" class="round-btn" aria-label="뒤로가기">🏠</button>
+    <button id="paint-back" class="round-btn" aria-label="그림 고르기로"><span class="ic" data-ic="gallery"></span></button>
     <div id="paint-title" class="game-title"></div>
     <div class="header-btns">
-      <button id="paint-fit" class="round-btn" aria-label="전체 보기">⛶</button>
-      <button id="paint-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
+      <button id="paint-fit" class="round-btn" aria-label="전체 보기"><span class="ic" data-ic="fit"></span></button>
+      <button id="paint-mute" class="round-btn" aria-label="소리 켜기/끄기"><span class="ic" data-ic="sound"></span></button>
     </div>
   </header>
 
@@ -55,13 +56,13 @@
     <div id="progress-label" class="progress-label"></div>
     <div class="palette-row">
       <div class="booster-bar">
-        <button id="btn-bomb" class="booster-btn" aria-label="폭탄">💣<span id="bomb-count" class="booster-count"></span></button>
-        <button id="btn-wand" class="booster-btn" aria-label="마법봉">🪄<span id="wand-count" class="booster-count"></span></button>
+        <button id="btn-bomb" class="booster-btn" aria-label="폭탄"><span class="ic" data-ic="bomb"></span><span id="bomb-count" class="booster-count"></span></button>
+        <button id="btn-wand" class="booster-btn" aria-label="마법봉"><span class="ic" data-ic="wand"></span><span id="wand-count" class="booster-count"></span></button>
       </div>
       <div id="palette-bar" class="palette-bar"><!-- 엔진이 팔레트 버튼 생성 --></div>
     </div>
     <div id="viewer-bar" class="viewer-bar hidden">
-      <button id="btn-repaint" class="big-btn btn-primary">🖌️ 다시 색칠하기</button>
+      <button id="btn-repaint" class="big-btn btn-primary"><span class="ic" data-ic="brush"></span>다시 색칠하기</button>
     </div>
   </div>
 </div>
@@ -74,9 +75,9 @@
     <div class="complete-thumb"><canvas id="complete-canvas"></canvas></div>
     <div id="complete-name" class="complete-name"></div>
     <div class="complete-btns">
-      <button id="complete-home" class="big-btn btn-soft">🏠</button>
-      <button id="complete-works" class="big-btn btn-soft">🖼️ 내 작품</button>
-      <button id="complete-next" class="big-btn btn-primary">다음 그림 ▶</button>
+      <button id="complete-home" class="big-btn btn-soft" aria-label="그림 고르기로"><span class="ic" data-ic="gallery"></span></button>
+      <button id="complete-works" class="big-btn btn-soft"><span class="ic" data-ic="works"></span>내 작품</button>
+      <button id="complete-next" class="big-btn btn-primary">다음 그림<span class="ic" data-ic="next"></span></button>
     </div>
   </div>
 </div>
@@ -95,7 +96,7 @@
 <!-- ═══════════ 내 작품 화면 ═══════════ -->
 <div id="screen-works" class="screen">
   <header class="home-header">
-    <button id="works-back" class="round-btn" aria-label="뒤로가기">🏠</button>
+    <button id="works-back" class="round-btn" aria-label="그림 고르기로"><span class="ic" data-ic="gallery"></span></button>
     <h1 class="app-title"><span class="title-emoji">🖼️</span> 내 작품</h1>
     <div style="width:56px"></div>
   </header>
@@ -104,6 +105,7 @@
 
 <script src="../shared/profile.js"></script>
 <script src="../shared/parent-settings.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/pictures/heart.js"></script>
@@ -160,5 +162,6 @@
 <script src="../shared/pet.js"></script>
 <script src="../shared/time-limit.js"></script>
 <script src="../shared/sw-register.js"></script>
+<script src="../shared/home-button.js"></script>
 </body>
 </html>

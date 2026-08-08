@@ -54,8 +54,10 @@ window.App = (() => {
         const total = modeLevels(m).reduce((s, lv) => s + P.rounds(m.id + '-' + lv.id), 0);
         prog = total ? '🎮 ' + total + '판' : '처음이야!';
       }
+      // 아이콘은 이모지 대신 손그림 SVG (index.html 의 <symbol id="mi-…">)
       b.innerHTML =
-        '<span class="mc-icon">' + m.icon + '</span>' +
+        '<span class="mc-icon"><svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">' +
+        '<use href="#mi-' + m.id + '"></use></svg></span>' +
         '<span class="mc-name">' + m.name + '</span>' +
         '<span class="mc-desc">' + m.desc + '</span>' +
         '<span class="mc-prog">' + prog + '</span>';

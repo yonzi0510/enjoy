@@ -9,6 +9,7 @@ window.App = (() => {
   const D = window.TwistData;
   const A = window.Audio2;
   const P = window.Progress;
+  const I = window.TwistIcons;   // 손그림 아이콘(화면 틀 전용 — 블록 얼굴은 건드리지 않는다)
   const $ = id => document.getElementById(id);
 
   /* ─────────── 화면 전환 ─────────── */
@@ -25,17 +26,19 @@ window.App = (() => {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
     menu.innerHTML = '';
-    D.LEVELS.forEach(lv => {
+    D.LEVELS.forEach((lv, li) => {
       const ids = D.puzzlesOf(lv.id).map(x => x.id);
       const done = P.doneCount(ids);
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'menu-card ' + lv.cls;
       b.innerHTML =
+        // 첫 칸에만 "여기부터 해요" 점선 화살표 — 글을 못 읽는 아이에게 순서를 알려 준다
+        (li === 0 ? I.startArrow() : '') +
         '<span class="mc-cyl">' + miniCyl(lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? I.span('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openRounds(lv); });
       menu.appendChild(b);
     });
@@ -52,7 +55,7 @@ window.App = (() => {
   let curLevel = null;
   function openRounds(lv) {
     curLevel = lv;
-    $('rounds-title').textContent = lv.icon + ' ' + lv.name;
+    $('rounds-title').innerHTML = I.span('twist', 'ic-title') + ' ' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('rounds-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('rounds-list');
@@ -68,7 +71,7 @@ window.App = (() => {
         '<span class="rd-finds">' +
           pz.cylinders.map(c => '<span class="cyl-face tiny">' + c.faces[c.target] + '</span>').join('') +
         '</span>' +
-        '<span class="rd-badge">' + (done ? '⭐' : '🎡') + '</span>';
+        '<span class="rd-badge">' + I.html(done ? 'star' : 'twist') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });
@@ -89,7 +92,7 @@ window.App = (() => {
       })),
       locked: false,
     };
-    $('play-title').textContent = D.levelDef(pz.stage).icon + ' 돌려서 맞춰요';
+    $('play-title').innerHTML = I.span('twist', 'ic-title') + ' 돌려서 맞춰요';
     renderFindCard();
     renderCylRow();
     showScreen('scr-play');
@@ -121,7 +124,7 @@ window.App = (() => {
       b.dataset.idx = i;
       b.innerHTML =
         '<span class="cyl-face' + (animIdx === i ? ' spin-anim' : '') + '">' + c.faces[c.current] + '</span>' +
-        (matched ? '<span class="cyl-check">✅</span>' : '');
+        (matched ? '<span class="cyl-check">' + I.html('check') + '</span>' : '');
       b.addEventListener('click', ev => { ev.preventDefault(); doSpin(i); });
       box.appendChild(b);
     });

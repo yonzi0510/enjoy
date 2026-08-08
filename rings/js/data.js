@@ -23,23 +23,40 @@ window.RingsData = (() => {
   ];
   const fingerDef = i => FINGERS[i];
 
-  /* 손 그림(살구빛 손바닥 + 손가락 5개). uid로 그라데이션 id를 구분한다. */
+  /* 손 그림 — 아이가 크레용으로 그린 손(살구빛 손바닥 + 손가락 5개).
+   * 손가락은 '자로 그은 네모'가 아니라 **한 획씩 그은 굵은 선**이다. 같은 획을 세 겹으로 쌓는다:
+   *   1) 삐져나간 칠 — 조금 어긋나게(3,4) 더 굵게 깔아 윤곽 밖으로 색이 새 나오게
+   *   2) 연필 윤곽 — 살보다 6 굵게 깔아 테두리로 보이게
+   *   3) 살       — 맨 위. 손가락끼리는 살이 안 닿아서 그 틈이 곧 손가락 사이 선이 된다.
+   * ⚠️ 손가락 중심선(41·78·108·138·166)과 끝 높이, 손바닥 자리는 예전 그림 그대로다 —
+   *    고리 slot 좌표와 판정영역(zone)이 이 좌표에 맞춰져 있어 어긋나면 판정이 틀어진다.
+   *    그래서 이 그림에는 **회전·확대 같은 변형을 절대 주지 않는다.**
+   * (SVG 필터는 쓰지 않는다. 손 그림은 목록에서 열 개 넘게 동시에 그려져 느려진다 —
+   *  떨림은 획 좌표에 직접 넣었다.) */
+  const HAND_STROKES = [
+    ['M41 190 C44 168, 38 148, 41 130', 30],      // 엄지
+    ['M78 194 C81 162, 75 122, 78 88', 26],       // 검지
+    ['M108 194 C111 158, 105 106, 108 72', 26],   // 중지
+    ['M138 194 C135 160, 141 120, 138 88', 26],   // 약지
+    ['M166 196 C169 170, 163 136, 166 112', 23],  // 새끼
+    ['M76 199 C95 196, 115 202, 134 199', 96],    // 손바닥
+  ];
+  function handLayer(add, attrs) {
+    return '<g ' + attrs + ' fill="none" stroke-linecap="round">' +
+      HAND_STROKES.map(([d, w]) => '<path d="' + d + '" stroke-width="' + (w + add) + '"/>').join('') +
+      '</g>';
+  }
   function handSVG(u) {
     return `
     <svg viewBox="0 0 210 260" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
       <defs><linearGradient id="${u}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#FFE1C6"/><stop offset="1" stop-color="#F3BE93"/>
+        <stop offset="0" stop-color="#FFE7CD"/><stop offset="1" stop-color="#FFD6B0"/>
       </linearGradient></defs>
-      <g fill="url(#${u})" stroke="#DA9E72" stroke-width="3" stroke-linejoin="round">
-        <rect x="24"  y="112" width="34" height="98"  rx="17"/>
-        <rect x="62"  y="70"  width="32" height="140" rx="16"/>
-        <rect x="92"  y="54"  width="32" height="156" rx="16"/>
-        <rect x="122" y="70"  width="32" height="140" rx="16"/>
-        <rect x="152" y="96"  width="28" height="116" rx="14"/>
-        <rect x="30"  y="150" width="150" height="98" rx="46"/>
-      </g>
-      <g fill="none" stroke="#E7B58C" stroke-width="2.4" stroke-linecap="round" opacity=".55">
-        <path d="M78 150 q0 8 0 14"/><path d="M108 150 q0 8 0 14"/><path d="M138 150 q0 8 0 14"/>
+      ${handLayer(9, 'transform="translate(3,4)" stroke="#FFCEA0" opacity=".72"')}
+      ${handLayer(6, 'stroke="#2E2A24" stroke-opacity=".86"')}
+      ${handLayer(0, `stroke="url(#${u})"`)}
+      <g fill="none" stroke="#D9A578" stroke-width="3" stroke-linecap="round" opacity=".55">
+        <path d="M78 170 q1 9 -1 15"/><path d="M108 168 q-1 9 1 15"/><path d="M138 170 q1 9 -1 15"/>
       </g>
     </svg>`;
   }

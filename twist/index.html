@@ -13,18 +13,20 @@
 <link rel="stylesheet" href="../shared/time-limit.css">
 <link rel="stylesheet" href="../shared/pet.css">
 <link rel="stylesheet" href="../shared/crayon.css">
+<link rel="stylesheet" href="../shared/doodle-menu.css">
+<link rel="stylesheet" href="css/doodle.css">
 </head>
 <body>
 
 <!-- 홈 -->
 <section class="screen on" id="scr-home">
   <header class="home-head">
-    <h1>🎡 돌림 블록</h1>
+    <h1><span class="ic ic-title" data-icon="twist"></span> 돌림 블록</h1>
     <div class="stats">
-      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <span class="stat"><span class="ic" data-icon="star"></span> <b id="home-stars">0</b></span>
       <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
       <span id="pet-slot"></span>
-      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정"><span class="ic" data-icon="voice"></span></button>
     </div>
   </header>
   <div class="menu" id="menu"></div>
@@ -33,8 +35,8 @@
 <!-- 퍼즐 목록 -->
 <section class="screen" id="scr-rounds">
   <header class="bar">
-    <button type="button" class="back" data-go="scr-home">◀</button>
-    <h2 id="rounds-title">🎡 쉬운 돌림 블록</h2>
+    <button type="button" class="back" data-go="scr-home" aria-label="뒤로"><span class="ic" data-icon="back"></span></button>
+    <h2 id="rounds-title"><span class="ic ic-title" data-icon="twist"></span> 쉬운 돌림 블록</h2>
     <span class="page-count" id="rounds-count">0 / 10</span>
   </header>
   <div class="rounds-list" id="rounds-list"></div>
@@ -43,14 +45,14 @@
 <!-- 놀이(돌림 블록 맞추기) -->
 <section class="screen" id="scr-play">
   <header class="bar">
-    <button type="button" class="back" id="btn-play-back">◀</button>
-    <h2 id="play-title">🎡 돌려서 맞춰요</h2>
-    <button type="button" class="bigbtn small" id="btn-listen">🔊 듣기</button>
+    <button type="button" class="back" id="btn-play-back" aria-label="뒤로"><span class="ic" data-icon="back"></span></button>
+    <h2 id="play-title"><span class="ic ic-title" data-icon="twist"></span> 돌려서 맞춰요</h2>
+    <button type="button" class="bigbtn small" id="btn-listen"><span class="ic" data-icon="speaker"></span> 듣기</button>
   </header>
   <div class="play-stage" id="play-stage">
     <!-- 본보기 카드(맞춰야 할 그림 줄) -->
     <div class="find-card" id="find-card">
-      <div class="find-cap" id="find-cap">🎯 이렇게 맞춰요!</div>
+      <div class="find-cap" id="find-cap"><span class="ic" data-icon="card"></span> 이렇게 맞춰요!</div>
       <div class="find-faces" id="find-faces"></div>
     </div>
     <!-- 돌림 블록(나무 막대 위 실린더들) -->
@@ -63,11 +65,11 @@
 <!-- 보상 오버레이 -->
 <div class="reward" id="reward">
   <div class="reward-card">
-    <div class="reward-face" id="reward-face">🎡</div>
+    <div class="reward-face" id="reward-face"><span class="ic ic-title" data-icon="twist"></span></div>
     <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
     <div class="reward-btns">
       <button type="button" class="bigbtn" id="reward-close">그만할래</button>
-      <button type="button" class="bigbtn primary" id="reward-next">다음 ▶</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 <span class="ic" data-icon="next"></span></button>
     </div>
   </div>
 </div>
@@ -76,6 +78,7 @@
 <div class="confetti" id="confetti" aria-hidden="true"></div>
 
 <script src="../shared/profile.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/data.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/progress.js"></script>
@@ -86,5 +89,6 @@
 <script src="../shared/pet.js"></script>
 <script src="../shared/time-limit.js"></script>
 <script src="../shared/sw-register.js"></script>
+<script src="../shared/home-button.js"></script>
 </body>
 </html>

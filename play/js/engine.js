@@ -38,9 +38,16 @@
 
   /* ─────────── 소리 버튼 ─────────── */
   function updateMuteIcons() {
-    const icon = Sound.isMuted() ? '🔇' : '🔊';
-    $('btn-mute').textContent = icon;
-    $('game-mute').textContent = icon;
+    /* 손그림 아이콘이 있으면 그것으로, 없으면 옛 이모지로 되돌아간다 */
+    const name = Sound.isMuted() ? 'sound-off' : 'sound-on';
+    const emoji = Sound.isMuted() ? '🔇' : '🔊';
+    ['btn-mute', 'game-mute'].forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      const slot = el.querySelector('.di') || el;
+      if (window.DoodleIcons && DoodleIcons.has(name)) DoodleIcons.set(slot, name);
+      else slot.textContent = emoji;
+    });
   }
   function toggleMute() { Sound.toggleMute(); updateMuteIcons(); }
   $('btn-mute').addEventListener('click', toggleMute);

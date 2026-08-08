@@ -25,6 +25,15 @@ window.App = (() => {
     if (id === 'scr-home') renderHome();
   }
 
+  /* ─────────── 손그림 아이콘 (index.html 의 <symbol>) ───────────
+   * 화면 틀에 쓰던 이모지를 아이가 그린 SVG 로 바꾼다.
+   * 놀이 조각(chipDraw)은 색맹 대비로 색마다 모양이 달라서 그대로 둔다. */
+  function ic(name, cls) {
+    return '<svg class="ic' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#sl-' + name + '"/></svg>';
+  }
+  // 열(튜브)·본보기 열에 두르는 손그림 테두리. 절대배치라 안쪽 내용은 CSS 가 위로 올린다.
+  const FRAME = cls => '<svg class="' + cls + '" preserveAspectRatio="none" aria-hidden="true"><use href="#sl-frame"/></svg>';
+
   /* 미니 본보기(목표 색 4열) — 홈·목록·카드에서 재사용 */
   function miniGoal(perm, keyPrefix, big) {
     return '<span class="mini-goal' + (big ? ' big' : '') + '">' +
@@ -46,10 +55,12 @@ window.App = (() => {
       b.type = 'button';
       b.className = 'menu-card ' + lv.cls;
       b.innerHTML =
+        // 첫 칸에만 — 제목 쪽에서 휘어 들어오는 손그림 점선 화살표("여기부터")
+        (lv.id === 1 ? '<svg class="start-arrow" aria-hidden="true"><use href="#sl-arrow"/></svg>' : '') +
         '<span class="mc-icon">' + miniGoal(sample.perm, 'mn' + lv.id, false) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? ic('star', 'ic-sm') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(lv); });
       menu.appendChild(b);
     });
@@ -59,7 +70,7 @@ window.App = (() => {
   let curLevel = null;
   function openList(lv) {
     curLevel = lv;
-    $('list-title').textContent = '🔴 ' + lv.name;
+    $('list-title').innerHTML = ic('title') + ' ' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('list-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('list');
@@ -73,7 +84,7 @@ window.App = (() => {
       b.innerHTML =
         '<span class="pz-no">' + (i + 1) + '</span>' +
         miniGoal(pz.perm, 'pc' + pz.id, false) +
-        '<span class="pz-badge">' + (done ? '⭐' : '🎨') + '</span>';
+        '<span class="pz-badge">' + ic(done ? 'star' : 'palette') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });
@@ -85,7 +96,7 @@ window.App = (() => {
 
   function openPlay(pz) {
     cur = { pz, cols: deep(pz.start), selected: null, locked: false };
-    $('play-title').textContent = '🔴 ' + D.levelDef(pz.level).name;
+    $('play-title').innerHTML = ic('title') + ' ' + D.levelDef(pz.level).name;
     renderCard();
     renderBoard();
     showScreen('scr-play');
@@ -101,7 +112,7 @@ window.App = (() => {
       col.className = 'gc-col';
       let chips = '';
       for (let k = 0; k < D.CAP; k++) chips += '<span class="gc-chip">' + D.chipDraw(cid, 'gc' + i + k + uid()) + '</span>';
-      col.innerHTML = chips;
+      col.innerHTML = FRAME('gc-frame') + chips; // 손그림 테두리 + 목표 색 조각
       box.appendChild(col);
     });
   }
@@ -118,6 +129,8 @@ window.App = (() => {
       colEl.className = 'col' + (cur.selected === ci ? ' sel' : '') + (colDone ? ' ok' : '');
       colEl.dataset.col = ci;
       colEl.setAttribute('aria-label', (ci + 1) + '번 열');
+      // 손그림 테두리 — 절대배치·pointer-events:none 이라 탭 판정에는 끼어들지 않는다
+      colEl.innerHTML = FRAME('col-frame');
       const stack = document.createElement('div');
       stack.className = 'col-stack';
       col.forEach((cid, i) => {

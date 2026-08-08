@@ -13,18 +13,195 @@
 <link rel="stylesheet" href="../shared/time-limit.css">
 <link rel="stylesheet" href="../shared/pet.css">
 <link rel="stylesheet" href="../shared/crayon.css">
+<link rel="stylesheet" href="../shared/doodle-menu.css">
 </head>
 <body>
+
+<!-- ═══════════ 아이가 그린 손그림 아이콘 ═══════════
+     화면 틀(제목·단추·칸)에서 <use href="#li-…"> 로 불러 쓴다.
+     이모지를 걷어낸 이유 — 기기마다 다른 그림이 나오고, 매끈하게 잘 그려져 있어
+     「낙서장」 종이 위에서 혼자 인쇄물처럼 떠 보인다.
+
+     그리는 규칙 (다섯 살이 크레용으로 그린 것처럼):
+       · 굵고 고른 획 하나로 — 가늘고 굵은 변화를 주지 않는다
+       · 삐뚤한 선 — feTurbulence + feDisplacementMap 으로 실제로 떨게 한다
+         (#lab-line, 같은 방식의 선례는 shared/home-button.js)
+       · 안 닫히는 동그라미 — 원 대신 300°쯤 도는 호를 쓰고 한 군데를 터 둔다
+       · 색은 윤곽 밖으로 삐져나오게 — 채움에는 더 크게 흔드는 #lab-fill 을 먹인다
+
+     ★ 여기 쓰는 색은 '틀'의 색이다. 물감·혼색 결과·도감의 색(js/data.js, js/mix.js)은
+       놀이 내용 그 자체라 한 톨도 건드리지 않았다.
+     ══════════════════════════════════════════════ -->
+<svg class="art-defs" aria-hidden="true" focusable="false">
+<defs>
+  <!-- 윤곽선용: 잔잔하게 떨린다 -->
+  <filter id="lab-line" x="-25%" y="-25%" width="150%" height="150%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4"/>
+  </filter>
+  <!-- 색칠용: 크게 흔들어 선 밖으로 비어져 나오게 -->
+  <filter id="lab-fill" x="-30%" y="-30%" width="160%" height="160%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="2" seed="19" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="7"/>
+  </filter>
+</defs>
+
+<!-- 🎯 미션 실험 — 과녁, 바깥 두 고리는 한 군데가 터져 있다 -->
+<symbol id="li-mission" viewBox="0 0 100 100">
+  <g filter="url(#lab-fill)">
+    <circle cx="50" cy="52" r="33" fill="#FFF1D6"/>
+    <circle cx="50" cy="52" r="19" fill="#F7C948"/>
+    <circle cx="50" cy="52" r="8" fill="#E8635A"/>
+  </g>
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="7" stroke-linecap="round">
+    <path d="M84 52 A34 34 0 1 1 66 22"/>
+    <path d="M70 52 A20 20 0 1 1 59.6 34.7"/>
+  </g>
+</symbol>
+
+<!-- 🌈 자유 실험 — 무지개 세 줄. 굵은 연필 자국 위에 색을 얹었다 -->
+<symbol id="li-free" viewBox="0 0 100 100">
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="15" stroke-linecap="round">
+    <path d="M11 80 A39 39 0 0 1 89 80"/>
+  </g>
+  <g filter="url(#lab-fill)" fill="none" stroke-width="9" stroke-linecap="round">
+    <path d="M12 80 A38 38 0 0 1 88 80" stroke="#E8635A"/>
+    <path d="M23 80 A27 27 0 0 1 77 80" stroke="#F7C948"/>
+    <path d="M34 80 A16 16 0 0 1 66 80" stroke="#5BA85B"/>
+  </g>
+</symbol>
+
+<!-- 📖 색깔 도감 — 펼친 공책에 붙여 놓은 색 동그라미 -->
+<symbol id="li-book" viewBox="0 0 100 100">
+  <g filter="url(#lab-fill)">
+    <path d="M15 27 L49 33 L49 79 L15 73 Z" fill="#FFF6E2"/>
+    <path d="M85 27 L51 33 L51 79 L85 73 Z" fill="#FFF6E2"/>
+    <circle cx="29" cy="47" r="6" fill="#E8635A"/>
+    <circle cx="29" cy="62" r="6" fill="#7BC4F0"/>
+    <circle cx="71" cy="47" r="6" fill="#F7C948"/>
+    <circle cx="71" cy="62" r="6" fill="#5BA85B"/>
+  </g>
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M13 25 L50 32 L87 25 L88 74 L50 81 L12 74 Z"/>
+    <path d="M50 32 L50 81"/>
+  </g>
+</symbol>
+
+<!-- 🧪 제목·도감 칸 — 삼각 플라스크에 뽀글뽀글 -->
+<symbol id="li-flask" viewBox="0 0 100 100">
+  <g filter="url(#lab-fill)">
+    <path d="M41 46 L28 74 Q26 84 37 84 L63 84 Q74 84 72 74 L59 46 Z" fill="#9AD8E8"/>
+  </g>
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M41 16 L41 42 L26 75 Q23 87 36 87 L64 87 Q77 87 74 75 L59 42 L59 16"/>
+    <path d="M35 15 L65 14"/>
+  </g>
+  <g filter="url(#lab-fill)" fill="#FFFDF6" stroke="none">
+    <circle cx="44" cy="70" r="4.5"/><circle cx="58" cy="76" r="3.5"/><circle cx="52" cy="62" r="3"/>
+  </g>
+</symbol>
+
+<!-- ⭐ 모은 별 -->
+<symbol id="li-star" viewBox="0 0 100 100">
+  <g filter="url(#lab-fill)">
+    <path d="M50 18 L62 43 L88 47 L69 65 L74 90 L50 78 L26 90 L31 65 L12 47 L38 43 Z" fill="#F7C948"/>
+  </g>
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M50 14 L63 41 L92 45 L71 66 L76 94 L50 80 L24 94 L29 66 L8 45 L37 41 Z"/>
+  </g>
+</symbol>
+
+<!-- ◀ 뒤로 -->
+<symbol id="li-back" viewBox="0 0 100 100">
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M63 18 L29 50 L63 82"/>
+  </g>
+</symbol>
+
+<!-- 🔊 다시 듣기 -->
+<symbol id="li-sound" viewBox="0 0 100 100">
+  <g filter="url(#lab-fill)">
+    <path d="M17 40 L33 40 L52 22 L52 78 L33 60 L17 60 Z" fill="#F7C948"/>
+  </g>
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 39 L33 39 L53 20 L53 80 L33 61 L16 61 Z"/>
+    <path d="M66 34 Q78 50 66 66"/>
+    <path d="M81 23 Q97 50 81 77" stroke-width="6"/>
+  </g>
+</symbol>
+
+<!-- 🗣️ 목소리 설정 — 말풍선 -->
+<symbol id="li-voice" viewBox="0 0 100 100">
+  <g filter="url(#lab-fill)">
+    <path d="M18 24 L82 22 L84 61 L46 63 L30 81 L32 62 L17 61 Z" fill="#FFF6E2"/>
+  </g>
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 23 L83 21 L85 62 L46 64 L28 82 L32 63 L16 62 Z"/>
+    <path d="M32 37 L68 36" stroke-width="6"/>
+    <path d="M32 49 L57 48" stroke-width="6"/>
+  </g>
+</symbol>
+
+<!-- 🚿 물 비우기 — 병을 기울여 쏟는다 -->
+<symbol id="li-pour" viewBox="0 0 100 100">
+  <g filter="url(#lab-fill)">
+    <path d="M29 15 L58 28 L45 57 L17 44 Z" fill="#9AD8E8"/>
+  </g>
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 12 L60 26 L46 58 L14 44 Z"/>
+    <path d="M53 44 Q64 62 60 78"/>
+  </g>
+  <g filter="url(#lab-fill)" fill="#9AD8E8" stroke="none">
+    <circle cx="73" cy="60" r="6"/><circle cx="82" cy="80" r="5"/><circle cx="60" cy="88" r="5.5"/>
+  </g>
+</symbol>
+
+<!-- 🧴 병에 담기 · 내 색깔 선반 -->
+<symbol id="li-jar" viewBox="0 0 100 100">
+  <g filter="url(#lab-fill)">
+    <path d="M29 44 L71 44 L71 82 Q71 87 65 87 L35 87 Q29 87 29 82 Z" fill="#9AD8E8"/>
+  </g>
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M27 40 L73 38 L74 83 Q74 90 66 90 L34 90 Q26 90 26 84 Z"/>
+    <path d="M35 22 L65 20 L66 39 L34 40 Z"/>
+  </g>
+</symbol>
+
+<!-- ✅ 다 만든 미션 -->
+<symbol id="li-check" viewBox="0 0 100 100">
+  <g filter="url(#lab-line)" fill="none" stroke="#4CA64C" stroke-width="13" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 52 L40 76 L86 22"/>
+  </g>
+</symbol>
+
+<!-- ❓ 아직 못 만든 색 -->
+<symbol id="li-q" viewBox="0 0 100 100">
+  <g filter="url(#lab-line)" fill="none" stroke="#A9B39D" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 34 Q32 14 52 14 Q74 14 71 34 Q68 47 51 54 L51 64"/>
+  </g>
+  <g filter="url(#lab-fill)" fill="#A9B39D" stroke="none"><circle cx="51" cy="84" r="7"/></g>
+</symbol>
+
+<!-- ✨ 성공 반짝 -->
+<symbol id="li-sparkle" viewBox="0 0 100 100">
+  <g filter="url(#lab-fill)">
+    <path d="M50 8 L60 40 L92 50 L60 60 L50 92 L40 60 L8 50 L40 40 Z" fill="#FFE47A"/>
+  </g>
+  <g filter="url(#lab-line)" fill="none" stroke="#2E2A24" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M50 8 L60 40 L92 50 L60 60 L50 92 L40 60 L8 50 L40 40 Z"/>
+  </g>
+</symbol>
+</svg>
 
 <!-- 홈 -->
 <section class="screen on" id="scr-home">
   <header class="home-head">
-    <h1>🧪 색깔 실험실</h1>
+    <h1><svg class="hd-icon hd-big" aria-hidden="true"><use href="#li-flask"></use></svg>색깔 실험실</h1>
     <div class="stats">
-      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <span class="stat"><svg class="stat-icon" aria-hidden="true"><use href="#li-star"></use></svg><b id="home-stars">0</b></span>
       <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
       <span id="pet-slot"></span>
-      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정"><svg class="btn-icon" aria-hidden="true"><use href="#li-voice"></use></svg></button>
     </div>
   </header>
   <div class="menu" id="menu"></div>
@@ -33,9 +210,9 @@
 <!-- 미션 목록 (12색) -->
 <section class="screen" id="scr-missions">
   <header class="bar">
-    <button type="button" class="back" data-go="scr-home">◀</button>
-    <h2>🎯 미션 실험</h2>
-    <span class="page-count" id="missions-count">🎨 0 / 30</span>
+    <button type="button" class="back" data-go="scr-home" aria-label="뒤로"><svg class="btn-icon" aria-hidden="true"><use href="#li-back"></use></svg></button>
+    <h2><svg class="hd-icon" aria-hidden="true"><use href="#li-mission"></use></svg>미션 실험</h2>
+    <span class="page-count" id="missions-count">0 / 30</span>
   </header>
   <div class="missions-grid" id="missions-list"></div>
 </section>
@@ -43,13 +220,13 @@
 <!-- 실험대 (미션·자유 공용) -->
 <section class="screen" id="scr-lab">
   <header class="bar">
-    <button type="button" class="back" id="btn-lab-back">◀</button>
-    <h2 id="lab-title">🎯 주황 만들기</h2>
-    <button type="button" class="mini-btn" id="btn-say" aria-label="다시 듣기">🔊</button>
+    <button type="button" class="back" id="btn-lab-back" aria-label="뒤로"><svg class="btn-icon" aria-hidden="true"><use href="#li-back"></use></svg></button>
+    <h2 id="lab-title"><svg class="hd-icon" aria-hidden="true"><use href="#li-mission"></use></svg>주황 만들기</h2>
+    <button type="button" class="mini-btn" id="btn-say" aria-label="다시 듣기"><svg class="btn-icon" aria-hidden="true"><use href="#li-sound"></use></svg></button>
   </header>
   <div class="lab-stage">
     <div class="target-chip" id="target-chip">
-      <span class="tc-label">🎯 목표</span>
+      <span class="tc-label"><svg class="hd-icon" aria-hidden="true"><use href="#li-mission"></use></svg>목표</span>
       <span class="target-swatch" id="target-swatch"></span>
       <b id="target-name">주황</b>
     </div>
@@ -67,16 +244,16 @@
           <path d="M52 96 q0 -26 18 -40" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="9" stroke-linecap="round"/>
           <path d="M50 130 v66" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="9" stroke-linecap="round"/>
         </svg>
-        <div class="jar-sparkle" id="jar-sparkle" hidden>✨</div>
+        <div class="jar-sparkle" id="jar-sparkle" hidden><svg aria-hidden="true"><use href="#li-sparkle"></use></svg></div>
       </div>
     </div>
     <div class="lab-actions">
-      <button type="button" class="bigbtn" id="btn-empty">🚿 물 비우기</button>
-      <button type="button" class="bigbtn primary" id="btn-keep" hidden>🧴 병에 담기</button>
+      <button type="button" class="bigbtn" id="btn-empty"><svg class="hd-icon" aria-hidden="true"><use href="#li-pour"></use></svg>물 비우기</button>
+      <button type="button" class="bigbtn primary" id="btn-keep" hidden><svg class="hd-icon" aria-hidden="true"><use href="#li-jar"></use></svg>병에 담기</button>
     </div>
     <div class="palette" id="palette"></div>
     <div class="shelf" id="shelf" hidden>
-      <div class="shelf-title">🧴 내 색깔 선반</div>
+      <div class="shelf-title"><svg class="hd-icon" aria-hidden="true"><use href="#li-jar"></use></svg>내 색깔 선반</div>
       <div class="shelf-row" id="shelf-row"></div>
     </div>
   </div>
@@ -85,8 +262,8 @@
 <!-- 색깔 도감 -->
 <section class="screen" id="scr-book">
   <header class="bar">
-    <button type="button" class="back" data-go="scr-home">◀</button>
-    <h2>📖 색깔 도감</h2>
+    <button type="button" class="back" data-go="scr-home" aria-label="뒤로"><svg class="btn-icon" aria-hidden="true"><use href="#li-back"></use></svg></button>
+    <h2><svg class="hd-icon" aria-hidden="true"><use href="#li-book"></use></svg>색깔 도감</h2>
     <span class="page-count" id="book-count">0 / 30</span>
   </header>
   <div class="book-grid" id="book-grid"></div>
@@ -116,5 +293,6 @@
 <script src="../shared/pet.js"></script>
 <script src="../shared/time-limit.js"></script>
 <script src="../shared/sw-register.js"></script>
+<script src="../shared/home-button.js"></script>
 </body>
 </html>

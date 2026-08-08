@@ -17,6 +17,13 @@ window.App = (() => {
     el.classList.add('wiggle');
   }
 
+  /* ─────────── 손그림 아이콘 (index.html 의 <symbol>) ───────────
+   * 이모지 대신 아이가 그린 SVG 를 쓴다. 상품 그림(과일·장난감…)은 이모지 그대로 둔다. */
+  function ic(name, cls) {
+    return '<svg class="ic' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#mk-' + name + '"/></svg>';
+  }
+  const LEVEL_ICON = { 1: 'coin', 2: 'coins', 3: 'bag' }; // 단계 카드 그림
+
   /* ─────────── 화면 전환 ─────────── */
   function showScreen(id) {
     A.stop();
@@ -46,7 +53,8 @@ window.App = (() => {
   function renderHome() {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
-    menu.innerHTML = '';
+    // 제목 밑에서 첫 가게로 향하는 손그림 점선 화살표 — 어디부터 놀면 되는지 알려 준다
+    menu.innerHTML = '<svg class="start-arrow" aria-hidden="true"><use href="#mk-arrow"/></svg>';
     D.LEVELS.forEach(lv => {
       const open = levelUnlocked(lv);
       const n = P.rounds('level-' + lv.id);
@@ -54,10 +62,12 @@ window.App = (() => {
       b.type = 'button';
       b.className = 'menu-card c-l' + lv.id + (open ? '' : ' locked');
       b.innerHTML =
-        '<span class="mc-icon">' + (open ? lv.emoji : '🔒') + '</span>' +
+        '<span class="mc-icon">' + ic(open ? LEVEL_ICON[lv.id] : 'lock') + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + (open ? lv.desc : '앞 가게를 먼저 깨요') + '</span>' +
-        '<span class="mc-prog">' + (n ? '🎮 ' + n + '판' : (open ? '처음이야!' : '🔒')) + '</span>';
+        '<span class="mc-prog">' +
+          (n ? ic('cart', 'ic-sm') + ' ' + n + '판' : (open ? '처음이야!' : ic('lock', 'ic-sm'))) +
+        '</span>';
       b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
@@ -174,11 +184,12 @@ window.App = (() => {
 
   function spawnHearts() {
     const row = document.querySelector('.cust-row');
-    const HEARTS = ['💖', '❤️', '💛', '🧡'];
+    const HEARTS = ['#FF7BA8', '#F0524B', '#FFC93C', '#FF8C42']; // 손그림 하트 색 (칠은 color 를 따라간다)
     for (let i = 0; i < 4; i++) {
       const h = document.createElement('span');
       h.className = 'heart';
-      h.textContent = HEARTS[i % HEARTS.length];
+      h.style.color = HEARTS[i % HEARTS.length];
+      h.innerHTML = ic('heart');
       h.style.left = (18 + rnd(56)) + '%';
       h.style.animationDelay = (i * 0.13) + 's';
       row.appendChild(h);
@@ -212,7 +223,10 @@ window.App = (() => {
       const got = sh.picked.indexOf(p) >= 0;
       const s = document.createElement('span');
       s.className = 'basket-slot' + (got ? ' got' : '');
-      s.textContent = got ? p.emoji : '';
+      // 손그림 점선 테두리(자로 그은 점선 대신) + 담은 상품 그림
+      s.innerHTML = '<svg class="zone-frame" preserveAspectRatio="none" aria-hidden="true">' +
+        '<use href="#mk-dashframe"/></svg>' +
+        '<span class="slot-emoji">' + (got ? p.emoji : '') + '</span>';
       box.appendChild(s);
     });
   }
@@ -340,7 +354,7 @@ window.App = (() => {
     renderPurse();
     renderCounter();
     const say = D.priceSay(sh.order, sh.price);
-    setBubble('💰', say);
+    setBubble(ic('coins', 'ic-bubble'), say);
     A.speak(say + ' 동전을 계산대에 올려 줘!');
   }
 
@@ -390,7 +404,7 @@ window.App = (() => {
     // 산 물건에 어울리는 리액션 + 감사 인사
     const react = D.reactionFor(sh.order[0]);
     const thanks = pick(D.THANKS);
-    setBubble('💕', react + ' ' + thanks);
+    setBubble('<span class="bb-heart">' + ic('heart', 'ic-bubble') + '</span>', react + ' ' + thanks);
     A.speak('딩동댕! ' + react + ' ' + thanks);
     const served = sh.custIdx + 1;
     if (window.Pet && served % 2 === 0) Pet.awardSnack(1); // 접객 2명마다 간식 하나 (과하지 않게)
@@ -409,7 +423,8 @@ window.App = (() => {
     A.sfx.fanfare();
     renderDots();
     const praise = pick(D.praises);
-    showReward('손님 다섯 명 접객 성공!', '한 판 더 🛒', () => openShop(sh.level), () => showScreen('scr-home'));
+    showReward('손님 다섯 명 접객 성공!', '한 판 더 ' + ic('cart', 'ic-sm'),
+      () => openShop(sh.level), () => showScreen('scr-home'));
     A.speak('와, 손님 다섯 명을 모두 도와줬어요! ' + praise);
   }
 
@@ -417,7 +432,7 @@ window.App = (() => {
   let rewardNextFn = null, rewardCloseFn = null;
   function showReward(praise, nextLabel, onNext, onClose) {
     $('reward-praise').textContent = praise;
-    $('reward-next').textContent = nextLabel;
+    $('reward-next').innerHTML = nextLabel; // 손그림 아이콘이 섞인 딱지
     rewardNextFn = onNext;
     rewardCloseFn = onClose || null;
     $('reward-close').hidden = !onClose;

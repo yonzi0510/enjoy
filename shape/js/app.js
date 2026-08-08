@@ -33,11 +33,13 @@ window.App = (() => {
   }
 
   /* ─────────── 놀이 세 가지 ─────────── */
+  // icon 은 손그림 이름(js/doodle.js) — 이모지 대신 아이가 그린 그림을 쓴다
   const MODES = [
-    { id: 'tan', icon: '🧩', name: '칠교놀이', desc: '일곱 조각 그림 맞추기', cls: 'c-tan', list: () => D.tangrams },
-    { id: 'block', icon: '🐢', name: '블록 퍼즐', desc: '블록으로 그림 채우기', cls: 'c-block', list: () => D.blocks },
-    { id: 'shape', icon: '🏠', name: '도형 맞추기', desc: '같은 모양 자리 찾기', cls: 'c-shape', list: () => D.shapes },
+    { id: 'tan', icon: 'tan', name: '칠교놀이', desc: '일곱 조각 그림 맞추기', cls: 'c-tan', list: () => D.tangrams },
+    { id: 'block', icon: 'block', name: '블록 퍼즐', desc: '블록으로 그림 채우기', cls: 'c-block', list: () => D.blocks },
+    { id: 'shape', icon: 'shape', name: '도형 맞추기', desc: '같은 모양 자리 찾기', cls: 'c-shape', list: () => D.shapes },
   ];
+  const dood = n => (window.ShapeDoodle ? ShapeDoodle.svg(n) : '');
   const modeDef = id => MODES.find(m => m.id === id);
 
   function renderHome() {
@@ -51,10 +53,10 @@ window.App = (() => {
       b.type = 'button';
       b.className = 'menu-card ' + m.cls;
       b.innerHTML =
-        '<span class="mc-icon">' + m.icon + '</span>' +
+        '<span class="mc-icon">' + dood(m.icon) + '</span>' +
         '<span class="mc-name">' + m.name + '</span>' +
         '<span class="mc-desc">' + m.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? dood('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(m); });
       menu.appendChild(b);
     });
@@ -64,21 +66,23 @@ window.App = (() => {
   let curMode = null;
   function openList(m) {
     curMode = m;
-    $('list-title').textContent = m.icon + ' ' + m.name;
+    $('list-title').innerHTML = dood(m.icon) + ' ' + m.name;
     const list = $('puzzle-list');
     list.innerHTML = '';
+    // 아직 안 한 도안 중 첫 번째 = 다음에 할 것. 이 하나만 크게 보여 준다.
+    const nextUp = m.list().find(q => !P.isDone(m.id, q.id));
     m.list().forEach(pz => {
       const done = P.isDone(m.id, pz.id);
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'item-main';
+      b.className = 'item-main' + (nextUp && pz.id === nextUp.id ? ' next-up' : '');
       b.dataset.puzzle = pz.id;
       b.innerHTML =
         '<span class="it-emoji">' + pz.emoji + '</span>' +
         '<span class="it-texts"><span class="it-name">' + pz.name + '</span>' +
-        '<span class="it-kind">' + (m.id === 'tan' ? (pz.rotate ? '🔄 빙글빙글 단계' : '쏙쏙 끼우기 단계') :
+        '<span class="it-kind">' + (m.id === 'tan' ? (pz.rotate ? dood('spin') + ' 빙글빙글 단계' : '쏙쏙 끼우기 단계') :
           m.id === 'block' ? '블록 ' + pz.pieces.length + '개' : '도형 ' + pz.parts.length + '개') + '</span></span>' +
-        '<span class="it-prog">' + (done ? '🏅' : '') + '</span>';
+        '<span class="it-prog">' + (done ? dood('medal') : '') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPuzzle(m, pz); });
       list.appendChild(b);
     });

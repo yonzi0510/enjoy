@@ -18,10 +18,11 @@ window.App = (() => {
   }
 
   /* ─────────── 홈 ─────────── */
+  // 아이콘은 이모지 대신 손그림 SVG (index.html 의 <symbol id="li-…">)
   const MODES = [
-    { id: 'mission', icon: '🎯', name: '미션 실험', desc: '목표 색을 만들어라!', cls: 'c-mission' },
-    { id: 'free', icon: '🌈', name: '자유 실험', desc: '마음껏 섞어 보자', cls: 'c-free' },
-    { id: 'book', icon: '📖', name: '색깔 도감', desc: '모은 색 구경하기', cls: 'c-book' },
+    { id: 'mission', icon: 'li-mission', name: '미션 실험', desc: '목표 색을 만들어라!', cls: 'c-mission' },
+    { id: 'free', icon: 'li-free', name: '자유 실험', desc: '마음껏 섞어 보자', cls: 'c-free' },
+    { id: 'book', icon: 'li-book', name: '색깔 도감', desc: '모은 색 구경하기', cls: 'c-book' },
   ];
   function renderHome() {
     $('home-stars').textContent = P.stars();
@@ -34,13 +35,14 @@ window.App = (() => {
       let prog;
       if (m.id === 'free') {
         const n = P.shelf().length;
-        prog = n ? '🧴 병 ' + n + '개' : '처음이야!';
+        prog = n ? '병 ' + n + '개' : '처음이야!';
       } else {
         const n = P.missionCount();
-        prog = n ? '🎨 ' + n + ' / ' + D.MISSIONS.length : '처음이야!';
+        prog = n ? n + ' / ' + D.MISSIONS.length : '처음이야!';
       }
       b.innerHTML =
-        '<span class="mc-icon">' + m.icon + '</span>' +
+        '<span class="mc-icon"><svg viewBox="0 0 100 100" aria-hidden="true">' +
+        '<use href="#' + m.icon + '"></use></svg></span>' +
         '<span class="mc-name">' + m.name + '</span>' +
         '<span class="mc-desc">' + m.desc + '</span>' +
         '<span class="mc-prog">' + prog + '</span>';
@@ -57,7 +59,7 @@ window.App = (() => {
 
   /* ─────────── 미션 목록 ─────────── */
   function openMissions() {
-    $('missions-count').textContent = '🎨 ' + P.missionCount() + ' / ' + D.MISSIONS.length;
+    $('missions-count').textContent = P.missionCount() + ' / ' + D.MISSIONS.length;
     const list = $('missions-list');
     list.innerHTML = '';
     D.MISSIONS.forEach(ms => {
@@ -69,7 +71,9 @@ window.App = (() => {
       b.innerHTML =
         '<span class="mi-swatch" style="background:' + ms.target + '"></span>' +
         '<span class="mi-name">' + ms.emoji + ' ' + ms.name + '</span>' +
-        '<span class="mi-state">' + (done ? '🦋 완성!' : '만들어 보자!') + '</span>';
+        '<span class="mi-state">' +
+        (done ? '<svg class="mi-check" viewBox="0 0 100 100" aria-hidden="true"><use href="#li-check"></use></svg>완성!'
+              : '만들어 보자!') + '</span>';
       b.addEventListener('click', ev => {
         ev.preventDefault();
         A.sfx.tap();
@@ -89,10 +93,13 @@ window.App = (() => {
       const done = P.missionDone(ms.id);
       const cell = document.createElement('div');
       cell.className = 'book-cell' + (done ? ' done' : '');
+      // 병 속 색(ms.target)은 놀이 내용이라 그대로 두고, 병 그림만 손그림으로 바꿨다
       cell.innerHTML = done
-        ? '<span class="bk-jar" style="background:' + ms.target + '">🧪</span>' +
+        ? '<span class="bk-jar" style="background:' + ms.target + '">' +
+          '<svg viewBox="0 0 100 100" aria-hidden="true"><use href="#li-flask"></use></svg></span>' +
           '<span class="bk-name">' + ms.emoji + ' ' + ms.name + '</span>'
-        : '<span class="bk-jar empty">❓</span><span class="bk-name">아직 몰라요</span>';
+        : '<span class="bk-jar empty"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#li-q"></use></svg></span>' +
+          '<span class="bk-name">아직 몰라요</span>';
       grid.appendChild(cell);
     });
     showScreen('scr-book');
@@ -105,9 +112,9 @@ window.App = (() => {
   function openLab(mode, mission) {
     clearLabTimers();
     lab = { mode, mission, drops: [], lock: false, hinted: false, judgeTimer: null, rewardTimer: null };
-    $('lab-title').textContent = mode === 'mission'
-      ? '🎯 ' + mission.name + ' 만들기'
-      : '🌈 자유 실험';
+    $('lab-title').innerHTML = mode === 'mission'
+      ? '<svg class="hd-icon" aria-hidden="true"><use href="#li-mission"></use></svg>' + mission.name + ' 만들기'
+      : '<svg class="hd-icon" aria-hidden="true"><use href="#li-free"></use></svg>자유 실험';
     $('target-chip').hidden = mode !== 'mission';
     $('mix-name').hidden = mode !== 'free';
     $('btn-keep').hidden = mode !== 'free';

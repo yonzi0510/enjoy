@@ -51,6 +51,23 @@ await check('홈 화면이 열린다', async () => {
   expect(await page.locator('#scr-home .menu-card').count() === 5, '메뉴 5개');
 });
 
+/* ── 낙서장 첫 화면 ── */
+await check('첫 화면: 아이콘 5개가 손그림 SVG (이모지 아님)', async () => {
+  const n = await page.locator('#scr-home .menu-card .mc-emoji svg.ki').count();
+  expect(n === 5, '손그림 아이콘 5개여야 함, 실제 ' + n);
+  const left = await page.$$eval('#scr-home .menu-card .mc-emoji',
+    els => els.map(e => e.textContent.trim()).join(''));
+  expect(left === '', '아이콘 자리에 이모지 글자가 남아 있음: ' + left);
+});
+await check('첫 화면: 제목에서 첫 놀이로 가는 화살표 하나', async () => {
+  expect(await page.locator('#scr-home .m-learn .mc-arrow').count() === 1, '화살표는 배우기 칸에 하나');
+});
+await check('첫 화면: 크기 위계 — 배우기가 가장 크고 차례로 작아진다', async () => {
+  const ws = await page.$$eval('#scr-home .menu-card', els => els.map(e => e.offsetWidth));
+  for (let i = 1; i < ws.length; i++)
+    expect(ws[i - 1] > ws[i], '칸 너비가 차례로 작아져야 함: ' + ws.join(','));
+});
+
 /* ── 글자 배우기 ── */
 await check('글자 배우기 → 자음 14자 그리드', async () => {
   await tap('[data-go="learn"]');
@@ -189,6 +206,35 @@ await check('새로고침 후 별·카드 유지', async () => {
   expect(stars >= 6 + 10, '별 부족: ' + stars);   // 따라쓰기 3×2 + 게임 5×2
   expect(cards >= 3, '카드 부족: ' + cards);
 });
+
+/* ── 첫 화면 배치: 폰·패드에서 칸이 겹치거나 화면 밖으로 나가지 않는다
+      (칸마다 크기가 다르고 doodle-menu.css 가 흩뿌리므로 자리 검사가 필요하다) ── */
+for (const [name, w, h] of [['폰 390×844', 390, 844], ['패드 1180×820', 1180, 820]]) {
+  await check('첫 화면 배치 ' + name + ': 안 겹치고 화면 안에 든다', async () => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto(BASE);
+    await page.waitForTimeout(900); // 등장 모션이 끝난 뒤 재야 실제 자리가 나온다
+    const bad = await page.evaluate(() => {
+      const rs = [...document.querySelectorAll('#scr-home .menu-card')].map(c => {
+        const r = c.getBoundingClientRect();
+        return { n: c.querySelector('.mc-name').textContent, l: r.left, t: r.top, r: r.right, b: r.bottom };
+      });
+      const out = [];
+      for (let i = 0; i < rs.length; i++) {
+        const a = rs[i];
+        if (a.l < -1 || a.r > innerWidth + 1) out.push(a.n + ' 화면 밖');
+        if (a.r - a.l < 44 || a.b - a.t < 44) out.push(a.n + ' 터치 44px 미만');
+        for (let j = i + 1; j < rs.length; j++) {
+          const b = rs[j];
+          if (Math.min(a.r, b.r) - Math.max(a.l, b.l) > 0 &&
+              Math.min(a.b, b.b) - Math.max(a.t, b.t) > 0) out.push(a.n + '↔' + b.n + ' 겹침');
+        }
+      }
+      return out;
+    });
+    expect(bad.length === 0, bad.join(' / '));
+  });
+}
 
 await browser.close();
 console.log('\n결과: ' + passed + ' 통과, ' + failed + ' 실패');

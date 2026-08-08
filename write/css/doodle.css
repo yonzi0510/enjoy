@@ -1,0 +1,270 @@
+/* ✍️ 글씨 놀이터 — 「낙서장」 배치와 손그림 아이콘
+ *
+ * 공용 층(shared/crayon.css 끝의 낙서장 층)이 '재질'을 바꿨다면 이 파일은
+ * 이 앱의 '자리'를 바꾼다. 반드시 css/style.css·shared/crayon.css **뒤에** 불러야
+ * 두툼한 단면 그림자와 줄 맞춘 격자를 덮어쓸 수 있다.
+ *
+ * 하는 일 세 가지
+ *   1) 첫 화면 고르는 칸을 종이 위에 손으로 붙인 것처럼 흩뿌린다
+ *      — shared/doodle-menu.css 의 nth-child 방식을 이 앱 폭에 맞춰 옮겨 적었다.
+ *        (칸 폭이 저마다 달라 흔들림 폭을 공용보다 작게 잡아야 안 겹친다)
+ *   2) 크기 위계 — 가장 먼저 할 「자음 쓰기」가 제일 크고, 뒤로 갈수록 작아진다.
+ *      낙서장·물어보기·내 글씨는 곁다리라 가장 작다.
+ *   3) UI 이모지를 손그림 SVG(css/doodle-icons.css)로 갈아끼운다.
+ *
+ * ⚠️ 줄노트(.note)와 필사 판(canvas)은 건드리지 않는다 — 획 채점 좌표가 틀어진다.
+ */
+
+/* ─────────── 1. 흩뿌리기 ─────────── */
+
+/* 흔들려면 칸 사이가 넉넉해야 한다. 겹치면 어디를 눌러야 할지 헷갈린다. */
+#menu.menu {
+  gap: clamp(22px, 3vw, 36px);
+  align-items: flex-start;
+  padding: clamp(6px, 1.4vh, 18px) 0 clamp(14px, 2vh, 26px);
+}
+
+/* 등장 애니메이션이 transform 을 쓰면 흩뿌림이 잠깐 풀렸다가 튄다.
+ * 순서대로 나타나는 맛(지연)은 그대로 두고 투명도만 움직이게 다시 정의한다. */
+@keyframes card-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 칸마다 다른 손버릇. 여덟 개까지 정해 두고 그 뒤로는 되풀이된다 —
+ * 놀이가 늘거나 줄어도 자리가 무너지지 않는다. */
+.menu > .menu-card:nth-child(8n+1) { transform: translate(-2%,  2.5%) rotate(-2.0deg); }
+.menu > .menu-card:nth-child(8n+2) { transform: translate( 1.5%, -2%)  rotate( 1.5deg); }
+.menu > .menu-card:nth-child(8n+3) { transform: translate(-1%,  -2.5%) rotate( 2.2deg); }
+.menu > .menu-card:nth-child(8n+4) { transform: translate( 2.5%, 2%)   rotate(-1.3deg); }
+.menu > .menu-card:nth-child(8n+5) { transform: translate(-2.5%, -1.5%) rotate( 1.0deg); }
+.menu > .menu-card:nth-child(8n+6) { transform: translate( 1%,   2.5%) rotate(-2.2deg); }
+.menu > .menu-card:nth-child(8n+7) { transform: translate( 2%,  -2.5%) rotate( 1.8deg); }
+.menu > .menu-card:nth-child(8n+8) { transform: translate(-1.5%, 1.5%) rotate(-1.1deg); }
+
+/* 누르면 제자리로 눌린다 — 기울기는 잠깐 펴진다 */
+.menu > .menu-card:active { transform: translate(2px, 4px) rotate(0) scale(.99); }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu > .menu-card,
+  .menu > .menu-card:active { transform: none; }
+}
+
+/* ─────────── 2. 크기 위계 — 먼저 할 것이 크다 ─────────── */
+/* --mci = 그 칸 아이콘 크기. 칸 폭과 함께 줄여 위계를 또렷하게 만든다. */
+.c-jaum    { width: clamp(180px, 46vmin, 320px); --mci: clamp(54px, 11vmin,  88px); }
+.c-moum    { width: clamp(150px, 38vmin, 246px); --mci: clamp(46px, 9.4vmin, 72px); }
+.c-rows    { width: clamp(144px, 36vmin, 228px); --mci: clamp(43px, 8.6vmin, 64px); }
+.c-word    { width: clamp(138px, 34vmin, 214px); --mci: clamp(41px, 8.2vmin, 60px); }
+.c-song,
+.c-tale,
+.c-dict    { width: clamp(132px, 32vmin, 196px); --mci: clamp(37px, 7.4vmin, 54px); }
+.c-draw,
+.c-ask,
+.c-gallery { width: clamp(130px, 30vmin, 180px); --mci: clamp(34px,   7vmin, 48px); }
+
+/* 이름 글씨도 같이 작아진다 — 위계가 두 배로 또렷해지고,
+   좁아진 칸에서 놀이 이름이 두 줄로 꺾이지 않는다 */
+.c-jaum .mc-name { font-size: clamp(21px, 4.4vmin, 31px); }
+.c-moum .mc-name { font-size: clamp(19px, 3.9vmin, 28px); }
+.c-song .mc-name,
+.c-tale .mc-name,
+.c-dict .mc-name { font-size: clamp(16px, 3.1vmin, 22px); }
+.c-draw .mc-name,
+.c-gallery .mc-name { font-size: clamp(15px, 2.9vmin, 19px); }
+/* 이름이 가장 긴 칸 — 한 줄에 들어가게 조금 더 좁혀 쓴다 */
+.c-ask .mc-name { font-size: clamp(14px, 2.7vmin, 17px); letter-spacing: -.02em; }
+.c-draw .mc-desc,
+.c-ask .mc-desc,
+.c-gallery .mc-desc { font-size: clamp(11px, 2vmin, 13px); }
+
+/* 가로 화면(패드 가로가 기본 사용 환경)은 세로 여유가 적다.
+ * 위계는 지키되 한 뼘씩 줄여 **두 줄 안에** 열 칸이 다 들어오게 맞춘다
+ * (세 줄이 되면 홈에서 스크롤이 생겨 아이가 아래 놀이를 못 찾는다). */
+@media (orientation: landscape) {
+  .c-jaum    { width: clamp(180px, 34vmin, 282px); --mci: clamp(48px,   9vmin, 70px); }
+  .c-moum    { width: clamp(148px, 27vmin, 221px); --mci: clamp(42px, 7.6vmin, 58px); }
+  .c-rows    { width: clamp(142px, 25vmin, 205px); --mci: clamp(39px,   7vmin, 52px); }
+  .c-word    { width: clamp(136px, 23.5vmin, 192px); --mci: clamp(37px, 6.6vmin, 48px); }
+  .c-song,
+  .c-tale,
+  .c-dict    { width: clamp(128px, 21.5vmin, 176px); --mci: clamp(34px, 6vmin, 44px); }
+  .c-draw,
+  .c-ask,
+  .c-gallery { width: clamp(120px, 20vmin, 164px); --mci: clamp(31px, 5.4vmin, 40px); }
+  #menu.menu { gap: clamp(16px, 1.8vw, 26px); }
+  .c-jaum .mc-name { font-size: clamp(20px, 3.4vmin, 27px); }
+  .c-moum .mc-name { font-size: clamp(18px, 3.1vmin, 25px); }
+}
+
+/* ─────────── 3. 손그림 아이콘 ─────────── */
+
+/* 글자 옆에 놓는 아이콘 (제목·머리말·단추) */
+.di {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -.22em;
+  background: var(--di) center / contain no-repeat;
+  flex: none;
+}
+.di + * { margin-left: .1em; }
+h1 .di, .bar h2 .di { margin-right: .22em; }
+/* 글자 뒤에 붙는 아이콘 (예: "써 볼래! ✏️") */
+.bigbtn .di:last-child:not(:first-child) { margin-left: .24em; }
+
+/* 홈 칸 아이콘 — 이모지 자리를 그림으로 바꾼다 */
+.c-word .mc-icon,
+.c-song .mc-icon,
+.c-tale .mc-icon,
+.c-dict .mc-icon,
+.c-draw .mc-icon,
+.c-ask .mc-icon,
+.c-gallery .mc-icon {
+  font-size: 0;                 /* 원래 이모지를 감춘다 */
+  width: var(--mci);
+  height: var(--mci);
+  background: var(--di) center / contain no-repeat;
+}
+.c-word    .mc-icon { --di: var(--di-apple); }
+.c-song    .mc-icon { --di: var(--di-note); }
+.c-tale    .mc-icon { --di: var(--di-book); }
+.c-dict    .mc-icon { --di: var(--di-head); }
+.c-draw    .mc-icon { --di: var(--di-palette); }
+.c-ask     .mc-icon { --di: var(--di-mic); }
+.c-gallery .mc-icon { --di: var(--di-frame); }
+
+/* ㄱ·ㅏ·가 는 이모지가 아니라 '배울 글자'다 — 그림으로 바꾸지 않고
+   크레용으로 눌러 쓴 글씨처럼 보이게만 한다 */
+.c-jaum .mc-icon,
+.c-moum .mc-icon,
+.c-rows .mc-icon {
+  font-size: var(--mci);
+  line-height: 1.06;
+  color: #2E2A24;
+  transform: rotate(-3deg);
+}
+.c-moum .mc-icon { transform: rotate(2.5deg); }
+.c-rows .mc-icon { transform: rotate(-1.5deg); }
+
+/* 목록 화면 머리말 아이콘 (js/app.js 가 넣는다) */
+#items-title .di { width: 1.05em; height: 1.05em; }
+
+/* 축하 판의 커다란 별 */
+.reward-stars .di { width: 1em; height: 1em; vertical-align: -.12em; margin: 0; }
+
+/* 진행도 알약 안의 별·메달·말풍선 */
+.mc-prog .di, .it-prog .di {
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -.18em;
+  margin-right: .18em;
+}
+
+/* 물어보고 쓰기 — 커다란 마이크 단추 */
+.ask-mic .di {
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -.2em;
+  margin: 0;
+}
+
+/* 낙서장 도구 단추 — 아이콘 하나만 들어가는 칸이라 꽉 채운다 */
+.dock-btn .di,
+.pen-btn .di,
+.navbtn .di,
+.item-play .di,
+.line-clear .di {
+  width: 1em;
+  height: 1em;
+  vertical-align: -.14em;
+  margin: 0;
+}
+/* 다 지우기: 한 번 더 누르면 지워지는 상태를 빨간 통으로 알린다 */
+#btn-draw-clear.armed .di { --di: var(--di-trash-on); }
+
+/* ─────────── 낙서장 손맛 마무리 ─────────── */
+/* 크레용 층이 못 걷어낸 이 앱만의 두툼한 색 단면·광택을 마저 지우고
+   얇고 삐뚤한 손그림 윤곽만 남긴다. 색은 앱이 정한 것을 그대로 쓴다. */
+.item-main,
+.bigbtn,
+.dock-btn,
+.pen-btn,
+.ask-mic,
+.ask-chip,
+.art-card,
+.item-play,
+.draw-drop,
+.dict-check {
+  border: 3px solid rgba(46, 42, 36, .82);
+  box-shadow: none;
+}
+/* 광택 그라데이션을 쓰던 것만 흰 종이로 되돌린다 (단색 배경은 그대로 둔다) */
+.bigbtn, .dock-btn, .pen-btn, .ask-chip, .item-main, .art-card, .draw-drop {
+  background-image: none;
+  background-color: #fff;
+}
+.bigbtn        { border-radius: 20px 16px 21px 17px; }
+.dock-btn,
+.pen-btn       { border-radius: 24px 19px 25px 20px; }
+.ask-mic       { border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%; }
+.ask-chip      { border-radius: 999px; }
+.item-main,
+.art-card,
+.draw-drop,
+.dict-check    { border-radius: 22px 18px 23px 19px; }
+.item-play     { border-radius: 20px 24px 19px 23px; }
+/* 켜짐·강조 상태 — 손그림 아이콘은 진한 먹선이라 짙은 보라 위에서 안 보인다.
+   '고른 것'은 형광펜으로 칠한 듯 밝은 색 + 굵은 테로 알린다 (테를 굵혀도
+   box-sizing:border-box 라 단추 크기는 그대로다). */
+.bigbtn.primary, .bigbtn.on,
+.dock-btn.on, .dock-btn.open, .dock-btn.save,
+.pen-btn.on { box-shadow: none; }
+.dock-btn.on, .dock-btn.open, .pen-btn.on {
+  background-color: #FFDE7A;
+  border-color: rgba(46, 42, 36, .95);
+  border-width: 4px;
+  color: #2E2A24;
+}
+.dock-btn.save { background-color: #A9E7C7; color: #2E2A24; }
+.bigbtn.primary, .bigbtn.on { background-color: #C9B4EC; color: #2E2A24; }
+
+/* 도화지 — 두툼한 하늘색 단면을 벗고 종이 윤곽만 (크기·비율은 그대로) */
+#draw-pad { box-shadow: 0 0 0 3px rgba(46, 42, 36, .8); }
+.bigbtn:active,
+.dock-btn:active,
+.pen-btn:active,
+.item-play:active,
+.ask-chip:active,
+.art-card:active,
+.item-main:active { transform: translate(2px, 3px) scale(1); box-shadow: none; }
+
+/* 색 동그라미 — 그림자 대신 연필로 두른 테 */
+.swatch { box-shadow: 0 0 0 2.5px rgba(46, 42, 36, .8); }
+/* 세로 화면에서는 색 동그라미가 30px 밖에 안 돼 다섯 살 손가락에 작았다.
+   툴바가 줄노트 아래라 한 줄 늘어도 필기 칸에는 영향이 없다.
+   (가로 화면은 툴바가 좁은 세로 열이라 그대로 둔다 — 늘리면 판이 밀린다) */
+@media (orientation: portrait) {
+  .swatch { width: clamp(44px, 8vmin, 48px); height: clamp(44px, 8vmin, 48px); }
+}
+
+/* 다섯 살 손가락이 닿는 최소 크기(44px) 맞추기 —
+   공용 단추(🗣️·펫)와 낱말 입력칸이 조금 모자랐다. 이 앱에서만 키운다. */
+.vs-btn, .pet-btn { min-width: 46px; min-height: 46px; }
+.ask-typebox input { min-height: 46px; }
+
+/* 줄노트: **크기·자리는 한 톨도 건드리지 않는다** (획 채점 좌표가 여기 걸려 있다).
+   레이아웃에 영향이 없는 그림자만 종이 윤곽으로 바꾼다. */
+.note { box-shadow: 0 0 0 3px rgba(46, 42, 36, .8); }
+.line-clear { box-shadow: 0 0 0 2.5px rgba(46, 42, 36, .8); }
+.line-clear .di { width: 1.35em; height: 1.35em; } /* 단추 크기·자리는 그대로, 그림만 바뀐다 */
+
+/* 앞·뒤 장 넘김 단추 — 종이 위에 그린 동그라미 */
+.side-nav {
+  border: 3px solid rgba(46, 42, 36, .82);
+  box-shadow: none;
+  background-image: none;
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+}
+.side-nav.prev { background-color: #fff; }
+.side-nav:not(:disabled):active { box-shadow: none; }

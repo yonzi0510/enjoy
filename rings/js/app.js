@@ -10,6 +10,8 @@ window.App = (() => {
   const $ = id => document.getElementById(id);
   const W = D.HAND.W, H = D.HAND.H;
   const pc = (v, total) => (v / total * 100);
+  /* 손그림 아이콘 한 조각 — index.html 의 <symbol id="rg-…"> 를 가져다 쓴다(이모지 대신) */
+  const ic = (name, cls) => '<svg class="ic' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#rg-' + name + '"/></svg>';
 
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
@@ -49,7 +51,8 @@ window.App = (() => {
   function renderHome() {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
-    menu.innerHTML = '';
+    // 제목 밑에서 첫 단계 칸으로 향하는 점선 화살표 — 글씨를 못 읽어도 "여기부터" 를 안다
+    menu.innerHTML = '<svg class="start-arrow" aria-hidden="true"><use href="#rg-arrow"/></svg>';
     D.LEVELS.forEach(lv => {
       const ids = D.puzzlesOf(lv.id).map(x => x.id);
       const done = P.doneCount(ids);
@@ -63,7 +66,7 @@ window.App = (() => {
       b.innerHTML =
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? ic('star', 'ic-sm') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.insertBefore(box, b.firstChild);
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPuzzles(lv); });
       menu.appendChild(b);
@@ -81,7 +84,7 @@ window.App = (() => {
   let curLevel = null;
   function openPuzzles(lv) {
     curLevel = lv;
-    $('puzzles-title').textContent = lv.icon + ' ' + lv.name;
+    $('puzzles-title').innerHTML = ic('ring', 'ic-h') + ' ' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('puzzles-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('puzzles-list');
@@ -96,7 +99,8 @@ window.App = (() => {
       hand.className = 'mc-hand';
       hand.innerHTML = handInner(D.nextUid(), false);
       fillTarget(hand.querySelector('.ring-layer'), pz);
-      b.innerHTML = '<span class="pz-no">' + (i + 1) + '</span><span class="pz-badge">' + (done ? '⭐' : '💍') + '</span>';
+      b.innerHTML = '<span class="pz-no">' + (i + 1) + '</span>' +
+        '<span class="pz-badge">' + ic(done ? 'star' : 'ring') + '</span>';
       b.insertBefore(hand, b.firstChild);
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
@@ -111,7 +115,7 @@ window.App = (() => {
   function openPlay(pz) {
     cur = { pz, target: D.target(pz), steps: D.steps(pz), total: pz.rings.length, placed: {}, locked: false };
     selColor = null;
-    $('play-title').textContent = D.levelDef(pz.level).icon + ' 똑같이 끼워요';
+    $('play-title').innerHTML = ic('ring', 'ic-h') + ' 똑같이 끼워요';
     // 본보기 카드
     $('card-hand').innerHTML = handInner(D.nextUid(), false);
     fillTarget($('card-hand').querySelector('.ring-layer'), pz);

@@ -224,7 +224,8 @@ h1 {
 }
 .hand-slot { display: flex; align-items: center; justify-content: center; width: 100%; }
 .card-slot .hand-box { max-width: clamp(150px, 42vmin, 250px); }
-.play-slot .hand-box { max-width: clamp(180px, 52vmin, 300px); }
+/* 놀이 손은 본보기 손보다 확실히 크게 — 어디에 끼워야 하는지가 한눈에 보인다 */
+.play-slot .hand-box { max-width: clamp(200px, 60vmin, 320px); }
 
 /* ─────────── 색 고리 트레이 ─────────── */
 .tray {
@@ -237,7 +238,8 @@ h1 {
 }
 .tray-item {
   display: flex; align-items: center; justify-content: center;
-  width: clamp(58px, 12vmin, 92px); padding: 6px; aspect-ratio: 100 / 64;
+  /* 폰 세로에서 58px 이면 높이가 43px 라 다섯 살 손가락에 작다 — 하한을 70px 로 올렸다 */
+  width: clamp(70px, 12vmin, 92px); padding: 6px; aspect-ratio: 100 / 64;
   border: none; border-radius: 16px; cursor: grab; font-family: inherit; touch-action: none;
   background: linear-gradient(180deg, #FFFFFF 0%, #FFF1F5 100%);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 4px 0 #F0B6C9, 0 8px 14px rgba(var(--accent), .14);
@@ -324,4 +326,119 @@ h1 {
     animation: none !important;
   }
   * { transition: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 낙서장 마무리 — 「시안 3 · 낙서장」
+ *
+ * 1) 손그림 아이콘(.ic): 이모지가 있던 자리에 그대로 들어가도록 크기를 글자(em)에 맞춘다.
+ * 2) 첫 화면 크기 위계: 단계1 칸이 제일 크고 3으로 갈수록 작아진다. 제목 밑에서 단계1로
+ *    향하는 점선 화살표가 "여기부터" 를 알려 준다. 흩뿌리기(기울기·자리)는
+ *    ../shared/doodle-menu.css 가 맡는다 — **고르는 칸에만** 걸린다.
+ * 3) 놀이 화면은 두툼한 색 단면 그림자와 광택을 걷고 얇은 손그림 윤곽만 남긴다.
+ *    **색 고리(놀잇감)는 손대지 않는다** — 색 맞추기가 곧 놀이다.
+ *
+ * ⚠️ 손 그림(.hand-box)과 그 위의 고리·판정영역에는 회전·확대를 걸지 않는다.
+ *    어느 손가락에 끼웠는지 판정이 좌표로 이뤄져 있어 조금만 틀어져도 틀린다.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 손그림 아이콘 ── */
+.ic {
+  width: 1.15em; height: 1.15em;
+  display: inline-block; vertical-align: -.22em; flex: none;
+}
+.ic-sm { width: 1em; height: 1em; vertical-align: -.16em; }
+h1 .ic-title { width: 1.75em; height: 1.24em; vertical-align: -.26em; }
+.bar h2 .ic-h { width: 1.1em; height: 1.1em; vertical-align: -.2em; }
+.back .ic, .vs-btn .ic { width: 1.5em; height: 1.5em; vertical-align: middle; }
+.bigbtn .ic { width: 1.35em; height: 1.35em; vertical-align: -.3em; }
+.card-cap .ic { width: 1.3em; height: 1.3em; vertical-align: -.32em; }
+.pz-badge { line-height: 0; }
+.pz-badge .ic { width: 1.5em; height: 1.5em; }
+.reward-hand { line-height: 0; }
+.reward-hand .ic { width: 1.6em; height: 1.6em; vertical-align: middle; }
+#reward-next .ic { color: #3A1E2A; }
+
+/* 한글은 어절 단위로 줄을 바꾼다 — "두 개\n도!" 처럼 낱말이 쪼개지지 않게 */
+.mc-name, .mc-desc, .bar h2, .card-cap, .reward-praise { word-break: keep-all; text-wrap: balance; }
+.bar h2 { font-size: clamp(17px, 4vmin, 30px); line-height: 1.14; }
+
+/* ── 첫 화면: 크기 위계 + 시작 화살표 ── */
+/* 남는 세로를 칸들이 나눠 갖고 가운데로 모인다 — 패드에서 아래가 텅 비어 보이지 않게 */
+.menu { align-items: center; flex: 1; align-content: center; min-height: 0; }
+/* 흩뿌리기 — shared/doodle-menu.css 의 순서별 손버릇을, 칸이 셋뿐인 이 앱에 맞춰
+   조금 더 세게 준다(화살표가 1번이라 단계 칸은 2·3·4번). 겹치지 않을 만큼만. */
+.menu > .menu-card:nth-child(2) { transform: translate(-1%,  1%) rotate(-2.2deg); }
+.menu > .menu-card:nth-child(3) { transform: translate( 2%, -2%) rotate( 2.8deg); }
+.menu > .menu-card:nth-child(4) { transform: translate(-1%,  4%) rotate(-2.6deg); }
+/* 눌렸을 때 제자리로 펴지는 것과 모션 줄이기는 doodle-menu.css 가 !important 로 맡는다 */
+.start-arrow { /* 제목 밑에서 단계1 칸으로 향하는 손그림 점선 화살표 */
+  width: clamp(52px, 10vmin, 88px);
+  aspect-ratio: 110 / 130;
+  flex: none; align-self: flex-start;
+  margin-top: clamp(-6px, -1vmin, 0px);
+  color: #C05C86;
+  overflow: visible; pointer-events: none;
+}
+.c-l1 { width: clamp(172px, 32vmin, 262px); }
+.c-l2 { width: clamp(150px, 27vmin, 214px); }
+.c-l3 { width: clamp(132px, 23vmin, 180px); }
+.c-l1 .mc-hand { width: clamp(100px, 20vmin, 164px); }
+.c-l2 .mc-hand { width: clamp(86px, 16.5vmin, 130px); }
+.c-l3 .mc-hand { width: clamp(74px, 14vmin, 108px); }
+.c-l1 .mc-name { font-size: clamp(20px, 4.1vmin, 30px); }
+.c-l3 .mc-name { font-size: clamp(16px, 3.1vmin, 22px); }
+.c-l3 .mc-desc { font-size: clamp(11px, 2vmin, 14px); }
+
+/* ── 종이 위에 연필로: 알약·번호 딱지 ── */
+.mc-prog, .page-count {
+  background: rgba(255, 255, 255, .85);
+  border: 2.5px solid rgba(46, 42, 36, .7);
+  border-radius: 999px;
+  color: #2E2A24;
+}
+.pz-no {
+  background: #fff; color: #2E2A24;
+  border: 2.5px solid rgba(46, 42, 36, .8);
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+  box-shadow: none;
+  width: 28px; height: 28px;
+}
+.puzzle-card.done .pz-no { background: #FFE7A6; }
+.card-cap { color: #3F3129; }
+
+/* ── 놀이 화면: 단면 그림자·광택을 걷고 손그림 윤곽만 ── */
+.card-panel {
+  background: rgba(255, 255, 255, .72);
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 26px 20px 25px 22px;
+  box-shadow: none;
+}
+.tray-item {
+  background: rgba(255, 255, 255, .92);
+  border: 2.5px solid rgba(46, 42, 36, .75);
+  border-radius: 19px 15px 20px 16px;
+  box-shadow: none;
+}
+.tray-item:active { transform: translate(2px, 3px); }
+.tray-item.sel { /* 고른 색 — 종이를 크레용으로 한 번 더 덧그린 느낌 */
+  border-width: 4px; border-color: #2E2A24;
+  background: #FFF3D6;
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: none;
+}
+/* 큰 단추(듣기·다음·그만할래) — shared/crayon.css 의 !important 를 이기려고 body 를 붙였다 */
+body .bigbtn {
+  background: rgba(255, 255, 255, .88) !important;
+  border: 3px solid rgba(46, 42, 36, .85) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  color: #2E2A24;
+  display: inline-flex; align-items: center; justify-content: center; gap: .35em;
+}
+body .bigbtn.primary { background: #F58AAB !important; color: #3A1E2A; }
+body .bigbtn:active { transform: translate(2px, 3px) !important; box-shadow: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tray-item:active, body .bigbtn:active { transform: none !important; }
 }

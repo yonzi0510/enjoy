@@ -1,0 +1,126 @@
+/* bag/css/doodle.css — 생각 놀이터 「낙서장」 층
+ *
+ * 불러오는 자리: index.html 스타일시트 **맨 마지막**
+ *   css/style.css → shared/crayon.css → shared/doodle-menu.css → 이 파일
+ *
+ * 하는 일 두 가지
+ *   1) 첫 화면 고르는 칸을 종이에 손으로 붙인 것처럼 흩뿌린다 (자리·기울기·크기).
+ *      shared/doodle-menu.css 가 기본 흩뿌림을 주지만, 앞서 오는 shared/crayon.css 의
+ *      `.menu-card:nth-child(even)`(선택자 무게 0,2,0)가 그걸 덮어 버린다.
+ *      그래서 여기서는 `.menu > .menu-card:nth-child(...)`(같은 0,2,0 · 더 뒤)로 다시 잡는다.
+ *   2) 손그림 아이콘(<use href="#bg-…">)의 크기를 자리마다 맞춘다.
+ *
+ * ⚠️ 절대 지킬 것 — **놀잇감에는 transform 을 주지 않는다.**
+ *    숟가락·빨대 슬라이더·네모 조각은 SVG 좌표로 자리와 각도를 판정하고,
+ *    풍선 줄은 캔버스 좌표로 궤적을 채점한다. 여기에 CSS 회전·확대를 얹으면
+ *    손가락이 닿는 자리와 판정 좌표가 어긋나 놀이가 망가진다.
+ *    흩뿌리기는 첫 화면 `.menu > .menu-card` 에만 준다.
+ */
+
+/* ─────────── 손그림 아이콘 ─────────── */
+.di {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -.14em;
+  flex: none;
+  overflow: visible;      /* 획을 떨면 테두리 밖으로 조금 삐져나온다 */
+  pointer-events: none;   /* 단추 위 아이콘이 눌림을 가로채지 않게 */
+}
+
+/* ─────────── 첫 화면: 종이에 흩뿌린 고르는 칸 ─────────── */
+.menu {
+  align-items: flex-start;             /* 키가 다른 칸들이 위에 매달리게 */
+  max-width: min(100%, 900px);
+  padding: clamp(10px, 1.8vh, 24px) clamp(12px, 2.2vw, 28px) !important; /* 기울인 칸이 밀려날 여백 */
+}
+
+/* 크기 위계 — 가장 먼저 할 놀이(숟가락)가 가장 크고, 뒤로 갈수록 작아진다.
+   칸이 늘어나면(5번째부터) 막내 크기로 이어 붙는다. */
+.menu > .menu-card:nth-child(1) { width: clamp(196px, 42vmin, 320px); padding: clamp(20px, 4vmin, 34px); }
+.menu > .menu-card:nth-child(2) { width: clamp(168px, 35vmin, 264px); }
+.menu > .menu-card:nth-child(3) { width: clamp(154px, 31vmin, 238px); }
+.menu > .menu-card:nth-child(n+4) { width: clamp(150px, 30vmin, 230px); }
+
+.menu > .menu-card:nth-child(1) .mc-icon { font-size: clamp(64px, 13.5vmin, 100px); }
+.menu > .menu-card:nth-child(1) .mc-name { font-size: clamp(20px, 4.2vmin, 30px); }
+.menu > .menu-card:nth-child(2) .mc-icon { font-size: clamp(52px, 11vmin, 80px); }
+.menu > .menu-card:nth-child(n+3) .mc-icon { font-size: clamp(46px, 9.6vmin, 68px); }
+/* 작은 칸일수록 이름 글씨도 한 톤 작게 + 여백을 줄여 — 이름이 두 줄로 넘어가지 않게 */
+.menu > .menu-card:nth-child(n+3) { padding: clamp(12px, 2.7vmin, 24px); }
+.menu > .menu-card:nth-child(n+3) .mc-name { font-size: clamp(15px, 3vmin, 22px); }
+.menu > .menu-card:nth-child(n+4) .mc-name { font-size: clamp(14px, 2.9vmin, 21px); }
+.menu > .menu-card .mc-desc { line-height: 1.25; }
+
+/* 칸마다 다른 손버릇 — 자리와 기울기. 여덟 개까지 정하고 그 뒤로 되풀이된다. */
+.menu > .menu-card:nth-child(8n+1) { transform: translate(-2%,  1%) rotate(-2.1deg); }
+.menu > .menu-card:nth-child(8n+2) { transform: translate( 2%,  4%) rotate( 1.7deg); }
+.menu > .menu-card:nth-child(8n+3) { transform: translate(-1%, -2%) rotate( 2.5deg); }
+.menu > .menu-card:nth-child(8n+4) { transform: translate( 2%,  3%) rotate(-1.6deg); }
+.menu > .menu-card:nth-child(8n+5) { transform: translate(-2%, -1%) rotate( 1.2deg); }
+.menu > .menu-card:nth-child(8n+6) { transform: translate( 1%,  4%) rotate(-2.4deg); }
+.menu > .menu-card:nth-child(8n+7) { transform: translate( 2%, -2%) rotate( 1.9deg); }
+.menu > .menu-card:nth-child(8n+8) { transform: translate(-1%,  2%) rotate(-1.3deg); }
+
+/* 누르면 기울기가 잠깐 펴지며 종이가 눌린다 */
+.menu > .menu-card:active { transform: translate(2px, 4px) rotate(0deg) !important; }
+
+/* ─────────── 화면 틀의 손그림 아이콘 크기 ─────────── */
+h1 .di { vertical-align: -.12em; }
+.stat .di { width: 1.15em; height: 1.15em; }
+/* 목소리 단추 — 공용 기본이 42px 이라 폰에서 손가락 하한(44px)에 못 미친다 */
+#btn-voice { width: clamp(44px, 7.5vmin, 54px); height: clamp(44px, 7.5vmin, 54px); }
+.vs-btn .di { width: 1.4em; height: 1.4em; }
+
+/* ◀ ▶ 는 글자가 아니라 그림이라 단추 안에서 따로 키운다 */
+.back { font-size: clamp(24px, 4.8vmin, 34px); }
+.side-nav { font-size: clamp(26px, 5.2vmin, 38px); }
+.sample-tag .di, .bl-tag .di { width: 1.25em; height: 1.25em; }
+.bigbtn .di { width: 1.2em; height: 1.2em; }
+.reward-stars .di { width: 1em; height: 1em; vertical-align: -.08em; }
+
+/* 내 줄 지우개 — 다섯 살 손가락에 맞춰 44px 아래로는 내려가지 않게 */
+.line-clear {
+  width: clamp(44px, 6.4vmin, 52px);
+  height: clamp(44px, 6.4vmin, 52px);
+  font-size: clamp(22px, 3.6vmin, 28px);
+}
+.line-clear .di { width: 1.1em; height: 1.1em; }
+
+/* ─────────── 낙서장 문법을 bag 고유 부품에도 ───────────
+ * shared/crayon.css 의 낙서장 층은 여러 앱이 함께 쓰는 이름(.menu-card·.reward-card…)만 다룬다.
+ * 생각 놀이터만 쓰는 부품(본보기 카드·풍선 카드·도안 줄·큰 단추)에도 같은 문법을 준다 —
+ * 두툼한 색 단면 그림자와 광택 그라데이션을 걷고, 얇은 손그림 윤곽만 남긴다. */
+.sample-card,
+.bl-card,
+.item-main {
+  background: rgba(255, 255, 255, .78) !important;
+  border: 3px solid rgba(46, 42, 36, .85) !important;
+  box-shadow: none !important;
+}
+.sample-card { border-radius: 25px 20px 27px 21px !important; }
+.bl-card { border-radius: 22px 18px 23px 19px !important; }
+.bl-card canvas { box-shadow: none; background: #fff; }
+
+.bigbtn,
+.side-nav,
+.page-count,
+.sample-tag,
+.line-clear {
+  background: #fff !important;
+  border: 3px solid rgba(46, 42, 36, .8) !important;
+  box-shadow: none !important;
+  color: var(--ink, #2E2A24) !important;
+}
+.page-count, .sample-tag { border-width: 2.5px !important; border-radius: 999px !important; }
+.side-nav, .line-clear { border-radius: 52% 48% 51% 49% / 49% 52% 48% 51% !important; }
+
+/* 가장 중요한 단추(다음·확인)만 크레용으로 칠한 노랑 */
+.bigbtn.primary,
+.bl-toolbar .bigbtn.on { background: #F6C453 !important; }
+
+/* ─────────── 모션 줄이기 ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  .menu > .menu-card,
+  .menu > .menu-card:active { transform: none !important; }
+}

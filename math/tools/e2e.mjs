@@ -609,6 +609,80 @@ await check('새로고침 후 새 활동 진행도 유지', async () => {
   expect(dice.includes('1판'), '주사위 판 수: ' + dice);
 });
 
+await check('첫 화면: 네 화면 모두 스크롤 없이 11칸 · 겹침 없음 · 손그림 아이콘', async () => {
+  // 진행도가 쌓인 뒤(글자가 가장 긴 상태)로 재는 것이 더 빡빡한 검사다
+  const screens = [
+    ['폰 세로', 390, 844], ['폰 가로', 844, 390],
+    ['패드 세로', 820, 1180], ['패드 가로', 1180, 820], ['패드 가로(작은)', 1024, 768],
+  ];
+  for (const [name, w, h] of screens) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    await page.waitForTimeout(120); // 흩뿌린 기울기가 자리 잡을 때까지
+    const m = await page.evaluate(() => {
+      const scr = document.getElementById('scr-home');
+      const cards = [...document.querySelectorAll('#menu .menu-card')];
+      const rects = cards.map(c => {
+        const r = c.getBoundingClientRect();
+        return { n: c.querySelector('.mc-name').textContent, x: r.x, y: r.y, w: r.width, h: r.height, r: r.right, b: r.bottom };
+      });
+      const overlaps = [];
+      for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
+        const a = rects[i], b = rects[j];
+        if (Math.min(a.r, b.r) - Math.max(a.x, b.x) > 2 && Math.min(a.b, b.b) - Math.max(a.y, b.y) > 2) {
+          overlaps.push(a.n + '×' + b.n);
+        }
+      }
+      const hb = document.querySelector('.enjoy-home-btn').getBoundingClientRect();
+      const underHome = rects.filter(q =>
+        Math.min(hb.right, q.r) - Math.max(hb.left, q.x) > 1 && Math.min(hb.bottom, q.b) - Math.max(hb.top, q.y) > 1).map(q => q.n);
+      // 왼쪽 아래 고정된 아이 이름표가 카드 글씨를 덮지 않아야 한다
+      const badge = document.querySelector('.enjoy-profile-badge');
+      const bg = badge && badge.getBoundingClientRect();
+      const underBadge = !bg ? [] : [...document.querySelectorAll('#menu .mc-name, #menu .mc-prog')].filter(t => {
+        const q = t.getBoundingClientRect();
+        return Math.min(bg.right, q.right) - Math.max(bg.left, q.left) > 1 && Math.min(bg.bottom, q.bottom) - Math.max(bg.top, q.top) > 1;
+      }).map(t => t.textContent);
+      return { underBadge,
+        count: rects.length,
+        overflowY: scr.scrollHeight - scr.clientHeight,
+        overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        overlaps, underHome,
+        tooSmall: rects.filter(q => q.w < 44 || q.h < 44).map(q => q.n),
+        offscreen: rects.filter(q => q.x < -1 || q.r > innerWidth + 1 || q.y < -1 || q.b > innerHeight + 1).map(q => q.n),
+        // 아이콘이 이모지가 아니라 손그림 <symbol> 을 불러 쓰는지
+        arts: cards.filter(c => c.querySelector('.mc-icon > svg > use[href^="#mi-"]')).length,
+      };
+    });
+    expect(m.count === 11, name + ': 카드 수 ' + m.count);
+    expect(m.overflowY === 0, name + ': 세로 스크롤 ' + m.overflowY + 'px (한 화면에 안 들어옴)');
+    expect(m.overflowX === 0, name + ': 가로 스크롤 ' + m.overflowX + 'px');
+    expect(m.overlaps.length === 0, name + ': 카드 겹침 ' + m.overlaps.join(', '));
+    expect(m.underHome.length === 0, name + ': 집 단추에 가린 카드 ' + m.underHome.join(', '));
+    expect(m.underBadge.length === 0, name + ': 이름표에 가린 글씨 ' + m.underBadge.join(', '));
+    expect(m.tooSmall.length === 0, name + ': 터치 하한 44px 미달 ' + m.tooSmall.join(', '));
+    expect(m.offscreen.length === 0, name + ': 화면 밖 ' + m.offscreen.join(', '));
+    expect(m.arts === 11, name + ': 손그림 아이콘 ' + m.arts + ' / 11');
+  }
+  await page.setViewportSize({ width: 1180, height: 820 }); // 기본 뷰포트 복원
+});
+
+await check('첫 화면: 크기 위계 — 숫자 따라쓰기가 가장 크고, 세 층으로 나뉜다', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const a = await page.evaluate(() => {
+    const area = sel => { const r = document.querySelector(sel).getBoundingClientRect(); return r.width * r.height; };
+    return {
+      trace: area('.menu-card.c-trace'),
+      mid: area('.menu-card.c-stones'),
+      small: area('.menu-card.c-add'),
+    };
+  });
+  expect(a.trace > a.mid * 1.8, '따라쓰기가 충분히 크지 않다: ' + JSON.stringify(a));
+  expect(a.mid > a.small * 1.15, '가운데 층이 작은 층과 구분되지 않는다: ' + JSON.stringify(a));
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });

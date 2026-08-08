@@ -1,0 +1,41 @@
+/* 낙서장 배치 — 앱 첫 화면의 놀이 고르는 칸을 종이 위에 흩뿌린다.
+ *
+ * 「시안 3 · 낙서장」의 핵심은 질감이 아니라 **격자를 깨는 것**이다.
+ * 칸이 자로 잰 듯 줄 맞춰 있으면 아무리 손그림을 얹어도 앱처럼 보인다.
+ * 그래서 칸마다 조금씩 다른 자리·기울기·크기를 준다 — 손으로 붙인 것처럼.
+ *
+ * 자리는 사람이 하나하나 정하지 않고 순서(nth-child)로 준다. 그래야
+ * 놀이가 늘거나 줄어도 무너지지 않는다.
+ *
+ * 불러오는 법 — 앱 index.html 의 스타일시트 중 **가장 마지막**:
+ *   <link rel="stylesheet" href="../shared/doodle-menu.css">
+ */
+
+/* 흩뿌릴 대상 — 첫 화면의 '놀이 고르기' 칸들 */
+.screen.on .menu > *,
+.screen.active .menu > * {
+  transition: transform .12s ease;
+}
+
+/* 칸마다 다른 손버릇. 여덟 개까지 정해 두고 그 뒤로는 되풀이된다. */
+.menu > *:nth-child(8n+1) { transform: translate(-3%,  4%) rotate(-2.1deg) scale(1.05); }
+.menu > *:nth-child(8n+2) { transform: translate( 2%, -3%) rotate( 1.6deg) scale(.97);  }
+.menu > *:nth-child(8n+3) { transform: translate(-1%, -5%) rotate( 2.4deg) scale(1.02); }
+.menu > *:nth-child(8n+4) { transform: translate( 4%,  3%) rotate(-1.4deg) scale(.99);  }
+.menu > *:nth-child(8n+5) { transform: translate(-4%, -2%) rotate( 1.1deg) scale(1.04); }
+.menu > *:nth-child(8n+6) { transform: translate( 1%,  5%) rotate(-2.6deg) scale(.96);  }
+.menu > *:nth-child(8n+7) { transform: translate( 3%, -4%) rotate( 1.9deg) scale(1.03); }
+.menu > *:nth-child(8n+8) { transform: translate(-2%,  2%) rotate(-1.2deg) scale(.98);  }
+
+/* 누르면 제자리로 눌린다 — 기울기는 잠깐 펴진다 */
+.menu > *:active { transform: translateY(3px) rotate(0) scale(.99) !important; }
+
+/* 흩뿌리려면 칸 사이가 넉넉해야 한다. 겹치면 누를 자리가 헷갈린다. */
+.menu {
+  gap: clamp(16px, 2.6vw, 34px) !important;
+  padding: clamp(10px, 1.8vh, 24px) clamp(6px, 1.4vw, 20px) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu > * { transform: none !important; }
+}

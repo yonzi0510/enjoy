@@ -345,3 +345,138 @@ h1 {
   }
   * { transition: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 낙서장 마무리 — 「시안 3 · 낙서장」
+ *
+ * ⚠️ 이 놀이의 목숨줄: **조각이 어느 쪽을 보는지**가 정답이다.
+ *    그래서 격자(.board·.bd-*)와 조각(.tray-item·.ti-piece·.drag-ghost)에는
+ *    회전(rotate)도 크기(scale)도 절대 주지 않는다. 흩뿌리기는 첫 화면의
+ *    '고르는 칸'에만 준다. 첫 화면 카드 안의 작은 격자 미리보기도 카드가 기운
+ *    만큼 되돌려 세워 둔다(.mc-icon) — 미리보기의 조각 방향도 정답이라서다.
+ *
+ * 하는 일 셋:
+ *   1) 첫 화면 흩뿌리기 — 칸마다 다른 기울기·자리 (공용 doodle-menu.css 의 방식을
+ *      이 앱 안으로 옮겨 왔다. scale 을 빼고 미리보기 되돌리기를 더한 판이다.)
+ *   2) 크기 위계 — 가장 먼저 할 1단계 칸이 제일 크고 3단계로 갈수록 작아진다.
+ *   3) 손그림 아이콘(.ic) 자리 잡기 + 놀이 화면에서 두툼한 색 단면·광택 걷어내기.
+ *      색(조각·스와치·단계색)은 앱이 정한 것을 그대로 둔다.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1) 첫 화면 흩뿌리기 ─────────────────────────────────────────── */
+.menu {
+  align-items: center;
+  align-content: center;   /* 남는 세로 공간 한가운데에 종이처럼 놓이게 */
+  flex: 1;
+  gap: clamp(16px, 3vmin, 32px);
+  padding: clamp(8px, 1.6vh, 20px) clamp(4px, 1.2vw, 16px);
+}
+/* 칸마다 다른 손버릇. 세 칸까지 정해 두고 그 뒤로는 되풀이된다.
+   기울기·자리만 준다 — 크기(scale)는 아래 위계가 width 로 따로 정한다.
+   (선택자를 `.menu > .menu-card:…` 로 잡는 이유: 공용 crayon.css 의
+    `.menu-card:nth-child(even)` 보다 구체적이어야 이 기울기가 이긴다) */
+.menu > .menu-card:nth-child(3n+1) { transform: translate(-2.5%,  3%) rotate(-2.2deg); }
+.menu > .menu-card:nth-child(3n+2) { transform: translate( 2.5%, -2%) rotate( 1.8deg); }
+.menu > .menu-card:nth-child(3n+3) { transform: translate(-1%,    4%) rotate( 2.6deg); }
+
+/* 들어올 때는 스르르 나타나기만 한다 — 원래의 card-in 은 transform 을 덮어써서
+   기울기가 잠깐 펴졌다가 툭 하고 기우는 게 보였다. */
+@keyframes menu-card-in { from { opacity: 0; } to { opacity: 1; } }
+.menu-card { animation-name: menu-card-in; }
+
+/* 카드 안의 작은 격자 미리보기는 카드가 기운 만큼 되돌려 똑바로 세운다.
+   (조각 방향이 곧 정답이라, 미리보기가 기울면 아이가 잘못 배운다) */
+.mc-icon { display: block; line-height: 0; transform-origin: 50% 50%; }
+.menu > .menu-card:nth-child(3n+1) .mc-icon { transform: rotate( 2.2deg); }
+.menu > .menu-card:nth-child(3n+2) .mc-icon { transform: rotate(-1.8deg); }
+.menu > .menu-card:nth-child(3n+3) .mc-icon { transform: rotate(-2.6deg); }
+
+/* 누르면 제자리로 눌린다 — 기울기는 잠깐 펴진다 */
+.menu .menu-card:active { transform: translate(2px, 3px) rotate(0); }
+
+/* ── 2) 크기 위계 — 먼저 할 것을 크게 ────────────────────────────── */
+.c-l1 { width: clamp(190px, 34vmin, 300px); }
+.c-l2 { width: clamp(166px, 28vmin, 250px); }
+.c-l3 { width: clamp(144px, 24vmin, 210px); }
+.c-l1 .mini-grid { width: clamp(88px, 17vmin, 130px); }
+.c-l2 .mini-grid { width: clamp(74px, 14vmin, 106px); }
+.c-l3 .mini-grid { width: clamp(64px, 12vmin,  90px); }
+.c-l1 .mc-name { font-size: clamp(21px, 4.4vmin, 32px); }
+.c-l2 .mc-name { font-size: clamp(18px, 3.6vmin, 26px); }
+.c-l3 .mc-name { font-size: clamp(16px, 3.2vmin, 23px); }
+.c-l3 .mc-desc { font-size: clamp(11px, 2.1vmin, 14px); }
+
+/* 머리의 동그란 단추 — 폰 세로에서 42px 까지 줄어 손가락 하한(44px)을 밑돌았다.
+   (공용 voice-settings.css 의 `.vs-btn` 보다 구체적이어야 이긴다) */
+.stats .vs-btn { width: clamp(46px, 8vmin, 52px); height: clamp(46px, 8vmin, 52px); }
+
+/* 머리줄을 한 칸 내린다 — 오른쪽 위의 '남은 시간' 쪽지(공용 .tl-bar-tag)와
+   제목·듣기 단추가 겹치던 것을 푼다. 폰(≤700px)에서는 공용 집 단추 쪽이 쪽지를
+   아래로 내려 주지만, 넓은 화면에서는 쪽지가 머리줄과 같은 높이에 남는다.
+   놀이 화면은 격자 위 여백만 줄어들 뿐 격자·트레이 자리는 그대로다(트레이는 아래에 붙어 있다). */
+.home-head { margin-top: max(2vmin, 26px); }
+.bar { margin-top: 22px; }
+
+/* 왼쪽 아래는 비워 둔다 — 지금 누가 노는지 알려 주는 공용 프로필 배지(고정)가
+   조각 트레이와 격자 칸을 덮고 있었다. 배지 높이 30px + 아래 여백 10px 만큼 비운다. */
+.screen { padding-bottom: 48px; }
+
+/* ── 3) 손그림 아이콘 자리 ───────────────────────────────────────── */
+.ic {
+  width: 1.15em; height: 1.15em;
+  display: inline-block; vertical-align: -.2em; flex: none;
+}
+h1 .ic-title { width: 1.2em; height: 1.2em; }
+.vs-btn .ic, .back .ic { width: 1.5em; height: 1.5em; vertical-align: middle; }
+.mc-prog .ic { width: 1.1em; height: 1.1em; }
+.ps-badge .ic { width: 1.5em; height: 1.5em; }
+.bd-corner .ic { width: 74%; height: 74%; }        /* 코너 칸 크기를 따라간다 */
+.hint-chip .ic { width: 1.3em; height: 1.3em; }
+.stat, .mc-prog, .ps-badge, .hint-chip { line-height: 1.25; }
+
+/* ── 놀이 화면: 단면 그림자·광택을 걷고 손그림 윤곽만 (변형은 없다) ── */
+.board {
+  background: rgba(255,255,255,.7);
+  border: 3px solid rgba(46,42,36,.85);
+  border-radius: 26px 21px 27px 22px;
+  box-shadow: none;
+}
+.bd-dir {
+  background: rgba(255,255,255,.55);
+  border-radius: 15px 12px 16px 13px;
+  box-shadow: none;
+}
+.bd-color { background: rgba(255,255,255,.45); border-radius: 15px 12px 16px 13px; }
+.bd-cell {
+  background: rgba(255,255,255,.3);
+  border-radius: 16px 13px 17px 14px;
+  box-shadow: inset 0 0 0 2.5px rgba(46,42,36,.28);
+}
+.bd-cell.filled { background: rgba(255,255,255,.78); box-shadow: inset 0 0 0 2.5px rgba(46,42,36,.16); }
+.tray-item {
+  background: #fff;
+  border: 2.5px solid rgba(46,42,36,.72);
+  border-radius: 17px 14px 18px 15px;
+  box-shadow: none;
+}
+.hint-chip, .page-count {
+  background: rgba(255,255,255,.85);
+  border: 2.5px solid rgba(46,42,36,.72);
+  border-radius: 999px;
+  box-shadow: none;
+}
+.hint-chip { padding: 5px 16px; }
+.page-count { padding: 4px 13px; }
+
+/* 다음에 채울 칸 표시 — 👉(오른쪽을 가리키는 손) 대신 방향이 없는 손그림 동그라미.
+   화살표처럼 보이는 표시를 칸에 두면 '오른쪽 조각'으로 오해할 수 있다. */
+.bd-cell.next:not(.filled)::after {
+  content: '';
+  width: 56%; height: 56%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M23 8 C33 8 40 15 40 24 C40 33 33 40 24 40 C15 40 8 33 8 24 C8 16 14 9 22 8.4' fill='none' stroke='%23C8901A' stroke-width='4.4' stroke-linecap='round'/%3E%3Cpath d='M24 15 L27.5 21 L34 24 L27.5 27 L24 33 L20.5 27 L14 24 L20.5 21 Z' fill='%23E8A31A'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* ── 모션 줄이기 — 흩뿌린 기울기도 편다 ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .menu > .menu-card, .menu > .menu-card .mc-icon, .menu .menu-card:active { transform: none !important; }
+}

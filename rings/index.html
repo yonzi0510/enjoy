@@ -13,18 +13,142 @@
 <link rel="stylesheet" href="../shared/time-limit.css">
 <link rel="stylesheet" href="../shared/pet.css">
 <link rel="stylesheet" href="../shared/crayon.css">
+<link rel="stylesheet" href="../shared/doodle-menu.css">
 </head>
 <body>
+
+<!-- ═══════════ 아이가 그린 손그림 (인라인 SVG) ═══════════
+     이모지 대신 쓰는 그림들. 굵고 고른 획, 삐뚤한 선, 안 닫히는 동그라미,
+     칠은 윤곽 밖으로 조금 삐져나간다.
+     — 획 떨림은 feTurbulence + feDisplacementMap 두 벌(윤곽용·칠용)로 낸다.
+     — 동그라미를 안 닫는 방법: stroke-dasharray 로 한 군데를 비운다.
+     ⚠️ 놀잇감인 **색 고리(js/data.js 의 ringSVG)** 는 여기 없다. 색 맞추기가 곧 놀이라
+        고리 색·모양은 손대지 않는다. 여기 그림은 '틀'(제목·단추·딱지)뿐이고,
+        틀에 쓰는 고리 그림(#rg-ring)은 여섯 색 어느 것도 아닌 종이빛으로 칠했다. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <!-- 윤곽선용 떨림 — 자로 그은 티를 없앤다 -->
+  <filter id="rg-hand" x="-18%" y="-18%" width="136%" height="136%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.036" numOctaves="2" seed="5"/>
+    <feDisplacementMap in="SourceGraphic" scale="2.6"/>
+  </filter>
+  <!-- 칠(크레용)용 떨림 — 더 크게 흔들어 윤곽 밖으로 삐져나가게 한다 -->
+  <filter id="rg-spill" x="-28%" y="-28%" width="156%" height="156%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.024" numOctaves="2" seed="2"/>
+    <feDisplacementMap in="SourceGraphic" scale="5.4"/>
+  </filter>
+
+  <!-- 제목: 고무줄 고리 세 개. 여섯 색 중 하나만 쓰면 '이 색이 답인가?' 싶어져서
+       빨강·노랑·파랑을 나란히 둬 어느 색도 가리키지 않게 했다. -->
+  <symbol id="rg-title" viewBox="0 0 68 48">
+    <g filter="url(#rg-spill)" fill="none" stroke-linecap="round" opacity=".92">
+      <circle cx="17" cy="27" r="10" stroke="#EF4E4E" stroke-width="7" stroke-dasharray="54 9" transform="rotate(-25 17 27)"/>
+      <circle cx="34" cy="22" r="10" stroke="#F4CE2A" stroke-width="7" stroke-dasharray="54 9" transform="rotate(120 34 22)"/>
+      <circle cx="51" cy="27" r="10" stroke="#4DA6E8" stroke-width="7" stroke-dasharray="54 9" transform="rotate(200 51 27)"/>
+    </g>
+    <g filter="url(#rg-hand)" fill="none" stroke="#2E2A24" stroke-width="2.8" stroke-linecap="round">
+      <circle cx="17" cy="26" r="13.5" stroke-dasharray="76 9" transform="rotate(-40 17 26)"/>
+      <circle cx="17" cy="26" r="6.5" stroke-dasharray="36 6" transform="rotate(150 17 26)"/>
+      <circle cx="34" cy="21" r="13.5" stroke-dasharray="76 9" transform="rotate(95 34 21)"/>
+      <circle cx="34" cy="21" r="6.5" stroke-dasharray="36 6" transform="rotate(-30 34 21)"/>
+      <circle cx="51" cy="26" r="13.5" stroke-dasharray="76 9" transform="rotate(215 51 26)"/>
+      <circle cx="51" cy="26" r="6.5" stroke-dasharray="36 6" transform="rotate(60 51 26)"/>
+    </g>
+  </symbol>
+
+  <!-- 고무줄 고리 하나 — 딱지·꼬리표용. 종이빛이라 놀이의 여섯 색과 헷갈리지 않는다. -->
+  <symbol id="rg-ring" viewBox="0 0 48 48">
+    <g filter="url(#rg-spill)" fill="none" stroke-linecap="round" opacity=".95">
+      <circle cx="25" cy="25" r="13" stroke="#E3D2B6" stroke-width="9" stroke-dasharray="70 12" transform="rotate(-20 25 25)"/>
+    </g>
+    <g filter="url(#rg-hand)" fill="none" stroke="#2E2A24" stroke-width="3.2" stroke-linecap="round">
+      <circle cx="24" cy="24" r="17.5" stroke-dasharray="98 12" transform="rotate(-35 24 24)"/>
+      <circle cx="24" cy="24" r="8.5" stroke-dasharray="47 9" transform="rotate(140 24 24)"/>
+    </g>
+  </symbol>
+
+  <!-- 별 (모은 별·완성 딱지) -->
+  <symbol id="rg-star" viewBox="0 0 48 48">
+    <g filter="url(#rg-spill)" transform="translate(1.6,2.2)">
+      <path d="M24 8 L28.1 19.3 L40.2 19.8 L30.7 27.2 L34 38.8 L24 32 L14 38.8 L17.3 27.2 L7.8 19.8 L19.9 19.3 Z" fill="#F4CE2A"/>
+    </g>
+    <g filter="url(#rg-hand)" fill="none" stroke="#2E2A24" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 8 L28.1 19.3 L40.2 19.8 L30.7 27.2 L34 38.8 L24 32 L14 38.8 L17.3 27.2 L7.8 19.8 L19.9 19.3 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 뒤로 가기 화살표 -->
+  <symbol id="rg-back" viewBox="0 0 48 48">
+    <g filter="url(#rg-hand)" fill="none" stroke="#2E2A24" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M29 11 L15 24 L29 37"/><path d="M16 24 H35"/>
+    </g>
+  </symbol>
+
+  <!-- 다음으로 가는 화살표 -->
+  <symbol id="rg-next" viewBox="0 0 48 48">
+    <g filter="url(#rg-hand)" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 11 L33 24 L19 37"/><path d="M32 24 H13"/>
+    </g>
+  </symbol>
+
+  <!-- 목소리 설정(말풍선) -->
+  <symbol id="rg-talk" viewBox="0 0 48 48">
+    <g filter="url(#rg-spill)" transform="translate(1.6,2.2)"><path d="M7 10 H41 V30 H21 L13 38 V30 H7 Z" fill="#F8C6D6"/></g>
+    <g filter="url(#rg-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 10 H41 V30 H21 L13 38 V30 H7 Z"/>
+      <path d="M16 20 h.6 M24 20 h.6 M32 20 h.6" stroke-width="4.4"/>
+    </g>
+  </symbol>
+
+  <!-- 듣기(소리 나는 나팔) -->
+  <symbol id="rg-sound" viewBox="0 0 48 48">
+    <g filter="url(#rg-spill)" transform="translate(1.4,2)"><path d="M7 19 H16 L26 10 V38 L16 29 H7 Z" fill="#9BD0F5"/></g>
+    <g filter="url(#rg-hand)" fill="none" stroke="#2E2A24" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 19 H16 L26 10 V38 L16 29 H7 Z"/>
+      <path d="M32 18 C36 22, 36 26, 32 30" stroke-width="3.2"/>
+      <path d="M38 12 C45 20, 45 28, 38 36" stroke-width="3.2"/>
+    </g>
+  </symbol>
+
+  <!-- 다 끼웠을 때: 고리 하나에 반짝반짝 -->
+  <symbol id="rg-cheer" viewBox="0 0 64 64">
+    <g filter="url(#rg-spill)" fill="none" stroke-linecap="round" opacity=".95">
+      <circle cx="33" cy="35" r="16" stroke="#E3D2B6" stroke-width="11" stroke-dasharray="86 15" transform="rotate(-20 33 35)"/>
+    </g>
+    <g filter="url(#rg-hand)" fill="none" stroke="#2E2A24" stroke-width="3.6" stroke-linecap="round">
+      <circle cx="32" cy="34" r="22" stroke-dasharray="124 16" transform="rotate(-35 32 34)"/>
+      <circle cx="32" cy="34" r="10.5" stroke-dasharray="58 11" transform="rotate(140 32 34)"/>
+    </g>
+    <g filter="url(#rg-hand)" fill="none" stroke="#E8A11C" stroke-width="3.4" stroke-linecap="round">
+      <path d="M55 10 v9 M50.5 14.5 h9"/>
+      <path d="M9 16 v6 M6 19 h6"/>
+      <path d="M56 44 v6 M53 47 h6"/>
+    </g>
+  </symbol>
+
+  <!-- 제목에서 첫 놀이로 향하는 점선 화살표 — "여기부터 놀아 보자" -->
+  <symbol id="rg-arrow" viewBox="0 0 110 130">
+    <g filter="url(#rg-hand)" fill="none" stroke="currentColor" stroke-width="6"
+       stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11 10">
+      <path d="M14 10 C6 42, 12 70, 34 92 C50 108, 68 114, 92 114"/>
+    </g>
+    <g filter="url(#rg-hand)" fill="none" stroke="currentColor" stroke-width="6"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M76 100 L95 114 L75 126"/>
+    </g>
+  </symbol>
+</defs></svg>
 
 <!-- 홈 -->
 <section class="screen on" id="scr-home">
   <header class="home-head">
-    <h1>💍 손가락 고무줄</h1>
+    <h1><svg class="ic ic-title" aria-hidden="true"><use href="#rg-title"/></svg> 손가락 고무줄</h1>
     <div class="stats">
-      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <span class="stat"><svg class="ic" aria-hidden="true"><use href="#rg-star"/></svg> <b id="home-stars">0</b></span>
       <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
       <span id="pet-slot"></span>
-      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">
+        <svg class="ic" aria-hidden="true"><use href="#rg-talk"/></svg>
+      </button>
     </div>
   </header>
   <div class="menu" id="menu"></div>
@@ -33,8 +157,10 @@
 <!-- 퍼즐 목록 -->
 <section class="screen" id="scr-puzzles">
   <header class="bar">
-    <button type="button" class="back" data-go="scr-home">◀</button>
-    <h2 id="puzzles-title">💍 고리 두 개</h2>
+    <button type="button" class="back" data-go="scr-home" aria-label="단계 고르기로">
+      <svg class="ic" aria-hidden="true"><use href="#rg-back"/></svg>
+    </button>
+    <h2 id="puzzles-title"><svg class="ic ic-h" aria-hidden="true"><use href="#rg-ring"/></svg> 고리 두 개</h2>
     <span class="page-count" id="puzzles-count">0 / 10</span>
   </header>
   <div class="puzzles-list" id="puzzles-list"></div>
@@ -43,14 +169,18 @@
 <!-- 놀이(고리 끼우기) -->
 <section class="screen" id="scr-play">
   <header class="bar">
-    <button type="button" class="back" id="btn-play-back">◀</button>
-    <h2 id="play-title">💍 똑같이 끼워요</h2>
-    <button type="button" class="bigbtn small" id="btn-listen">🔊 듣기</button>
+    <button type="button" class="back" id="btn-play-back" aria-label="퍼즐 고르기로">
+      <svg class="ic" aria-hidden="true"><use href="#rg-back"/></svg>
+    </button>
+    <h2 id="play-title"><svg class="ic ic-h" aria-hidden="true"><use href="#rg-ring"/></svg> 똑같이 끼워요</h2>
+    <button type="button" class="bigbtn small" id="btn-listen">
+      <svg class="ic" aria-hidden="true"><use href="#rg-sound"/></svg> 듣기
+    </button>
   </header>
   <div class="play-stage">
     <!-- 본보기 카드 -->
     <div class="card-panel">
-      <div class="card-cap">💍 이렇게 끼워요!</div>
+      <div class="card-cap"><svg class="ic" aria-hidden="true"><use href="#rg-ring"/></svg> 이렇게 끼워요!</div>
       <div class="hand-slot card-slot">
         <div class="hand-box card-hand" id="card-hand"></div>
       </div>
@@ -70,11 +200,11 @@
 <!-- 보상 오버레이 -->
 <div class="reward" id="reward">
   <div class="reward-card">
-    <div class="reward-hand" id="reward-hand">💍✨</div>
+    <div class="reward-hand" id="reward-hand"><svg class="ic" aria-hidden="true"><use href="#rg-cheer"/></svg></div>
     <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
     <div class="reward-btns">
       <button type="button" class="bigbtn" id="reward-close">그만할래</button>
-      <button type="button" class="bigbtn primary" id="reward-next">다음 ▶</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 <svg class="ic" aria-hidden="true"><use href="#rg-next"/></svg></button>
     </div>
   </div>
 </div>
@@ -93,5 +223,6 @@
 <script src="../shared/pet.js"></script>
 <script src="../shared/time-limit.js"></script>
 <script src="../shared/sw-register.js"></script>
+<script src="../shared/home-button.js"></script>
 </body>
 </html>

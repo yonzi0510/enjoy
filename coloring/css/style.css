@@ -282,6 +282,8 @@ h1 {
   #paint-canvas { width: min(72vh, 56vw, 660px); height: min(72vh, 56vw, 660px); }
   .paint-tools { justify-content: center; }
   .palette { max-width: 380px; }
+  /* 도구 열이 300px 이면 팔레트 7칸이 한 알 38px 로 쪼그라든다 — 44px 을 넘기게 넓힌다 */
+  .paint-stage { grid-template-columns: minmax(0, 1fr) clamp(344px, 36vw, 440px); }
   .pic-grid { grid-template-columns: repeat(5, 1fr); max-width: 900px; }
   .cat-chips { max-width: 900px; }
   .gallery-grid { grid-template-columns: repeat(4, 1fr); max-width: 900px; }
@@ -291,3 +293,176 @@ h1 {
   .pic-card, .art-card, .home-head, .bar, .reward.on, .reward-card, .reward-stars { animation: none; }
   .confetti-bit { animation-duration: .8s; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 낙서장 층 — 부모님이 고르신 「시안 3 · 낙서장」을 색칠공부에 맞게
+ *
+ * 이 앱은 물통(flood fill)으로 색을 붓는다. 밑그림·안내선·벽 마스크와
+ * 색칠 캔버스(#paint-canvas)는 그림 좌표(0~100)와 화면 좌표를 1:1 로
+ * 환산해 쓰므로, **거기에는 회전·크기 변형을 절대 주지 않는다** —
+ * 좌표가 조금만 틀어져도 색이 엉뚱한 칸으로 샌다.
+ * 그래서 흩뿌리기는 오직 '고르는 칸'(.pic-card / .art-card) 에만 준다.
+ *
+ * shared/doodle-menu.css 는 `.menu` 를 잡는데 이 앱에는 `.menu` 가 없어서,
+ * 같은 nth-child 방식을 여기로 옮겨 썸네일 칸에 맞게 다시 잡았다.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 손그림 아이콘 ────────────────────────────────────────────────
+   index.html 맨 위 <symbol> 모음을 <use> 로 불러 쓴다. 글자 크기(em)에
+   맞춰 커지므로 기존 clamp() 반응형이 그대로 살아 있다. */
+.ico-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ic { width: 1em; height: 1em; display: inline-block; vertical-align: -.16em; flex: none; }
+.tool-btn .ic, .act-btn .ic { width: 1.3em; height: 1.3em; vertical-align: middle; }
+.back .ic { width: 1.15em; height: 1.15em; vertical-align: middle; }
+.vs-btn .ic { width: 1.15em; height: 1.15em; vertical-align: middle; }
+.ic-h1 { width: 1.05em; height: 1.05em; vertical-align: -.16em; }
+.reward-stars .ic { width: 1em; height: 1em; }
+/* 물통·크레용을 고른 상태에서도 손그림이 잘 보이게 (흰 종이 위 그림이라 반전 대신 테두리로 표시) */
+.tool-btn.on .ic { filter: drop-shadow(0 0 2px rgba(255,255,255,.95)); }
+
+/* ── 고르는 칸 흩뿌리기 ───────────────────────────────────────────
+   자로 잰 듯 줄 맞춘 격자를 깬다. 자리는 사람이 하나하나 정하지 않고
+   순서(nth-child)로 주어, 카테고리를 바꿔 칸 수가 달라져도 무너지지 않는다.
+   기울기·자리 이동이 이웃을 덮지 않도록 칸 사이(gap)와 바깥 여백을 함께 넓혔다. */
+.pic-grid, .gallery-grid {
+  gap: clamp(16px, 2.8vmin, 24px);
+  padding: clamp(6px, 1.4vmin, 14px) clamp(8px, 1.6vmin, 16px) 18px;
+}
+/* 위아래 이동은 2% 까지만. 기울기가 만드는 여유(폭 × sin θ ≈ 3.5px)와 합쳐도
+   칸 사이(gap 16px 이상) 안에 들어와야 폰 가로에서 윗줄·아랫줄이 겹치지 않는다. */
+.pic-card, .art-card { transition: transform .12s ease; }
+.pic-card:nth-child(8n+1), .art-card:nth-child(8n+1) { transform: translate(-1.5%,  1.5%) rotate(-3deg);   }
+.pic-card:nth-child(8n+2), .art-card:nth-child(8n+2) { transform: translate( 1.5%, -1.5%) rotate( 2.2deg); }
+.pic-card:nth-child(8n+3), .art-card:nth-child(8n+3) { transform: translate(-1%,   -2%)   rotate( 3.2deg); }
+.pic-card:nth-child(8n+4), .art-card:nth-child(8n+4) { transform: translate( 1.5%,  2%)   rotate(-1.8deg); }
+.pic-card:nth-child(8n+5), .art-card:nth-child(8n+5) { transform: translate(-1.5%, -1%)   rotate( 1.4deg); }
+.pic-card:nth-child(8n+6), .art-card:nth-child(8n+6) { transform: translate( 1%,    2%)   rotate(-3.2deg); }
+.pic-card:nth-child(8n+7), .art-card:nth-child(8n+7) { transform: translate( 1.5%, -1.5%) rotate( 2.6deg); }
+.pic-card:nth-child(8n+8), .art-card:nth-child(8n+8) { transform: translate(-1%,    1%)   rotate(-1.6deg); }
+
+/* 갤러리 작품 칸은 썸네일보다 두세 배 커서, 같은 각도라도 이웃을 훨씬 많이 침범한다.
+   그래서 비율(%) 대신 고정 px 로 옮기고 기울기도 절반만 준다. */
+.art-card:nth-child(8n+1) { transform: translate(-4px,  4px) rotate(-1.7deg); }
+.art-card:nth-child(8n+2) { transform: translate( 4px, -3px) rotate( 1.3deg); }
+.art-card:nth-child(8n+3) { transform: translate(-3px, -4px) rotate( 1.8deg); }
+.art-card:nth-child(8n+4) { transform: translate( 4px,  4px) rotate(-1.1deg); }
+.art-card:nth-child(8n+5) { transform: translate(-4px, -2px) rotate( 0.9deg); }
+.art-card:nth-child(8n+6) { transform: translate( 3px,  4px) rotate(-1.8deg); }
+.art-card:nth-child(8n+7) { transform: translate( 4px, -3px) rotate( 1.5deg); }
+.art-card:nth-child(8n+8) { transform: translate(-3px,  3px) rotate(-1deg);   }
+
+/* 갤러리 첫 줄이 오른쪽 위 공용 부품(집 단추·남은 시간 쪽지) 밑으로 들어가지 않게 띄운다 */
+.gallery-grid { padding-top: clamp(48px, 5vh, 58px); }
+
+/* 나타나는 동작이 transform 을 덮어써 흩뿌림이 풀리지 않게, 칸은 흐림만으로 등장시킨다 */
+.pic-card, .art-card { animation-name: fade-in; }
+
+/* ── 크기 위계: 「지금 할 그림」을 크게 ────────────────────────────
+   30장이 모두 같은 크기면 다섯 살은 어디부터 손대야 할지 모른다.
+   아직 색칠 안 한 첫 그림 한 장만 두 칸×두 줄로 키워 눈이 먼저 가게 한다. */
+.pic-card.next-up {
+  grid-column: span 2;
+  grid-row: span 2;
+  transform: rotate(-1.2deg);      /* 큰 칸은 덜 기울인다 — 이웃을 덮지 않게 */
+  z-index: 2;
+}
+.pic-card.next-up .pc-name { font-size: clamp(16px, 3.4vmin, 24px); }
+.pic-card.next-up .pc-thumb { border-radius: 20px; }
+.pic-card { justify-content: center; }   /* 큰 칸에서 내용이 위로 쏠리지 않게 */
+
+/* 누르면 기울기가 잠깐 펴지며 눌린다 (crayon.css 의 :active 와 같은 손짓) */
+.pic-card:active, .art-card:active, .pic-card.next-up:active {
+  transform: translate(2px, 3px) rotate(0) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pic-card, .art-card, .pic-card.next-up { transform: none !important; }
+}
+
+/* ── 남은 화면 틀도 같은 손으로 ────────────────────────────────────
+   두툼한 색 단면(0 6px 0 var(--chunk))과 광택 그라데이션을 걷고,
+   흰 종이 + 얇고 삐뚤한 손그림 윤곽만 남긴다.
+   놀잇감 색(팔레트 12색·완성작 그림)은 그대로 둔다. */
+.cat-chip {
+  /* 다섯 살 손가락 기준 44px 을 채운다 (전에는 33px 이라 자꾸 빗나갔다) */
+  padding: 9px 17px; min-height: 46px;
+  background: rgba(255,255,255,.86);
+  border: 3px solid rgba(46,42,36,.8);
+  box-shadow: none;
+  color: #2E2A24;
+}
+.cat-chip.on {
+  background: #FFDCEB;
+  border-color: #2E2A24;
+  box-shadow: none;
+  color: #2E2A24;
+}
+.cat-chip:active { transform: translate(2px, 3px); }
+
+.art-card {
+  background: rgba(255,255,255,.72);
+  border: 3px solid rgba(46,42,36,.85);
+  border-radius: 24px 19px 26px 21px;
+  box-shadow: none;
+}
+.art-img { box-shadow: 0 0 0 2px rgba(46,42,36,.5); }
+
+/* 「몇 장」 쪽지 — 오른쪽 끝은 shared/time-limit.js 의 남은 시간 쪽지 자리라 그만큼 비켜 준다 */
+.page-count {
+  margin-right: 76px;
+  background: rgba(255,255,255,.86);
+  border: 2.5px solid rgba(46,42,36,.8);
+  box-shadow: none;
+  color: #2E2A24;
+}
+/* 폰 세로는 뒤로가기·제목·남은시간·집 단추만으로 가로가 꽉 찬다.
+   같은 수를 홈의 🖼 배지가 이미 알려 주므로 여기서는 접는다 (글을 못 읽는 나이라 쪽지보다 자리가 중요). */
+@media (max-width: 560px) { .page-count { display: none; } }
+
+/* 색칠 캔버스 — 윤곽은 반드시 box-shadow 로 그린다.
+   border 를 주면 getBoundingClientRect 가 테두리를 포함해 화면 좌표가
+   테두리 두께만큼 밀리고, 물통 색이 엉뚱한 칸으로 샌다.
+   box-shadow 는 배치에 전혀 영향을 주지 않아 좌표가 그대로다. */
+#paint-canvas {
+  box-shadow: 0 0 0 3px rgba(46,42,36,.85);
+  border-radius: 22px 18px 23px 19px;
+}
+/* 오른쪽 위는 공용 부품 자리다 — 집 단추(shared/home-button.js)와 그 아래 남은 시간
+   쪽지(shared/time-limit.js)가 화면에 붙어 떠 있다. 세로 화면에서는 캔버스 윗귀퉁이가
+   그 밑으로 들어가므로 두 부품 높이만큼 내려 준다.
+   (가로 화면은 캔버스가 왼쪽에 있어 겹치지 않으니 그대로 둔다) */
+@media (orientation: portrait) {
+  .canvas-wrap { margin-top: 42px; }
+}
+
+/* 도구·조작 단추 */
+.tool-btn, .act-btn, .size-btn {
+  background: rgba(255,255,255,.9);
+  border: 3px solid rgba(46,42,36,.82);
+  border-radius: 20px 16px 21px 17px;
+  box-shadow: none;
+  color: #2E2A24;
+}
+.tool-btn:active, .act-btn:active, .size-btn:active {
+  transform: translate(2px, 3px);
+  box-shadow: none;
+}
+/* 고른 도구 — 색 대비 대신 '굵게 덧그린 테두리'로 알린다 (손그림 아이콘이 가려지지 않게) */
+.tool-btn.on {
+  background: #FFDCEB;
+  border: 5px solid #2E2A24;
+  box-shadow: none;
+  color: #2E2A24;
+}
+.act-btn.save { background: #BDEBCB; color: #2E2A24; box-shadow: none; }
+.act-btn.armed { background: #FFD2CE; color: #2E2A24; box-shadow: none; }
+.size-btn.on { border: 5px solid #2E2A24; box-shadow: none; }
+.size-btn .size-dot { background: #2E2A24; }
+
+/* 팔레트 알 — 색은 놀잇감이라 그대로 두고, 테두리만 연필선으로 */
+.swatch { box-shadow: 0 0 0 2.5px rgba(46,42,36,.8); }
+.swatch.on { box-shadow: 0 0 0 3px #FCFBF4, 0 0 0 6px #2E2A24; }
+
+/* 축하 패널의 큰 단추 — 광택만 걷는다 (테두리·그림자는 shared/crayon.css 가 맡는다) */
+.bigbtn { background: #fff; color: #2E2A24; }
+.bigbtn.primary { background: #FFDCEB; color: #2E2A24; }

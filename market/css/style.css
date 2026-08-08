@@ -312,18 +312,23 @@ h1 {
   width: 100%;
 }
 .dropzone {
+  position: relative; /* 손그림 점선 테두리(.zone-frame)를 덮어 씌운다 */
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   min-height: clamp(96px, 19vmin, 150px);
-  background: linear-gradient(180deg, #FFFEFA 0%, #FFF0E6 100%);
+  background: rgba(255,255,255,.55);
   border-radius: 22px;
-  border: 3px dashed rgba(217,91,50,.4);
-  padding: clamp(8px, 1.6vmin, 14px);
+  /* 테두리는 CSS 점선(자로 그은 점선) 대신 인라인 SVG 로 긋는다 — .zone-frame */
+  padding: clamp(10px, 1.8vmin, 16px);
   transition: box-shadow .2s;
 }
+/* 테두리 SVG 는 절대 배치라 글자를 덮는다 — 안쪽 내용을 위로 올린다 */
+.dropzone > .zone-label,
+.dropzone > .zone-items,
+.dropzone > .price-guide { position: relative; z-index: 1; }
 .dropzone.counter { flex: 1.3; }
 .zone-label {
   font-size: clamp(13px, 2.7vmin, 18px);
@@ -342,18 +347,37 @@ h1 {
   flex: 1;
 }
 .basket-slot { /* 담아야 할 자리 (빈 칸 → 담으면 이모지) */
+  position: relative; /* 손그림 점선 테두리 */
   display: flex;
   align-items: center;
   justify-content: center;
   width: clamp(48px, 10vmin, 76px);
   height: clamp(48px, 10vmin, 76px);
   border-radius: 16px;
-  border: 2px dashed #E8A98F;
   background: rgba(255,255,255,.6);
   font-size: clamp(32px, 7vmin, 54px);
   line-height: 1.15;
 }
-.basket-slot.got { border-style: solid; border-color: #7ED957; background: #EFFBE8; animation: pop .35s; }
+.slot-emoji { position: relative; z-index: 1; }
+.basket-slot.got { background: #EFFBE8; animation: pop .35s; }
+
+/* ── 손그림 점선 테두리 (물건 놓는 칸) ──
+   색은 앱이 쓰던 칸 색 그대로. 굵기·점 간격은 non-scaling-stroke 라 늘여도 그대로다. */
+.zone-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  color: rgba(217,91,50,.55);
+  stroke: currentColor;
+  stroke-width: 3.4px;
+  stroke-linecap: round;
+  stroke-dasharray: 21 12 11 15 25 11 14 16; /* 손으로 그은 듯 길이가 들쭉날쭉 */
+}
+.basket-slot .zone-frame { color: #E0906E; stroke-width: 3px; stroke-dasharray: 11 8 7 10 14 8; }
+.basket-slot.got .zone-frame { color: #62BE3E; stroke-width: 3.8px; stroke-dasharray: none; }
 .price-guide { /* 가격표 — 내야 하는 동전을 옅게 보여 준다 */
   display: flex;
   flex-wrap: wrap;
@@ -516,7 +540,7 @@ h1 {
   animation: pop-in .3s;
 }
 @keyframes pop-in { from { transform: scale(.6); opacity: 0; } }
-.reward-stars { font-size: clamp(44px, 10vmin, 80px); animation: star-spin .8s; }
+.reward-stars { font-size: clamp(56px, 13vmin, 96px); animation: star-spin .8s; }
 @keyframes star-spin { from { transform: rotate(-30deg) scale(.3); } 60% { transform: rotate(10deg) scale(1.2); } }
 .reward-praise { font-size: clamp(20px, 4.6vmin, 34px); font-weight: 900; color: #A83E1B; }
 .reward-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
@@ -571,6 +595,96 @@ h1 {
     height: clamp(56px, 16vh, 78px);
     font-size: clamp(40px, 12vh, 56px);
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 낙서장 마무리 — 「시안 3 · 낙서장」
+ *
+ * 1) 손그림 아이콘(.ic) 크기: 글자 크기(em)를 따라간다. 이모지가 놓이던 자리에
+ *    그대로 들어가므로 칸 크기를 다시 잡을 필요가 없다.
+ * 2) 첫 화면 크기 위계: 1단계 가게가 제일 크고 3단계로 갈수록 작아진다.
+ *    거기에 제목에서 첫 가게로 향하는 점선 화살표를 얹어 "여기부터" 를 알려 준다.
+ * 3) 놀이 화면도 같은 손으로: 두툼한 색 단면 그림자와 반질반질한 그라데이션을 걷고
+ *    얇은 손그림 윤곽만 남긴다. **색(단계색·상품·동전)은 앱이 정한 것을 그대로 둔다.**
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 손그림 아이콘 ── */
+.ic {
+  width: 1.15em;
+  height: 1.15em;
+  display: inline-block;
+  vertical-align: -.22em;
+  flex: none;
+}
+.ic-sm { width: 1em; height: 1em; }
+h1 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -.2em; }
+.mc-icon .ic, .reward-stars .ic, .heart .ic, .bb-icon .ic-bubble { width: 1em; height: 1em; vertical-align: -.1em; }
+.vs-btn .ic, .back .ic { width: 1.5em; height: 1.5em; vertical-align: middle; }
+.zone-label .ic { width: 1.7em; height: 1.7em; vertical-align: -.45em; }
+.bigbtn .ic { width: 1.5em; height: 1.5em; }
+.reward-stars, .heart { line-height: 1; }
+.heart { font-size: clamp(28px, 5.6vmin, 44px); }
+.bb-heart { color: #F0524B; } /* 말풍선 하트는 빨갛게 (글자색을 물려받지 않게) */
+
+/* ── 첫 화면: 크기 위계 + 시작 화살표 ── */
+.menu { align-items: center; }
+.start-arrow { /* 제목 밑에서 첫 가게(1단계)로 향하는 손그림 점선 화살표 */
+  width: clamp(56px, 11vmin, 96px);
+  aspect-ratio: 110 / 130;
+  flex: none;
+  align-self: flex-start;
+  margin-top: clamp(-6px, -1vmin, 0px);
+  overflow: visible;
+  pointer-events: none;
+}
+.c-l1 { width: clamp(196px, 38vmin, 300px); }
+.c-l2 { width: clamp(164px, 30vmin, 240px); }
+.c-l3 { width: clamp(140px, 25vmin, 200px); }
+.c-l1 .mc-icon { font-size: clamp(52px, 11vmin, 84px); }
+.c-l2 .mc-icon { font-size: clamp(42px, 9vmin, 66px); }
+.c-l3 .mc-icon { font-size: clamp(34px, 7.5vmin, 56px); }
+.c-l1 .mc-name { font-size: clamp(21px, 4.2vmin, 30px); }
+.c-l3 .mc-name { font-size: clamp(16px, 3.2vmin, 22px); }
+.c-l3 .mc-desc { font-size: clamp(11px, 2.1vmin, 15px); }
+/* 잠긴 가게 자물쇠는 색을 빼서 회색으로 (기존 잠금 표현 유지) */
+.menu-card.locked .mc-icon .ic { filter: grayscale(1); opacity: .75; }
+
+/* ── 놀이 화면: 단면 그림자·광택을 걷고 손그림 윤곽만 ── */
+.shelf, .bubble, .purse, .bigbtn, .shelf-item {
+  border-radius: 24px 19px 26px 21px;
+  box-shadow: none;
+}
+.shelf, .bubble, .purse {
+  background: rgba(255,255,255,.72);
+  border: 3px solid rgba(46,42,36,.85);
+}
+.purse { border-radius: 999px; }
+.shelf-item {
+  background: var(--tint, #fff);
+  border: 3px solid rgba(46,42,36,.8);
+  border-radius: 20px 16px 21px 17px;
+}
+.shelf-item:active { transform: translate(2px, 3px) scale(.99); }
+.bigbtn {
+  background: rgba(255,255,255,.85);
+  border: 3px solid rgba(46,42,36,.85);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: .4em;
+}
+.bigbtn.primary { background: #FF9463; color: #4A2110; }
+.bigbtn:active { transform: translate(2px, 3px) scale(.99); box-shadow: none; }
+.bubble::before { border-right-color: rgba(46,42,36,.85); }
+.bubble::after { /* 말풍선 꼬리 속(윤곽 안쪽) */
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 8px solid transparent;
+  border-right-color: #FDFCF6;
+  border-left: none;
 }
 
 /* ─────────── 등장 모션 + 모션 줄이기 설정 존중 ─────────── */

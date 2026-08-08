@@ -193,70 +193,65 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-7px); }
 }
+/* ─────────── 홈: 낙서장 배치 ───────────
+ * 「시안 3 · 낙서장」의 핵심은 질감이 아니라 격자를 깨는 것이다.
+ * 칸이 자로 잰 듯 줄 맞춰 있으면 손그림을 얹어도 앱처럼 보인다.
+ *
+ * 공용 shared/doodle-menu.css 는 `.menu` 자식만 흩뿌리는데,
+ * 영어 놀이터의 첫 화면은 `.home-nav` 로 짜여 있어 그 규칙이 안 걸린다.
+ * 그래서 같은 방식(nth-child 로 자리·기울기를 준다)을 여기서 직접 쓴다.
+ * — 공용 파일은 다른 앱이 함께 쓰므로 건드리지 않는다. */
 .home-nav {
   display: flex;
-  gap: clamp(10px, 2vmin, 18px);
+  align-items: flex-end;   /* 칸 높이를 맞추지 않는다 — 줄 맞으면 다시 앱처럼 보인다 */
+  gap: clamp(12px, 2.6vmin, 24px);
   width: min(680px, 96%);
+  padding: 8px 4px 12px;   /* 기울인 칸의 모서리가 잘리지 않게 */
 }
 .nav-card {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: clamp(12px, 2.4vmin, 20px) 8px;
-  border-radius: 20px;
+  gap: .16em;
+  padding: .8em .5em .7em; /* em — 글자 크기를 키우면 칸도 같이 커진다(크기 위계) */
   font-size: clamp(14px, 2.7vmin, 20px);
   font-weight: 900;
+  line-height: 1.25;
   color: #3D3318; /* 한 톤 짙게 */
-  transition: transform .12s, box-shadow .12s;
-  animation: card-rise .35s ease-out backwards;
+  /* 낙서장 살결: 두툼한 색 단면·광택을 걷고 얇고 삐뚤한 손그림 윤곽만 남긴다 */
+  background: rgba(255, 255, 255, .72);
+  border: 3px solid var(--ink, #2E2A24);
+  border-radius: 24px 19px 26px 21px;
+  box-shadow: none;
+  transition: transform .12s;
+  animation: nav-appear .35s ease-out backwards;
 }
+/* 크기 위계 — 가장 먼저 할 것(그림 단어장)이 제일 크고, 기록(배운 단어)은 작게 */
+.nav-dict    { flex: 1.4;  font-size: clamp(16px, 3.2vmin, 25px); background: #DDF2FD; }
+.nav-learned { flex: .82;  font-size: clamp(13px, 2.3vmin, 18px); background: #FFF4CC; }
+.nav-quiz    { flex: 1.08; font-size: clamp(15px, 2.8vmin, 22px); background: #E6F7D8; }
+
+/* 손으로 하나씩 붙인 것처럼 — 칸마다 다른 자리·기울기 */
+.home-nav .nav-card:nth-child(1) { transform: translate(-1.5%,  4%)  rotate(-2.2deg); }
+.home-nav .nav-card:nth-child(2) { transform: translate( 1.5%, -3.5%) rotate( 2deg);  }
+.home-nav .nav-card:nth-child(3) { transform: translate(-1%,   2.5%) rotate(-1.2deg); }
+/* 누르면 기울기가 잠깐 펴지며 종이가 눌린다 */
+.home-nav .nav-card:active { transform: translate(2px, 3px) rotate(0) scale(.99) !important; }
+
+/* 자리를 흐트러뜨려 두었으니 등장은 밝기만으로 — 움직이면 자리가 흔들린다 */
+@keyframes nav-appear { from { opacity: 0; } to { opacity: 1; } }
 /* 스태거 등장 — 0.05s 간격 */
 .home-nav .nav-card:nth-child(1) { animation-delay: .05s; }
 .home-nav .nav-card:nth-child(2) { animation-delay: .10s; }
 .home-nav .nav-card:nth-child(3) { animation-delay: .15s; }
-.nav-card:active { transform: translateY(3px) scale(.97); }
-.nav-emoji { font-size: clamp(28px, 5.5vmin, 44px); }
-/* 색 있는 버튼: 기존 색 유지 + 흰 inset 테두리 + 자기 색 원거리 그림자 */
-.nav-dict {
-  background: linear-gradient(180deg, #C9F0FF, #7DD8FF);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.55),
-    0 5px 0 #3FAEE0,
-    0 12px 20px rgba(125, 216, 255, .30);
-}
-.nav-dict:active {
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.55),
-    0 2px 0 #3FAEE0,
-    0 7px 12px rgba(125, 216, 255, .20);
-}
-.nav-learned {
-  background: linear-gradient(180deg, #FFE9A8, #FFD93D);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.55),
-    0 5px 0 #E0B400,
-    0 12px 20px rgba(255, 217, 61, .30);
-}
-.nav-learned:active {
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.55),
-    0 2px 0 #E0B400,
-    0 7px 12px rgba(255, 217, 61, .20);
-}
-.nav-quiz {
-  background: linear-gradient(180deg, #D8F5C8, #A8E28A);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.55),
-    0 5px 0 #7CBF5C,
-    0 12px 20px rgba(168, 226, 138, .32);
-}
-.nav-quiz:active {
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.55),
-    0 2px 0 #7CBF5C,
-    0 7px 12px rgba(168, 226, 138, .22);
+
+/* 아이가 그린 손그림 아이콘 — 글자 크기를 따라 커진다 */
+.nav-ico {
+  width: 2.8em;
+  height: 2.8em;
+  display: block;
+  overflow: visible;
 }
 
 /* ─────────── 오버레이 공통 ─────────── */
@@ -720,7 +715,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .mic-guide    { grid-area: guide;  align-self: end; }
   .mic-btn      { grid-area: mic;    align-self: start; }
   /* 메뉴는 오른쪽 세로 열로 — 카드가 오히려 넓어진다(터치 영역 유지) */
-  .home-nav     { grid-area: nav;    align-self: start; flex-direction: column; width: min(380px, 94%); }
+  /* 세로 열에서는 칸 폭을 맞춰야 한다 — flex-end 로 두면 칸마다 폭이 들쭉날쭉해진다 */
+  .home-nav     { grid-area: nav;    align-self: start; flex-direction: column; align-items: stretch; width: min(380px, 94%); }
+  /* 세로로 쌓이니 크기 위계는 글자·아이콘 크기로만 준다(높이 비율은 끈다) */
+  .nav-dict, .nav-learned, .nav-quiz { flex: 0 0 auto; }
 
   /* 답변·모르는 단어: 좌 그림 · 우 단어(안내)+버튼 */
   .answer-body {
@@ -775,7 +773,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* 폰 가로(낮은 화면): 메뉴는 가로로 눕혀 높이를 아끼고, 듣는 중 카드는 2단으로 */
 @media (orientation: landscape) and (max-height: 480px) {
   .home-body { row-gap: 8px; }
-  .home-nav  { flex-direction: row; width: 100%; max-width: 430px; }
+  .home-nav  { flex-direction: row; align-items: flex-end; width: 100%; max-width: 430px; }
+  /* 다시 가로 한 줄이니 폭 비율(크기 위계)도 되살린다 */
+  .nav-dict    { flex: 1.4; }
+  .nav-learned { flex: .82; }
+  .nav-quiz    { flex: 1.08; }
   .listen-card {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -795,6 +797,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .listen-label         { grid-area: label; }
   .listen-interim       { grid-area: interim; }
   .listen-card .big-btn { grid-area: btn; }
+}
+
+/* 패드 가로: 메뉴가 세로 한 열이 된다 — 폭이 넓은 칸을 세로로 쌓아 놓고 크게 기울이면
+   위아래 칸의 모서리가 서로 닿는다. 그래서 열에서는 기울기를 반으로 줄이고
+   위아래로는 밀지 않는다(좌우 흔들림만으로도 흩뿌린 느낌은 남는다). */
+@media (orientation: landscape) and (min-height: 481px) {
+  .home-nav { gap: clamp(16px, 3vmin, 28px); }
+  /* 가로로 긴 칸이니 그림과 글씨를 나란히 — 세로로 쌓으면 칸 가운데가 텅 빈다 */
+  .home-nav .nav-card { flex-direction: row; justify-content: center; gap: .55em; padding: .55em .7em; }
+  .home-nav .nav-card:nth-child(1) { transform: translate(-2.5%, 0) rotate(-1.1deg); }
+  .home-nav .nav-card:nth-child(2) { transform: translate( 2.5%, 0) rotate( 1deg);   }
+  .home-nav .nav-card:nth-child(3) { transform: translate(-1.5%, 0) rotate(-.7deg);  }
 }
 
 /* 모션 줄이기 설정 존중 — 등장·흔들림·장식 모션 전부 끈다 */

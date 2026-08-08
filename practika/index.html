@@ -55,29 +55,30 @@
 
 <!-- ═══════════ 홈 ═══════════ -->
 <div id="screen-home" class="screen active">
+  <!-- UI 그림은 이모지 대신 손그림 SVG — js/icons.js 가 data-ico 자리를 채운다 -->
   <header class="stat-bar">
-    <div class="stat"><span class="stat-emoji">⭐</span><b id="stat-xp">0</b></div>
-    <div class="stat"><span class="stat-emoji">💎</span><b id="stat-gems">0</b></div>
-    <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+    <div class="stat"><span class="stat-emoji" data-ico="star"></span><b id="stat-xp">0</b></div>
+    <div class="stat"><span class="stat-emoji" data-ico="gem"></span><b id="stat-gems">0</b></div>
+    <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로"><span data-ico="house"></span></a>
     <span id="pet-slot"></span>
-    <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+    <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정"><span data-ico="speak"></span></button>
   </header>
   <div class="home-body">
     <div class="home-hero">
       <div class="avatar-slot" id="home-avatar"></div>
       <div class="hero-bubble" id="home-bubble">Hi! Let's practice English together!</div>
     </div>
-    <h1 class="app-title"><span>🎙️</span> 프랙티카 놀이터</h1>
+    <h1 class="app-title"><span data-ico="mic"></span> 프랙티카 놀이터</h1>
     <div id="lang-tabs" class="lang-tabs"></div>
     <div id="track-list" class="track-list"></div>
-    <button id="btn-review" class="review-btn"><span>🗂️</span> 어휘 복습 <b id="review-count">0</b></button>
+    <button id="btn-review" class="review-btn"><span data-ico="cards"></span> 어휘 복습 <b id="review-count">0</b></button>
   </div>
 </div>
 
 <!-- ═══════════ 코스맵 (레슨 목록) ═══════════ -->
 <div id="screen-map" class="screen">
   <header class="top-bar">
-    <button id="map-home" class="round-btn" aria-label="처음으로">🏠</button>
+    <button id="map-home" class="round-btn" aria-label="처음으로"><span data-ico="house"></span></button>
     <h1 class="app-title" id="map-title"></h1>
     <div style="width:56px"></div>
   </header>
@@ -87,9 +88,9 @@
 <!-- ═══════════ 대화 세션 ═══════════ -->
 <div id="screen-session" class="screen">
   <header class="top-bar">
-    <button id="session-back" class="round-btn" aria-label="뒤로">◀</button>
+    <button id="session-back" class="round-btn" aria-label="뒤로"><span data-ico="back"></span></button>
     <div class="session-progress"><div id="session-bar" class="session-bar-fill"></div></div>
-    <button id="session-home" class="round-btn" aria-label="처음으로">🏠</button>
+    <button id="session-home" class="round-btn" aria-label="처음으로"><span data-ico="house"></span></button>
   </header>
   <div class="session-body">
     <div class="avatar-slot session-avatar" id="session-avatar"></div>
@@ -98,17 +99,17 @@
       <div id="tutor-en" class="tutor-en"></div>
       <div id="tutor-ko" class="tutor-ko"></div>
       <div class="tutor-btns">
-        <button id="tutor-replay" class="pill-btn"><span>🔊</span> 다시 듣기</button>
+        <button id="tutor-replay" class="pill-btn"><span data-ico="speaker"></span> 다시 듣기</button>
         <button id="tutor-next" class="pill-btn pill-primary">다음 ▶</button>
       </div>
     </div>
     <!-- 유저 말하기 -->
     <div id="user-panel" class="user-panel hidden">
       <div id="user-ask" class="user-ask"></div>
-      <button id="user-hint" class="hint-btn">💡 힌트 보기</button>
+      <button id="user-hint" class="hint-btn"><span data-ico="bulb"></span> 힌트 보기</button>
       <div id="user-model" class="user-model hidden"></div>
       <button id="mic-btn" class="mic-btn" aria-label="마이크로 말하기">
-        <span id="mic-icon">🎤</span>
+        <span id="mic-icon" data-ico="mic"></span>
         <div id="mic-waves" class="mic-waves hidden"><span></span><span></span><span></span><span></span><span></span></div>
       </button>
       <div id="mic-label" class="mic-label">버튼을 누르고 영어로 말해보세요</div>
@@ -121,8 +122,8 @@
       <div id="fb-model" class="fb-model"></div>
       <div id="fb-heard" class="fb-heard"></div>
       <div class="fb-btns">
-        <button id="fb-hear" class="pill-btn"><span>🔊</span> 모범 듣기</button>
-        <button id="fb-retry" class="pill-btn"><span>🎤</span> 다시 말하기</button>
+        <button id="fb-hear" class="pill-btn"><span data-ico="speaker"></span> 모범 듣기</button>
+        <button id="fb-retry" class="pill-btn"><span data-ico="mic"></span> 다시 말하기</button>
         <button id="fb-next" class="pill-btn pill-primary">다음 ▶</button>
       </div>
     </div>
@@ -137,13 +138,13 @@
     <div class="result-title" id="result-title">잘했어요!</div>
     <div class="result-acc" id="result-acc"></div>
     <div class="result-rewards">
-      <div class="reward"><span>⭐</span><b id="result-xp">+0</b><small>XP</small></div>
-      <div class="reward"><span>💎</span><b id="result-gems">+0</b><small>젬</small></div>
+      <div class="reward"><span data-ico="star"></span><b id="result-xp">+0</b><small>XP</small></div>
+      <div class="reward"><span data-ico="gem"></span><b id="result-gems">+0</b><small>젬</small></div>
     </div>
     <div class="result-btns">
       <button id="result-next" class="pill-btn pill-primary">다음 레슨 ▶</button>
-      <button id="result-review" class="pill-btn"><span>🗂️</span> 어휘 복습</button>
-      <button id="result-map" class="pill-btn"><span>🏠</span> 코스로</button>
+      <button id="result-review" class="pill-btn"><span data-ico="cards"></span> 어휘 복습</button>
+      <button id="result-map" class="pill-btn"><span data-ico="house"></span> 코스로</button>
     </div>
   </div>
 </div>
@@ -151,7 +152,7 @@
 <!-- ═══════════ 어휘 복습 ═══════════ -->
 <div id="screen-review" class="screen">
   <header class="top-bar">
-    <button id="review-home" class="round-btn" aria-label="처음으로">🏠</button>
+    <button id="review-home" class="round-btn" aria-label="처음으로"><span data-ico="house"></span></button>
     <div class="session-progress"><div id="review-bar" class="session-bar-fill"></div></div>
     <div style="width:56px"></div>
   </header>
@@ -161,7 +162,7 @@
       <div class="review-sub" id="review-sub">이 말을 해보세요</div>
     </div>
     <button id="review-mic" class="mic-btn" aria-label="마이크로 말하기">
-      <span id="review-mic-icon">🎤</span>
+      <span id="review-mic-icon" data-ico="mic"></span>
       <div id="review-waves" class="mic-waves hidden"><span></span><span></span><span></span><span></span><span></span></div>
     </button>
     <div id="review-mic-label" class="mic-label">버튼을 누르고 영어로 말해보세요</div>
@@ -169,7 +170,7 @@
       <div id="review-fb-title" class="fb-title"></div>
       <div id="review-fb-model" class="fb-model"></div>
       <div class="fb-btns">
-        <button id="review-hear" class="pill-btn"><span>🔊</span> 듣기</button>
+        <button id="review-hear" class="pill-btn"><span data-ico="speaker"></span> 듣기</button>
         <button id="review-next" class="pill-btn pill-primary">다음 ▶</button>
       </div>
     </div>
@@ -182,8 +183,8 @@
     <div class="result-title">복습 끝!</div>
     <div class="result-acc" id="review-score"></div>
     <div class="result-btns">
-      <button id="review-again" class="pill-btn pill-primary">한 번 더 🗂️</button>
-      <button id="review-done-home" class="pill-btn"><span>🏠</span> 처음으로</button>
+      <button id="review-again" class="pill-btn pill-primary">한 번 더 <span data-ico="cards"></span></button>
+      <button id="review-done-home" class="pill-btn"><span data-ico="house"></span> 처음으로</button>
     </div>
   </div>
 </div>
@@ -195,6 +196,7 @@
 <script src="js/progress.js"></script>
 <script src="js/tutor.js"></script>
 <script src="js/review.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/app.js"></script>
 <script src="../shared/parent-settings.js"></script>
 <script src="../shared/voice-settings.js"></script>
@@ -202,5 +204,6 @@
 <script src="../shared/pet.js"></script>
 <script src="../shared/time-limit.js"></script>
 <script src="../shared/sw-register.js"></script>
+<script src="../shared/home-button.js"></script>
 </body>
 </html>

@@ -3,6 +3,7 @@
  * 실제 Chromium으로 홈 → 단계 잠금 → 1단계 가게(주문 표시 → 상품 드래그 → 동전 지불:
  * 모자람 안내·초과 안내·정확 지불 성공) → 손님 5명 접객 보상(별·펫) →
  * 새로고침 후 진행도 유지 → 2단계 해금·500원 동전까지 검증한다.
+ * 낙서장 차림새(손그림 아이콘·시작 화살표·크기 위계, 물건 놓는 칸의 손그림 점선)도 함께 잰다.
  * 저장소 루트에서 정적 서버를 띄운 뒤 실행 (예: python3 -m http.server 8777)
  */
 import { createRequire } from 'node:module';
@@ -76,6 +77,19 @@ await check('홈: 가게 카드 3개 + 별 0', async () => {
   expect((await page.locator('#home-stars').textContent()) === '0', '별 수');
 });
 
+await check('낙서장 첫 화면: 손그림 아이콘 + 시작 화살표 + 크기 위계', async () => {
+  // 이모지 대신 손그림 SVG (제목·별·단계 카드)
+  expect(await page.locator('h1 svg use[href="#mk-cart"]').count() === 1, '제목 손그림 수레가 없음');
+  expect(await page.locator('.stat svg use[href="#mk-star"]').count() === 1, '별 손그림이 없음');
+  expect(await page.locator('#menu .mc-icon svg').count() === 3, '단계 카드 그림이 손그림 SVG 가 아님');
+  // 제목에서 첫 가게로 향하는 점선 화살표
+  expect(await page.locator('#menu .start-arrow').count() === 1, '시작 화살표가 없음');
+  // 크기 위계: 1단계 > 2단계 > 3단계
+  const w = async sel => (await page.locator(sel).boundingBox()).width;
+  const [w1, w2, w3] = [await w('.menu-card.c-l1'), await w('.menu-card.c-l2'), await w('.menu-card.c-l3')];
+  expect(w1 > w2 && w2 > w3, '가게 카드 크기 위계: ' + [w1, w2, w3].join(' > '));
+});
+
 await check('잠긴 가게는 열리지 않는다 (2·3단계 🔒)', async () => {
   expect(await page.locator('.menu-card.c-l2.locked').count() === 1, '2단계가 잠겨 있어야 함');
   expect(await page.locator('.menu-card.c-l3.locked').count() === 1, '3단계가 잠겨 있어야 함');
@@ -96,6 +110,21 @@ await check('1단계 진입: 손님 주문 표시 + 진열 6개 + 동전 가격�
   expect(await page.locator('.shelf-item .si-price .coin').count() > 0, '동전 가격표가 없음');
   // 주문 상품이 진열대에 있어야 한다
   expect(await page.locator('.shelf-item[data-id="' + d.shop.order[0] + '"]').count() === 1, '주문 상품이 진열대에 없음');
+});
+
+await check('물건 놓는 칸: 자로 그은 점선이 아니라 손그림 점선(인라인 SVG)', async () => {
+  for (const id of ['basket', 'counter']) {
+    expect(await page.locator('#' + id + ' > svg.zone-frame').count() === 1, id + ': 손그림 테두리 SVG 가 없음');
+    const bs = await page.evaluate(i => getComputedStyle(document.getElementById(i)).borderStyle, id);
+    expect(bs === 'none', id + ': CSS 점선 테두리가 남아 있음 — ' + bs);
+  }
+  // 담을 자리(장바구니 칸)도 같은 손으로
+  expect(await page.locator('#basket-items .basket-slot svg.zone-frame').count() >= 1, '담을 자리 테두리 SVG 가 없음');
+  const sbs = await page.evaluate(() => getComputedStyle(document.querySelector('.basket-slot')).borderStyle);
+  expect(sbs === 'none', '담을 자리에 CSS 점선이 남아 있음 — ' + sbs);
+  // 상품 그림(과일·장난감)은 이모지 그대로 — 아이가 알아보는 놀잇감
+  const emoji = await page.locator('.shelf-item .si-emoji').first().textContent();
+  expect(emoji && emoji.trim().length > 0, '상품 이모지가 사라짐');
 });
 
 await check('가게 테마: 간판 표시 + 진열·주문이 테마 상품으로만 구성', async () => {

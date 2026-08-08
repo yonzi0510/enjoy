@@ -50,7 +50,7 @@
     <div class="complete-title">참 잘했어요!</div>
     <div id="memory-stars" class="complete-stars"></div>
     <div class="complete-btns">
-      <button id="memory-done-home" class="big-btn btn-soft">🏠</button>
+      <button id="memory-done-home" class="big-btn btn-soft"><span class="di" data-di="back"></span></button>
       <button id="memory-done-next" class="big-btn btn-primary">다음 단계 ▶</button>
     </div>
   </div>
@@ -87,7 +87,9 @@
     st.busy = false;
     st.playing = true;
 
-    $('memory-title').textContent = '🃏 짝꿍 카드 · ' + level + '단계';
+    /* 손그림 아이콘 + 글자 (아이콘이 없으면 옛 이모지) */
+    const mIcon = window.DoodleIcons ? '<span class="di" data-di="cards"></span> ' : '🃏 ';
+    $('memory-title').innerHTML = mIcon + '짝꿍 카드 · ' + level + '단계';
 
     // 짝 카드 만들기: 한 벌에서 짝 수만큼 겹침 없이 뽑아 2장씩
     const chosen = shuffle(POOL.slice()).slice(0, st.pairs);

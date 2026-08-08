@@ -66,12 +66,15 @@ window.App = (() => {
     return '<svg class="board-svg" viewBox="0 0 100 100" xmlns="' + SVGNS + '">' + under + over + pegs + '</svg>';
   }
 
+  /* 손그림 아이콘 한 조각 — index.html 의 <symbol> 을 가리킨다(이모지 대신) */
+  const ico = (name, cls) => '<svg class="ico' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#gb-' + name + '"/></svg>';
+
   /* ─────────── 홈: 단계 3개 ─────────── */
   function renderHome() {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
     menu.innerHTML = '';
-    D.LEVELS.forEach(lv => {
+    D.LEVELS.forEach((lv, i) => {
       const ids = D.puzzlesOf(lv.id).map(x => x.id);
       const done = P.doneCount(ids);
       const pz = D.puzzlesOf(lv.id)[0];
@@ -79,10 +82,12 @@ window.App = (() => {
       b.type = 'button';
       b.className = 'menu-card ' + lv.cls;
       b.innerHTML =
+        // 첫 칸에만 손그림 점선 화살표 — 카드 기준 절대배치라 화면이 어떻게 접혀도 여기를 가리킨다
+        (i === 0 ? '<svg class="first-arrow" aria-hidden="true"><use href="#gb-arrow"/></svg>' : '') +
         '<span class="mc-icon">' + boardSVG(pz, pz.segments.map(() => true), 'thumb') + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? ico('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(lv); });
       menu.appendChild(b);
     });
@@ -92,7 +97,7 @@ window.App = (() => {
   let curLevel = null;
   function openList(lv) {
     curLevel = lv;
-    $('list-title').textContent = lv.icon + ' ' + lv.name;
+    $('list-title').innerHTML = ico('pin') + ' ' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('list-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('list');
@@ -106,7 +111,7 @@ window.App = (() => {
       b.innerHTML =
         '<span class="pz-no">' + (i + 1) + '</span>' +
         '<span class="pz-thumb">' + boardSVG(pz, pz.segments.map(() => true), 'thumb') + '</span>' +
-        '<span class="pz-badge">' + (done ? '⭐' : '📌') + '</span>';
+        '<span class="pz-badge">' + (done ? ico('star') : ico('pin')) + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });
@@ -120,7 +125,7 @@ window.App = (() => {
   function openPlay(pz) {
     cur = { pz, matched: new Array(pz.segments.length).fill(false), pendingFrom: null, locked: false };
     selColor = null;
-    $('play-title').textContent = D.levelDef(pz.stage).icon + ' 똑같이 걸어요';
+    $('play-title').innerHTML = ico('pin') + ' 똑같이 걸어요';
     $('card-board').innerHTML = boardSVG(pz, pz.segments.map(() => true), 'card');
     renderTray();
     renderBoard();

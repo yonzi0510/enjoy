@@ -10,6 +10,9 @@ window.App = (() => {
   const P = window.Progress;
   const $ = id => document.getElementById(id);
   const SVGNS = 'http://www.w3.org/2000/svg';
+  // 손그림 아이콘 (js/icons.js) — 이모지 자리를 대신한다
+  const ic = (n, cls) => (window.TangramIcons ? TangramIcons.html(n, cls) : '');
+  const icSpan = (n, cls) => '<span class="ic' + (cls ? ' ' + cls : '') + '">' + ic(n) + '</span>';
 
   const ROT_STEP = 30; // 톡 누르면 도는 각도
 
@@ -87,7 +90,7 @@ window.App = (() => {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
     menu.innerHTML = '';
-    D.LEVELS.forEach(lv => {
+    D.LEVELS.forEach((lv, li) => {
       const ids = D.puzzlesOf(lv.id).map(x => x.id);
       const done = P.doneCount(ids);
       const rep = D.puzzlesOf(lv.id)[0];
@@ -95,10 +98,12 @@ window.App = (() => {
       b.type = 'button';
       b.className = 'menu-card ' + lv.cls;
       b.innerHTML =
+        // 첫 칸에는 "여기부터 놀아 보자" 손그림 점선 화살표를 붙인다 (칸 기준 절대배치)
+        (li === 0 ? ic('startArrow', 'start-arrow') : '') +
         '<span class="mc-icon">' + pictureSVG(rep) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? icSpan('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(lv); });
       menu.appendChild(b);
     });
@@ -108,7 +113,7 @@ window.App = (() => {
   let curLevel = null;
   function openList(lv) {
     curLevel = lv;
-    $('list-title').textContent = lv.icon + ' ' + lv.name;
+    $('list-title').innerHTML = icSpan('rainbow', 'ic-title') + ' ' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('list-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('list');
@@ -122,7 +127,8 @@ window.App = (() => {
       b.innerHTML =
         '<span class="pz-no">' + (i + 1) + '</span>' +
         '<span class="pz-thumb">' + pictureSVG(pz) + '</span>' +
-        '<span class="pz-badge">' + (done ? '⭐' : pz.emoji) + '</span>';
+        // 다 하면 별, 아직이면 색 없는 고리 조각 윤곽 (조각 색·모양은 썸네일이 보여준다)
+        '<span class="pz-badge">' + ic(done ? 'star' : 'arc') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPuzzle(pz); });
       box.appendChild(b);
     });
@@ -135,7 +141,7 @@ window.App = (() => {
 
   function openPuzzle(pz) {
     cur = { puzzle: pz, pieces: [], placedCount: 0 };
-    $('play-title').textContent = pz.emoji + ' ' + pz.name;
+    $('play-title').innerHTML = icSpan('rainbow', 'ic-title') + ' ' + pz.name;
     $('ref-card').innerHTML = pictureSVG(pz);
     showScreen('scr-play');
 
@@ -380,7 +386,7 @@ window.App = (() => {
       $('reward-pic').innerHTML = pictureSVG(pz);
       const list = D.puzzlesOf(pz.level);
       const next = list.find(q => q.id !== pz.id && !P.isDone(q.id)) || list.find(q => q.id !== pz.id);
-      showReward(praise, next ? '다음 ' + next.emoji + ' ▶' : '목록으로', () => {
+      showReward(praise, next ? '다음 ' + icSpan('next') : '목록으로', () => {
         if (next) openPuzzle(next); else openList(D.levelDef(pz.level));
       });
     }, 900);
@@ -409,7 +415,7 @@ window.App = (() => {
   let rewardNextFn = null;
   function showReward(praise, nextLabel, onNext) {
     $('reward-praise').textContent = praise;
-    $('reward-next').textContent = nextLabel;
+    $('reward-next').innerHTML = nextLabel;
     rewardNextFn = onNext;
     $('reward').classList.add('on');
   }

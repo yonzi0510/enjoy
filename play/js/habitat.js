@@ -219,7 +219,7 @@
     <div id="habitat-stars" class="complete-stars"></div>
     <div id="habitat-done-count" class="habitat-done-count"></div>
     <div class="complete-btns">
-      <button id="habitat-done-home" class="big-btn btn-soft">🏠</button>
+      <button id="habitat-done-home" class="big-btn btn-soft"><span class="di" data-di="back"></span></button>
       <button id="habitat-done-next" class="big-btn btn-primary">한 번 더 ▶</button>
     </div>
   </div>
@@ -264,7 +264,9 @@
     const done = shuffle(topic.items.filter(i => Progress.isHabitatDone(topic.id, i.id)));
     st.queue = shuffle(undone.concat(done).slice(0, ROUND));
 
-    $('habitat-title').textContent = '🏠 ' + topic.name + ' 찾기';
+    /* 손그림 아이콘 + 글자 (아이콘이 없으면 옛 이모지) */
+    const hIcon = window.DoodleIcons ? '<span class="di" data-di="house"></span> ' : '🏠 ';
+    $('habitat-title').innerHTML = hIcon + topic.name + ' 찾기';
 
     // 구역 그리기
     const wrap = $('habitat-zones');

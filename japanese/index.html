@@ -13,40 +13,265 @@
 <link rel="stylesheet" href="../shared/time-limit.css">
 <link rel="stylesheet" href="../shared/pet.css">
 <link rel="stylesheet" href="../shared/crayon.css">
+<link rel="stylesheet" href="../shared/doodle-menu.css">
 </head>
 <body>
+
+<!-- ═══════════ 아이가 그린 손그림 ═══════════
+     이모지를 쓰지 않는 이유 — 이모지는 기기마다 그림이 달라지고, 반질반질한 앱 아이콘처럼
+     보인다. 낙서장 시안은 "아이가 크레용으로 그린 공책"이라서, 획이 굵고 고르며 선이
+     삐뚤고 동그라미가 안 닫히는 그림이라야 한다.
+     · #ji-hand  : 획을 실제로 떨리게 한다 (자로 그은 티 없애기)
+     · #ji-spill : 색칠 층을 더 크게 뭉갠다 — 색이 윤곽 밖으로 삐져나오게
+     색칠(fill)은 윤곽(stroke)보다 **먼저·조금 어긋나게** 깔아서 아이가 칠하다 삐져나간 자국을 만든다. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="ji-hand" x="-16%" y="-16%" width="132%" height="132%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.034" numOctaves="2" seed="11"/>
+    <feDisplacementMap in="SourceGraphic" scale="3"/>
+  </filter>
+  <filter id="ji-spill" x="-22%" y="-22%" width="144%" height="144%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="3" seed="4"/>
+    <feDisplacementMap in="SourceGraphic" scale="6.5"/>
+  </filter>
+
+  <!-- 제목에서 첫 놀이로 가는 점선 화살표 (꼬리는 오른쪽 위, 머리는 왼쪽 아래) -->
+  <symbol id="ji-arrow" viewBox="0 0 160 80">
+    <g filter="url(#ji-hand)" fill="none" stroke="currentColor"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M152 12 C122 4, 76 11, 47 31 C31 42, 23 55, 19 70"
+            stroke-width="6" stroke-dasharray="2 13"/>
+      <path d="M6 53 L19 72 L34 57" stroke-width="6.4"/>
+    </g>
+  </symbol>
+
+  <!-- 글자 배우기 — 펼친 책에 あ 를 끄적여 놓았다 -->
+  <symbol id="ji-learn" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".85">
+      <path d="M11 21 C19 16, 27 17, 32 23 L32 47 C26 42, 18 42, 11 46 Z" fill="#FBE7B8"/>
+      <path d="M54 20 C46 15, 37 17, 32 23 L32 47 C38 42, 46 42, 53 46 Z" fill="#F8D9E4"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#B8791E" stroke-width="4.6"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 18 C17 12, 27 14, 32 21 C37 14, 47 12, 56 18"/>
+      <path d="M8 18 L9 47 C17 42, 26 43, 32 49 C38 43, 47 42, 55 47 L56 18"/>
+      <path d="M32 21 L32 49"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke-linecap="round">
+      <path d="M13 27 h10 M13 33 h8" stroke="#E2B457" stroke-width="3.2"/>
+      <path d="M38 27 h12 M44.5 23 v11 M50 30 c-7 1 -12 6 -9 9 c4 3 10 -3 9 -9"
+            stroke="#D46A93" stroke-width="3.4"/>
+    </g>
+  </symbol>
+
+  <!-- 따라쓰기 — 연필이 점선 위를 지나간다 -->
+  <symbol id="ji-trace" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".85">
+      <path d="M40 10 L56 24 L28 51 L14 55 L18 40 Z" fill="#FFE08A"/>
+      <path d="M15 55 L19 46 L24 51 Z" fill="#6B5340"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#E0A21B" stroke-width="4.6"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M41 11 L55 25 L27 52 L15 56 L18 41 Z"/>
+      <path d="M18 41 L28 50"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#9AA7B8" stroke-width="3.6"
+       stroke-linecap="round" stroke-dasharray="1 8">
+      <path d="M6 60 C16 54, 26 58, 36 57 C46 56, 52 52, 58 47"/>
+    </g>
+  </symbol>
+
+  <!-- 글자 놀이 — 통통 튀는 공. 동그라미는 일부러 안 닫는다(왼쪽 위가 트여 있다) -->
+  <symbol id="ji-play" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".8">
+      <circle cx="31" cy="35" r="21" fill="#BFE3F7"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#3E86BE" stroke-width="4.8"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M30 12 C44 11, 55 22, 54 35 C53 48, 42 57, 30 56
+               C18 55, 10 46, 10 34 C10 24, 16 16, 23 13"/>
+      <path d="M12 28 C24 22, 40 22, 52 28"/>
+      <path d="M12 43 C24 49, 40 49, 52 43"/>
+      <path d="M31 12 C25 23, 25 45, 31 56"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#E8A32C" stroke-width="3.4" stroke-linecap="round">
+      <path d="M56 14 l4 -5 M60 22 l4 -1 M50 7 l-1 -5"/>
+    </g>
+  </symbol>
+
+  <!-- あいうえお 노래 — 음표 두 개와 반짝 -->
+  <symbol id="ji-song" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".85">
+      <ellipse cx="17" cy="49" rx="8.6" ry="6.8" transform="rotate(-18 17 49)" fill="#D8C7F2"/>
+      <ellipse cx="40" cy="44" rx="8.6" ry="6.8" transform="rotate(-18 40 44)" fill="#D8C7F2"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#7E57B5" stroke-width="4.6"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M25 49 L24 15"/>
+      <path d="M48 44 L47 10"/>
+      <path d="M24 15 C31 10, 40 8, 47 10"/>
+      <path d="M24 23 C31 18, 40 16, 47 18"/>
+      <ellipse cx="17" cy="49" rx="8" ry="6.2" transform="rotate(-18 17 49)"/>
+      <ellipse cx="40" cy="44" rx="8" ry="6.2" transform="rotate(-18 40 44)"/>
+    </g>
+    <g filter="url(#ji-hand)" stroke="none" fill="#E8A32C">
+      <path d="M57 24 C57.7 29, 59 30.6, 64 31.5 C59 32.4, 57.7 34, 57 39
+               C56.3 34, 55 32.4, 50 31.5 C55 30.6, 56.3 29, 57 24 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 카드책 — 낱말 카드 두 장을 겹쳐 놓았다 -->
+  <symbol id="ji-cards" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".85">
+      <path d="M11 27 L31 17 L45 46 L25 56 Z" fill="#CFEBD8"/>
+      <path d="M29 14 L55 16 L53 48 L27 47 Z" fill="#FFFFFF"/>
+      <path d="M41 27 c-4 -5 -11 -1 -8 5 c2 4 8 8 8 8 s6 -4 8 -8 c3 -6 -4 -10 -8 -5 z" fill="#F0A0BC"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#4E9B48" stroke-width="4.4"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 27 L31 17 L45 46 L25 56 Z"/>
+      <path d="M29 14 L55 16 L53 48 L27 47 Z"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#D46A93" stroke-width="3.4"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M41 26 c-4 -5 -11 -1 -8 5 c2 4 8 8 8 8 s6 -4 8 -8 c3 -6 -4 -10 -8 -5"/>
+    </g>
+  </symbol>
+
+  <!-- 거품 놀이 — 안 닫힌 동그라미 세 개 -->
+  <symbol id="ji-bubble" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".75">
+      <circle cx="25" cy="37" r="14" fill="#BFE3F7"/>
+      <circle cx="46" cy="22" r="9" fill="#BFE3F7"/>
+      <circle cx="15" cy="15" r="6" fill="#BFE3F7"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#3E86BE" stroke-width="4.4"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 22 C34 21, 41 28, 41 37 C41 46, 34 52, 25 52
+               C16 52, 10 45, 10 37 C10 30, 14 25, 19 23"/>
+      <path d="M45 12 C51 12, 56 17, 56 23 C56 29, 51 33, 45 33
+               C39 33, 35 29, 35 23 C35 19, 37 16, 40 14"/>
+      <path d="M14 8.5 C18 8.5, 21 11, 21 15 C21 19, 18 21.5, 14 21.5
+               C10.5 21.5, 8.5 19, 8.5 15.5"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round">
+      <path d="M16 36 C17 31, 20 28, 25 27"/>
+      <path d="M40 21 C41 18, 43 17, 45 17"/>
+    </g>
+  </symbol>
+
+  <!-- 첫소리 놀이 — 글자 블록 두 개 (あ · い) -->
+  <symbol id="ji-first" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".85">
+      <path d="M8 19 L31 20 L30 42 L7 41 Z" fill="#FBE7B8"/>
+      <path d="M34 25 L57 26 L56 48 L33 47 Z" fill="#CFE6F7"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke-width="4.4"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 19 L31 20 L30 42 L7 41 Z" stroke="#E0A21B"/>
+      <path d="M34 25 L57 26 L56 48 L33 47 Z" stroke="#3E86BE"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke-width="3.2" stroke-linecap="round">
+      <path d="M12 27 h13 M18.5 24 v13 M25 30 c-7 1 -12 6 -9 9 c4 3 10 -3 9 -9" stroke="#D46A93"/>
+      <path d="M40 31 c-1.5 7, 0 11, 3 13 M50 31 c.5 6, 0 9, -1.5 11" stroke="#2E7BB0"/>
+    </g>
+  </symbol>
+
+  <!-- 머리말 그림들 — 제목의 벚꽃, 별·카드 셈, 목소리 단추 -->
+  <symbol id="ji-sakura" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".85" fill="#F8D3E1">
+      <ellipse cx="32" cy="15" rx="8" ry="10.5"/>
+      <ellipse cx="49" cy="27" rx="8" ry="10.5" transform="rotate(72 49 27)"/>
+      <ellipse cx="42" cy="47" rx="8" ry="10.5" transform="rotate(144 42 47)"/>
+      <ellipse cx="22" cy="47" rx="8" ry="10.5" transform="rotate(216 22 47)"/>
+      <ellipse cx="15" cy="27" rx="8" ry="10.5" transform="rotate(288 15 27)"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#D46A93" stroke-width="4" stroke-linejoin="round">
+      <ellipse cx="32" cy="15" rx="7.6" ry="10"/>
+      <ellipse cx="49" cy="27" rx="7.6" ry="10" transform="rotate(72 49 27)"/>
+      <ellipse cx="42" cy="47" rx="7.6" ry="10" transform="rotate(144 42 47)"/>
+      <ellipse cx="22" cy="47" rx="7.6" ry="10" transform="rotate(216 22 47)"/>
+      <ellipse cx="15" cy="27" rx="7.6" ry="10" transform="rotate(288 15 27)"/>
+    </g>
+    <g filter="url(#ji-hand)" stroke="none" fill="#E8A32C"><circle cx="32" cy="32" r="4.6"/></g>
+  </symbol>
+
+  <symbol id="ji-star" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".9" fill="#FFD75E">
+      <path d="M32 7 L40 25 L60 27 L45 40 L49 59 L32 49 L15 59 L19 40 L4 27 L24 25 Z"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#E0A21B" stroke-width="4.6" stroke-linejoin="round">
+      <path d="M32 7 L40 25 L60 27 L45 40 L49 59 L32 49 L15 59 L19 40 L4 27 L24 25 Z"/>
+    </g>
+  </symbol>
+
+  <symbol id="ji-cardstat" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".9">
+      <path d="M10 20 L30 12 L45 44 L25 53 Z" fill="#CFEBD8"/>
+      <path d="M30 12 L54 15 L52 49 L28 47 Z" fill="#FFFFFF"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#4E9B48" stroke-width="4.6"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 20 L30 12 L45 44 L25 53 Z"/>
+      <path d="M30 12 L54 15 L52 49 L28 47 Z"/>
+    </g>
+  </symbol>
+
+  <symbol id="ji-voice" viewBox="0 0 64 64">
+    <g filter="url(#ji-spill)" stroke="none" opacity=".85">
+      <path d="M9 13 L44 15 L42 39 L24 38 L14 50 L15 37 L8 36 Z" fill="#DCEBF7"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#3E86BE" stroke-width="4.4"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 13 L44 15 L42 39 L24 38 L14 50 L15 37 L8 36 Z"/>
+    </g>
+    <g filter="url(#ji-hand)" fill="none" stroke="#D46A93" stroke-width="4"
+       stroke-linecap="round">
+      <path d="M49 19 C55 24, 55 31, 49 36"/>
+      <path d="M56 13 C65 22, 65 34, 56 43"/>
+    </g>
+  </symbol>
+</defs></svg>
 
 <!-- 홈 -->
 <section class="screen on" id="scr-home">
   <header class="home-head">
-    <h1>🌸 あいうえお 일본어 놀이터</h1>
+    <h1><svg class="h1-art" aria-hidden="true"><use href="#ji-sakura"></use></svg>あいうえお 일본어 놀이터</h1>
     <div class="stats">
-      <span class="stat">⭐ <b id="home-stars">0</b></span>
-      <span class="stat">🃏 <b id="home-cards">0</b></span>
+      <span class="stat"><svg class="st-art" aria-hidden="true"><use href="#ji-star"></use></svg><b id="home-stars">0</b></span>
+      <span class="stat"><svg class="st-art" aria-hidden="true"><use href="#ji-cardstat"></use></svg><b id="home-cards">0</b></span>
       <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
       <span id="pet-slot"></span>
-      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정"><svg class="st-art" aria-hidden="true"><use href="#ji-voice"></use></svg></button>
     </div>
   </header>
+  <!-- 놀이 칸은 크기로 순서를 알려준다 — 글자 배우기가 가장 크고, 뒤로 갈수록 조금씩 작다.
+       화살표는 '글자 배우기' 칸에 붙어 있어서(카드 기준 절대배치) 화면이 어떻게 접히든
+       늘 첫 놀이를 가리킨다. -->
   <div class="menu">
     <button type="button" class="menu-card m-learn" data-go="learn">
-      <span class="mc-emoji">📖</span><span class="mc-name">글자 배우기</span>
+      <svg class="first-arrow" aria-hidden="true"><use href="#ji-arrow"></use></svg>
+      <svg class="mc-art" aria-hidden="true"><use href="#ji-learn"></use></svg>
+      <span class="mc-name">글자 배우기</span>
       <span class="mc-desc">あいうえお 소리와 낱말</span>
     </button>
     <button type="button" class="menu-card m-trace" data-go="trace">
-      <span class="mc-emoji">✏️</span><span class="mc-name">따라쓰기</span>
+      <svg class="mc-art" aria-hidden="true"><use href="#ji-trace"></use></svg>
+      <span class="mc-name">따라쓰기</span>
       <span class="mc-desc">획순 따라 손가락 쓰기</span>
     </button>
     <button type="button" class="menu-card m-play" data-go="scr-games">
-      <span class="mc-emoji">🎮</span><span class="mc-name">글자 놀이</span>
+      <svg class="mc-art" aria-hidden="true"><use href="#ji-play"></use></svg>
+      <span class="mc-name">글자 놀이</span>
       <span class="mc-desc">거품·첫소리 게임</span>
     </button>
     <button type="button" class="menu-card m-song" data-go="scr-song">
-      <span class="mc-emoji">🎵</span><span class="mc-name">あいうえお 노래</span>
+      <svg class="mc-art" aria-hidden="true"><use href="#ji-song"></use></svg>
+      <span class="mc-name">あいうえお 노래</span>
       <span class="mc-desc">글자가 반짝반짝</span>
     </button>
     <button type="button" class="menu-card m-cards" data-go="scr-cards">
-      <span class="mc-emoji">🃏</span><span class="mc-name">카드책</span>
+      <svg class="mc-art" aria-hidden="true"><use href="#ji-cards"></use></svg>
+      <span class="mc-name">카드책</span>
       <span class="mc-desc">모은 낱말 카드</span>
     </button>
   </div>
@@ -99,11 +324,13 @@
   </header>
   <div class="menu">
     <button type="button" class="menu-card m-bubble" data-go="scr-bubble">
-      <span class="mc-emoji">🫧</span><span class="mc-name">거품 놀이</span>
+      <svg class="mc-art" aria-hidden="true"><use href="#ji-bubble"></use></svg>
+      <span class="mc-name">거품 놀이</span>
       <span class="mc-desc">글자 거품을 찾아 팡!</span>
     </button>
     <button type="button" class="menu-card m-first" data-go="scr-first">
-      <span class="mc-emoji">🔤</span><span class="mc-name">첫소리 놀이</span>
+      <svg class="mc-art" aria-hidden="true"><use href="#ji-first"></use></svg>
+      <span class="mc-name">첫소리 놀이</span>
       <span class="mc-desc">낱말의 첫 글자 찾기</span>
     </button>
   </div>
@@ -186,5 +413,6 @@
 <script src="../shared/pet.js"></script>
 <script src="../shared/time-limit.js"></script>
 <script src="../shared/sw-register.js"></script>
+<script src="../shared/home-button.js"></script>
 </body>
 </html>

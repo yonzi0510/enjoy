@@ -177,6 +177,128 @@ await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침, 4×4 로
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+/* ─── 낙서장 배치 (「시안 3」) ─────────────────────────────────────── */
+
+await check('첫 화면 낙서장: 칸마다 다른 기울기 · 크기 위계(1>2>3) · 안 겹침', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  await page.waitForTimeout(400);
+  const m = await page.evaluate(() => {
+    const ang = el => { const t = getComputedStyle(el).transform; if (t === 'none') return 0; const n = new DOMMatrix(t); return +(Math.atan2(n.b, n.a) * 180 / Math.PI).toFixed(2); };
+    const cards = [...document.querySelectorAll('#menu .menu-card')];
+    const rs = cards.map(c => c.getBoundingClientRect());
+    let overlap = 0;
+    for (let i = 0; i < rs.length; i++) for (let j = i + 1; j < rs.length; j++)
+      if (rs[i].right > rs[j].left + 1 && rs[j].right > rs[i].left + 1 &&
+          rs[i].bottom > rs[j].top + 1 && rs[j].bottom > rs[i].top + 1) overlap++;
+    return {
+      angles: cards.map(ang),
+      widths: rs.map(r => Math.round(r.width)),
+      overlap,
+      offscreen: rs.filter(r => r.left < -1 || r.right > innerWidth + 1).length,
+      scrollX: document.querySelector('#scr-home').scrollWidth - document.querySelector('#scr-home').clientWidth,
+    };
+  });
+  expect(new Set(m.angles).size === 3, '칸이 같은 각도로 서 있다: ' + m.angles.join(','));
+  expect(m.angles.every(a => Math.abs(a) > 0.5 && Math.abs(a) < 6), '기울기가 0이거나 과하다: ' + m.angles.join(','));
+  expect(m.widths[0] > m.widths[1] && m.widths[1] > m.widths[2], '크기 위계 어긋남: ' + m.widths.join('>'));
+  expect(m.overlap === 0, '칸끼리 겹침 ' + m.overlap + '건');
+  expect(m.offscreen === 0 && m.scrollX <= 1, '칸이 화면 밖으로 나감');
+});
+
+/* 이 놀이의 목숨줄 — 조각이 '어느 쪽을 보는지'가 정답이라
+   격자·조각에 회전이나 크기 변형이 붙으면 놀이가 망가진다. */
+await check('격자·조각에는 회전·크기 변형 없음 (첫 화면 미리보기 포함)', async () => {
+  const home = await page.evaluate(() => {
+    const ang = el => { const t = getComputedStyle(el).transform; if (t === 'none') return 0; const n = new DOMMatrix(t); return Math.atan2(n.b, n.a) * 180 / Math.PI; };
+    return [...document.querySelectorAll('#menu .mc-icon .mini-grid')].map(el => {
+      let a = 0;
+      for (let n = el; n && n.id !== 'menu'; n = n.parentElement) a += ang(n);
+      return +a.toFixed(2);
+    });
+  });
+  expect(home.every(a => Math.abs(a) < 0.35), '첫 화면 미리보기 격자가 기울어 있다: ' + home.join(','));
+
+  await page.click('.menu-card.c-l3');
+  await page.waitForSelector('#scr-puzzles.on');
+  await page.click('#puzzles-list .puzzle-card');
+  await page.waitForSelector('#scr-play.on');
+  await page.waitForTimeout(200);
+  const play = await page.evaluate(() => {
+    const els = [document.querySelector('#board'),
+      ...document.querySelectorAll('#board .bd-cell, #board .bd-head, #board .bd-corner, #tray .tray-item, #tray .ti-piece')];
+    let maxA = 0, maxS = 0;
+    for (const el of els) {
+      const t = getComputedStyle(el).transform;
+      if (t === 'none') continue;
+      const m = new DOMMatrix(t);
+      maxA = Math.max(maxA, Math.abs(Math.atan2(m.b, m.a) * 180 / Math.PI));
+      maxS = Math.max(maxS, Math.abs(Math.hypot(m.a, m.b) - 1));
+    }
+    return { maxA: +maxA.toFixed(3), maxS: +maxS.toFixed(3) };
+  });
+  expect(play.maxA < 0.01, '격자·조각이 회전했다: ' + play.maxA + '도');
+  expect(play.maxS < 0.01, '격자·조각 크기가 변형됐다: 배율차 ' + play.maxS);
+});
+
+await check('UI 그림은 손그림 SVG — 이모지가 남아 있지 않다', async () => {
+  const m = await page.evaluate(() => {
+    const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2B00}-\u{2BFF}\u{25A0}-\u{25FF}\u{2190}-\u{21FF}\u{2600}-\u{27BF}]/u;
+    /* 공용 부품(#pet-slot 의 학습 펫, 남은 시간 쪽지, 프로필 배지)은 이 앱 소관이 아니라 뺀다 */
+    const zones = ['#scr-home h1', '#scr-home .stat', '#scr-home .menu', '#scr-puzzles .bar',
+      '#puzzles-list', '#scr-play .bar', '#hint-chip', '#board .bd-corner'];
+    const left = [];
+    for (const z of zones) {
+      const el = document.querySelector(z);
+      if (el && EMOJI.test(el.textContent)) left.push(z + ': ' + el.textContent.trim().slice(0, 24));
+    }
+    return {
+      left,
+      useCount: document.querySelectorAll('use[href^="#mx-"]').length,
+      symbols: document.querySelectorAll('symbol[id^="mx-"]').length,
+      hasFilter: !!document.querySelector('#mx-hand feTurbulence') && !!document.querySelector('#mx-hand feDisplacementMap'),
+    };
+  });
+  expect(m.left.length === 0, '이모지가 남았다 — ' + m.left.join(' | '));
+  expect(m.symbols >= 10, '손그림 <symbol> 수: ' + m.symbols);
+  expect(m.useCount >= 4, '손그림을 쓰는 자리 수: ' + m.useCount);
+  expect(m.hasFilter, '떨림 필터(feTurbulence + feDisplacementMap) 없음');
+});
+
+await check('오른쪽 위 남은 시간 쪽지와 머리줄이 겹치지 않는다 (폰·패드)', async () => {
+  for (const s of [{ w: 390, h: 844, n: '폰 세로' }, { w: 1180, h: 820, n: '패드 가로' }]) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    await page.waitForTimeout(400);
+    const hitHome = await page.evaluate(() => {
+      const t = document.querySelector('.tl-bar-tag');
+      if (!t) return [];
+      const r = t.getBoundingClientRect();
+      return [...document.querySelectorAll('#scr-home h1, #scr-home .stat, #scr-home .vs-btn')]
+        .filter(e => getComputedStyle(e).display !== 'none')
+        .filter(e => { const b = e.getBoundingClientRect(); return b.right > r.left && r.right > b.left && b.bottom > r.top && r.bottom > b.top; })
+        .map(e => e.tagName + (e.className ? '.' + e.className : ''));
+    });
+    expect(hitHome.length === 0, s.n + ' 첫 화면 겹침: ' + hitHome.join(','));
+    await page.click('.menu-card.c-l1');
+    await page.waitForSelector('#scr-puzzles.on');
+    await page.click('#puzzles-list .puzzle-card');
+    await page.waitForSelector('#scr-play.on');
+    await page.waitForTimeout(200);
+    const hitPlay = await page.evaluate(() => {
+      const t = document.querySelector('.tl-bar-tag');
+      if (!t) return [];
+      const r = t.getBoundingClientRect();
+      return [...document.querySelectorAll('#scr-play .back, #scr-play h2, #scr-play .bigbtn')]
+        .filter(e => { const b = e.getBoundingClientRect(); return b.right > r.left && r.right > b.left && b.bottom > r.top && r.bottom > b.top; })
+        .map(e => e.id || e.tagName);
+    });
+    expect(hitPlay.length === 0, s.n + ' 놀이 화면 겹침: ' + hitPlay.join(','));
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });

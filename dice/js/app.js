@@ -11,6 +11,11 @@ window.App = (() => {
 
   const ROLL_MS = 480; // 주사위 굴리는 애니메이션 길이
 
+  /* 손그림 아이콘 — index.html <defs> 의 <symbol> 을 가져다 쓴다.
+   * 이모지가 있던 자리에 그대로 들어가도록 크기는 CSS(.ic)가 글자 크기(em)로 맞춘다.
+   * ⚠️ 주사위에 그려진 동물 얼굴은 놀잇감이라 손대지 않는다 — 여기 있는 건 화면 틀뿐. */
+  const ic = (id, cls) => '<svg class="ic' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#dc-' + id + '"/></svg>';
+
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
   function showScreen(id) {
@@ -24,7 +29,8 @@ window.App = (() => {
   function renderHome() {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
-    menu.innerHTML = '';
+    // 제목에서 첫 놀이로 향하는 점선 화살표 — 어디부터 놀면 되는지 알려 준다
+    menu.innerHTML = '<svg class="start-arrow" aria-hidden="true"><use href="#dc-arrow"/></svg>';
     D.LEVELS.forEach(lv => {
       const ids = D.roundsOf(lv.id).map(x => x.id);
       const done = P.doneCount(ids);
@@ -35,15 +41,17 @@ window.App = (() => {
         '<span class="mc-die">' + miniDie(lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? ic('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openRounds(lv); });
       menu.appendChild(b);
     });
   }
 
   // 단계 아이콘용 작은 주사위 (대표 라운드의 찾을 동물로)
+  // 단계마다 다른 라운드를 대표로 삼는다 — 세 칸이 같은 동물이면 무엇이 다른지 안 보인다
   function miniDie(level) {
-    const round = D.roundsOf(level)[0];
+    const list = D.roundsOf(level);
+    const round = list[(level - 1) % list.length];
     const aid = round.find[0];
     return '<span class="die mini">' + D.ANIMALS[aid].draw('mn' + level + aid) + '</span>';
   }
@@ -52,7 +60,7 @@ window.App = (() => {
   let curLevel = null;
   function openRounds(lv) {
     curLevel = lv;
-    $('rounds-title').textContent = lv.icon + ' ' + lv.name;
+    $('rounds-title').innerHTML = ic('die', 'ic-title') + ' ' + lv.name;
     const list = D.roundsOf(lv.id);
     $('rounds-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('rounds-list');
@@ -68,7 +76,7 @@ window.App = (() => {
         '<span class="rd-finds">' +
           rd.find.map(aid => '<span class="die tiny">' + D.ANIMALS[aid].draw('rc' + rd.id + aid) + '</span>').join('') +
         '</span>' +
-        '<span class="rd-badge">' + (done ? '⭐' : '🔍') + '</span>';
+        '<span class="rd-badge">' + (done ? ic('star') : ic('lens')) + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(rd); });
       box.appendChild(b);
     });
@@ -89,7 +97,7 @@ window.App = (() => {
       rolled: false,
       locked: false,
     };
-    $('play-title').textContent = D.levelDef(rd.level).icon + ' ' + D.levelDef(rd.level).name;
+    $('play-title').innerHTML = ic('die', 'ic-title') + ' ' + D.levelDef(rd.level).name;
     renderFindCard();
     renderDice();
     $('btn-roll').disabled = false;
@@ -109,7 +117,7 @@ window.App = (() => {
       el.innerHTML = D.ANIMALS[aid].draw('fc' + aid);
       box.appendChild(el);
     });
-    $('find-cap').textContent = cur.targets.length > 1 ? '🔍 이 동물들을 찾아요!' : '🔍 이 동물을 찾아요!';
+    $('find-cap').innerHTML = ic('lens') + (cur.targets.length > 1 ? ' 이 동물들을 찾아요!' : ' 이 동물을 찾아요!');
   }
 
   // 주사위들
@@ -124,10 +132,10 @@ window.App = (() => {
       b.dataset.idx = i;
       if (cur.rolled) {
         b.innerHTML = '<span class="die">' + D.ANIMALS[aid].draw('dg' + cur.round.id + i) + '</span>' +
-                      '<span class="die-check">✅</span>';
+                      '<span class="die-check">' + ic('check') + '</span>';
         if (cur.found.has(i)) b.classList.add('found');
       } else {
-        b.innerHTML = '<span class="die cover">🎲</span>';
+        b.innerHTML = '<span class="die cover">' + ic('pips', 'ic-pips') + '</span>';
       }
       b.addEventListener('click', ev => { ev.preventDefault(); tapDie(i, b); });
       box.appendChild(b);
