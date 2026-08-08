@@ -377,6 +377,9 @@ h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -
   border: 3px solid rgba(46, 42, 36, .85);
   border-radius: 26% 21% 27% 22%;
   box-shadow: none;
+  /* 굴리기 전(눈만 그린 알)과 굴린 뒤(동물 얼굴)의 높이가 같아야
+     굴리는 순간 판이 늘었다 줄었다 하지 않는다 */
+  aspect-ratio: 1;
 }
 .die.tiny { border-width: 2.5px; }
 /* 안 굴린 주사위의 눈 — 알 너비를 따라간다 (높이를 %로 주면 flex 안에서 늘어난다) */

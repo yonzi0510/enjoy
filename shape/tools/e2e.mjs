@@ -426,6 +426,25 @@ for (const [w, h, tag] of [[390, 844, '폰 390×844'], [1180, 820, '패드 1180�
   });
 }
 
+// 도안 목록 첫 줄이 공용 붙박이(집 단추·남은시간 쪽지)에 가려지면 완성 메달이 안 보인다
+for (const [w, h, tag] of [[390, 844, '폰 390×844'], [1180, 820, '패드 1180×820']]) {
+  await check('도안 목록 첫 줄이 공용 붙박이에 안 가린다 (' + tag + ')', async () => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForTimeout(350);
+    await page.click('#btn-play-back');
+    await page.waitForSelector('#scr-list.on');
+    const r = await page.evaluate(() => {
+      const box = s => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom }; };
+      const hit = (a, b) => !!a && !!b && Math.min(a.r, b.r) - Math.max(a.l, b.l) > 0.5 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 0.5;
+      const row = box('#puzzle-list .item-main'), tl = box('.tl-bar-tag'), hm = box('.enjoy-home-btn');
+      return { row: !!row, vsTime: hit(row, tl), vsHome: hit(row, hm) };
+    });
+    expect(r.row, '목록 첫 줄이 없다');
+    expect(!r.vsTime, '첫 줄이 남은시간 쪽지에 가린다');
+    expect(!r.vsHome, '첫 줄이 집 단추에 가린다');
+  });
+}
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });

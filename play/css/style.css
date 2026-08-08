@@ -1321,6 +1321,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .round-btn .di { width: 1.3em; height: 1.3em; vertical-align: 0; }
 .close-btn .di { width: 1.5em; height: 1.5em; vertical-align: 0; }
 .big-btn .di { width: 1.2em; height: 1.2em; vertical-align: -0.18em; }
+.level-btn .di, .letters-level-btn .di { width: 1.9em; height: 1.9em; vertical-align: 0; }
 
 /* 오른쪽 위 공용 집 단추(shared/home-button.js) 자리를 비워 준다.
    가로·세로 모두 비워야 한다 — 안 그러면 집 단추가 아래 배너를 덮는다.

@@ -423,6 +423,12 @@ h1 {
    '0 / 7' 이 그 밑에 깔려 숫자가 안 보이던 것을 왼쪽으로 비켜 준다. */
 .page-count { margin-right: clamp(52px, 7vw, 92px); }
 
+/* 폰 세로에서는 그 쪽지가 집 단추 아래로 내려와 도안 목록 첫 줄의 메달을 덮었다.
+   목록을 쪽지 아래에서 시작하게 한 칸 내려 준다. */
+@media (max-width: 699px) and (orientation: portrait) {
+  .items-list { padding-top: 52px; }
+}
+
 /* ─────────── 손그림 아이콘 (js/doodle.js) ─────────── */
 .dood {
   display: inline-block;
