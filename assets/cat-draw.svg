@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 205 205" role="img" aria-label="그리기와 쓰기 — 연필 안은 토끼">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFC9DB"/><stop offset="1" stop-color="#FFB0C8"/>
+    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="28%" r="75%">
+      <stop offset="0" stop-color="#F0F8FE"/><stop offset="1" stop-color="#CFE7FA"/>
+    </radialGradient>
+  </defs>
+  <rect width="205" height="205" fill="url(#bg)"/>
+  <g transform="translate(2.5 0)">
+    <g>
+      <g transform="rotate(-14 84 62)">
+        <ellipse cx="84" cy="40" rx="15" ry="40" fill="url(#body)" stroke="#E05C86" stroke-width="3"/>
+        <ellipse cx="84" cy="44" rx="7" ry="27" fill="#FF8FB0"/>
+      </g>
+      <g transform="rotate(14 116 62)">
+        <ellipse cx="116" cy="40" rx="15" ry="40" fill="url(#body)" stroke="#E05C86" stroke-width="3"/>
+        <ellipse cx="116" cy="44" rx="7" ry="27" fill="#FF8FB0"/>
+      </g>
+    </g>
+    <ellipse cx="82" cy="187" rx="15" ry="10" fill="url(#body)" stroke="#E05C86" stroke-width="3"/>
+    <ellipse cx="118" cy="187" rx="15" ry="10" fill="url(#body)" stroke="#E05C86" stroke-width="3"/>
+    <ellipse cx="82" cy="188" rx="6" ry="4" fill="#FF8FB0"/>
+    <ellipse cx="118" cy="188" rx="6" ry="4" fill="#FF8FB0"/>
+    <ellipse cx="100" cy="150" rx="46" ry="43" fill="url(#body)" stroke="#E05C86" stroke-width="3"/>
+    <ellipse cx="100" cy="158" rx="27" ry="30" fill="#FFF2F7"/>
+    <ellipse cx="66" cy="150" rx="12" ry="14" fill="url(#body)" stroke="#E05C86" stroke-width="3"/>
+    <ellipse cx="134" cy="150" rx="12" ry="14" fill="url(#body)" stroke="#E05C86" stroke-width="3"/>
+    <ellipse cx="100" cy="95" rx="50" ry="46" fill="url(#body)" stroke="#E05C86" stroke-width="3"/>
+    <ellipse cx="71" cy="103" rx="11" ry="8" fill="#FF8FB0" opacity=".6"/>
+    <ellipse cx="129" cy="103" rx="11" ry="8" fill="#FF8FB0" opacity=".6"/>
+    <ellipse cx="83" cy="92" rx="8.5" ry="11" fill="#3A2233"/>
+    <ellipse cx="117" cy="92" rx="8.5" ry="11" fill="#3A2233"/>
+    <circle cx="80" cy="88" r="3.2" fill="#fff"/>
+    <circle cx="114" cy="88" r="3.2" fill="#fff"/>
+    <circle cx="86" cy="96" r="1.5" fill="#fff" opacity=".85"/>
+    <circle cx="120" cy="96" r="1.5" fill="#fff" opacity=".85"/>
+    <path d="M95 105 h10 l-5 5.5 z" fill="#E05C86"/>
+    <path d="M100 110.5 q-5 6 -11 3 M100 110.5 q5 6 11 3" fill="none" stroke="#E05C86" stroke-width="2.4" stroke-linecap="round"/>
+      <g transform="rotate(-28 100 155)">
+        <rect x="86" y="108" width="28" height="66" rx="4" fill="#FFD24E" stroke="#C98A16" stroke-width="4"/>
+        <rect x="86" y="108" width="28" height="12" rx="4" fill="#FF9FC0" stroke="#C98A16" stroke-width="4"/>
+        <path d="M86 174 h28 l-14 22 z" fill="#FFE9C4" stroke="#C98A16" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M93 188 h14 l-7 8 z" fill="#3A2233"/>
+      </g>
+  </g>
+</svg>

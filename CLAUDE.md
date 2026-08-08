@@ -123,7 +123,7 @@ PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
 - 새 앱을 추가할 때: 기존 앱의 폴더 구조를 따르고, 루트 `index.html`의 **알맞은 묶음(`<section class="cat cat-*">`) 안**에 놀이 버튼을 넣고(맨 뒤에 붙이지 않는다), `README.md`에 항목을 추가하며, 규모가 있으면 `PLAN.md`로 설계를 남긴다.
 - **홈 묶음 6종**: 📚 배우기 · ✏️ 그리기와 쓰기 · 🔷 모양 만들기 · 🌈 색 맞추기 · 🔁 순서와 규칙 · 👀 찾기와 짝맞추기.
   묶음 토끼를 누르면 그 묶음만 펼쳐진다(한 번에 하나, 처음엔 맨 위 묶음만 펼침).
-  머리표 토끼는 `assets/cat-*.png` (생성기 `tools/make-category-icons.mjs` — 앱 아이콘 생성기와 별개 파일이다.
+  머리표 토끼는 `assets/cat-*.svg` (생성기 `tools/make-category-icons.mjs` — 앱 아이콘 생성기와 별개 파일이다.
   `tools/make-mascot-icons.mjs`는 최상위 await로 즉시 실행되는 스크립트라 import하면 앱 아이콘이 전부 다시 써진다).
   묶음 아이콘은 **소품을 크게** 잡는다 — 6마리만 구분하면 되므로 60px에서도 알아볼 수 있어야 한다.
 - **홈 놀이 버튼 마크업**: `<a class="app-card" href="./<앱>/"><span class="app-name"><span class="ge">이모지</span><span class="gn">이름</span></span></a>`.
