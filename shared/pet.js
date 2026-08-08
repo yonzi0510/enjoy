@@ -145,8 +145,46 @@ window.Pet = (() => {
     { l: 30, b: 27, w: 14 }, { l: 56, b: 27, w: 14 },
   ];
 
-  const NAME_CHIPS = ['별이', '콩이', '솜사탕', '복덩이', '반짝이', '초코'];
+  // ✏️ 이름 바꾸기 판에 띄우는 추천 이름 (기본 이름과 합쳐 6개까지 보여 준다)
+  const NAME_IDEAS = ['별이', '콩이', '솜사탕', '복덩이', '반짝이', '초코'];
   const PRAISES = ['냠냠! 맛있다!', '고마워!', '냠냠, 힘이 나요!', '우와, 잘 먹을게!'];
+
+  /* ─────────── 돌보기 그림 (직접 그린 인라인 SVG) ─────────── */
+  // 💩 응가 — 웃는 얼굴을 달아 "무섭지 않은 할 일"로 보이게 한다
+  const POOP_SVG = '<svg viewBox="0 0 40 36" aria-hidden="true">' +
+    '<ellipse cx="20" cy="33" rx="15" ry="3" fill="#8A6430" opacity=".18"/>' +
+    '<path d="M20 5 Q26.5 5 26.8 10.5 Q27 12.6 24.6 13 L15.4 13 Q13 12.6 13.2 10.5 Q13.5 5 20 5 Z" fill="#B9803F"/>' +
+    '<path d="M13.6 13 Q29 12.4 30.6 19 Q31 21.2 28.4 21.6 L11.6 21.6 Q9 21.2 9.4 19 Q10 14.4 13.6 13 Z" fill="#A66F35"/>' +
+    '<path d="M9 21.6 Q32.6 20.8 34.8 28.4 Q35.3 31 31.8 31.3 L8.2 31.3 Q4.7 31 5.2 28.4 Q5.9 23 9 21.6 Z" fill="#8E5C2C"/>' +
+    '<circle cx="15" cy="26.4" r="2.6" fill="#FFF"/><circle cx="25" cy="26.4" r="2.6" fill="#FFF"/>' +
+    '<circle cx="15.4" cy="26.8" r="1.3" fill="#4A3A2A"/><circle cx="25.4" cy="26.8" r="1.3" fill="#4A3A2A"/>' +
+    '<path d="M17.4 29.4 Q20 31.4 22.6 29.4" fill="none" stroke="#4A3A2A" stroke-width="1.4" stroke-linecap="round"/>' +
+    '</svg>';
+  // 🍵 약(따뜻한 차) — 아플 때만 방 오른쪽 아래에 뜬다
+  const MED_SVG = '<svg viewBox="0 0 44 42" aria-hidden="true">' +
+    '<path d="M11 6 Q14 9.5 11 13" fill="none" stroke="#9CC4A8" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M19 4 Q22 8 19 12" fill="none" stroke="#9CC4A8" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M27 6 Q30 9.5 27 13" fill="none" stroke="#9CC4A8" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M32 20 q7 0.5 6.6 5 -0.4 4.5 -7 4.3" fill="none" stroke="#7FA98A" stroke-width="2.6" stroke-linecap="round"/>' +
+    '<path d="M6.5 17.5 h26 v7.5 a13 13 0 0 1 -26 0 z" fill="#F3FAF4" stroke="#7FA98A" stroke-width="2.6" stroke-linejoin="round"/>' +
+    '<ellipse cx="19.5" cy="17.8" rx="12.4" ry="3.4" fill="#BFE0A2" stroke="#7FA98A" stroke-width="2"/>' +
+    '<ellipse cx="19.5" cy="37" rx="16.5" ry="3.6" fill="#E4F2E7" stroke="#7FA98A" stroke-width="2.2"/>' +
+    '</svg>';
+  // 하트 칸 (찬 칸 / 빈 칸) — 삐뚤빼뚤 손그림 결
+  const HEART_FULL = '<svg viewBox="0 0 24 22" aria-hidden="true">' +
+    '<path d="M12 20.2 C4.2 14.6 2.1 10.4 3.9 6.9 C5.8 3.2 10.4 3.6 12 7 C13.8 3.5 18.4 3.4 20.2 7.1 C21.9 10.7 19.6 14.8 12 20.2 Z" ' +
+    'fill="#FF7BA9" stroke="#D9557F" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  const HEART_EMPTY = '<svg viewBox="0 0 24 22" aria-hidden="true">' +
+    '<path d="M12 20.2 C4.2 14.6 2.1 10.4 3.9 6.9 C5.8 3.2 10.4 3.6 12 7 C13.8 3.5 18.4 3.4 20.2 7.1 C21.9 10.7 19.6 14.8 12 20.2 Z" ' +
+    'fill="#F1EAF5" stroke="#CDBBD9" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+
+  /* 💩 응가 자리 — 방 바닥에 겹치지 않게 미리 정한 6곳 (l 왼쪽%, b 바닥%).
+   * 꾸미기 자리(.ps-f1~f4)와 도감 친구 자리(MINI_SPOTS)의 한가운데를 피해 두었다 —
+   * 응가가 위에 떠 있어도 그 단추들을 삼키지 않는다. */
+  const POOP_SPOTS = [
+    { l: 28, b: 1 }, { l: 59, b: 1 }, { l: 20, b: 21 },
+    { l: 66, b: 21 }, { l: 44, b: 1 }, { l: 44, b: 21 },
+  ];
 
   /* ─────────── 저장 (+ 예전 형식 마이그레이션) ─────────── */
   function load() {
