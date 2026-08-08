@@ -61,13 +61,20 @@
     if (!window.speechSynthesis) return;
     try {
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'ko-KR';
-      u.rate = 0.95 * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
-      u.pitch = 1.1;
-      const v = window.VoiceSettings && VoiceSettings.koVoice();
-      if (v) u.voice = v;
-      speechSynthesis.speak(u);
+      const VS = window.VoiceSettings;
+      // 부드럽게 — 다듬기·호흡·첫 글자 잘림 방지는 shared/voice-settings.js 가 맡는다
+      const chunks = VS ? VS.parts(text) : [text];
+      const v = VS && VS.koVoice();
+      setTimeout(() => {
+        chunks.forEach(p => {
+          const u = new SpeechSynthesisUtterance(p);
+          u.lang = 'ko-KR';
+          u.rate = 0.92 * (VS ? VS.rateFactor() : 1);
+          u.pitch = VS ? VS.pitchOf(1.1) : 1;
+          if (v) u.voice = v;
+          speechSynthesis.speak(u);
+        });
+      }, VS ? VS.startDelay() : 0);
     } catch (e) {}
   }
 

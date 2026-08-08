@@ -380,14 +380,22 @@ window.Pet = (() => {
     if (!window.speechSynthesis) return;
     try {
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'ko-KR';
-      u.rate = 0.95 * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
-      u.pitch = 1.2;
-      const v = (window.VoiceSettings && VoiceSettings.koVoice()) ||
+      const VS = window.VoiceSettings;
+      // 부드럽게 — 이모지를 빼고, 감탄사 뒤에 숨을 두고, 긴 말은 두 마디로 (shared/voice-settings.js)
+      const chunks = VS ? VS.parts(text) : [text];
+      const v = (VS && VS.koVoice()) ||
         speechSynthesis.getVoices().find(x => x.lang && x.lang.replace('_', '-').toLowerCase().indexOf('ko') === 0);
-      if (v) u.voice = v;
-      speechSynthesis.speak(u);
+      // 끊자마자 speak 하면 크롬에서 첫 글자가 잘린다 — 아주 잠깐 두고 시작한다
+      setTimeout(() => {
+        chunks.forEach(p => {
+          const u = new SpeechSynthesisUtterance(p);
+          u.lang = 'ko-KR';
+          u.rate = 0.92 * (VS ? VS.rateFactor() : 1);
+          u.pitch = VS ? VS.pitchOf(1.2) : 1;
+          if (v) u.voice = v;
+          speechSynthesis.speak(u);
+        });
+      }, VS ? VS.startDelay() : 0);
     } catch (e) {}
   }
 

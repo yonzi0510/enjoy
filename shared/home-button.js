@@ -82,10 +82,12 @@ a.vs-btn[href="../"], .home-head a[href="../"]{ display:none !important }
     let spoke = 0;
     try {
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance('놀이터로 갈까요?');
-      u.lang = 'ko-KR'; u.pitch = 1.15;
-      u.rate = window.VoiceSettings ? VoiceSettings.rateFactor() : 1;
-      if (window.VoiceSettings) { const v = VoiceSettings.koVoice(); if (v) u.voice = v; }
+      const VS = window.VoiceSettings;
+      const u = new SpeechSynthesisUtterance(VS ? VS.say('놀이터로 갈까요?') : '놀이터로 갈까요?');
+      u.lang = 'ko-KR';
+      u.pitch = VS ? VS.pitchOf(1.15) : 1;   // 높낮이는 1.0 이 제 소리다
+      u.rate = 0.92 * (VS ? VS.rateFactor() : 1);
+      if (VS) { const v = VS.koVoice(); if (v) u.voice = v; }
       speechSynthesis.speak(u);
       spoke = 1;
     } catch (err) {}

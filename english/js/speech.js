@@ -47,28 +47,34 @@ window.Speech = (() => {
     speechSynthesis.cancel();
     pickVoices();
     let i = 0;
+    const startWait = window.VoiceSettings ? VoiceSettings.startDelay() : 0;
     function next() {
       if (i >= items.length) { if (onDone) onDone(); return; }
       const it = items[i++];
       try {
-        const u = new SpeechSynthesisUtterance(it.text);
+        const VS = window.VoiceSettings;
+        // 한국어 안내만 다듬는다 — 영어 낱말은 발음이 달라지면 안 되니 손대지 않는다
+        const ko = it.lang !== 'en';
+        const u = new SpeechSynthesisUtterance(ko && VS ? VS.say(it.text) : it.text);
         if (it.lang === 'en') {
           u.lang = 'en-US';
           if (enVoice) u.voice = enVoice;
           u.rate = it.rate || 0.85;
+          u.pitch = 1.1;                                   // 영어는 예전 그대로
         } else {
           u.lang = 'ko-KR';
-          const sel = (window.VoiceSettings && VoiceSettings.koVoice()) || koVoice;
+          const sel = (VS && VS.koVoice()) || koVoice;
           if (sel) u.voice = sel;
-          u.rate = (it.rate || 0.95) * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
+          u.rate = (it.rate || 0.92) * (VS ? VS.rateFactor() : 1); // 0.95 → 0.92, 조금 더 느긋하게
+          u.pitch = VS ? VS.pitchOf(1.1) : 1.1;            // 높낮이는 1.0 쪽이 제 소리
         }
-        u.pitch = 1.1;
         u.onend = next;
         u.onerror = next;
         speechSynthesis.speak(u);
       } catch (e) { next(); }
     }
-    next();
+    // cancel() 직후 바로 speak() 하면 크롬에서 첫 글자가 잘린다 — 아주 잠깐 두고 시작
+    if (startWait) setTimeout(next, startWait); else next();
   }
 
   /* ─────────── STT ───────────
@@ -192,7 +198,11 @@ window.Speech = (() => {
     startListen,
     stopListen,
     speakSeq,
-    speakKo(text, onDone) { speakSeq([{ lang: 'ko', text }], onDone); },
+    // 한국어 안내는 긴 말이면 두 마디로 나눠 읽는다 — 그 사이가 자연스러운 쉼이 된다
+    speakKo(text, onDone) {
+      const VS = window.VoiceSettings;
+      speakSeq(VS ? VS.parts(text).map(t => ({ lang: 'ko', text: t })) : [{ lang: 'ko', text }], onDone);
+    },
     speakEn(text, rate, onDone) { speakSeq([{ lang: 'en', text, rate }], onDone); },
     stopSpeak() { if (window.speechSynthesis) speechSynthesis.cancel(); },
     // 효과음

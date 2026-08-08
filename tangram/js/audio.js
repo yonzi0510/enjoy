@@ -46,23 +46,37 @@ window.Audio2 = (() => {
 
   function stop() { if (window.speechSynthesis) speechSynthesis.cancel(); }
 
+  // 긴 말은 두 마디로 나눠 차례로 읽는다 — 그 사이가 자연스러운 쉼이 된다
+  let seqId = 0; // 새 발화가 시작되면 앞선 마디는 이어 읽지 않는다
   function speak(text, onDone) {
     if (!window.speechSynthesis) { if (onDone) setTimeout(onDone, 200); return; }
+    const VS = window.VoiceSettings;
+    const parts = VS ? VS.parts(text) : [text];   // 이모지를 빼고 감탄사 뒤에 숨을 넣어 나눈다
+    const my = ++seqId;
     try {
       speechSynthesis.cancel();
       pickVoice();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'ko-KR';
-      const sel = (window.VoiceSettings && VoiceSettings.koVoice()) || koVoice;
-      if (sel) u.voice = sel;
-      u.rate = 0.92 * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
-      u.pitch = 1.12;
-      let advanced = false;
-      const step = () => { if (!advanced) { advanced = true; clearTimeout(wd); if (onDone) onDone(); } };
-      const wd = setTimeout(step, 1000 + text.length * 450);
-      u.onend = step;
-      u.onerror = step;
-      speechSynthesis.speak(u);
+      let i = 0;
+      function next() {
+        // 새 발화가 끼어들었으면 멈추되, 기다리던 쪽이 막히지 않게 onDone은 그대로 부른다(예전과 같음)
+        if (my !== seqId || i >= parts.length) { if (onDone) onDone(); return; }
+        const txt = parts[i++];
+        const u = new SpeechSynthesisUtterance(txt);
+        u.lang = 'ko-KR';
+        const sel = (VS && VS.koVoice()) || koVoice;
+        if (sel) u.voice = sel;
+        u.rate = 0.92 * (VS ? VS.rateFactor() : 1);
+        u.pitch = VS ? VS.pitchOf(1.12) : 1.12; // 높낮이는 1.0 쪽이 제 소리
+        let advanced = false;
+        const step = () => { if (!advanced) { advanced = true; clearTimeout(wd); next(); } };
+        const wd = setTimeout(step, 1000 + txt.length * 450);
+        u.onend = step;
+        u.onerror = step;
+        speechSynthesis.speak(u);
+      }
+      // cancel() 직후 바로 speak() 하면 크롬에서 첫 글자가 잘린다 — 아주 잠깐 두고 시작
+      const wait = VS ? VS.startDelay() : 0;
+      if (wait) setTimeout(next, wait); else next();
     } catch (e) { if (onDone) onDone(); }
   }
 

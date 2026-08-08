@@ -58,13 +58,25 @@ window.Sound = (() => {
       if (muted || !window.speechSynthesis) return;
       try {
         speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'ko-KR';
-        u.rate = 0.9 * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
-        u.pitch = 1.15;
-        const v = (window.VoiceSettings && VoiceSettings.koVoice()) || pickVoice();
-        if (v) u.voice = v;
-        speechSynthesis.speak(u);
+        const VS = window.VoiceSettings;
+        // 긴 말은 마디로 나눠 읽는다 — 마디 사이의 틈이 곧 숨이 된다 (다 빠져 버리면 원래 글로)
+        const ps = VS ? VS.parts(text) : null;
+        const list = (ps && ps.length && ps[0]) ? ps : [String(text)];
+        const go = () => {
+          if (muted) return;
+          list.forEach(p => {
+            const u = new SpeechSynthesisUtterance(p);
+            u.lang = 'ko-KR';
+            u.rate = 0.9 * (VS ? VS.rateFactor() : 1);
+            u.pitch = VS ? VS.pitchOf(1.15) : 1.15;   // 높낮이는 1.0 이 제 소리라 되돌린다
+            const v = (VS && VS.koVoice()) || pickVoice();
+            if (v) u.voice = v;
+            speechSynthesis.speak(u);
+          });
+        };
+        // 크롬은 cancel() 직후 speak() 하면 첫 글자를 삼킨다 — 아주 잠깐 두고 시작한다
+        if (VS) setTimeout(go, VS.startDelay());
+        else go();
       } catch (e) {}
     },
     speakPraise() { this.speak(praises[Math.floor(Math.random() * praises.length)]); },

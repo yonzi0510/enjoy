@@ -62,26 +62,40 @@ window.Audio2 = (() => {
 
   function stop() { if (window.speechSynthesis) speechSynthesis.cancel(); }
 
+  /* 통짜 문장을 두 마디로 나눠 차례로 읽는다 — 마디 사이가 자연스러운 쉼이 된다.
+   * 이모지를 빼고 감탄사 뒤에 숨을 넣는 다듬기는 공용 VoiceSettings 가 맡는다. */
+  let seqId = 0; // 새 발화가 시작되면 이전 onDone 무효화
   function speak(text, onDone) {
+    const my = ++seqId;
     if (!window.speechSynthesis) { if (onDone) setTimeout(onDone, 200); return; }
     speechSynthesis.cancel();
     pickVoice();
-    try {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'ko-KR';
-      const sel = (window.VoiceSettings && VoiceSettings.koVoice()) || koVoice;
-      if (sel) u.voice = sel;
-      u.rate = 0.95 * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
-      u.pitch = 1.1;
-      if (onDone) {
+    const VS = window.VoiceSettings || null;
+    const items = VS ? VS.parts(text) : [text];
+    let i = 0;
+    function next() {
+      if (my !== seqId) return;
+      if (i >= items.length) { if (onDone) onDone(); return; }
+      const t = items[i++];
+      try {
+        const u = new SpeechSynthesisUtterance(t);
+        u.lang = 'ko-KR';
+        const sel = (VS && VS.koVoice()) || koVoice;
+        if (sel) u.voice = sel;
+        u.rate = 0.92 * (VS ? VS.rateFactor() : 1);   // 0.95 는 조금 서둘러 들려 0.92 로 낮춤
+        u.pitch = VS ? VS.pitchOf(1.1) : 1.1;         // 높낮이를 1.0 쪽으로 — 얇고 딱딱한 소리를 줄인다
+        // 음성 엔진이 없거나 멈춰도 흐름이 끊기지 않게 워치독으로 강제 진행
         let advanced = false;
-        const step = () => { if (!advanced) { advanced = true; clearTimeout(wd); onDone(); } };
-        const wd = setTimeout(step, 1000 + text.length * 450);
+        const step = () => { if (!advanced) { advanced = true; clearTimeout(wd); next(); } };
+        const wd = setTimeout(step, 1000 + String(t).length * 450);
         u.onend = step;
         u.onerror = step;
-      }
-      speechSynthesis.speak(u);
-    } catch (e) { if (onDone) onDone(); }
+        speechSynthesis.speak(u);
+      } catch (e) { next(); }
+    }
+    // 첫 발화만 아주 잠깐 미룬다 — cancel() 직후 바로 speak() 하면 첫 글자가 잘린다
+    const delay = VS ? VS.startDelay() : 0;
+    if (delay) setTimeout(next, delay); else next();
   }
 
   return { sfx, speak, stop };
