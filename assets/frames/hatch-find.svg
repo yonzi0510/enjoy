@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <filter id="cr" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="9" result="w"/>
+      <feDisplacementMap in="SourceGraphic" in2="w" scale="3.4" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" seed="16" result="g"/>
+      <feColorMatrix in="g" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.6 .68" result="grain"/>
+      <feComposite in="grain" in2="d" operator="in" result="gin"/>
+      <feBlend in="d" in2="gin" mode="multiply"/>
+    </filter></defs>
+  <g filter="url(#cr)" fill="none" stroke="#E8453C" stroke-linecap="round">
+    <path d="M-22 128 L16.0 -12" stroke-width="-0.4" opacity="0.27"/>
+    <path d="M-5.5 128 L28.5 -12" stroke-width="1.4" opacity="0.13"/>
+    <path d="M-3 128 L41.0 -12" stroke-width="3.2" opacity="0.34"/>
+    <path d="M19 128 L73.0 -12" stroke-width="5.0" opacity="0.55"/>
+    <path d="M24 128 L74.0 -12" stroke-width="6.8" opacity="0.41"/>
+    <path d="M27 128 L73.0 -12" stroke-width="4.1" opacity="0.62"/>
+    <path d="M48.5 128 L104.5 -12" stroke-width="5.9" opacity="0.48"/>
+    <path d="M53 128 L105.0 -12" stroke-width="3.2" opacity="0.34"/>
+    <path d="M73 128 L121.0 -12" stroke-width="5.0" opacity="0.55"/>
+    <path d="M78 128 L122.0 -12" stroke-width="6.8" opacity="0.41"/>
+    <path d="M83 128 L137.0 -12" stroke-width="4.1" opacity="0.62"/>
+    <path d="M102 128 L152.0 -12" stroke-width="5.9" opacity="0.48"/>
+    <path d="M116 128 L162.0 -12" stroke-width="3.2" opacity="0.34"/>
+    <path d="M117 128 L173.0 -12" stroke-width="5.0" opacity="0.55"/>
+    <path d="M134.5 128 L186.5 -12" stroke-width="6.8" opacity="0.41"/>
+    <path d="M136 128 L184.0 -12" stroke-width="4.1" opacity="0.62"/>
+  </g>
+</svg>

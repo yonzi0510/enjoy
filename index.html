@@ -43,7 +43,7 @@ body {
    좁은 화면에서는 자리를 다투므로 큰 것 몇 개만 남긴다. */
 .doodles {
   position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
-  opacity: .62;               /* 배경 그림답게 물러나 있게 — 내용과 다투면 안 된다 */
+  opacity: .95;               /* 참고 그림처럼 또렷하게 — 구석 장식이 아니라 구성의 일부 */
 }
 .doodles img { position: absolute; display: block; }
 /* 위쪽 낙서는 제목 줄을 피해 '더 위·더 바깥'에 둔다 */
@@ -56,12 +56,16 @@ body {
 .dd-tree    { bottom: -6px; left: -10px; width: clamp(50px, 8.5vw, 108px); }
 .dd-flower  { bottom: 0;   left: 9vw;   width: clamp(26px, 4vw, 54px); }
 .dd-dolphin { bottom: 2px; right: -10px; width: clamp(54px, 9vw, 118px); }
-.dd-grass   { bottom: -6px; left: 0; width: 100%; height: auto; }
+/* 풀은 얇은 띠로 — 높으면 부모님 링크를 덮는다 */
+.dd-grass   { bottom: -4px; left: 0; width: 100%;
+              height: clamp(26px, 6vh, 52px); object-fit: cover; object-position: bottom; }
 /* 내용은 낙서 위에 */
 .wrap { position: relative; z-index: 1; }
 /* 세로 화면에서만 제목 좌우를 비워 무지개·해를 피한다 */
 @media (orientation: portrait) {
   h1 { padding: 0 clamp(30px, 9.5vw, 72px); word-break: keep-all; }
+  /* 아래쪽 낙서(풀·나무)가 부모님 링크를 가리지 않게 자리를 비운다 */
+  .wrap { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
 }
 /* 세로가 짧은 화면(폰 가로·패드 가로)은 내용이 꽉 차서 아래쪽 낙서가 낄 자리가 없다 */
 @media (orientation: landscape) {
@@ -117,21 +121,29 @@ h1 {
   position: relative;
   isolation: isolate;
   width: 100%;
-  /* 네 귀퉁이 반경을 다르게 — 자로 그린 게 아니라 손으로 그린 상자처럼 */
-  border-radius: 24px 19px 25px 20px;
-  border: 3px solid var(--ink);
+  /* 테두리는 CSS 선이 아니라 '크레용으로 그린 SVG'를 상자 크기로 늘려 쓴다.
+     CSS border 로는 아무리 굵게 줘도 자로 그은 티가 난다.
+     늘어나도 획이 굵어지지 않게 vector-effect="non-scaling-stroke" 를 쓴다. */
+  border-radius: 12px;
   background: var(--cat-tint);
-  box-shadow: 4px 5px 0 rgba(90,70,50,.18); /* 크레용 자국 같은 단단한 그림자 */
+  color: var(--cat-crayon);   /* 테두리 SVG 가 currentColor 로 받아 쓴다 */
   animation: card-in .35s ease-out backwards;
 }
-/* 칠한 면에 종이결을 얹어 크레용이 결에 걸린 자국을 낸다 */
+/* 늘어나는 크레용 테두리 — 상자·버튼이 공유한다 */
+.fr {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  overflow: visible;
+  filter: url(#crayon);
+  pointer-events: none;
+}
+/* 상자 안쪽을 크레용으로 슥슥 칠한 결 — 밋밋한 단색이 아니라 '칠한 면'이 되게 */
 .cat::before {
   content: '';
   position: absolute; inset: 0;
-  border-radius: inherit;
-  background: url("./assets/paper.svg") repeat;
-  background-size: 180px 180px;
-  opacity: .55;
+  background: var(--cat-hatch) repeat;
+  background-size: 128px 128px;
+  opacity: .10;
   mix-blend-mode: multiply;
   pointer-events: none;
   z-index: -1;
@@ -190,12 +202,18 @@ h1 {
 }
 .cat.open .cat-body { grid-template-rows: 1fr; }
 /* 묶음별 크레용 원색 — 토끼 뒤 동그라미(assets/cat-*.svg)와 같은 색을 쓴다 */
-.cat-learn { --cat-crayon: #F2B705; --cat-tint: #FFFAEC; } /* 노랑 */
-.cat-draw  { --cat-crayon: #2E7BC4; --cat-tint: #EEF5FC; } /* 파랑 */
-.cat-shape { --cat-crayon: #4CA64C; --cat-tint: #F0F8F0; } /* 초록 */
-.cat-color { --cat-crayon: #9B59B6; --cat-tint: #F7F1FA; } /* 보라 */
-.cat-order { --cat-crayon: #FF8C42; --cat-tint: #FFF4EC; } /* 주황 */
-.cat-find  { --cat-crayon: #E8453C; --cat-tint: #FDEFEE; } /* 빨강 */
+.cat-learn { --cat-crayon: #F2B705; --cat-tint: #FFF8E4;
+  --cat-frame: url("./assets/frames/frame-learn.svg"); --cat-hatch: url("./assets/frames/hatch-learn.svg"); }
+.cat-draw  { --cat-crayon: #2E7BC4; --cat-tint: #EAF3FB;
+  --cat-frame: url("./assets/frames/frame-draw.svg");  --cat-hatch: url("./assets/frames/hatch-draw.svg"); }
+.cat-shape { --cat-crayon: #4CA64C; --cat-tint: #EDF7EC;
+  --cat-frame: url("./assets/frames/frame-shape.svg"); --cat-hatch: url("./assets/frames/hatch-shape.svg"); }
+.cat-color { --cat-crayon: #9B59B6; --cat-tint: #F4EDF8;
+  --cat-frame: url("./assets/frames/frame-color.svg"); --cat-hatch: url("./assets/frames/hatch-color.svg"); }
+.cat-order { --cat-crayon: #FF8C42; --cat-tint: #FFF1E6;
+  --cat-frame: url("./assets/frames/frame-order.svg"); --cat-hatch: url("./assets/frames/hatch-order.svg"); }
+.cat-find  { --cat-crayon: #E8453C; --cat-tint: #FDEBEA;
+  --cat-frame: url("./assets/frames/frame-find.svg");  --cat-hatch: url("./assets/frames/hatch-find.svg"); }
 /* 놀이 버튼 — 상자 안에 격자로 깔린다.
    overflow:hidden 은 접힘 애니메이션(0fr↔1fr)에서 내용이 삐져나오지 않게 하는 것 */
 .cat-cards {
@@ -212,11 +230,10 @@ h1 {
   gap: clamp(5px, 1.2vmin, 9px);
   min-height: 48px; /* 5세 터치 영역 하한 */
   padding: clamp(8px, 1.7vmin, 12px) clamp(8px, 1.6vmin, 12px);
-  /* 손으로 그린 듯 네 귀퉁이를 다르게 */
-  border-radius: 13px 10px 14px 11px;
-  border: 2.5px solid var(--ink);
-  background: #fff;
-  box-shadow: 2px 3px 0 rgba(58,46,38,.14);
+  position: relative;
+  border-radius: 9px;
+  background: #FFFDF7;
+  color: #5A4632;             /* 테두리 SVG 색 */
   text-decoration: none;
   transition: transform .12s, box-shadow .12s;
 }
@@ -236,16 +253,11 @@ h1 {
 .apps .cat:nth-child(4) { animation-delay: .23s; }
 .apps .cat:nth-child(5) { animation-delay: .29s; }
 .apps .cat:nth-child(n+6) { animation-delay: .35s; }
-.app-card:active {
-  /* 그림자가 줄며 종이가 눌리는 느낌 */
-  transform: translate(2px, 3px);
-  box-shadow: 0 0 0 rgba(58,46,38,.14);
-}
+.app-card:active { transform: translate(2px, 3px); }
 .app-card[hidden] { display: none; } /* hidden 속성이 위 display:flex에 밀리지 않게 */
 .app-name { display: contents; } /* koName()이 읽는 래퍼 — 배치는 .ge/.gn 이 맡는다 */
 /* 잠긴 버튼(일본어 — 한글 카드 10장을 모으면 열림) */
 .app-card.locked {
-  position: relative;
   opacity: .75;
   border-color: #A79C90;   /* 연필을 옅게 — 아직 못 여는 놀이 */
   background: #F7F4EC;
@@ -363,6 +375,24 @@ h1 {
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="crayon" x="-12%" y="-12%" width="124%" height="124%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="5" result="w"/>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="2.1" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" seed="12" result="g"/>
+    <feColorMatrix in="g" type="matrix"
+      values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.6 .68" result="gr"/>
+    <feComposite in="gr" in2="d" operator="in" result="gi"/>
+    <feBlend in="d" in2="gi" mode="multiply"/>
+  </filter>
+  <!-- 두 번 겹쳐 그은 둥근 사각형 — 한 번에 못 그은 손맛 -->
+  <symbol id="crayon-frame" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="4" width="92" height="92" rx="9" stroke-width="5.5" vector-effect="non-scaling-stroke"/>
+      <rect x="4.7" y="3.4" width="90.8" height="93" rx="10" stroke-width="3" opacity=".6" vector-effect="non-scaling-stroke"/>
+    </g>
+  </symbol>
+</defs></svg>
 <div class="doodles" aria-hidden="true">
   <img class="dd-rainbow" src="./assets/doodle-rainbow.svg" alt="">
   <img class="dd-sun"     src="./assets/doodle-sun.svg" alt="">
@@ -380,86 +410,92 @@ h1 {
 <div class="profiles" id="profile-picker"><!-- 스크립트가 은아·서하 버튼 생성 --></div>
 <div class="apps">
   <section class="cat cat-learn open">
+    <svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg>
     <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="true">
       <img class="cat-rabbit" src="./assets/cat-learn.svg" alt="">
       <span class="cat-name">📚 배우기</span>
       <span class="cat-chev" aria-hidden="true">▾</span>
     </button></h2>
     <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./hangul/"><span class="app-name"><img class="ge gi" src="./assets/icons/hangul.svg" alt=""><span class="gn">한글 놀이터</span></span></a>
-    <a class="app-card" href="./english/"><span class="app-name"><img class="ge gi" src="./assets/icons/english.svg" alt=""><span class="gn">영어 놀이터</span></span></a>
-    <a class="app-card" href="./japanese/"><span class="app-name"><img class="ge gi" src="./assets/icons/japanese.svg" alt=""><span class="gn">일본어 놀이터</span></span></a>
-    <a class="app-card" href="./math/"><span class="app-name"><img class="ge gi" src="./assets/icons/math.svg" alt=""><span class="gn">산수 놀이터</span></span></a>
-    <a class="app-card" href="./market/"><span class="app-name"><img class="ge gi" src="./assets/icons/market.svg" alt=""><span class="gn">시장 놀이터</span></span></a>
-    <a class="app-card" href="./pixel/"><span class="app-name"><img class="ge gi" src="./assets/icons/pixel.svg" alt=""><span class="gn">픽셀 놀이터</span></span></a>
-    <a class="app-card" href="./practika/" id="card-practika" hidden><span class="app-name"><span class="ge">🎙️</span><span class="gn">프랙티카 놀이터</span></span></a>
+    <a class="app-card" href="./hangul/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><img class="ge gi" src="./assets/icons/hangul.svg" alt=""><span class="gn">한글 놀이터</span></span></a>
+    <a class="app-card" href="./english/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><img class="ge gi" src="./assets/icons/english.svg" alt=""><span class="gn">영어 놀이터</span></span></a>
+    <a class="app-card" href="./japanese/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><img class="ge gi" src="./assets/icons/japanese.svg" alt=""><span class="gn">일본어 놀이터</span></span></a>
+    <a class="app-card" href="./math/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><img class="ge gi" src="./assets/icons/math.svg" alt=""><span class="gn">산수 놀이터</span></span></a>
+    <a class="app-card" href="./market/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><img class="ge gi" src="./assets/icons/market.svg" alt=""><span class="gn">시장 놀이터</span></span></a>
+    <a class="app-card" href="./pixel/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><img class="ge gi" src="./assets/icons/pixel.svg" alt=""><span class="gn">픽셀 놀이터</span></span></a>
+    <a class="app-card" href="./practika/" id="card-practika" hidden><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🎙️</span><span class="gn">프랙티카 놀이터</span></span></a>
     </div></div>
   </section>
   <section class="cat cat-draw">
+    <svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg>
     <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-draw.svg" alt="">
       <span class="cat-name">✏️ 그리기와 쓰기</span>
       <span class="cat-chev" aria-hidden="true">▾</span>
     </button></h2>
     <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./write/"><span class="app-name"><span class="ge">✍️</span><span class="gn">글씨 놀이터</span></span></a>
-    <a class="app-card" href="./lines/"><span class="app-name"><span class="ge">✏️</span><span class="gn">선 따라 그리기</span></span></a>
-    <a class="app-card" href="./coloring/"><span class="app-name"><span class="ge">🎨</span><span class="gn">색칠공부</span></span></a>
+    <a class="app-card" href="./write/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">✍️</span><span class="gn">글씨 놀이터</span></span></a>
+    <a class="app-card" href="./lines/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">✏️</span><span class="gn">선 따라 그리기</span></span></a>
+    <a class="app-card" href="./coloring/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🎨</span><span class="gn">색칠공부</span></span></a>
     </div></div>
   </section>
   <section class="cat cat-shape">
+    <svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg>
     <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-shape.svg" alt="">
       <span class="cat-name">🔷 모양 만들기</span>
       <span class="cat-chev" aria-hidden="true">▾</span>
     </button></h2>
     <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./shape/"><span class="app-name"><span class="ge">🔷</span><span class="gn">도형 놀이터</span></span></a>
-    <a class="app-card" href="./tangram/"><span class="app-name"><span class="ge">🌈</span><span class="gn">무지개 탱그램</span></span></a>
-    <a class="app-card" href="./geoboard/"><span class="app-name"><span class="ge">📌</span><span class="gn">지오보드</span></span></a>
-    <a class="app-card" href="./cups/"><span class="app-name"><span class="ge">🥤</span><span class="gn">컵 쌓기</span></span></a>
+    <a class="app-card" href="./shape/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🔷</span><span class="gn">도형 놀이터</span></span></a>
+    <a class="app-card" href="./tangram/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🌈</span><span class="gn">무지개 탱그램</span></span></a>
+    <a class="app-card" href="./geoboard/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">📌</span><span class="gn">지오보드</span></span></a>
+    <a class="app-card" href="./cups/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🥤</span><span class="gn">컵 쌓기</span></span></a>
     </div></div>
   </section>
   <section class="cat cat-color">
+    <svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg>
     <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-color.svg" alt="">
       <span class="cat-name">🌈 색 맞추기</span>
       <span class="cat-chev" aria-hidden="true">▾</span>
     </button></h2>
     <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./lab/"><span class="app-name"><span class="ge">🧪</span><span class="gn">색깔 실험실</span></span></a>
-    <a class="app-card" href="./beads/"><span class="app-name"><span class="ge">🔵</span><span class="gn">구슬 보드</span></span></a>
-    <a class="app-card" href="./rings/"><span class="app-name"><span class="ge">💍</span><span class="gn">손가락 고무줄</span></span></a>
-    <a class="app-card" href="./tubes/"><span class="app-name"><span class="ge">⚗️</span><span class="gn">시험관 구슬</span></span></a>
-    <a class="app-card" href="./slide/"><span class="app-name"><span class="ge">🔴</span><span class="gn">네 색 슬라이드</span></span></a>
+    <a class="app-card" href="./lab/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🧪</span><span class="gn">색깔 실험실</span></span></a>
+    <a class="app-card" href="./beads/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🔵</span><span class="gn">구슬 보드</span></span></a>
+    <a class="app-card" href="./rings/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">💍</span><span class="gn">손가락 고무줄</span></span></a>
+    <a class="app-card" href="./tubes/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">⚗️</span><span class="gn">시험관 구슬</span></span></a>
+    <a class="app-card" href="./slide/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🔴</span><span class="gn">네 색 슬라이드</span></span></a>
     </div></div>
   </section>
   <section class="cat cat-order">
+    <svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg>
     <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-order.svg" alt="">
       <span class="cat-name">🔁 순서와 규칙</span>
       <span class="cat-chev" aria-hidden="true">▾</span>
     </button></h2>
     <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./burger/"><span class="app-name"><span class="ge">🍔</span><span class="gn">햄버거 가게</span></span></a>
-    <a class="app-card" href="./kkochi/"><span class="app-name"><span class="ge">🍢</span><span class="gn">꼬치 가게</span></span></a>
-    <a class="app-card" href="./pattern/"><span class="app-name"><span class="ge">🔁</span><span class="gn">패턴 놀이터</span></span></a>
-    <a class="app-card" href="./connect/"><span class="app-name"><span class="ge">✏️</span><span class="gn">점 잇기</span></span></a>
+    <a class="app-card" href="./burger/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🍔</span><span class="gn">햄버거 가게</span></span></a>
+    <a class="app-card" href="./kkochi/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🍢</span><span class="gn">꼬치 가게</span></span></a>
+    <a class="app-card" href="./pattern/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🔁</span><span class="gn">패턴 놀이터</span></span></a>
+    <a class="app-card" href="./connect/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">✏️</span><span class="gn">점 잇기</span></span></a>
     </div></div>
   </section>
   <section class="cat cat-find">
+    <svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg>
     <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
       <img class="cat-rabbit" src="./assets/cat-find.svg" alt="">
       <span class="cat-name">👀 찾기와 짝맞추기</span>
       <span class="cat-chev" aria-hidden="true">▾</span>
     </button></h2>
     <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./play/"><span class="app-name"><span class="ge">🔍</span><span class="gn">찾기 놀이터</span></span></a>
-    <a class="app-card" href="./dice/"><span class="app-name"><span class="ge">🎲</span><span class="gn">동물 주사위</span></span></a>
-    <a class="app-card" href="./donut/"><span class="app-name"><span class="ge">🍩</span><span class="gn">도넛 짝맞추기</span></span></a>
-    <a class="app-card" href="./twist/"><span class="app-name"><span class="ge">🎡</span><span class="gn">돌림 블록</span></span></a>
-    <a class="app-card" href="./matrix/"><span class="app-name"><span class="ge">🧭</span><span class="gn">방향·색 놀이터</span></span></a>
-    <a class="app-card" href="./bag/"><span class="app-name"><span class="ge">💡</span><span class="gn">생각 놀이터</span></span></a>
+    <a class="app-card" href="./play/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🔍</span><span class="gn">찾기 놀이터</span></span></a>
+    <a class="app-card" href="./dice/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🎲</span><span class="gn">동물 주사위</span></span></a>
+    <a class="app-card" href="./donut/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🍩</span><span class="gn">도넛 짝맞추기</span></span></a>
+    <a class="app-card" href="./twist/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🎡</span><span class="gn">돌림 블록</span></span></a>
+    <a class="app-card" href="./matrix/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">🧭</span><span class="gn">방향·색 놀이터</span></span></a>
+    <a class="app-card" href="./bag/"><svg class="fr" aria-hidden="true"><use href="#crayon-frame"/></svg><span class="app-name"><span class="ge">💡</span><span class="gn">생각 놀이터</span></span></a>
     </div></div>
   </section>
 </div>

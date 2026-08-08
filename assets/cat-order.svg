@@ -14,35 +14,25 @@
     <circle cx="102.5" cy="102.5" r="80" fill="#FF8C42" opacity=".12"/>
   </g>
   <g transform="translate(2.5 0)" filter="url(#wob)">
-    <g>
-      <g transform="rotate(-14 84 62)">
-        <ellipse cx="84" cy="40" rx="15" ry="40" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-        <ellipse cx="84" cy="44" rx="7" ry="27" fill="#FF9BBB"/>
-      </g>
-      <g transform="rotate(14 116 62)">
-        <ellipse cx="116" cy="40" rx="15" ry="40" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-        <ellipse cx="116" cy="44" rx="7" ry="27" fill="#FF9BBB"/>
-      </g>
+    <g stroke="#5A4632" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <!-- 귀 -->
+      <path d="M78 66 Q70 24 82 16 Q94 24 90 66 Z" fill="#F9B8CE"/>
+      <path d="M122 66 Q130 24 118 16 Q106 24 110 66 Z" fill="#F9B8CE"/>
+      <path d="M81 58 Q77 34 83 27 Q89 34 87 58 Z" fill="#F08CAE" stroke="none"/>
+      <path d="M119 58 Q123 34 117 27 Q111 34 113 58 Z" fill="#F08CAE" stroke="none"/>
+      <!-- 몸 -->
+      <path d="M100 178 Q58 178 58 142 Q58 118 100 118 Q142 118 142 142 Q142 178 100 178 Z" fill="#F9B8CE"/>
+      <!-- 머리 -->
+      <circle cx="100" cy="92" r="44" fill="#F9B8CE"/>
+      <!-- 볼 -->
+      <ellipse cx="72" cy="102" rx="9" ry="6.5" fill="#F08CAE" stroke="none"/>
+      <ellipse cx="128" cy="102" rx="9" ry="6.5" fill="#F08CAE" stroke="none"/>
+      <!-- 눈·코·입: 점과 짧은 획으로만 (크레용으로 콕 찍은 느낌) -->
+      <circle cx="86" cy="88" r="4.6" fill="#5A4632" stroke="none"/>
+      <circle cx="114" cy="88" r="4.6" fill="#5A4632" stroke="none"/>
+      <path d="M96 103 h8 l-4 4 z" fill="#5A4632" stroke="none"/>
+      <path d="M100 107 q-6 6 -12 2 M100 107 q6 6 12 2" fill="none" stroke-width="3.4"/>
     </g>
-    <ellipse cx="82" cy="187" rx="15" ry="10" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="118" cy="187" rx="15" ry="10" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="82" cy="188" rx="6" ry="4" fill="#FF9BBB"/>
-    <ellipse cx="118" cy="188" rx="6" ry="4" fill="#FF9BBB"/>
-    <ellipse cx="100" cy="150" rx="46" ry="43" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="100" cy="158" rx="27" ry="30" fill="#FFFDF8"/>
-    <ellipse cx="66" cy="150" rx="12" ry="14" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="134" cy="150" rx="12" ry="14" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="100" cy="95" rx="50" ry="46" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="71" cy="103" rx="11" ry="8" fill="#FF9BBB" opacity=".6"/>
-    <ellipse cx="129" cy="103" rx="11" ry="8" fill="#FF9BBB" opacity=".6"/>
-    <ellipse cx="83" cy="92" rx="8.5" ry="11" fill="#3A2233"/>
-    <ellipse cx="117" cy="92" rx="8.5" ry="11" fill="#3A2233"/>
-    <circle cx="80" cy="88" r="3.2" fill="#fff"/>
-    <circle cx="114" cy="88" r="3.2" fill="#fff"/>
-    <circle cx="86" cy="96" r="1.5" fill="#fff" opacity=".85"/>
-    <circle cx="120" cy="96" r="1.5" fill="#fff" opacity=".85"/>
-    <path d="M95 105 h10 l-5 5.5 z" fill="#3A2E26"/>
-    <path d="M100 110.5 q-5 6 -11 3 M100 110.5 q5 6 11 3" fill="none" stroke="#3A2E26" stroke-width="2.4" stroke-linecap="round"/>
       <rect x="44" y="146" width="112" height="42" rx="10" fill="#FFFDF8" stroke="#3A2E26" stroke-width="4"/>
       <circle cx="66" cy="167" r="11" fill="#FF6F91"/>
       <path d="M100 155 l12 22 h-24 z" fill="#5BBDF0" stroke-linejoin="round"/>
