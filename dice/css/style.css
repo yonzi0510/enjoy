@@ -451,6 +451,35 @@ h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -
 .bigbtn.primary { background: #8BD79B; color: #22432C; }
 .reward-face .ic-reward { width: 100%; height: auto; aspect-ratio: 1; vertical-align: middle; }
 
+/* ── 주사위판이 화면 높이를 넘지 않게 ──────────────────────────────
+ * 주사위 알을 정사각으로 맞추고 나니, 가로 화면에서 판이 세로로 넘쳐
+ * 「굴리기」 단추가 화면 밖으로 밀려났다(패드 가로 -16px · 폰 가로 -31px).
+ * 판의 크기는 칸 너비만 보고 정해지므로 남은 **높이**로도 한 번 더 묶는다:
+ *   남은 높이 = 화면 높이 − (위아래 여백 + 윗줄 + 사이 간격 두 번 + 굴리기 단추)
+ *   판 너비 상한 = 남은 높이 × (가로 칸수 / 세로 칸수)
+ * 칸수 비율은 여백 몫만큼 조금 낮춰 잡아 여유를 둔다. */
+@media (orientation: landscape) {
+  .dice-col {
+    --grid-h: calc(100vh
+      - 2 * clamp(10px, 2.5vmin, 24px)   /* 화면 위아래 여백 */
+      - clamp(46px, 9vmin, 58px)         /* 윗줄(뒤로·제목·듣기) */
+      - clamp(10px, 2vmin, 18px)         /* 화면 세로 간격 */
+      - clamp(10px, 2vmin, 18px)         /* 판과 굴리기 단추 사이 */
+      - clamp(50px, 8vmin, 64px));       /* 굴리기 단추 */
+  }
+  @supports (height: 100dvh) {
+    .dice-col { --grid-h: calc(100dvh
+      - 2 * clamp(10px, 2.5vmin, 24px)
+      - clamp(46px, 9vmin, 58px)
+      - clamp(10px, 2vmin, 18px)
+      - clamp(10px, 2vmin, 18px)
+      - clamp(50px, 8vmin, 64px)); }
+  }
+  .dice-grid.n6 { max-width: min(100%, calc(var(--grid-h) * 1.45)); }  /* 3칸 × 2줄 */
+  .dice-grid.n8 { max-width: min(100%, calc(var(--grid-h) * 1.9)); }   /* 4칸 × 2줄 */
+  .dice-grid.n9 { max-width: min(100%, calc(var(--grid-h) * 0.98)); }  /* 3칸 × 3줄 */
+}
+
 @media (prefers-reduced-motion: reduce) {
   .find-card, .round-card, .die-btn { transform: none !important; }
 }

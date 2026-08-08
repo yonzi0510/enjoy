@@ -431,7 +431,7 @@ for (const [w, h, tag] of [[390, 844, '폰 390×844'], [1180, 820, '패드 1180�
   await check('도안 목록 첫 줄이 공용 붙박이에 안 가린다 (' + tag + ')', async () => {
     await page.setViewportSize({ width: w, height: h });
     await page.waitForTimeout(350);
-    await page.click('#btn-play-back');
+    if (await page.locator('#scr-play.on').count()) await page.click('#btn-play-back');
     await page.waitForSelector('#scr-list.on');
     const r = await page.evaluate(() => {
       const box = s => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom }; };

@@ -169,15 +169,21 @@
 <!-- 놀이(선 따라 그리기) -->
 <section class="screen" id="scr-play">
   <header class="bar">
-    <button type="button" class="back" id="btn-play-back">◀</button>
+    <button type="button" class="back" id="btn-play-back" aria-label="뒤로">
+      <svg class="ic" aria-hidden="true"><use href="#ln-back"/></svg>
+    </button>
     <h2 id="play-title">✏️ 선 따라 그리기</h2>
-    <button type="button" class="bigbtn small" id="btn-listen">🔊 듣기</button>
+    <button type="button" class="bigbtn small" id="btn-listen">
+      <svg class="ic" aria-hidden="true"><use href="#ln-sound"/></svg> 듣기
+    </button>
   </header>
   <div class="play-stage">
     <div class="board-wrap">
       <canvas id="play-canvas"></canvas>
     </div>
-    <button type="button" class="bigbtn" id="btn-clear">🧽 다시 그릴래</button>
+    <button type="button" class="bigbtn" id="btn-clear">
+      <svg class="ic" aria-hidden="true"><use href="#ln-eraser"/></svg> 다시 그릴래
+    </button>
   </div>
 </section>
 

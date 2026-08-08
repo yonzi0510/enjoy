@@ -49,7 +49,7 @@
     <div class="complete-title">참 잘했어요!</div>
     <div id="letters-stars" class="complete-stars"></div>
     <div class="complete-btns">
-      <button id="letters-done-home" class="big-btn btn-soft"><span class="di" data-di="house"></span></button>
+      <button id="letters-done-home" class="big-btn btn-soft"><span class="di" data-di="back"></span></button>
       <button id="letters-done-next" class="big-btn btn-primary">다음 단계 ▶</button>
     </div>
   </div>

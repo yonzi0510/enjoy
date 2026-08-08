@@ -1,0 +1,215 @@
+/* 돌림 블록 — 「낙서장」 층 (스타일시트 중 가장 마지막에 불러온다)
+ *
+ * 공용 shared/crayon.css(모눈 공책 바탕·얇은 손그림 윤곽)와
+ * shared/doodle-menu.css(첫 화면 흩뿌리기) 위에, 이 앱에만 필요한 것을 얹는다.
+ *   1) 첫 화면 단계 카드 — 자리·기울기·**크기 위계**(먼저 할 '쉬운 돌림 블록'이 가장 크다)
+ *      + 제목에서 첫 놀이로 내려꽂는 손그림 점선 화살표
+ *   2) 손그림 아이콘(js/icons.js) 자리 잡기 — 이모지 자리를 대신한다
+ *   3) 남아 있던 반질반질한 면(본보기 카드·블록 면·나무 막대·알약)을 종이와 연필선으로
+ *   4) 오른쪽 위 공용 집 단추·남은시간 쪽지와 이 앱 머리줄이 겹치지 않게 비켜 준다
+ *
+ * ⚠️ 절대 건드리지 않는 것 — **실린더 블록의 변형(transform)**
+ *   이 놀이는 블록을 톡톡 눌러 '돌려서' 맞춘다. 블록에 장식용 회전·확대를 주면
+ *   아이가 돌려 놓은 각도와 뒤섞여 무엇이 정답인지 알 수 없게 된다.
+ *   그래서 흩뿌리기·기울이기는 **고르는 칸(.menu-card, .round-card)** 에만 준다.
+ *   (#cyl-row / .cyl-btn / .cyl-face 의 rest 상태 transform 은 none — e2e 가 지킨다)
+ *   블록에 그려진 얼굴 이모지(동물·공룡·도형)도 그대로 둔다. 그게 놀잇감이다.
+ */
+
+/* ═══════════ 1. 첫 화면 — 낙서장 배치 + 크기 위계 + 시작 화살표 ═══════════
+ * 공용 doodle-menu.css 는 칸이 여덟 개까지 있는 앱을 기준으로 흩뿌린다.
+ * 돌림 블록은 단계가 셋뿐이라, 셋을 하나하나 잡아 "먼저 할 것이 가장 크게" 보이도록 다시 준다.
+ * (선택자를 `.menu > .menu-card:nth-child(n)` 로 더 구체적으로 써서 공용 값을 덮는다) */
+.menu {
+  align-items: flex-start;
+  max-width: 780px;
+  /* 화살표가 들어갈 자리를 첫 줄 위에 비워 둔다 (doodle-menu.css 의 padding !important 를 덮는다) */
+  padding-top: clamp(40px, 8vmin, 84px) !important;
+  row-gap: clamp(18px, 3.4vh, 40px) !important;
+}
+.menu-card { position: relative; }
+
+.menu > .menu-card:nth-child(1) {          /* 쉬운 돌림 블록 — 가장 먼저, 가장 크게 */
+  width: clamp(178px, 33vmin, 272px);
+  padding: clamp(16px, 3.4vmin, 26px);
+  transform: translate(-1%, 1%) rotate(-2.2deg);
+}
+.menu > .menu-card:nth-child(2) {          /* 보통 */
+  width: clamp(152px, 26.5vmin, 214px);
+  margin-top: clamp(6px, 1.6vmin, 18px);
+  transform: translate(1%, -1%) rotate(1.9deg);
+}
+.menu > .menu-card:nth-child(3) {          /* 어려운 — 아직 먼 이야기라 가장 작게 */
+  width: clamp(134px, 22.5vmin, 180px);
+  margin-top: clamp(12px, 3vmin, 34px);
+  transform: translate(-1%, 2%) rotate(2.8deg);
+}
+
+/* 카드 안 미리보기 블록도 카드 크기를 따라간다 */
+.menu > .menu-card:nth-child(1) .cyl-face.mini { width: clamp(64px, 14vmin, 100px); font-size: clamp(30px, 8vmin, 54px); }
+.menu > .menu-card:nth-child(2) .cyl-face.mini { width: clamp(52px, 10.5vmin, 78px); font-size: clamp(24px, 6vmin, 40px); }
+.menu > .menu-card:nth-child(3) .cyl-face.mini { width: clamp(44px, 8.6vmin, 64px); font-size: clamp(20px, 5vmin, 33px); }
+
+.menu > .menu-card:nth-child(1) .mc-name { font-size: clamp(21px, 4.4vmin, 31px); }
+.menu > .menu-card:nth-child(3) .mc-name { font-size: clamp(15px, 3vmin, 21px); }
+.menu > .menu-card:nth-child(3) .mc-desc { font-size: clamp(11px, 2.1vmin, 14px); }
+
+/* 첫 놀이만 종이가 살짝 노랗고 테두리가 한 겹 더 두껍다 — 크기 말고도 눈에 띄게 */
+.menu > .menu-card:nth-child(1) {
+  background: rgba(255, 250, 226, .88) !important;
+  border-width: 4px !important;
+}
+
+/* 한국어는 어절 단위로만 줄바꿈 — "돌림 블 록" 처럼 낱말이 쪼개지지 않게 */
+.mc-name, .mc-desc { word-break: keep-all; }
+
+/* 손그림 점선 화살표 — 첫 카드 안에 절대배치라, 화면이 어떻게 접히든 늘 그 카드를 가리킨다 */
+.first-arrow {
+  position: absolute;
+  left: 38%;
+  bottom: calc(100% - 4px);
+  width: clamp(86px, 18vmin, 150px);
+  height: calc(clamp(86px, 18vmin, 150px) / 2);
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* 폰 세로처럼 좁은 화면에서는 첫 칸을 한 줄 통째로 써서 더 크게 —
+   아래 줄에 나머지 둘이 나란히 붙어, 무엇부터 할지가 한눈에 보인다. */
+@media (max-width: 560px) {
+  .menu > .menu-card:nth-child(1) {
+    width: min(74%, 296px);
+    margin-bottom: clamp(4px, 1.4vh, 14px);
+  }
+  .menu > .menu-card:nth-child(1) .cyl-face.mini { width: clamp(66px, 19vmin, 92px); font-size: clamp(32px, 10vmin, 50px); }
+  .menu > .menu-card:nth-child(2) { width: min(44%, 190px); margin-top: 0; }
+  .menu > .menu-card:nth-child(3) { width: min(39%, 168px); margin-top: clamp(8px, 2vh, 20px); }
+}
+
+/* 퍼즐 목록 칸도 손으로 붙인 듯 살짝 삐뚤게 — 여기도 '고르는 칸'이라 안전하다 */
+.rounds-list > .round-card:nth-child(4n+1) { transform: rotate(-1.6deg); }
+.rounds-list > .round-card:nth-child(4n+2) { transform: rotate(1.3deg); }
+.rounds-list > .round-card:nth-child(4n+3) { transform: rotate(1.9deg); }
+.rounds-list > .round-card:nth-child(4n+4) { transform: rotate(-1.1deg); }
+.rounds-list > .round-card:active { transform: translate(2px, 3px) rotate(0) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu > .menu-card, .rounds-list > .round-card { transform: none !important; }
+}
+
+/* ═══════════ 2. 손그림 아이콘 자리 ═══════════
+ * js/icons.js 가 <span class="ic"> 안에 SVG 를 채운다. 이모지가 놓이던 자리를
+ * 그대로 물려받으므로 칸 크기를 다시 잡을 필요가 없다. */
+.ic { display: inline-block; width: 1.05em; height: 1.05em; line-height: 0; vertical-align: -.19em; flex: none; }
+.ic svg, .first-arrow { display: block; }
+.ic svg { width: 100%; height: 100%; }
+.ic-title { width: 1.18em; height: 1.18em; }
+
+/* 제목은 아이콘과 글씨를 나란히 — 연필로 쓴 글씨 색으로 */
+h1, .bar h2 {
+  display: flex; align-items: center; justify-content: center; gap: .26em;
+  color: var(--ink, #2E2A24);
+}
+.bar h2 { white-space: nowrap; }
+.find-cap { display: flex; align-items: center; justify-content: center; gap: .3em; color: var(--ink, #2E2A24); }
+.find-cap .ic { width: 1.25em; height: 1.25em; }
+
+/* 뒤로가기 — 화살표 하나가 단추를 꽉 채운다 */
+.back { display: flex; align-items: center; justify-content: center; }
+.back .ic { width: 58%; height: 58%; vertical-align: 0; }
+
+/* 목소리 단추 */
+.vs-btn { display: inline-flex; align-items: center; justify-content: center; }
+#btn-voice .ic { width: 62%; height: 62%; vertical-align: 0; }
+
+/* 듣기·다음 단추 */
+#btn-listen { display: inline-flex; align-items: center; gap: .3em; }
+#btn-listen .ic { width: 1.2em; height: 1.2em; }
+.bigbtn.primary { display: inline-flex; align-items: center; gap: .3em; }
+.bigbtn.primary .ic { width: 1em; height: 1em; }
+
+/* 별 개수 알약 · 단계 진행 알약 */
+.stat, .mc-prog { display: inline-flex; align-items: center; gap: .25em; }
+.stat .ic { width: 1.15em; height: 1.15em; }
+.mc-prog .ic { width: 1.05em; height: 1.05em; }
+
+/* 퍼즐 칸 배지 — 다 하면 별, 아직이면 돌림 블록 */
+.rd-badge { width: clamp(20px, 3.8vmin, 28px); height: clamp(20px, 3.8vmin, 28px); line-height: 0; }
+.rd-badge svg { width: 100%; height: 100%; display: block; }
+
+/* 맞은 블록 위 동그란 체크 — 이모지 자리를 그대로 쓴다 */
+.cyl-check { width: clamp(20px, 4.4vmin, 30px); height: clamp(20px, 4.4vmin, 30px); line-height: 0; }
+.cyl-check svg { width: 100%; height: 100%; display: block; }
+
+/* ═══════════ 3. 남은 광택 걷어내기 ═══════════ */
+
+/* 본보기 카드 — 종이 한 장 */
+.find-card {
+  background: rgba(255, 255, 255, .78) !important;
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 26px 20px 24px 22px;
+  box-shadow: none !important;
+}
+
+/* 블록의 그림 면 — 두툼한 단면과 그라데이션을 걷고 손으로 그은 네모만 남긴다.
+   ⚠️ 여기 오는 것은 '면의 재질'뿐이다. 안에 들어가는 얼굴 이모지도, 위치도 그대로. */
+.cyl-face {
+  background: #FFFDF6 !important;
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 26% 21% 27% 22%;
+  box-shadow: none !important;
+}
+.cyl-face.tiny { border-width: 2px; }
+.cyl-btn.match .cyl-face {
+  border-color: #4CA64C;
+  background: #F4FBF1 !important;
+  box-shadow: none !important;
+}
+
+/* 나무 막대 — 연필로 죽 그은 한 줄 */
+.cyl-row::before {
+  background: #FFFDF6 !important;
+  border: 3px solid rgba(46, 42, 36, .8);
+  box-shadow: none !important;
+}
+
+/* 알약·번호 — 흰 종이에 연필 테두리 */
+.page-count, .mc-prog {
+  background: #fff !important;
+  border: 2.5px solid rgba(46, 42, 36, .75);
+  border-radius: 999px;
+  color: var(--ink, #2E2A24) !important;
+}
+.rd-no {
+  background: #fff !important;
+  border: 2.5px solid rgba(46, 42, 36, .8);
+  color: var(--ink, #2E2A24) !important;
+  box-shadow: none !important;
+}
+.round-card.done .rd-no { background: #F6C453 !important; }
+
+/* 카드 글씨도 연필 색으로 */
+.mc-name { color: var(--ink, #2E2A24); }
+.mc-desc { color: #6B6154; }
+.reward-praise { color: var(--ink, #2E2A24); }
+
+/* 큰 단추 — 그라데이션 대신 단색 */
+.bigbtn { background: #fff !important; color: var(--ink, #2E2A24) !important; }
+.bigbtn.primary { background: #F6C453 !important; color: var(--ink, #2E2A24) !important; }
+
+/* ═══════════ 4. 오른쪽 위 자리 비켜 주기 ═══════════
+ * 오른쪽 위에는 공용 집 단추와 남은 시간 쪽지가 겹쳐 있다.
+ * shared/home-button.js 가 `.bar{padding-right:…!important}` 를 나중에 끼워 넣으므로
+ * 선택자를 한 단계 더 구체적으로(.screen > .bar) 써야 이긴다. */
+.screen > .bar { padding-right: clamp(150px, 15vw, 190px) !important; }
+
+/* 폰 세로는 그만큼 비우면 제목이 눌린다 —
+   대신 '듣기' 단추를 제목 아랫줄 가운데로 내려, 오른쪽 위와 아예 상관없게 만든다.
+   (::after 는 flex 줄바꿈용 빈 칸) */
+@media (max-width: 560px) {
+  .screen > .bar { flex-wrap: wrap; padding-right: clamp(96px, 24vw, 120px) !important; }
+  .screen > .bar::after { content: ""; flex-basis: 100%; height: 0; order: 2; }
+  #btn-listen { order: 3; margin: 6px auto 0; }
+  /* 제목이 두 줄로 접히며 남은시간 쪽지 밑으로 들어가지 않게 머리를 조금 내린다 */
+  #scr-home .home-head { padding-top: clamp(14px, 3vmin, 30px); }
+}

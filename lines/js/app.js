@@ -14,6 +14,13 @@ window.App = (() => {
   const ADH_THRESH = 0.55;   // 그은 잉크가 안내선 가까이 머문 비율 문턱
   const IDLE_MS = 15000;     // 이만큼 그리지 않고 머물면 살짝 다시 권한다
 
+  /* 손그림 아이콘 — index.html <defs> 의 <symbol> 을 가져다 쓴다.
+     화면 틀(별·연필·해·물결·소용돌이)만 손그림으로 바꾸고,
+     캔버스 위 캐릭터 얼굴(pz.char)은 놀잇감이라 이모지 그대로 둔다. */
+  const ic = (name, cls) =>
+    '<svg class="ic' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#' + name + '"/></svg>';
+  const STAGE_ICON = { 1: 'ln-sun', 2: 'ln-wave', 3: 'ln-swirl' };
+
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
   function showScreen(id) {
@@ -45,7 +52,8 @@ window.App = (() => {
   function renderHome() {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
-    menu.innerHTML = '';
+    // 첫 칸은 "여기부터" 를 가리키는 점선 화살표 — 단계 카드는 둘째부터다(css/doodle.css 가 그 자리를 잡는다)
+    menu.innerHTML = '<svg class="start-arrow" aria-hidden="true"><use href="#ln-arrow"/></svg>';
     D.STAGES.forEach(st => {
       const ids = D.puzzlesOf(st.id).map(x => x.id);
       const done = P.doneCount(ids);
@@ -55,9 +63,9 @@ window.App = (() => {
       b.className = 'menu-card ' + st.cls;
       b.innerHTML =
         '<span class="mc-icon">' + guideSVG(rep) + '</span>' +
-        '<span class="mc-name">' + st.icon + ' ' + st.name + '</span>' +
+        '<span class="mc-name">' + ic(STAGE_ICON[st.id]) + ' ' + st.name + '</span>' +
         '<span class="mc-desc">' + st.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? ic('ln-star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(st); });
       menu.appendChild(b);
     });
@@ -67,7 +75,7 @@ window.App = (() => {
   let curStage = null;
   function openList(st) {
     curStage = st;
-    $('list-title').textContent = st.icon + ' ' + st.name;
+    $('list-title').innerHTML = ic(STAGE_ICON[st.id], 'ic-title') + ' ' + st.name;
     const list = D.puzzlesOf(st.id);
     $('list-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('list');
@@ -81,7 +89,7 @@ window.App = (() => {
       b.innerHTML =
         '<span class="pz-no">' + (i + 1) + '</span>' +
         '<span class="pz-thumb">' + guideSVG(pz) + '</span>' +
-        '<span class="pz-badge">' + (done ? '⭐' : '✏️') + '</span>';
+        '<span class="pz-badge">' + ic(done ? 'ln-star' : 'ln-pencil') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });

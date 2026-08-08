@@ -447,6 +447,12 @@ h1 .ic-title { width: 1.1em; height: 1.1em; vertical-align: -.16em; }
   stroke-dasharray: 15 9 9 12 19 9; /* 손으로 그은 듯 점 길이가 들쭉날쭉 */
 }
 
+/* ── 폰 세로: 오른쪽 위 공용 집 단추가 본보기 카드 모서리를 덮던 것을 내려 준다 ──
+   (머리줄 자체는 shared/home-button.js 가 오른쪽 여백을 잡아 줘서 겹치지 않는다) */
+@media (orientation: portrait) and (max-width: 700px) {
+  #scr-play .play-stage { padding-top: clamp(16px, 3.4vmin, 28px); }
+}
+
 /* ── 폰 가로(낮은 화면): 첫 화면은 한 줄에 담고 화살표 자리도 줄인다 ── */
 @media (orientation: landscape) and (max-height: 480px) {
   #scr-home .menu {

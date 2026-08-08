@@ -191,6 +191,14 @@ h1 { display: flex; }
 /* 제목이 낱말 가운데서 끊기지 않게 (한국어는 띄어쓰기에서만 끊는다) */
 .bar h2 { word-break: keep-all; }
 
+/* 폰에서는 퍼즐 목록이 화면 폭을 꽉 채워서, 오른쪽 위에 떠 있는 집 단추와
+   남은시간 쪽지가 첫 줄 카드의 패턴 미리보기를 가렸다(집 단추 60×6, 쪽지 58×23).
+   규칙을 읽는 놀이에서 미리보기가 가려지면 안 되니 첫 줄을 그 아래로 내린다.
+   패드는 목록이 가운데로 좁게 모여(max-width:720px) 겹치지 않아 그대로 둔다. */
+@media (max-width: 900px) {
+  .puzzle-list { padding-top: clamp(44px, 10vw, 64px); }
+}
+
 /* ─────────── 모션 줄이기 존중 ─────────── */
 @media (prefers-reduced-motion: reduce) {
   .menu > .menu-card,

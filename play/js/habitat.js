@@ -219,7 +219,7 @@
     <div id="habitat-stars" class="complete-stars"></div>
     <div id="habitat-done-count" class="habitat-done-count"></div>
     <div class="complete-btns">
-      <button id="habitat-done-home" class="big-btn btn-soft"><span class="di" data-di="house"></span></button>
+      <button id="habitat-done-home" class="big-btn btn-soft"><span class="di" data-di="back"></span></button>
       <button id="habitat-done-next" class="big-btn btn-primary">한 번 더 ▶</button>
     </div>
   </div>
