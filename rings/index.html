@@ -83,6 +83,13 @@
     </g>
   </symbol>
 
+  <!-- 다음으로 가는 화살표 -->
+  <symbol id="rg-next" viewBox="0 0 48 48">
+    <g filter="url(#rg-hand)" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 11 L33 24 L19 37"/><path d="M32 24 H13"/>
+    </g>
+  </symbol>
+
   <!-- 목소리 설정(말풍선) -->
   <symbol id="rg-talk" viewBox="0 0 48 48">
     <g filter="url(#rg-spill)" transform="translate(1.6,2.2)"><path d="M7 10 H41 V30 H21 L13 38 V30 H7 Z" fill="#F8C6D6"/></g>
@@ -197,7 +204,7 @@
     <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
     <div class="reward-btns">
       <button type="button" class="bigbtn" id="reward-close">그만할래</button>
-      <button type="button" class="bigbtn primary" id="reward-next">다음 ▶</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 <svg class="ic" aria-hidden="true"><use href="#rg-next"/></svg></button>
     </div>
   </div>
 </div>

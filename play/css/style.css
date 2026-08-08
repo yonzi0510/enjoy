@@ -1497,10 +1497,44 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .level-btn:nth-child(2) { rotate:  .9deg; }
 .level-btn:nth-child(3) { rotate: -.7deg; }
 
+/* 스티커북·물감칸도 같은 종이 재질로 (스티커 그림 자체는 그대로 둔다) */
+.sticker-slot {
+  background: rgba(255, 255, 255, .7);
+  border: 3px solid rgba(46, 42, 36, .8);
+  border-radius: 24px 19px 26px 20px;
+  box-shadow: none;
+}
+.sticker-slot:nth-child(3n+1) { rotate: -1.2deg; }
+.sticker-slot:nth-child(3n+2) { rotate:  1deg; }
+.sticker-slot:nth-child(3n+3) { rotate: -.5deg; }
+.palette-item {
+  background: rgba(255, 255, 255, .8);
+  border: 3px solid rgba(46, 42, 36, .78);
+  border-radius: 19px 15px 20px 16px;
+  box-shadow: none;
+}
+.palette-item:active { transform: translate(2px, 3px) scale(.96); box-shadow: none; }
+.sticker-board { box-shadow: none; border: 3px solid rgba(46, 42, 36, .8); }
+
+/* 좁은 폰: 스티커 놀이·스티커북 머리글은 단추를 한 줄에 두고
+   제목을 그 아래 한 줄로 내린다 (오른쪽 위 집 단추 자리 때문에 두 줄로 깨지던 것) */
+@media (max-width: 520px) {
+  #screen-stickerplay .home-header, #screen-stickers .home-header {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  #screen-stickerplay .app-title, #screen-stickers .app-title {
+    order: 9;
+    width: 100%;
+    text-align: center;
+    font-size: clamp(19px, 4vmin, 28px);
+  }
+}
+
 /* 모션 줄이기 설정 존중 — 기울기·흩뿌림까지 모두 편다 */
 @media (prefers-reduced-motion: reduce) {
   .theme-grid .theme-card, .letters-banner, .mode-banner,
-  .stickerplay-cta, .game-title, .level-btn {
+  .stickerplay-cta, .game-title, .level-btn, .sticker-slot {
     rotate: 0deg !important;
     scale: 1 !important;
     translate: 0 0 !important;

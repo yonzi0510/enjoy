@@ -48,8 +48,10 @@ window.App = (() => {
   }
 
   // 단계 아이콘용 작은 주사위 (대표 라운드의 찾을 동물로)
+  // 단계마다 다른 라운드를 대표로 삼는다 — 세 칸이 같은 동물이면 무엇이 다른지 안 보인다
   function miniDie(level) {
-    const round = D.roundsOf(level)[0];
+    const list = D.roundsOf(level);
+    const round = list[(level - 1) % list.length];
     const aid = round.find[0];
     return '<span class="die mini">' + D.ANIMALS[aid].draw('mn' + level + aid) + '</span>';
   }

@@ -92,7 +92,7 @@ window.App = (() => {
       selected: null,
       locked: false,
     };
-    $('play-title').textContent = '🍩 ' + lv.name;
+    $('play-title').innerHTML = '<span class="ic">' + ico('donut') + '</span>' + lv.name;
     renderBoard();
     renderTray();
     showScreen('scr-play');

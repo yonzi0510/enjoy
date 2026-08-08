@@ -184,10 +184,15 @@ h1, .bar h2 {
  * 선택자를 한 단계 더 구체적으로(.screen > .bar) 써야 이긴다.
  * 폰 세로에서는 쪽지가 집 단추 '아래'로 내려오는데, 그 자리가 마침 머리줄 오른쪽 끝이라
  * 남은 개수 알약과 부딪힌다 — 그래서 알약을 왼쪽으로 더 물린다. */
-.screen > .bar { padding-right: clamp(96px, 9.4vw, 116px) !important; }
+/* 넓은 화면 — 쪽지가 집 단추 '왼쪽'에 나란히 선다.
+   집 단추 자리(공용 104px)만 비우면 남은 개수 알약이 쪽지 밑에 깔린다. */
+.screen > .bar { padding-right: clamp(158px, 15vw, 195px) !important; }
 #scr-home .home-head { padding-right: clamp(96px, 9.4vw, 116px) !important; }
 
 @media (max-width: 700px) {
-  /* 쪽지가 집 단추 아래(대략 y=78px)로 내려오는 구간 — 머리줄을 그만큼 왼쪽으로 비운다 */
-  .screen > .bar { padding-right: clamp(104px, 26vw, 130px) !important; }
+  /* 좁은 화면 — 쪽지가 집 단추 '아래'(대략 y 78~98px)로 내려온다.
+     머리줄은 집 단추만 피하면 되고, 대신 그 아래 퍼즐 목록 첫 줄이 쪽지에 깔리므로
+     목록을 쪽지 아래에서 시작하게 한다. */
+  .screen > .bar { padding-right: clamp(96px, 24vw, 116px) !important; }
+  .puzzle-list { padding-top: clamp(40px, 11vw, 52px); }
 }

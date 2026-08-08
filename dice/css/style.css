@@ -347,12 +347,16 @@ h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -
 .back .ic, .vs-btn .ic { width: 1.5em; height: 1.5em; vertical-align: middle; }
 .bigbtn .ic { width: 1.4em; height: 1.4em; }
 .mc-prog .ic { width: 1em; height: 1em; vertical-align: -.14em; }
-.die-check .ic { width: 1em; height: 1em; vertical-align: middle; }
+.die-check .ic { width: 1.5em; height: 1.5em; vertical-align: middle; } /* 찾았다 도장은 크게 */
 .rd-badge { line-height: 0; }
+.rd-badge .ic { width: 1.4em; height: 1.4em; }
+.die.tiny { width: clamp(44px, 9vmin, 76px); } /* 라운드 딱지의 찾을 동물도 알아볼 만큼 */
 .back { display: inline-flex; align-items: center; justify-content: center; }
 
 /* ── 첫 화면: 크기 위계 + 시작 화살표 ── */
 .menu { align-items: center; max-width: 1040px; }
+/* 첫 화면은 종이 한가운데에 놓는다. 넘칠 때는 safe 가 위쪽부터 보여 준다. */
+#scr-home { justify-content: safe center; }
 .start-arrow { /* 제목 밑에서 첫 놀이(쉬운 주사위)로 향하는 손그림 점선 화살표 */
   width: clamp(52px, 10vmin, 92px);
   aspect-ratio: 110 / 130;
@@ -370,6 +374,8 @@ h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -
 .c-l3 .mc-name { font-size: clamp(16px, 3.2vmin, 22px); }
 .c-l3 .mc-desc { font-size: clamp(11px, 2.1vmin, 15px); }
 .mc-prog { background: none; padding: 2px 4px; } /* 알약을 걷고 연필로 적어 둔 것처럼 */
+/* 좁은 칸에서 "…2마리 찾 / 기" 처럼 낱말 가운데가 끊기지 않게 */
+.mc-name, .mc-desc, .mc-prog { word-break: keep-all; }
 
 /* ── 주사위 알: 두툼한 단면·광택을 걷고 손으로 그은 네모만 ── */
 .die {

@@ -24,7 +24,9 @@
  * 공용 doodle-menu.css 는 칸 여덟 개를 기준으로 흩뿌린다. 여기는 단계가 셋뿐이라
  * 셋을 하나하나 잡아 "먼저 할 것이 가장 크게" 보이도록 다시 준다.
  * (선택자를 `.menu > .menu-card.c-sN` 로 더 구체적으로 써서 공용 값을 덮는다) */
-.menu { align-items: flex-start; }
+/* 넉넉한 화면에서는 화살표+카드 셋이 한 줄에 들어가야 한다 —
+   900px 로는 셋째 카드가 아랫줄로 밀려 화면 밖까지 내려간다. */
+.menu { align-items: flex-start; align-content: flex-start; max-width: min(1100px, 96vw); }
 
 .start-arrow {            /* 제목 밑에서 첫 놀이(반짝반짝 선)로 향하는 손그림 점선 화살표 */
   width: clamp(50px, 10vmin, 92px);
@@ -57,7 +59,8 @@
 .c-s2 .mc-icon { width: clamp(84px, 17vmin, 116px); }
 .c-s3 .mc-icon { width: clamp(70px, 14vmin, 96px); }
 .c-s1 .mc-name { font-size: clamp(20px, 4.2vmin, 30px); }
-.c-s3 .mc-name { font-size: clamp(15px, 3vmin, 21px); }
+.c-s2 .mc-name { font-size: clamp(16px, 3.2vmin, 23px); }
+.c-s3 .mc-name { font-size: clamp(14px, 2.6vmin, 19px); }   /* 놀이 이름은 한 줄로 */
 .c-s3 .mc-desc { font-size: clamp(11px, 2.1vmin, 14px); }
 
 /* 등장 모션 차례 — 첫 칸이 화살표라 카드는 둘째부터다 */
@@ -111,7 +114,7 @@ h1, .bar h2 {
 /* 공용 목소리·펫 단추는 폰에서 42px 이라 하한에 못 미친다 — 이 앱 안에서만 키운다 */
 .vs-btn, .pet-btn { width: clamp(46px, 8vmin, 54px) !important; height: clamp(46px, 8vmin, 54px) !important; }
 .bigbtn { min-height: 46px; }
-.mc-name { display: flex; align-items: center; justify-content: center; gap: .22em; color: #2E2A24; }
+.mc-name { display: flex; align-items: center; justify-content: center; gap: .22em; color: #2E2A24; white-space: nowrap; }
 .mc-desc { color: #6B6154; }
 .mc-prog, .stat { display: inline-flex; align-items: center; gap: .25em; }
 

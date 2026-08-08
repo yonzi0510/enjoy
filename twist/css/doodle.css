@@ -40,7 +40,7 @@
   transform: translate(1%, -1%) rotate(1.9deg);
 }
 .menu > .menu-card:nth-child(3) {          /* 어려운 — 아직 먼 이야기라 가장 작게 */
-  width: clamp(134px, 22.5vmin, 180px);
+  width: clamp(140px, 24vmin, 196px);
   margin-top: clamp(12px, 3vmin, 34px);
   transform: translate(-1%, 2%) rotate(2.8deg);
 }
@@ -50,8 +50,12 @@
 .menu > .menu-card:nth-child(2) .cyl-face.mini { width: clamp(52px, 10.5vmin, 78px); font-size: clamp(24px, 6vmin, 40px); }
 .menu > .menu-card:nth-child(3) .cyl-face.mini { width: clamp(44px, 8.6vmin, 64px); font-size: clamp(20px, 5vmin, 33px); }
 
-.menu > .menu-card:nth-child(1) .mc-name { font-size: clamp(21px, 4.4vmin, 31px); }
-.menu > .menu-card:nth-child(3) .mc-name { font-size: clamp(15px, 3vmin, 21px); }
+/* 놀이 이름은 한 줄로 — "어려운 돌림 / 블록" 처럼 접히면 위계가 흐려진다.
+   칸 폭에서 안쪽 여백을 뺀 자리에 들어가도록 단계마다 글자 크기를 따로 준다. */
+.mc-name { white-space: nowrap; }
+.menu > .menu-card:nth-child(1) .mc-name { font-size: clamp(20px, 4.2vmin, 30px); }
+.menu > .menu-card:nth-child(2) .mc-name { font-size: clamp(16px, 3.1vmin, 22px); }
+.menu > .menu-card:nth-child(3) .mc-name { font-size: clamp(14px, 2.6vmin, 18px); }
 .menu > .menu-card:nth-child(3) .mc-desc { font-size: clamp(11px, 2.1vmin, 14px); }
 
 /* 첫 놀이만 종이가 살짝 노랗고 테두리가 한 겹 더 두껍다 — 크기 말고도 눈에 띄게 */
@@ -114,8 +118,11 @@ h1, .bar h2 {
 .find-cap { display: flex; align-items: center; justify-content: center; gap: .3em; color: var(--ink, #2E2A24); }
 .find-cap .ic { width: 1.25em; height: 1.25em; }
 
-/* 뒤로가기 — 화살표 하나가 단추를 꽉 채운다 */
-.back { display: flex; align-items: center; justify-content: center; }
+/* 뒤로가기 — 화살표 하나가 단추를 꽉 채운다. 폰 세로에서도 44px 아래로 내려가지 않게 */
+.back {
+  display: flex; align-items: center; justify-content: center;
+  width: clamp(46px, 9vmin, 54px); height: clamp(46px, 9vmin, 54px);
+}
 .back .ic { width: 58%; height: 58%; vertical-align: 0; }
 
 /* 목소리 단추 — 폰 세로(vmin 390)에서도 손가락 하한 44px 을 지킨다 */
@@ -126,7 +133,7 @@ h1, .bar h2 {
 #btn-voice .ic { width: 62%; height: 62%; vertical-align: 0; }
 
 /* 듣기·다음 단추 */
-#btn-listen { display: inline-flex; align-items: center; gap: .3em; }
+#btn-listen { display: inline-flex; align-items: center; justify-content: center; gap: .3em; min-height: 46px; }
 #btn-listen .ic { width: 1.2em; height: 1.2em; }
 .bigbtn.primary { display: inline-flex; align-items: center; gap: .3em; }
 .bigbtn.primary .ic { width: 1em; height: 1em; }
