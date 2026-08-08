@@ -67,7 +67,8 @@
   `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`, `math-playground-v1`,
   `shape-playground-v1`·`market-playground-v1`·`lab-playground-v1`·`bag-playground-v1`·`coloring-playground-v1`·`burger-playground-v1`,
   `enjoy-voice-ko`·`enjoy-rate-factor`·`enjoy-timelimit-v1`·`enjoy-parent-v1`·`enjoy-profile`(공용),
-  `enjoy-pet-v1`(학습 펫 — `Profile.key()` 적용, 아이별로 각자 키움).
+  `enjoy-pet-v1`(학습 펫 — `Profile.key()` 적용, 아이별로 각자 키움),
+  `enjoy-recent-v1`(홈 "이어서 하기" — 최근 논 놀이 6개, `Profile.key()` 적용).
   (`chatgi-timelimit-v1`은 예전 play 전용 시간제한 키 — `shared/time-limit.js`가 이어받는다.)
 - **아이 프로필(은아·서하)**: 진행도 키는 `shared/profile.js`의 `Profile.key()`를 거친다 —
   은아는 원래 키 그대로(예전 진행도 보존), 서하는 `p2:` 접두어(예: `p2:hangul-playground-v1`).
@@ -155,3 +156,11 @@ PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
 - **한글 글꼴 파일은 못 쓴다**(2~6MB). 대신 **정해진 문구는 자모 획으로 그리면 된다** — 제목 2.6KB가 그 예다.
 - 고치면 반드시 `node tools/e2e-home.mjs`를 돌린다(정적 서버 필요). 네 화면 × 각 검사 항목을 전부 잰다.
 - 프랙티카는 배우기 안에 있으나 부모님이 켜야 보인다(`ParentSettings.get('showPractika')`, 기본 꺼짐).
+- **놀이 이름은 한 줄로.** 칸 수를 못 박지 말고 `repeat(auto-fill,minmax(min(100%,12.6em),1fr))` 로
+  글자 크기에 맞춰 칸을 나눈다. 칸 수를 3·4로 고정하면 반쪽 폭 묶음에서 이름이 두 줄로 넘어간다.
+- 맨 위 "이어서 하기" 줄은 최근 논 놀이 3개를 보여준다. 논 적이 없으면 나오지 않는다.
+
+**앱 아이콘**(`<앱>/icon-192.png`·`icon-512.png`)은 생성기가 두 갈래다 —
+옛 앱 13개는 `tools/make-mascot-icons.mjs`, 나머지는 `<앱>/tools/make-icon(s).mjs`.
+바탕색은 `node tools/recolor-app-icons.mjs` 가 홈 묶음 색으로 한꺼번에 맞춘 뒤 생성기를 다시 돌린다
+(48px 런처 크기에서 29개가 다 같은 분홍 토끼로 보이던 것을 색으로 가른다).

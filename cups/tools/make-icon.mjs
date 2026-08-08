@@ -71,7 +71,7 @@ const cupsProp = `
   ${cup(100, 133, 30, 'ic-b', '#5FB9F0', '#2E86D6', '#1F65A8')}`;
 
 function page(size) {
-  const [c0, c1] = ['#F6BCDD', '#FFE6F3'];
+  const [c0, c1] = ['#9CC799', '#B1D3AE'];
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   html,body{margin:0;padding:0}
   .box{width:${size}px;height:${size}px;

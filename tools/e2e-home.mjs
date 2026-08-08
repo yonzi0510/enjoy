@@ -88,10 +88,17 @@ for (const [label, width, height] of CASES) {
       const id = use && use.getAttribute('href').slice(1);
       return !id || !document.getElementById(id);
     }).map(a => a.dataset.id);
+    /* 이름이 두 줄로 넘어가면 안 된다 — 5세는 한 줄로 읽는다 */
+    const wrapped = [...document.querySelectorAll('.game:not([hidden])>span:not(.lock), .bar .name')]
+      .filter(el => {
+        const st = getComputedStyle(el);
+        const lh = parseFloat(st.lineHeight) || parseFloat(st.fontSize) * 1.4;
+        return el.getBoundingClientRect().height / lh > 1.5;
+      }).map(el => el.textContent.trim());
     const shown = games.filter(a => !a.hidden);
     const small = shown.filter(a => a.getBoundingClientRect().height < 44)
                        .map(a => a.dataset.id);
-    return { count: games.length, noIcon, small,
+    return { count: games.length, noIcon, small, wrapped,
              practikaHidden: !!document.querySelector('.game[data-id="practika"]')?.hidden };
   });
 
@@ -99,8 +106,40 @@ for (const [label, width, height] of CASES) {
   ok('모든 놀이에 아이콘이 있음', opened.noIcon.length === 0, opened.noIcon.join(', '));
   ok(`펼친 뒤에도 ${TOUCH_MIN}px 이상`, opened.small.length === 0, opened.small.join(', '));
   ok('프랙티카는 부모님이 켜야 보임 (기본 숨김)', opened.practikaHidden);
+  ok('이름이 두 줄로 안 넘어감', opened.wrapped.length === 0, opened.wrapped.join(', '));
 
   await page.close();
+}
+
+/* 이어서 하기 — 논 적이 없으면 안 보이고, 놀면 생기고, 아이별로 따로 기억한다 */
+console.log('\n[이어서 하기]');
+{
+  const ctx = await browser.newContext({ viewport: { width: 820, height: 1180 } });
+  const pg = await ctx.newPage();
+  const home = () => pg.goto(BASE, { waitUntil: 'networkidle' });
+
+  await home();
+  ok('처음에는 안 보임', !(await pg.isVisible('#recent')));
+
+  await pg.click('.game[data-id="market"]');
+  await pg.waitForURL('**/market/**', { timeout: 5000 });
+  await home();
+  ok('한 번 놀면 생김', await pg.isVisible('#recent'));
+  ok('논 놀이가 들어 있음',
+     (await pg.$$eval('#recent-games .game', es => es.map(e => e.dataset.id))).includes('market'));
+
+  await pg.click('.who button[data-id="seoha"]');
+  await pg.waitForTimeout(150);
+  ok('아이를 바꾸면 그 아이 것만 보임 (서하는 아직 빈칸)', !(await pg.isVisible('#recent')));
+
+  await pg.click('.who button[data-id="eunah"]');
+  await pg.waitForTimeout(150);
+  ok('되돌리면 은아 것이 그대로', await pg.isVisible('#recent'));
+
+  const saved = await pg.evaluate(() => [localStorage.getItem('enjoy-recent-v1'),
+                                         localStorage.getItem('p2:enjoy-recent-v1')]);
+  ok('저장 키를 아이별로 나눠 쓴다', !!saved[0] && !saved[1], JSON.stringify(saved));
+  await ctx.close();
 }
 
 /* 링크가 실제 폴더를 가리키는지 (화면 크기와 무관하므로 한 번만) */
