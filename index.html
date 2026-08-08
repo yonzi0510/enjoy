@@ -3,491 +3,442 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#FFFDF6">
+<meta name="theme-color" content="#fffaf0">
 <title>은아와 서하의 놀이터</title>
+
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="./shared/pet.css">
+
 <style>
-/* ── 디자인 시안 C "크레용 스케치북" — 홈 화면 적용 ──
-   스케치북 종이 위에 크레용으로 그린 느낌. 상자·버튼은 흰 종이에 연필심색(#3A2E26)
-   윤곽선을 두르고, 모서리 반경을 네 귀퉁이마다 다르게 줘 손으로 그린 티를 낸다.
-   묶음 구분은 크레용 원색(노랑·파랑·초록·보라·주황·빨강)이 맡는다.
-   그림자는 흐린 회색이 아니라 크레용 자국처럼 딱 떨어지는 오프셋 하나만 쓴다. */
-:root {
-  --paper: #FFFDF6;   /* 스케치북 종이 */
-  --ink:   #3A2E26;   /* 연필심 — 윤곽선과 글자 */
-  --ink-2: #7A6E60;   /* 옅은 연필 — 보조 글자 */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:#fffaf0}
+body{
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  color:#3e342e;
+  user-select:none;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html { height: 100%; }
-body {
-  /* height 고정 + 세로 중앙 정렬은 내용이 화면보다 길어지면 위아래가 잘리고
-     스크롤이 막힌다. min-height + .wrap의 margin:auto 로 스크롤 가능한 중앙 정렬. */
-  min-height: 100%;
-  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
-  /* 스케치북 종이 — 아주 옅은 줄노트 선 위에 크레용 자국 두 점 */
+.page{
+  width:min(914px,100%);
+  margin:0 auto;
+  padding:0 0 calc(26px + env(safe-area-inset-bottom));
+}
+/* 그림은 세로로 긴 비율(914:1536)이라, 화면 너비에만 맞추면 가로 화면에서
+   아래가 잘려 버튼 절반이 화면 밖으로 나간다. 그래서 화면 '높이'에도 맞춘다:
+   아래에 들어갈 찾기 막대(96px)와 부모님 링크(74px) 자리를 빼고 계산한다.
+   놀이 버튼 높이는 틀 너비의 12.26%라, 5세 터치 하한 44px 을 지키려면
+   틀이 최소 359px 이어야 한다. 그래서 366px 아래로는 줄이지 않는다
+   (그보다 짧은 화면에서는 스크롤이 생기는 편이 낫다). */
+.stage{
+  position:relative;
+  container-type:inline-size;   /* 위에 얹는 표시들이 화면이 아니라 '틀' 크기를 따르게 */
+  width:min(100%, max(366px, calc((100svh - 170px) * 0.5951)));
+  margin-inline:auto;
+  aspect-ratio:914 / 1536;
+  overflow:hidden;
+  background:#fffaf0;
+}
+.design{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+.hotspot{
+  position:absolute;
+  display:block;
+  border:0;
+  padding:0;
+  margin:0;
+  background:transparent;
+  cursor:pointer;
+  border-radius:24px;
+  text-decoration:none;
+  z-index:3;
+}
+.hotspot:focus-visible{
+  outline:4px dashed rgba(214,157,19,.9);
+  outline-offset:-5px;
+}
+
+/* invisible hit areas aligned to the approved artwork */
+.euna{left:21.4%;top:12.55%;width:31.8%;height:8.0%}
+.seoha{left:53.3%;top:12.55%;width:25.7%;height:8.0%}
+
+.hangul{left:7.8%;top:30.1%;width:41.6%;height:7.3%}
+.english{left:51.0%;top:30.1%;width:41.3%;height:7.3%}
+.japanese{left:7.8%;top:38.0%;width:41.6%;height:7.3%}
+.math{left:51.0%;top:38.0%;width:41.3%;height:7.3%}
+.market{left:7.8%;top:45.7%;width:41.6%;height:7.3%}
+.pixel{left:51.0%;top:45.7%;width:41.3%;height:7.3%}
+
+.draw-cat{left:4.5%;top:55.7%;width:91.0%;height:9.0%}
+.shape-cat{left:4.5%;top:65.5%;width:91.0%;height:8.8%}
+.color-cat{left:4.5%;top:75.0%;width:91.0%;height:8.8%}
+.order-cat{left:4.5%;top:84.3%;width:91.0%;height:9.2%}
+.find-cat{right:0;bottom:0;width:22%;height:9.5%}
+
+/* 찾기 막대 — 그림 속 다른 묶음 막대와 같은 모양으로 맞춘다 */
+.find-bar{
+  width:min(100%, max(366px, calc((100svh - 170px) * 0.5951)));
+  margin:10px auto 0;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:9px 14px;
+  border:4px solid #d8665f;
+  border-radius:34px 26px 36px 28px;
+  background:#fdeceb;
+  color:#3e342e;
+  font:inherit;
+  font-size:clamp(16px,3vw,23px);
+  font-weight:900;
+  letter-spacing:-.03em;
+  text-align:left;
+  cursor:pointer;
+  transform:rotate(.2deg);
+}
+.find-bar:active{transform:translate(2px,2px) rotate(0)}
+.find-rabbit{width:clamp(46px,9vw,66px);height:clamp(46px,9vw,66px);flex:none;border-radius:50%}
+.find-name{flex:1;word-break:keep-all}
+.find-chev{
+  width:clamp(34px,6vw,46px);height:clamp(34px,6vw,46px);
+  display:grid;place-items:center;flex:none;
+  border:4px solid #d8665f;border-radius:50%;
+  background:rgba(255,255,255,.5);color:#d8665f;
+  font-family:sans-serif;font-size:clamp(16px,3vw,22px);font-weight:900;
+}
+
+/* dynamic state overlays */
+.state-check{
+  position:absolute;
+  z-index:4;
+  color:#efaa24;
+  font-size:4.1cqw;
+  font-weight:1000;
+  line-height:1;
+  transform:rotate(-10deg);
+  pointer-events:none;
+}
+.state-check.euna-check{left:43.1%;top:15.35%}
+.state-check.seoha-check{left:73.8%;top:15.35%}
+
+.state-lock{
+  position:absolute;
+  z-index:4;
+  left:42.0%;
+  top:40.6%;
+  font-size:4cqw;
+  line-height:1;
+  pointer-events:none;
+}
+
+/* Secondary drawers: initial screen remains exactly the artwork. */
+.drawer-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  display:none;
+  place-items:center;
+  padding:18px;
+  background:rgba(59,48,40,.28);
+  backdrop-filter:blur(2px);
+}
+.drawer-backdrop.open{display:grid}
+.drawer{
+  width:min(680px,96vw);
+  max-height:min(78vh,760px);
+  overflow:auto;
+  padding:22px;
+  border:4px solid var(--accent,#4e9bd2);
+  border-radius:30px 23px 32px 25px;
   background:
-    radial-gradient(ellipse at 12% 6%,  rgba(242,183,5,.10), transparent 55%),
-    radial-gradient(ellipse at 90% 92%, rgba(46,123,196,.10), transparent 52%),
-    repeating-linear-gradient(180deg, transparent 0 39px, rgba(58,46,38,.055) 39px 40px),
-    var(--paper);
-  display: flex;
-  user-select: none;
+    repeating-linear-gradient(178deg,rgba(110,80,45,.025) 0 1px,transparent 1px 6px),
+    #fffaf0;
+  box-shadow:7px 8px 0 rgba(62,52,46,.14);
 }
-.wrap {
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(18px, 4vmin, 40px);
-  padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
-  width: 100%;
+.drawer-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:18px;
 }
-h1 {
-  font-size: clamp(28px, 6.5vmin, 52px);
-  font-weight: 900;
-  color: var(--ink); /* 연필로 쓴 제목 */
-  letter-spacing: -.01em;
-  text-align: center;
-  animation: card-in .35s ease-out backwards;
+.drawer-title{
+  flex:1;
+  margin:0;
+  font-size:clamp(26px,6vw,42px);
+  font-weight:1000;
+  letter-spacing:-.04em;
 }
-/* ── 놀이 묶음 6개 ──
-   순서 기준은 '만든 날짜'가 아니라 '놀이 성격'이다. 한 번 정한 자리는 고정해서
-   아이가 위치로 기억하게 하고, 새 놀이는 맨 뒤가 아니라 자기 묶음 안으로 들어간다.
-   글을 못 읽는 아이를 위해 머리표는 묶음마다 다른 '핑크 토끼'가 대신 알려준다. */
-.apps {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(18px, 3.4vmin, 34px);
-  width: 100%;
-  max-width: 1040px;
+.close{
+  width:48px;height:48px;
+  border:3px solid var(--accent,#4e9bd2);
+  border-radius:50%;
+  background:#fff;
+  color:#493e36;
+  font-size:24px;
+  font-weight:900;
 }
-/* 묶음 하나 = 상자 하나. 머리표(토끼)를 누르면 그 묶음만 펼쳐진다.
-   한 번에 하나만 열려 있어 여섯 묶음이 늘 한 화면에 들어온다. */
-.cat {
-  width: 100%;
-  /* 네 귀퉁이 반경을 다르게 — 자로 그린 게 아니라 손으로 그린 상자처럼 */
-  border-radius: 24px 19px 25px 20px;
-  border: 3px solid var(--ink);
-  background: var(--cat-tint);
-  box-shadow: 4px 5px 0 rgba(58,46,38,.16); /* 크레용 자국 같은 단단한 그림자 */
-  animation: card-in .35s ease-out backwards;
+.drawer-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
 }
-.cat-title { margin: 0; }
-.cat-head {
-  display: flex;
-  align-items: center;
-  gap: clamp(8px, 1.8vmin, 14px);
-  width: 100%;
-  padding: clamp(6px, 1.2vmin, 10px) clamp(12px, 2.4vmin, 20px) clamp(6px, 1.2vmin, 10px) clamp(6px, 1.2vmin, 10px);
-  border: 0;
-  border-radius: inherit;
-  background: none;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
+.drawer-card{
+  min-height:78px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  border:3px solid #50433a;
+  border-radius:18px 14px 20px 15px;
+  background:rgba(255,255,255,.78);
+  color:#3e342e;
+  text-decoration:none;
+  font-size:clamp(18px,4.3vw,28px);
+  font-weight:900;
+  box-shadow:3px 4px 0 rgba(62,52,46,.08);
 }
-.cat-head:focus-visible { outline: 3px solid var(--cat-crayon); outline-offset: -6px; }
-.cat-rabbit {
-  display: block;
-  flex: none;
-  width: clamp(52px, 10.5vmin, 78px);
-  height: clamp(52px, 10.5vmin, 78px);
-  border-radius: 50%;
+.drawer-card .ico{font-size:1.5em}
+.drawer-card.locked{opacity:.55}
+.parent-link{
+  display:block;
+  width:max-content;
+  margin:18px auto 0;
+  padding:10px 16px;
+  color:#776b62;
+  text-decoration:none;
+  font-weight:800;
+  border-bottom:2px dashed rgba(62,52,46,.3);
 }
-.cat-name {
-  flex: 1;
-  font-size: clamp(17px, 3.6vmin, 27px);
-  font-weight: 900;
-  color: var(--ink);
-  word-break: keep-all; /* '모양 만들/기'처럼 낱말 중간에서 꺾이지 않게 */
+.sr-only{
+  position:absolute!important;
+  width:1px!important;height:1px!important;
+  padding:0!important;margin:-1px!important;
+  overflow:hidden!important;clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;border:0!important;
 }
-/* 펼침 화살표 — 글을 못 읽는 아이에게 '누르면 열린다'를 알려주는 유일한 신호라
-   동그란 배지로 키워 눈에 띄게 한다 */
-.cat-chev {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: clamp(30px, 6vmin, 42px);
-  height: clamp(30px, 6vmin, 42px);
-  border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--cat-crayon);
-  font-size: clamp(15px, 3vmin, 21px);
-  line-height: 1;
-  color: var(--cat-crayon);
-  transition: transform .24s ease;
+@media(max-width:520px){
+  .drawer-grid{grid-template-columns:1fr}
 }
-.cat.open .cat-chev { transform: rotate(180deg); }
-/* 접힘/펼침 — grid 1fr 트릭으로 높이를 몰라도 부드럽게 여닫는다 */
-.cat-body {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows .26s ease;
-}
-.cat.open .cat-body { grid-template-rows: 1fr; }
-/* 묶음별 크레용 원색 — 토끼 뒤 동그라미(assets/cat-*.svg)와 같은 색을 쓴다 */
-.cat-learn { --cat-crayon: #F2B705; --cat-tint: #FFFAEC; } /* 노랑 */
-.cat-draw  { --cat-crayon: #2E7BC4; --cat-tint: #EEF5FC; } /* 파랑 */
-.cat-shape { --cat-crayon: #4CA64C; --cat-tint: #F0F8F0; } /* 초록 */
-.cat-color { --cat-crayon: #9B59B6; --cat-tint: #F7F1FA; } /* 보라 */
-.cat-order { --cat-crayon: #FF8C42; --cat-tint: #FFF4EC; } /* 주황 */
-.cat-find  { --cat-crayon: #E8453C; --cat-tint: #FDEFEE; } /* 빨강 */
-/* 놀이 버튼 — 상자 안에 격자로 깔린다.
-   overflow:hidden 은 접힘 애니메이션(0fr↔1fr)에서 내용이 삐져나오지 않게 하는 것 */
-.cat-cards {
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(clamp(128px, 40vw, 172px), 1fr));
-  gap: clamp(7px, 1.6vmin, 12px);
-  padding: 0 clamp(9px, 1.8vmin, 15px);
-}
-.cat.open .cat-cards { padding-bottom: clamp(10px, 2vmin, 16px); }
-.app-card {
-  display: flex;
-  align-items: center;
-  gap: clamp(5px, 1.2vmin, 9px);
-  min-height: 48px; /* 5세 터치 영역 하한 */
-  padding: clamp(8px, 1.7vmin, 12px) clamp(8px, 1.6vmin, 12px);
-  /* 손으로 그린 듯 네 귀퉁이를 다르게 */
-  border-radius: 13px 10px 14px 11px;
-  border: 2.5px solid var(--ink);
-  background: #fff;
-  box-shadow: 2px 3px 0 rgba(58,46,38,.14);
-  text-decoration: none;
-  transition: transform .12s, box-shadow .12s;
-}
-.ge { font-size: clamp(19px, 4vmin, 27px); line-height: 1; flex: none; }
-.gn {
-  font-size: clamp(11px, 2.5vmin, 15px);
-  font-weight: 800;
-  color: var(--ink);
-  line-height: 1.25;
-  word-break: keep-all;
-}
-/* 묶음 상자 자체는 스태거로 등장한다 (버튼은 접혀 있어 개별 지연이 의미 없다) */
-.apps .cat:nth-child(1) { animation-delay: .05s; }
-.apps .cat:nth-child(2) { animation-delay: .11s; }
-.apps .cat:nth-child(3) { animation-delay: .17s; }
-.apps .cat:nth-child(4) { animation-delay: .23s; }
-.apps .cat:nth-child(5) { animation-delay: .29s; }
-.apps .cat:nth-child(n+6) { animation-delay: .35s; }
-.app-card:active {
-  /* 그림자가 줄며 종이가 눌리는 느낌 */
-  transform: translate(2px, 3px);
-  box-shadow: 0 0 0 rgba(58,46,38,.14);
-}
-.app-card[hidden] { display: none; } /* hidden 속성이 위 display:flex에 밀리지 않게 */
-.app-name { display: contents; } /* koName()이 읽는 래퍼 — 배치는 .ge/.gn 이 맡는다 */
-/* 잠긴 버튼(일본어 — 한글 카드 10장을 모으면 열림) */
-.app-card.locked {
-  position: relative;
-  opacity: .75;
-  border-color: #A79C90;   /* 연필을 옅게 — 아직 못 여는 놀이 */
-  background: #F7F4EC;
-}
-.app-card.locked .ge { filter: grayscale(.9); }
-.lock-badge {
-  position: absolute;
-  top: 3px; right: 5px;
-  font-size: clamp(12px, 2.6vmin, 17px);
-}
-@keyframes card-in {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes card-nope {
-  0%, 100% { transform: translateX(0); }
-  25%, 75% { transform: translateX(-6px); }
-  50% { transform: translateX(6px); }
-}
-.app-card.nope { animation: card-nope .4s; }
-.parent-link {
-  font-size: clamp(12px, 2.6vmin, 16px);
-  font-weight: 700;
-  color: var(--ink-2);
-  text-decoration: none;
-  padding: 8px 14px;
-  border-radius: 999px;
-  animation: card-in .35s ease-out .45s backwards;
-}
-.parent-link:active { color: var(--ink); }
-/* 누가 놀 건지 고르기 (은아·서하) */
-.profiles {
-  display: flex;
-  gap: clamp(10px, 2.6vmin, 20px);
-  animation: card-in .35s ease-out backwards;
-}
-.profile-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 3px solid var(--ink);
-  cursor: pointer;
-  padding: clamp(8px, 2vmin, 14px) clamp(16px, 3.6vmin, 30px);
-  border-radius: 999px;
-  background: #fff;
-  font-family: inherit;
-  font-size: clamp(17px, 4.2vmin, 28px);
-  font-weight: 900;
-  color: var(--ink);
-  box-shadow: 3px 4px 0 rgba(58,46,38,.14);
-  transition: transform .12s, box-shadow .12s;
-}
-.profile-btn:active {
-  transform: translate(2px, 3px);
-  box-shadow: 0 0 0 rgba(58,46,38,.14);
-}
-.profile-btn .p-emoji { font-size: clamp(24px, 5.6vmin, 40px); }
-.profile-btn.sel {
-  background: #FFF9E6;
-  border-color: #F2B705;   /* 노랑 크레용으로 동그라미 친 느낌 */
-  box-shadow: 3px 4px 0 rgba(242,183,5,.35);
-}
-.profile-btn.sel::after { content: '✔'; color: #F2B705; font-size: .8em; }
-/* 모션 줄이기 설정 존중 */
-@media (prefers-reduced-motion: reduce) {
-  h1, .profiles, .parent-link, .app-card, .app-card.nope, .cat { animation: none; }
-  .app-card, .profile-btn { transition: none; }
-  .cat-body, .cat-chev { transition: none; }
-}
-/* ── 가로 모드 (태블릿 가로가 1차 기준 — DESIGN.md "가로모드 우선") ──
-   HTML은 그대로 두고 배치만 바꾼다. 세로모드는 위 기본 규칙 그대로.
-   카드 폭을 줄여 3~4열로 펼치고, 아이콘 크기는 화면 높이(vh) 기준으로 낮춰
-   한 화면에 카드가 최대한 들어오게 한다. */
-@media (orientation: landscape) {
-  .wrap { gap: clamp(12px, 2.2vh, 22px); }
-  .apps { gap: clamp(9px, 1.6vh, 16px); max-width: 1100px; }
-  /* 가로는 세로 공간이 귀하다 — 머리표를 낮추고 버튼을 한 줄에 더 많이 */
-  .cat-head { padding: 5px 16px 5px 5px; gap: 10px; }
-  .cat-rabbit { width: clamp(42px, 7.4vh, 62px); height: clamp(42px, 7.4vh, 62px); }
-  .cat-name { font-size: clamp(15px, 2.6vh, 22px); }
-  .cat-chev {
-    width: clamp(26px, 4.6vh, 38px);
-    height: clamp(26px, 4.6vh, 38px);
-    font-size: clamp(13px, 2.3vh, 18px);
-  }
-  .cat-cards {
-    grid-template-columns: repeat(auto-fill, minmax(clamp(120px, 15vw, 168px), 1fr));
-    gap: clamp(6px, 1vh, 11px);
-    padding: 0 clamp(8px, 1vw, 14px);
-  }
-  .app-card { min-height: 44px; padding: clamp(6px, 1.1vh, 10px) clamp(7px, .9vw, 11px); }
-}
-/* 넓은 가로(패드) — 프로필·제목·부모 링크를 한 줄에 모아 세로 공간을 아낀다.
-   재배치는 grid-template-areas로만 한다 (선례: shared/pet.css 끝부분).
-   1100px 미만에서는 제목이 두 줄로 꺾여 오히려 손해라 넓은 화면에서만 쓴다. */
-@media (orientation: landscape) and (min-width: 1100px) {
-  .wrap {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr; /* 좌 프로필 · 중앙 제목 · 우 부모 링크 */
-    grid-template-areas:
-      "profiles title link"
-      "apps     apps  apps";
-    align-items: center;
-    column-gap: 16px;
-    row-gap: clamp(14px, 2.6vh, 26px);
-    max-width: 1160px;
-  }
-  h1 { grid-area: title; white-space: nowrap; }
-  .profiles { grid-area: profiles; justify-self: start; gap: 12px; }
-  .parent-link { grid-area: link; justify-self: end; white-space: nowrap; }
-  .apps { grid-area: apps; justify-self: center; width: 100%; }
-  /* 옆 칸이 좁아도 이름이 세로로 꺾이지 않게 + 버튼을 홀쭉하게 (터치 높이는 유지) */
-  .profile-btn { white-space: nowrap; padding: clamp(6px, 1.4vh, 12px) 18px; }
+@media(prefers-reduced-motion:reduce){
+  *{scroll-behavior:auto!important}
 }
 </style>
 </head>
+
 <body>
-<div class="wrap">
-<h1>🌈 은아와 서하의 놀이터</h1>
-<div class="profiles" id="profile-picker"><!-- 스크립트가 은아·서하 버튼 생성 --></div>
-<div class="apps">
-  <section class="cat cat-learn open">
-    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="true">
-      <img class="cat-rabbit" src="./assets/cat-learn.svg" alt="">
-      <span class="cat-name">📚 배우기</span>
-      <span class="cat-chev" aria-hidden="true">▾</span>
-    </button></h2>
-    <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./hangul/"><span class="app-name"><span class="ge">🌟</span><span class="gn">한글 놀이터</span></span></a>
-    <a class="app-card" href="./english/"><span class="app-name"><span class="ge">🗣️</span><span class="gn">영어 놀이터</span></span></a>
-    <a class="app-card" href="./japanese/"><span class="app-name"><span class="ge">🌸</span><span class="gn">일본어 놀이터</span></span></a>
-    <a class="app-card" href="./math/"><span class="app-name"><span class="ge">🔢</span><span class="gn">산수 놀이터</span></span></a>
-    <a class="app-card" href="./market/"><span class="app-name"><span class="ge">🛒</span><span class="gn">시장 놀이터</span></span></a>
-    <a class="app-card" href="./pixel/"><span class="app-name"><span class="ge">🧩</span><span class="gn">픽셀 놀이터</span></span></a>
-    <a class="app-card" href="./practika/" id="card-practika" hidden><span class="app-name"><span class="ge">🎙️</span><span class="gn">프랙티카 놀이터</span></span></a>
-    </div></div>
-  </section>
-  <section class="cat cat-draw">
-    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
-      <img class="cat-rabbit" src="./assets/cat-draw.svg" alt="">
-      <span class="cat-name">✏️ 그리기와 쓰기</span>
-      <span class="cat-chev" aria-hidden="true">▾</span>
-    </button></h2>
-    <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./write/"><span class="app-name"><span class="ge">✍️</span><span class="gn">글씨 놀이터</span></span></a>
-    <a class="app-card" href="./lines/"><span class="app-name"><span class="ge">✏️</span><span class="gn">선 따라 그리기</span></span></a>
-    <a class="app-card" href="./coloring/"><span class="app-name"><span class="ge">🎨</span><span class="gn">색칠공부</span></span></a>
-    </div></div>
-  </section>
-  <section class="cat cat-shape">
-    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
-      <img class="cat-rabbit" src="./assets/cat-shape.svg" alt="">
-      <span class="cat-name">🔷 모양 만들기</span>
-      <span class="cat-chev" aria-hidden="true">▾</span>
-    </button></h2>
-    <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./shape/"><span class="app-name"><span class="ge">🔷</span><span class="gn">도형 놀이터</span></span></a>
-    <a class="app-card" href="./tangram/"><span class="app-name"><span class="ge">🌈</span><span class="gn">무지개 탱그램</span></span></a>
-    <a class="app-card" href="./geoboard/"><span class="app-name"><span class="ge">📌</span><span class="gn">지오보드</span></span></a>
-    <a class="app-card" href="./cups/"><span class="app-name"><span class="ge">🥤</span><span class="gn">컵 쌓기</span></span></a>
-    </div></div>
-  </section>
-  <section class="cat cat-color">
-    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
-      <img class="cat-rabbit" src="./assets/cat-color.svg" alt="">
-      <span class="cat-name">🌈 색 맞추기</span>
-      <span class="cat-chev" aria-hidden="true">▾</span>
-    </button></h2>
-    <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./lab/"><span class="app-name"><span class="ge">🧪</span><span class="gn">색깔 실험실</span></span></a>
-    <a class="app-card" href="./beads/"><span class="app-name"><span class="ge">🔵</span><span class="gn">구슬 보드</span></span></a>
-    <a class="app-card" href="./rings/"><span class="app-name"><span class="ge">💍</span><span class="gn">손가락 고무줄</span></span></a>
-    <a class="app-card" href="./tubes/"><span class="app-name"><span class="ge">⚗️</span><span class="gn">시험관 구슬</span></span></a>
-    <a class="app-card" href="./slide/"><span class="app-name"><span class="ge">🔴</span><span class="gn">네 색 슬라이드</span></span></a>
-    </div></div>
-  </section>
-  <section class="cat cat-order">
-    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
-      <img class="cat-rabbit" src="./assets/cat-order.svg" alt="">
-      <span class="cat-name">🔁 순서와 규칙</span>
-      <span class="cat-chev" aria-hidden="true">▾</span>
-    </button></h2>
-    <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./burger/"><span class="app-name"><span class="ge">🍔</span><span class="gn">햄버거 가게</span></span></a>
-    <a class="app-card" href="./kkochi/"><span class="app-name"><span class="ge">🍢</span><span class="gn">꼬치 가게</span></span></a>
-    <a class="app-card" href="./pattern/"><span class="app-name"><span class="ge">🔁</span><span class="gn">패턴 놀이터</span></span></a>
-    <a class="app-card" href="./connect/"><span class="app-name"><span class="ge">✏️</span><span class="gn">점 잇기</span></span></a>
-    </div></div>
-  </section>
-  <section class="cat cat-find">
-    <h2 class="cat-title"><button class="cat-head" type="button" aria-expanded="false">
-      <img class="cat-rabbit" src="./assets/cat-find.svg" alt="">
-      <span class="cat-name">👀 찾기와 짝맞추기</span>
-      <span class="cat-chev" aria-hidden="true">▾</span>
-    </button></h2>
-    <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./play/"><span class="app-name"><span class="ge">🔍</span><span class="gn">찾기 놀이터</span></span></a>
-    <a class="app-card" href="./dice/"><span class="app-name"><span class="ge">🎲</span><span class="gn">동물 주사위</span></span></a>
-    <a class="app-card" href="./donut/"><span class="app-name"><span class="ge">🍩</span><span class="gn">도넛 짝맞추기</span></span></a>
-    <a class="app-card" href="./twist/"><span class="app-name"><span class="ge">🎡</span><span class="gn">돌림 블록</span></span></a>
-    <a class="app-card" href="./matrix/"><span class="app-name"><span class="ge">🧭</span><span class="gn">방향·색 놀이터</span></span></a>
-    <a class="app-card" href="./bag/"><span class="app-name"><span class="ge">💡</span><span class="gn">생각 놀이터</span></span></a>
-    </div></div>
+<div class="page">
+  <div class="stage" aria-label="은아와 서하의 놀이터">
+    <img class="design" src="./assets/home-design.webp" alt="은아와 서하의 놀이터 손그림 홈 화면">
+
+    <button class="hotspot euna" type="button" data-profile-name="은아" aria-label="은아 선택"></button>
+    <button class="hotspot seoha" type="button" data-profile-name="서하" aria-label="서하 선택"></button>
+
+    <a class="hotspot hangul" href="./hangul/" aria-label="한글 놀이터"></a>
+    <a class="hotspot english" href="./english/" aria-label="영어 놀이터"></a>
+    <a class="hotspot japanese" href="./japanese/" aria-label="일본어 놀이터"></a>
+    <a class="hotspot math" href="./math/" aria-label="산수 놀이터"></a>
+    <a class="hotspot market" href="./market/" aria-label="시장 놀이터"></a>
+    <a class="hotspot pixel" href="./pixel/" aria-label="픽셀 놀이터"></a>
+
+    <button class="hotspot draw-cat" type="button" data-drawer="draw" aria-label="그리기와 쓰기 열기"></button>
+    <button class="hotspot shape-cat" type="button" data-drawer="shape" aria-label="모양 만들기 열기"></button>
+    <button class="hotspot color-cat" type="button" data-drawer="color" aria-label="색 맞추기 열기"></button>
+    <button class="hotspot order-cat" type="button" data-drawer="order" aria-label="순서와 규칙 열기"></button>
+    <button class="hotspot find-cat" type="button" data-drawer="find" aria-label="찾기와 짝맞추기 열기"></button>
+
+    <span class="state-check euna-check" id="check-euna" hidden>✓</span>
+    <span class="state-check seoha-check" id="check-seoha" hidden>✓</span>
+    <span class="state-lock" id="ja-lock" hidden>🔒</span>
+  </div>
+
+  <!-- 이 묶음만 그림에 그려져 있지 않다. 돌고래를 눌러야 열리는데 글 못 읽는
+       아이는 그걸 알 수 없어서, 그림과 같은 모양의 막대를 밖으로 꺼냈다. -->
+  <button class="find-bar" type="button" data-drawer="find">
+    <img class="find-rabbit" src="./assets/cat-find.svg" alt="">
+    <span class="find-name">👀 찾기와 짝맞추기</span>
+    <span class="find-chev" aria-hidden="true">▾</span>
+  </button>
+
+  <a class="parent-link" href="./parent/">🔑 부모님 페이지</a>
+</div>
+
+<div class="drawer-backdrop" id="drawer-backdrop" aria-hidden="true">
+  <section class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <div class="drawer-head">
+      <h2 class="drawer-title" id="drawer-title"></h2>
+      <button class="close" id="drawer-close" type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="drawer-grid" id="drawer-grid"></div>
   </section>
 </div>
-<a class="parent-link" href="./parent/">🔑 부모님 페이지</a>
-</div>
-<script>window.EnjoyProfileBadge = false; /* 홈엔 선택 버튼이 있어 배지 생략 */</script>
+
+<script>window.EnjoyProfileBadge = false;</script>
 <script src="./shared/profile.js"></script>
 <script src="./shared/parent-settings.js"></script>
+
 <script>
 (() => {
-  // ── 글을 못 읽는 아이를 위해: 카드를 누르면 앱 이름을 말해 준 뒤 이동한다 ──
-  function speak(text) {
-    if (!window.speechSynthesis) return 0;
-    try {
+  const DATA = {
+    draw: {
+      title:'✏️ 그리기와 쓰기',
+      accent:'#4e9bd2',
+      items:[
+        ['✍️','글씨 놀이터','./write/'],
+        ['✏️','선 따라 그리기','./lines/'],
+        ['🎨','색칠공부','./coloring/']
+      ]
+    },
+    shape: {
+      title:'🔷 모양 만들기',
+      accent:'#64a95e',
+      items:[
+        ['🔷','도형 놀이터','./shape/'],
+        ['🌈','무지개 탱그램','./tangram/'],
+        ['📌','지오보드','./geoboard/'],
+        ['🥤','컵 쌓기','./cups/']
+      ]
+    },
+    color: {
+      title:'🌈 색 맞추기',
+      accent:'#8a64b5',
+      items:[
+        ['🧪','색깔 실험실','./lab/'],
+        ['🔵','구슬 보드','./beads/'],
+        ['💍','손가락 고무줄','./rings/'],
+        ['⚗️','시험관 구슬','./tubes/'],
+        ['🔴','네 색 슬라이드','./slide/']
+      ]
+    },
+    order: {
+      title:'🔁 순서와 규칙',
+      accent:'#e58a2f',
+      items:[
+        ['🍔','햄버거 가게','./burger/'],
+        ['🍢','꼬치 가게','./kkochi/'],
+        ['🔁','패턴 놀이터','./pattern/'],
+        ['✏️','점 잇기','./connect/']
+      ]
+    },
+    find: {
+      title:'👀 찾기와 짝맞추기',
+      accent:'#d9625b',
+      items:[
+        ['🔍','찾기 놀이터','./play/'],
+        ['🎲','동물 주사위','./dice/'],
+        ['🍩','도넛 짝맞추기','./donut/'],
+        ['🎡','돌림 블록','./twist/'],
+        ['🧭','방향·색 놀이터','./matrix/'],
+        ['💡','생각 놀이터','./bag/']
+      ]
+    }
+  };
+
+  function speak(text){
+    if(!window.speechSynthesis) return 0;
+    try{
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'ko-KR';
-      u.rate = 1.0;
-      u.pitch = 1.15;
-      const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.replace('_', '-').toLowerCase().indexOf('ko') === 0);
-      if (vs.length) {
-        let uri = null;
-        try { uri = localStorage.getItem('enjoy-voice-ko'); } catch (e) {}
-        u.voice = vs.find(v => v.voiceURI === uri) || vs[0];
-      }
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang='ko-KR';u.rate=1;u.pitch=1.15;
       speechSynthesis.speak(u);
       return 1;
-    } catch (e) { return 0; }
-  }
-  function koName(card) {
-    // "🔍 찾기 놀이터" → "찾기 놀이터" (이모지는 읽지 않게)
-    const el = card.querySelector('.app-name');
-    return el ? el.textContent.replace(/[^가-힣0-9 ]/g, '').trim() : '';
+    }catch(e){return 0}
   }
 
-  // ── 누가 놀 건지 고르기 (은아·서하) — 진행도가 아이별로 나뉜다 ──
-  const picker = document.getElementById('profile-picker');
-  Profile.LIST.forEach(p => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'profile-btn' + (p.id === Profile.current() ? ' sel' : '');
-    b.innerHTML = '<span class="p-emoji">' + p.emoji + '</span>' + p.name;
-    b.addEventListener('click', () => {
-      if (p.id === Profile.current()) { speak(p.name + ', 어서 와!'); return; }
-      Profile.set(p.id);
-      speak(p.name + ', 어서 와!');
-      // 아이별 진행도(일본어 잠금 등)를 다시 반영하기 위해 새로고침
-      setTimeout(() => location.reload(), 900);
-    });
-    picker.appendChild(b);
-  });
-
-  // ── 프랙티카: 회화 내용이 5세엔 어려워 부모가 허용할 때만 보여준다 ──
-  if (window.ParentSettings && ParentSettings.get('showPractika')) {
-    document.getElementById('card-practika').hidden = false;
+  function profileName(){
+    if(!window.Profile) return '은아';
+    const current=Profile.current();
+    const p=Profile.LIST.find(x=>x.id===current);
+    return p ? p.name : '은아';
   }
 
-  // ── 일본어: 한글 낱말 카드 10장을 모으면 열림 (부모가 바로 열어줄 수도 있음) ──
-  const jaCard = document.querySelector('a[href="./japanese/"]');
-  const jaLocked = window.ParentSettings && !ParentSettings.japaneseUnlocked();
-  if (jaCard && jaLocked) {
-    jaCard.classList.add('locked');
-    jaCard.insertAdjacentHTML('beforeend', '<span class="lock-badge">🔒</span>');
+  function syncProfile(){
+    const name=profileName();
+    document.getElementById('check-euna').hidden = name !== '은아';
+    document.getElementById('check-seoha').hidden = name !== '서하';
   }
 
-  // ── 묶음 펼치기 — 토끼를 누르면 그 묶음만 열린다 (한 번에 하나) ──
-  // 아이는 글을 못 읽으므로 화살표가 돌아가는 모습 + 묶음 이름을 읽어 주는 소리로 알린다.
-  document.querySelectorAll('.cat-head').forEach(head => {
-    head.addEventListener('click', () => {
-      const cat = head.closest('.cat');
-      const wasOpen = cat.classList.contains('open');
-      document.querySelectorAll('.cat').forEach(c => {
-        c.classList.remove('open');
-        c.querySelector('.cat-head').setAttribute('aria-expanded', 'false');
-      });
-      if (!wasOpen) {
-        cat.classList.add('open');
-        head.setAttribute('aria-expanded', 'true');
-        const nm = head.querySelector('.cat-name');
-        speak(nm ? nm.textContent.replace(/[^가-힣0-9 ]/g, '').trim() : '');
-      }
+  document.querySelectorAll('[data-profile-name]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(!window.Profile) return;
+      const name=btn.dataset.profileName;
+      const p=Profile.LIST.find(x=>x.name===name);
+      if(!p) return;
+      if(p.id!==Profile.current()) Profile.set(p.id);
+      syncProfile();
+      speak(name+', 어서 와!');
     });
   });
 
-  document.querySelectorAll('.app-card').forEach(card => {
-    card.addEventListener('click', e => {
+  const ja=document.querySelector('.japanese');
+  const jaLocked=window.ParentSettings && !ParentSettings.japaneseUnlocked();
+  document.getElementById('ja-lock').hidden=!jaLocked;
+
+  ja.addEventListener('click',e=>{
+    if(!jaLocked) return;
+    e.preventDefault();
+    speak('한글 놀이터에서 낱말 카드를 열 장 모으면 열려요!');
+  });
+
+  document.querySelectorAll('.stage a.hotspot').forEach(a=>{
+    if(a.classList.contains('japanese')) return;
+    a.addEventListener('click',e=>{
       e.preventDefault();
-      if (card.classList.contains('locked')) {
-        card.classList.remove('nope');
-        void card.offsetWidth;
-        card.classList.add('nope');
-        speak('한글 놀이터에서 낱말 카드를 열 장 모으면 열려요!');
-        return;
-      }
-      const spoke = speak(koName(card));
-      setTimeout(() => { location.href = card.href; }, spoke ? 900 : 0);
+      const label=a.getAttribute('aria-label') || '';
+      const spoke=speak(label);
+      setTimeout(()=>location.href=a.href,spoke?700:0);
     });
   });
+
+  const backdrop=document.getElementById('drawer-backdrop');
+  const drawer=document.getElementById('drawer');
+  const title=document.getElementById('drawer-title');
+  const grid=document.getElementById('drawer-grid');
+
+  function openDrawer(key){
+    const d=DATA[key];
+    if(!d) return;
+    drawer.style.setProperty('--accent',d.accent);
+    title.textContent=d.title;
+    grid.innerHTML='';
+    d.items.forEach(([ico,name,href])=>{
+      const a=document.createElement('a');
+      a.className='drawer-card';
+      a.href=href;
+      a.innerHTML='<span class="ico">'+ico+'</span><span>'+name+'</span>';
+      a.addEventListener('click',e=>{
+        e.preventDefault();
+        const spoke=speak(name);
+        setTimeout(()=>location.href=href,spoke?700:0);
+      });
+      grid.appendChild(a);
+    });
+    backdrop.classList.add('open');
+    backdrop.setAttribute('aria-hidden','false');
+    speak(d.title.replace(/[^\uAC00-\uD7A30-9 ]/g,'').trim());
+  }
+
+  function closeDrawer(){
+    backdrop.classList.remove('open');
+    backdrop.setAttribute('aria-hidden','true');
+  }
+
+  document.querySelectorAll('[data-drawer]').forEach(b=>{
+    b.addEventListener('click',()=>openDrawer(b.dataset.drawer));
+  });
+  document.getElementById('drawer-close').addEventListener('click',closeDrawer);
+  backdrop.addEventListener('click',e=>{if(e.target===backdrop)closeDrawer()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+  syncProfile();
 })();
 </script>
+
 <script src="./shared/sw-register.js"></script>
-<!-- 학습 펫 — 오른쪽 아래 떠 있는 버튼으로 등장 -->
 <script src="./shared/pet-avatar.js"></script>
 <script src="./shared/pet.js"></script>
 </body>
