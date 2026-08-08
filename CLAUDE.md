@@ -53,8 +53,21 @@
 - **바닐라 HTML/CSS/JS만.** 빌드 도구, npm 의존성, CDN 스크립트, 외부 API, 서버, 로그인 전부 금지.
 - 그림은 **이모지·인라인 SVG·캔버스**, 소리는 **Web Speech TTS + Web Audio 합성 효과음**. 외부 이미지·오디오 파일을 받지 않는다.
 - 저장은 **localStorage만** 쓴다.
-- 한국어 TTS 발화 시 공용 목소리 설정을 따른다:
-  `VoiceSettings.koVoice()` / `기본빠르기 * VoiceSettings.rateFactor()` (사용법은 `shared/voice-settings.js` 머리 주석 참고).
+- **한국어 TTS 발화는 반드시 공용 목소리 설정을 거친다** (`shared/voice-settings.js` 머리 주석에 이유가 있다).
+  다섯 살에게는 소리가 안내의 절반이라, 딱딱하면 안 듣는다.
+
+  | 쓸 것 | 왜 |
+  |---|---|
+  | `VoiceSettings.koVoice()` | 기기의 한국어 목소리 중 **자연스러운 쪽을 골라** 준다. 맨 앞의 것을 그냥 쓰면 대개 기계음이다 |
+  | `기본빠르기 * VoiceSettings.rateFactor()` | 부모님이 정한 말 빠르기. 기본 빠르기는 **0.92** 안팎 |
+  | `VoiceSettings.pitchOf(원래값)` | 높낮이는 **1.0** 이 제 소리다. 올릴수록 얇고 인공적으로 들린다 |
+  | `VoiceSettings.say(글)` / `parts(글)` | 이모지를 빼고, 감탄사 뒤에 숨을 넣고, 긴 말은 두 마디로 나눈다 |
+  | `VoiceSettings.startDelay()` | `cancel()` 뒤 이만큼 두고 `speak()` 해야 크롬에서 첫 글자가 안 잘린다 |
+
+  - 브라우저는 **억양 태그(SSML)를 무시한다.** 호흡은 문장부호와 문장 나누기로만 만들 수 있다.
+  - **한국어 안내만 대상이다.** 영어·일본어·중국어 발화(english·japanese·practika)에는 손대지 않는다 — 발음이 달라진다.
+  - `VoiceSettings` 가 없을 때는 **예전과 똑같이** 동작해야 한다. 폴백은 `1` 이 아니라 그 파일의 원래 값이다.
+  - `say()` 가 빈 글을 낼 수 있다(순수 이모지 안내). 그때는 원래 글로 되돌려 빈 발화를 만들지 않는다.
 
 ## 기존 진행도 보존 (필수)
 
