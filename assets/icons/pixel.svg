@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="픽셀 놀이터 — 퍼즐 조각">
+  <defs>
+  <filter id="cr" x="-18%" y="-18%" width="136%" height="136%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="3" seed="4" result="w"/>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="2.2" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="13" result="g"/>
+    <feColorMatrix in="g" type="matrix"
+      values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.5 .58" result="grain"/>
+    <feComposite in="grain" in2="d" operator="in" result="gin"/>
+    <feBlend in="d" in2="gin" mode="multiply"/>
+  </filter></defs>
+  <g filter="url(#cr)" fill="none" stroke="#5A4632" stroke-width="3.4"
+     stroke-linecap="round" stroke-linejoin="round"><path d="M26 10 q0 -4 6 -4 q6 0 6 4 q0 5 4 5 q4 0 4 -3 q6 0 6 7 q0 6 -4 6
+      q-4 0 -4 4 q0 4 4 4 q4 0 4 6 q0 7 -7 7 q-3 0 -3 -4 q0 -4 -5 -4 q-5 0 -5 5
+      q0 5 -6 5 q-7 0 -7 -7 q0 -4 4 -4 q4 0 4 -4 q0 -4 -4 -4 q-4 0 -4 -6 q0 -7 7 -7 q0 -6 0 -6 z"
+      fill="#A8DFA0"/>
+  </g>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 66" role="img" aria-label="구름">
+  <defs>
+  <filter id="cr" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="3" seed="5" result="w"/>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="3.2" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.62" numOctaves="2" seed="11" result="g"/>
+    <feColorMatrix in="g" type="matrix"
+      values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.55 .62" result="grain"/>
+    <feComposite in="grain" in2="d" operator="in" result="gin"/>
+    <feBlend in="d" in2="gin" mode="multiply"/>
+  </filter></defs>
+  <g filter="url(#cr)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M26 48 q-18 0 -18 -13 q0 -12 14 -13 q3 -14 18 -14 q12 0 17 10
+             q6 -6 14 -6 q15 0 17 14 q14 1 14 12 q0 10 -15 10 z"
+          stroke="#7FB8E0" stroke-width="5"/>
+    <path d="M34 34 q8 -6 16 -1" stroke="#A8D2ED" stroke-width="4"/>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="산수 놀이터 — 숫자 블록">
+  <defs>
+  <filter id="cr" x="-18%" y="-18%" width="136%" height="136%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="3" seed="4" result="w"/>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="2.2" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="13" result="g"/>
+    <feColorMatrix in="g" type="matrix"
+      values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.5 .58" result="grain"/>
+    <feComposite in="grain" in2="d" operator="in" result="gin"/>
+    <feBlend in="d" in2="gin" mode="multiply"/>
+  </filter></defs>
+  <g filter="url(#cr)" fill="none" stroke="#5A4632" stroke-width="3.4"
+     stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="10" width="44" height="44" rx="8" fill="#CFC4EE"/>
+    <path d="M22 24 v-2 l3 -2 v14" stroke="#4A3A86"/>
+    <path d="M36 21 q6 -2 6 3 q0 4 -6 10 h7" stroke="#4A3A86"/>
+    <path d="M22 40 q6 -2 6 2 q0 3 -4 3 q4 0 4 3 q0 4 -6 3" stroke="#4A3A86"/>
+    <path d="M43 36 v9 M39 45 h9 M46 40 v11" stroke="#4A3A86"/>
+  </g>
+</svg>

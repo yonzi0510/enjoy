@@ -16,9 +16,9 @@
    묶음 구분은 크레용 원색(노랑·파랑·초록·보라·주황·빨강)이 맡는다.
    그림자는 흐린 회색이 아니라 크레용 자국처럼 딱 떨어지는 오프셋 하나만 쓴다. */
 :root {
-  --paper: #FFFDF6;   /* 스케치북 종이 */
-  --ink:   #3A2E26;   /* 연필심 — 윤곽선과 글자 */
-  --ink-2: #7A6E60;   /* 옅은 연필 — 보조 글자 */
+  --paper: #F7EFD9;   /* 따뜻한 크림 스케치북 종이 */
+  --ink:   #5A4632;   /* 크레용 윤곽 — 연필보다 따뜻하게 */
+  --ink-2: #8A7860;   /* 옅은 크레용 — 보조 글자 */
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { height: 100%; }
@@ -28,13 +28,60 @@ body {
   min-height: 100%;
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
   /* 스케치북 종이 — 아주 옅은 줄노트 선 위에 크레용 자국 두 점 */
+  /* 크림 종이 + 종이결(크레용이 걸릴 결) — 줄노트 선은 낙서와 겹쳐 지웠다 */
   background:
-    radial-gradient(ellipse at 12% 6%,  rgba(242,183,5,.10), transparent 55%),
-    radial-gradient(ellipse at 90% 92%, rgba(46,123,196,.10), transparent 52%),
-    repeating-linear-gradient(180deg, transparent 0 39px, rgba(58,46,38,.055) 39px 40px),
+    url("./assets/paper.svg"),
+    radial-gradient(ellipse at 12% 4%,  rgba(242,183,5,.12), transparent 52%),
+    radial-gradient(ellipse at 92% 94%, rgba(46,123,196,.10), transparent 50%),
     var(--paper);
+  background-size: 220px 220px, auto, auto, auto;
   display: flex;
   user-select: none;
+}
+/* ── 크레용 낙서 — 가장자리 장식 ──
+   장식이라 화면을 가리면 안 된다: 가장자리에만 두고 터치를 가로채지 않는다.
+   좁은 화면에서는 자리를 다투므로 큰 것 몇 개만 남긴다. */
+.doodles {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+  opacity: .62;               /* 배경 그림답게 물러나 있게 — 내용과 다투면 안 된다 */
+}
+.doodles img { position: absolute; display: block; }
+/* 위쪽 낙서는 제목 줄을 피해 '더 위·더 바깥'에 둔다 */
+.dd-rainbow { top: -8px;  left: -14px; width: clamp(74px, 12vw, 150px); }
+.dd-sun     { top: -6px;  right: -8px; width: clamp(56px, 9vw, 108px); }
+.dd-cloud-a { top: 12vh;  left: -10px; width: clamp(46px, 8vw, 100px); }
+.dd-cloud-b { top: 20vh;  right: -12px; width: clamp(42px, 7vw, 92px); }
+.dd-star-a  { top: 11vh;  left: 8vw;   width: clamp(22px, 3.4vw, 44px); }
+.dd-star-b  { top: 8vh;   right: 9vw;  width: clamp(20px, 3vw, 40px); }
+.dd-tree    { bottom: -6px; left: -10px; width: clamp(50px, 8.5vw, 108px); }
+.dd-flower  { bottom: 0;   left: 9vw;   width: clamp(26px, 4vw, 54px); }
+.dd-dolphin { bottom: 2px; right: -10px; width: clamp(54px, 9vw, 118px); }
+.dd-grass   { bottom: -6px; left: 0; width: 100%; height: auto; }
+/* 내용은 낙서 위에 */
+.wrap { position: relative; z-index: 1; }
+/* 세로 화면에서만 제목 좌우를 비워 무지개·해를 피한다 */
+@media (orientation: portrait) {
+  h1 { padding: 0 clamp(30px, 9.5vw, 72px); word-break: keep-all; }
+}
+/* 세로가 짧은 화면(폰 가로·패드 가로)은 내용이 꽉 차서 아래쪽 낙서가 낄 자리가 없다 */
+@media (orientation: landscape) {
+  /* 가로는 내용이 꽉 차서 아래쪽 낙서가 낄 자리가 없다.
+     (.doodles img 가 0,1,1 이라 .dd-* 만으로는 못 이긴다 — 선택자를 맞춰 준다) */
+  .doodles .dd-grass, .doodles .dd-tree,
+  .doodles .dd-flower, .doodles .dd-dolphin { display: none; }
+  .doodles .dd-cloud-a, .doodles .dd-cloud-b { top: 34vh; }
+}
+/* 넓은 가로는 위 모서리를 프로필 버튼·부모님 링크가 쓴다 — 무지개·해를 비켜 준다 */
+@media (orientation: landscape) and (min-width: 1100px) {
+  .doodles .dd-rainbow { top: auto; bottom: -10px; left: -16px; width: 130px; }
+  .doodles .dd-sun     { top: auto; bottom: -6px; right: -10px; width: 96px; }
+  .doodles .dd-star-a  { top: auto; bottom: 16vh; left: 1.5vw; }
+  .doodles .dd-star-b  { top: auto; bottom: 20vh; right: 2vw; }
+}
+@media (max-width: 560px) {
+  /* 폰에서는 큰 낙서만 — 작은 것들이 겹쳐 지저분해진다 */
+  .doodles .dd-cloud-a, .doodles .dd-cloud-b,
+  .doodles .dd-star-a, .doodles .dd-star-b, .doodles .dd-flower { display: none; }
 }
 .wrap {
   margin: auto;
@@ -46,7 +93,7 @@ body {
   width: 100%;
 }
 h1 {
-  font-size: clamp(28px, 6.5vmin, 52px);
+  font-size: clamp(24px, 6vmin, 52px);
   font-weight: 900;
   color: var(--ink); /* 연필로 쓴 제목 */
   letter-spacing: -.01em;
@@ -67,13 +114,27 @@ h1 {
 /* 묶음 하나 = 상자 하나. 머리표(토끼)를 누르면 그 묶음만 펼쳐진다.
    한 번에 하나만 열려 있어 여섯 묶음이 늘 한 화면에 들어온다. */
 .cat {
+  position: relative;
+  isolation: isolate;
   width: 100%;
   /* 네 귀퉁이 반경을 다르게 — 자로 그린 게 아니라 손으로 그린 상자처럼 */
   border-radius: 24px 19px 25px 20px;
   border: 3px solid var(--ink);
   background: var(--cat-tint);
-  box-shadow: 4px 5px 0 rgba(58,46,38,.16); /* 크레용 자국 같은 단단한 그림자 */
+  box-shadow: 4px 5px 0 rgba(90,70,50,.18); /* 크레용 자국 같은 단단한 그림자 */
   animation: card-in .35s ease-out backwards;
+}
+/* 칠한 면에 종이결을 얹어 크레용이 결에 걸린 자국을 낸다 */
+.cat::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: url("./assets/paper.svg") repeat;
+  background-size: 180px 180px;
+  opacity: .55;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: -1;
 }
 .cat-title { margin: 0; }
 .cat-head {
@@ -159,6 +220,7 @@ h1 {
   text-decoration: none;
   transition: transform .12s, box-shadow .12s;
 }
+.gi { width: clamp(22px, 4.6vmin, 30px); height: auto; }
 .ge { font-size: clamp(19px, 4vmin, 27px); line-height: 1; flex: none; }
 .gn {
   font-size: clamp(11px, 2.5vmin, 15px);
@@ -301,6 +363,18 @@ h1 {
 </style>
 </head>
 <body>
+<div class="doodles" aria-hidden="true">
+  <img class="dd-rainbow" src="./assets/doodle-rainbow.svg" alt="">
+  <img class="dd-sun"     src="./assets/doodle-sun.svg" alt="">
+  <img class="dd-cloud-a" src="./assets/doodle-cloud.svg" alt="">
+  <img class="dd-cloud-b" src="./assets/doodle-cloud.svg" alt="">
+  <img class="dd-star-a"  src="./assets/doodle-star.svg" alt="">
+  <img class="dd-star-b"  src="./assets/doodle-star.svg" alt="">
+  <img class="dd-tree"    src="./assets/doodle-tree.svg" alt="">
+  <img class="dd-flower"  src="./assets/doodle-flower.svg" alt="">
+  <img class="dd-dolphin" src="./assets/doodle-dolphin.svg" alt="">
+  <img class="dd-grass"   src="./assets/doodle-grass.svg" alt="">
+</div>
 <div class="wrap">
 <h1>🌈 은아와 서하의 놀이터</h1>
 <div class="profiles" id="profile-picker"><!-- 스크립트가 은아·서하 버튼 생성 --></div>
@@ -312,12 +386,12 @@ h1 {
       <span class="cat-chev" aria-hidden="true">▾</span>
     </button></h2>
     <div class="cat-body"><div class="cat-cards">
-    <a class="app-card" href="./hangul/"><span class="app-name"><span class="ge">🌟</span><span class="gn">한글 놀이터</span></span></a>
-    <a class="app-card" href="./english/"><span class="app-name"><span class="ge">🗣️</span><span class="gn">영어 놀이터</span></span></a>
-    <a class="app-card" href="./japanese/"><span class="app-name"><span class="ge">🌸</span><span class="gn">일본어 놀이터</span></span></a>
-    <a class="app-card" href="./math/"><span class="app-name"><span class="ge">🔢</span><span class="gn">산수 놀이터</span></span></a>
-    <a class="app-card" href="./market/"><span class="app-name"><span class="ge">🛒</span><span class="gn">시장 놀이터</span></span></a>
-    <a class="app-card" href="./pixel/"><span class="app-name"><span class="ge">🧩</span><span class="gn">픽셀 놀이터</span></span></a>
+    <a class="app-card" href="./hangul/"><span class="app-name"><img class="ge gi" src="./assets/icons/hangul.svg" alt=""><span class="gn">한글 놀이터</span></span></a>
+    <a class="app-card" href="./english/"><span class="app-name"><img class="ge gi" src="./assets/icons/english.svg" alt=""><span class="gn">영어 놀이터</span></span></a>
+    <a class="app-card" href="./japanese/"><span class="app-name"><img class="ge gi" src="./assets/icons/japanese.svg" alt=""><span class="gn">일본어 놀이터</span></span></a>
+    <a class="app-card" href="./math/"><span class="app-name"><img class="ge gi" src="./assets/icons/math.svg" alt=""><span class="gn">산수 놀이터</span></span></a>
+    <a class="app-card" href="./market/"><span class="app-name"><img class="ge gi" src="./assets/icons/market.svg" alt=""><span class="gn">시장 놀이터</span></span></a>
+    <a class="app-card" href="./pixel/"><span class="app-name"><img class="ge gi" src="./assets/icons/pixel.svg" alt=""><span class="gn">픽셀 놀이터</span></span></a>
     <a class="app-card" href="./practika/" id="card-practika" hidden><span class="app-name"><span class="ge">🎙️</span><span class="gn">프랙티카 놀이터</span></span></a>
     </div></div>
   </section>
