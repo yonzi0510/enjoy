@@ -9,6 +9,20 @@
  * TTS 모듈에서는 한국어 발화 시:
  *   const v = (window.VoiceSettings && VoiceSettings.koVoice()) || 기존값;
  *   u.rate = 기본빠르기 * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
+ *   u.pitch = VoiceSettings.pitchOf(원래값);          // 높낮이는 1.0 가 제 소리다
+ *   speechSynthesis.speak(new SpeechSynthesisUtterance(VoiceSettings.say(글)));
+ *   VoiceSettings.parts(글)                           // 긴 말은 두 마디로 나눠 읽는다
+ *
+ * ── 왜 이렇게 하나 (부모님이 "말이 딱딱하다"고 하셔서 고친 것) ─────────────
+ * 1) 목소리를 **고른다.** 예전에는 기기에 있는 한국어 목소리 중 맨 앞의 것을 그냥 썼는데,
+ *    안드로이드에서는 그게 대개 용량을 줄인 기계음이다. 이제 점수를 매겨 자연스러운 쪽을
+ *    고른다(`pickScore`). 부모님이 설정에서 직접 고른 목소리가 있으면 **그게 언제나 우선**이다.
+ * 2) 높낮이는 **1.0**. 올릴수록 얇고 인공적으로 들린다. 앱마다 1.0~1.2로 흩어져 있던 것을 모은다.
+ * 3) **숨 쉴 자리**를 만든다. 브라우저는 억양 태그(SSML)를 무시하므로, 문장부호와 문장 나누기로만
+ *    호흡을 만들 수 있다. 감탄사 뒤 느낌표를 쉼표로 바꾸고, 긴 말은 두 마디로 나눈다.
+ * 4) 이모지는 **읽지 않는다.** 그냥 두면 "쿠키" 처럼 엉뚱하게 읽거나 버벅인다.
+ * 5) 말을 끊고 **아주 잠깐 뒤에** 시작한다(`startDelay`). 크롬에서 cancel 직후 speak 하면
+ *    첫 글자가 잘리는 일이 잦다.
  */
 window.VoiceSettings = (() => {
   const VOICE_KEY = 'enjoy-voice-ko';
@@ -25,13 +39,73 @@ window.VoiceSettings = (() => {
       return localStorage.getItem(VOICE_KEY) || localStorage.getItem('pixel-voice') || null;
     } catch (e) { return null; }
   }
-  // 선택한 목소리 (없으면 기기의 첫 한국어 목소리)
+  /* 자연스러울 법한 목소리에 점수를 준다.
+   * 네트워크 목소리는 대개 훨씬 자연스럽다 — 읽을 문장이 제조사 서버로 가지만,
+   * 나가는 것은 우리가 앱에 써 둔 안내 문구뿐이고 아이 목소리·이름·진행도는 나가지 않는다
+   * (마이크 허용과는 전혀 다른 이야기다). 부모님 확인을 받고 켜 뒀다. */
+  function pickScore(v) {
+    const n = (v.name || '') + ' ' + (v.voiceURI || '');
+    let s = 0;
+    if (!v.localService) s += 4;                                  // 네트워크
+    if (/neural|natural|enhanced|premium|wavenet/i.test(n)) s += 4;
+    if (/google/i.test(n)) s += 3;
+    if (/yuna|유나|siri|sora|나리|heami|해미/i.test(n)) s += 2;
+    if (/compact|eloquence|espeak/i.test(n)) s -= 5;              // 용량 줄인 기계음
+    return s;
+  }
+  // 선택한 목소리 — 부모님이 고른 것이 있으면 그것, 없으면 가장 자연스러울 법한 것
   function koVoice() {
     const vs = koVoices();
     if (!vs.length) return null;
     const uri = savedURI();
-    return vs.find(v => v.voiceURI === uri) || vs[0];
+    const chosen = vs.find(v => v.voiceURI === uri);
+    if (chosen) return chosen;
+    // 점수가 같으면 기기가 준 차례를 지킨다 (기기마다 결과가 뒤집히지 않게)
+    let best = vs[0], bestScore = pickScore(vs[0]);
+    for (let i = 1; i < vs.length; i++) {
+      const s = pickScore(vs[i]);
+      if (s > bestScore) { best = vs[i]; bestScore = s; }
+    }
+    return best;
   }
+
+  /* ─────────── 부드럽게 말하기 (시안 「나」) ─────────── */
+  const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{FE0F}\u{20E3}]/gu;
+  // 뒤에서 숨을 쉬면 자연스러운 감탄사들
+  const EXCLAIM = /^(우와|와|앗|어라|짠|딩동댕|쓱싹|냠냠|아이고|야호|오|어머|헉)!/;
+
+  // 읽기 좋게 다듬는다 — 이모지를 빼고, 감탄사 뒤에 숨을 넣는다
+  function say(text) {
+    return String(text == null ? '' : text)
+      .replace(EMOJI, ' ')
+      .replace(EXCLAIM, '$1,')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // 긴 말은 두 마디로 나눠 읽는다 — 사이가 자연스러운 쉼이 된다.
+  // (뒤돌아보기 정규식은 옛 사파리가 파일 전체를 못 읽게 만들어서 쓰지 않는다)
+  function parts(text) {
+    const t = say(text);
+    if (t.length <= 14) return [t];                 // 짧은 말은 나누지 않는다
+    const out = [];
+    const seg = t.split(/([.!?])\s+/);
+    for (let i = 0; i < seg.length; i += 2) {
+      const piece = (seg[i] || '') + (seg[i + 1] || '');
+      if (piece.trim()) out.push(piece.trim());
+    }
+    return out.length ? out : [t];
+  }
+
+  // 높낮이 — 1.0 이 그 목소리의 제 소리다. 앱이 올려 둔 값은 살짝만 남긴다.
+  function pitchOf(p) {
+    const n = parseFloat(p);
+    if (!n || n <= 1) return 1;
+    return Math.min(1.05, 1 + (n - 1) * 0.25);
+  }
+
+  // 말을 끊은 뒤 이만큼 있다가 시작한다 (크롬에서 첫 글자가 잘리는 것을 막는다)
+  function startDelay() { return 90; }
   // 말 빠르기 배수 — 각 앱의 기본 빠르기에 곱해 쓴다
   function rateFactor() {
     try {
@@ -51,13 +125,17 @@ window.VoiceSettings = (() => {
     if (!window.speechSynthesis) return;
     try {
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance('안녕하세요! 이 목소리로 말해 드릴게요.');
-      u.lang = 'ko-KR';
-      u.rate = 0.95 * rateFactor();
-      u.pitch = 1.1;
-      const v = koVoice();
-      if (v) u.voice = v;
-      speechSynthesis.speak(u);
+      setTimeout(() => {
+        parts('안녕하세요! 이 목소리로 말해 드릴게요.').forEach(p => {
+          const u = new SpeechSynthesisUtterance(p);
+          u.lang = 'ko-KR';
+          u.rate = 0.92 * rateFactor();
+          u.pitch = 1;
+          const v = koVoice();
+          if (v) u.voice = v;
+          speechSynthesis.speak(u);
+        });
+      }, startDelay());
     } catch (e) {}
   }
 
@@ -156,5 +234,5 @@ window.VoiceSettings = (() => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoInit);
   else autoInit();
 
-  return { koVoices, koVoice, rateFactor, preview, open, init };
+  return { koVoices, koVoice, rateFactor, preview, open, init, say, parts, pitchOf, startDelay };
 })();
