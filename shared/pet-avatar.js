@@ -5,6 +5,7 @@
  * 사용법:
  *   const av = PetAvatar.create(containerEl);   // 컨테이너에 SVG 장착 (width/height 100%)
  *   av.render({ species: 'puppy', stage: 2 });  // 종·성장단계 갱신 (다시 그려도 잔동작 유지)
+ *   av.render({ species: 'puppy', stage: 2, sick: true }); // 감기 — 발그레한 볼·처진 눈·열 표시
  *   av.render({ species: 'egg', crack: 0.6 });  // 알 (crack 0~1: 커질수록 금이 늘어남)
  *   av.eat(done);       // 먹기 연출 (입 벌리기→오물오물→방긋), 끝나면 done()
  *   av.happy();         // 통통 뛰며 ^^ 눈 + 하트 파티클
@@ -68,6 +69,10 @@ window.PetAvatar = (() => {
     /* 하트·반짝 파티클 */
     '.pa-particle{animation:pa-float 1.35s ease-out forwards;pointer-events:none}',
     '@keyframes pa-float{0%{opacity:0;transform:translateY(6px) scale(.5)}18%{opacity:1}100%{opacity:0;transform:translateY(-72px) scale(1.2)}}',
+    /* 감기 — 숨쉬기를 느리게, 머리 위 열 아지랑이는 살랑살랑 */
+    '.pa-sick .pa-pet{animation-duration:5.4s}',
+    '.pa-fever{transform-box:fill-box;transform-origin:50% 100%;animation:pa-fever 2.8s ease-in-out infinite}',
+    '@keyframes pa-fever{0%,100%{opacity:.55;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}',
   ].join('\n');
 
   function ensureStyle() {
@@ -306,8 +311,37 @@ window.PetAvatar = (() => {
     return '';
   }
 
+  /* ─────────── 감기 표시 (발그레한 볼 · 처진 눈꺼풀 · 열 아지랑이) ─────────── */
+  const SICK_C = '#E9736B';
+  function sickCheeks(P, hx, hy, hr) { // 볼을 크고 진하게 + 홍조 빗금 3줄
+    const cy = hy + hr * 0.3, dx = hr * 0.58, rx = hr * 0.22, ry = hr * 0.15;
+    const one = s => E(hx + dx * s, cy, rx, ry, SICK_C, ' opacity=".55"') +
+      STROKE('M ' + r1(hx + dx * s - rx * 0.5) + ' ' + r1(cy + ry * 0.35) + ' l ' + r1(rx * 0.45) + ' ' + r1(-ry * 0.8), SICK_C, 1.8, ' opacity=".8"') +
+      STROKE('M ' + r1(hx + dx * s) + ' ' + r1(cy + ry * 0.45) + ' l ' + r1(rx * 0.45) + ' ' + r1(-ry * 0.8), SICK_C, 1.8, ' opacity=".8"') +
+      STROKE('M ' + r1(hx + dx * s + rx * 0.5) + ' ' + r1(cy + ry * 0.35) + ' l ' + r1(rx * 0.45) + ' ' + r1(-ry * 0.8), SICK_C, 1.8, ' opacity=".8"');
+    return one(-1) + one(1);
+  }
+  function sickLids(P, hx, eyeX, eyeY, eyeR) { // 눈 위를 반쯤 덮는 처진 눈꺼풀 + 축 처진 눈썹
+    const one = s => {
+      const ex = hx + eyeX * s;
+      return PATH('M ' + r1(ex - eyeR * 1.15) + ' ' + r1(eyeY - eyeR * 0.2) +
+        ' Q ' + r1(ex) + ' ' + r1(eyeY - eyeR * 1.7) + ' ' + r1(ex + eyeR * 1.15) + ' ' + r1(eyeY - eyeR * 0.2) +
+        ' Q ' + r1(ex) + ' ' + r1(eyeY - eyeR * 0.45) + ' ' + r1(ex - eyeR * 1.15) + ' ' + r1(eyeY - eyeR * 0.2) + ' Z', P.body) +
+        STROKE('M ' + r1(ex - eyeR * 1.3) + ' ' + r1(eyeY - eyeR * 1.5) + ' Q ' + r1(ex) + ' ' + r1(eyeY - eyeR * 1.15) +
+          ' ' + r1(ex + eyeR * 1.3) + ' ' + r1(eyeY - eyeR * 1.75), '#8a7f86', 2.4);
+    };
+    return one(-1) + one(1);
+  }
+  function feverWaves(hx, hy, hr) { // 머리 위로 오르는 열 아지랑이 3줄 (🤒 대신 직접 그린 표시)
+    const y = hy - hr * 1.16;
+    const one = dx => STROKE('M ' + r1(hx + dx) + ' ' + r1(y) +
+      ' q ' + r1(hr * 0.13) + ' ' + r1(-hr * 0.12) + ' 0 ' + r1(-hr * 0.24) +
+      ' q ' + r1(-hr * 0.13) + ' ' + r1(-hr * 0.12) + ' 0 ' + r1(-hr * 0.24), SICK_C, 3);
+    return '<g class="pa-fever">' + one(-hr * 0.3) + one(0) + one(hr * 0.3) + '</g>';
+  }
+
   /* ─────────── 펫 전체 그리기 ─────────── */
-  function petMarkup(spId, stage) {
+  function petMarkup(spId, stage, sick) {
     const P = SP[spId];
     const G = GEO[stage] || GEO[1];
     const hx = 100, bx = 100, hr = G.hr, brx = G.brx, bry = G.bry;
@@ -355,6 +389,7 @@ window.PetAvatar = (() => {
       b.push(E(hx - hr * 0.55, hy + hr * 0.28, hr * 0.17, hr * 0.11, P.cheek, ' opacity=".75"'));
       b.push(E(hx + hr * 0.55, hy + hr * 0.28, hr * 0.17, hr * 0.11, P.cheek, ' opacity=".75"'));
     }
+    if (sick) b.push(sickCheeks(P, hx, hy, hr)); // 감기 — 볼이 발그레
     // 눈 (개구리는 머리 위 볼록 눈)
     let eyes = '';
     if (P.eyesTop) {
@@ -371,6 +406,7 @@ window.PetAvatar = (() => {
     eyes += '<g class="pa-eyes"><g class="pa-eye-open">' + oneEye(hx - eyeX) + oneEye(hx + eyeX) + '</g>' +
             '<g class="pa-eye-happy">' + happyEye(hx - eyeX) + happyEye(hx + eyeX) + '</g></g>';
     b.push(eyes);
+    if (sick) b.push(sickLids(P, hx, eyeX, eyeY, eyeR)); // 감기 — 눈이 처진다
     b.push(nose(P, hx, hy, hr));
     if (P.whiskers) { // 고양이 수염
       b.push(STROKE('M ' + r1(hx - hr * 0.62) + ' ' + r1(hy + hr * 0.1) + ' l ' + r1(-hr * 0.32) + ' -3', P.whiskers, 1.8));
@@ -381,6 +417,7 @@ window.PetAvatar = (() => {
     // 입 (eat 연출이 d 를 바꾼다)
     b.push('<path class="pa-mouth" d="' + smileD(hx, my, mw) + '" fill="none" stroke="' + MOUTH_C +
            '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>');
+    if (sick) b.push(feverWaves(hx, hy, hr)); // 감기 — 머리 위 열 아지랑이
     b.push('</g></g>');
     return { html: b.join(''), mouth: { x: hx, y: my, w: mw } };
   }
@@ -491,15 +528,16 @@ window.PetAvatar = (() => {
     function render(opts) {
       if (destroyed) return;
       opts = opts || {};
-      cur = { species: opts.species || 'egg', stage: opts.stage || 1, crack: opts.crack || 0 };
+      cur = { species: opts.species || 'egg', stage: opts.stage || 1, crack: opts.crack || 0, sick: !!opts.sick };
       mouth = null;
       let inner;
       if (isEgg()) inner = eggMarkup(cur.crack);
       else {
-        const m = petMarkup(cur.species, Math.max(1, Math.min(3, cur.stage | 0)));
+        const m = petMarkup(cur.species, Math.max(1, Math.min(3, cur.stage | 0)), cur.sick);
         inner = m.html;
         mouth = m.mouth;
       }
+      svg.classList.toggle('pa-sick', !isEgg() && cur.sick); // 아프면 숨쉬기가 느려진다
       svg.innerHTML = inner + '<g class="pa-fx"></g>';
     }
 
@@ -553,11 +591,12 @@ window.PetAvatar = (() => {
     }
     function loopJitter() {
       if (!idleOn || destroyed) return;
-      jitterT = after(2000 + Math.random() * 3000, () => { doJitter(); loopJitter(); });
+      const slow = cur && cur.sick ? 2.2 : 1; // 아플 때는 잔동작을 느리게
+      jitterT = after((2000 + Math.random() * 3000) * slow, () => { doJitter(); loopJitter(); });
     }
     function loopBlink() {
       if (!idleOn || destroyed) return;
-      blinkT = after(1600 + Math.random() * 2600, () => {
+      blinkT = after((1600 + Math.random() * 2600) * (cur && cur.sick ? 2.2 : 1), () => {
         if (!isEgg()) flash('pa-blink', 300);
         loopBlink();
       });

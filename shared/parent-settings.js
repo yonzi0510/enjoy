@@ -8,6 +8,10 @@
  *   showJapanese   일본어 놀이터 열기 (꺼져 있어도 한글 낱말 카드 10장을 모으면 자동 열림)
  *   showWorksheets 픽셀 놀이터의 활동지 도안 노출
  *   showDictHard   글씨 놀이터 받아쓰기 6~7단계 노출
+ *   petCare        학습 펫 돌보기 세기 'soft'|'normal'|'tama' (기본 normal)
+ *                  soft   = 응가만 (하트도 안 줄고 감기도 없음)
+ *                  normal = 하루에 하트 한 칸·응가 하나, 하루를 거르면 감기
+ *                  tama   = 반나절에 한 칸·응가 두 배 (감기 조건은 normal과 같음)
  *
  * 사용법: <script src="../shared/parent-settings.js"></script> (앱 스크립트보다 먼저)
  *   ParentSettings.get('stt') / ParentSettings.set('limitMin', 45)
@@ -22,7 +26,8 @@ window.ParentSettings = (() => {
     showPractika: false,
     showJapanese: false,
     showWorksheets: false,
-    showDictHard: false
+    showDictHard: false,
+    petCare: 'normal'
   };
 
   function load() {
