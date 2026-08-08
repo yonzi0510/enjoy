@@ -38,6 +38,7 @@ window.Profile = (() => {
     if (window.EnjoyProfileBadge === false) return;
     const m = meta();
     const el = document.createElement('div');
+    el.className = 'enjoy-profile-badge'; // 스킨(shared/crayon.css)이 잡을 수 있게
     el.textContent = m.emoji + ' ' + m.name;
     el.style.cssText =
       'position:fixed;left:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:50;' +
