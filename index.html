@@ -3,16 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#FFD9E6">
+<meta name="theme-color" content="#FFFDF6">
 <title>은아와 서하의 놀이터</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="./shared/pet.css">
 <style>
-/* ── "포근한 장난감 방" — DESIGN.md 기준 구현 ──
-   카드 = 장난감 블록: 틴트 표면 + 유채색 chunk 단면 + 대표색 원거리 그림자.
-   검정 반투명 그림자는 쓰지 않는다. */
+/* ── 디자인 시안 C "크레용 스케치북" — 홈 화면 적용 ──
+   스케치북 종이 위에 크레용으로 그린 느낌. 상자·버튼은 흰 종이에 연필심색(#3A2E26)
+   윤곽선을 두르고, 모서리 반경을 네 귀퉁이마다 다르게 줘 손으로 그린 티를 낸다.
+   묶음 구분은 크레용 원색(노랑·파랑·초록·보라·주황·빨강)이 맡는다.
+   그림자는 흐린 회색이 아니라 크레용 자국처럼 딱 떨어지는 오프셋 하나만 쓴다. */
+:root {
+  --paper: #FFFDF6;   /* 스케치북 종이 */
+  --ink:   #3A2E26;   /* 연필심 — 윤곽선과 글자 */
+  --ink-2: #7A6E60;   /* 옅은 연필 — 보조 글자 */
+}
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { height: 100%; }
 body {
@@ -20,13 +27,12 @@ body {
      스크롤이 막힌다. min-height + .wrap의 margin:auto 로 스크롤 가능한 중앙 정렬. */
   min-height: 100%;
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
-  /* 무지개 파스텔 3색 그라데이션 + 블러 글로우 2개 + 아주 옅은 물방울 도트 */
+  /* 스케치북 종이 — 아주 옅은 줄노트 선 위에 크레용 자국 두 점 */
   background:
-    radial-gradient(ellipse at 15% 8%,  rgba(255,178,208,.45), transparent 60%),
-    radial-gradient(ellipse at 88% 88%, rgba(148,206,255,.40), transparent 58%),
-    radial-gradient(rgba(255,255,255,.5) 1.2px, transparent 1.3px),
-    linear-gradient(160deg, #FFE0EC 0%, #EDE1FB 48%, #D3F1FF 100%);
-  background-size: auto, auto, 24px 24px, auto;
+    radial-gradient(ellipse at 12% 6%,  rgba(242,183,5,.10), transparent 55%),
+    radial-gradient(ellipse at 90% 92%, rgba(46,123,196,.10), transparent 52%),
+    repeating-linear-gradient(180deg, transparent 0 39px, rgba(58,46,38,.055) 39px 40px),
+    var(--paper);
   display: flex;
   user-select: none;
 }
@@ -42,8 +48,8 @@ body {
 h1 {
   font-size: clamp(28px, 6.5vmin, 52px);
   font-weight: 900;
-  color: #5E3D7C; /* 한 톤 짙게 — 가독성 */
-  text-shadow: 0 2px 0 rgba(255,255,255,.85);
+  color: var(--ink); /* 연필로 쓴 제목 */
+  letter-spacing: -.01em;
   text-align: center;
   animation: card-in .35s ease-out backwards;
 }
@@ -62,12 +68,11 @@ h1 {
    한 번에 하나만 열려 있어 여섯 묶음이 늘 한 화면에 들어온다. */
 .cat {
   width: 100%;
-  border-radius: clamp(18px, 3.4vmin, 26px);
-  background: linear-gradient(180deg, #FFFFFF 0%, var(--cat-tint) 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.65),
-    0 6px 0 var(--cat-chunk),
-    0 14px 22px rgba(var(--cat-accent), .18);
+  /* 네 귀퉁이 반경을 다르게 — 자로 그린 게 아니라 손으로 그린 상자처럼 */
+  border-radius: 24px 19px 25px 20px;
+  border: 3px solid var(--ink);
+  background: var(--cat-tint);
+  box-shadow: 4px 5px 0 rgba(58,46,38,.16); /* 크레용 자국 같은 단단한 그림자 */
   animation: card-in .35s ease-out backwards;
 }
 .cat-title { margin: 0; }
@@ -84,7 +89,7 @@ h1 {
   cursor: pointer;
   text-align: left;
 }
-.cat-head:focus-visible { outline: 3px solid var(--cat-chunk); outline-offset: -3px; }
+.cat-head:focus-visible { outline: 3px solid var(--cat-crayon); outline-offset: -6px; }
 .cat-rabbit {
   display: block;
   flex: none;
@@ -96,7 +101,7 @@ h1 {
   flex: 1;
   font-size: clamp(17px, 3.6vmin, 27px);
   font-weight: 900;
-  color: var(--cat-ink);
+  color: var(--ink);
   word-break: keep-all; /* '모양 만들/기'처럼 낱말 중간에서 꺾이지 않게 */
 }
 /* 펼침 화살표 — 글을 못 읽는 아이에게 '누르면 열린다'를 알려주는 유일한 신호라
@@ -109,10 +114,10 @@ h1 {
   height: clamp(30px, 6vmin, 42px);
   border-radius: 50%;
   background: #fff;
-  box-shadow: inset 0 0 0 2px var(--cat-chunk), 0 2px 0 rgba(var(--cat-accent), .35);
+  border: 3px solid var(--cat-crayon);
   font-size: clamp(15px, 3vmin, 21px);
   line-height: 1;
-  color: var(--cat-chunk);
+  color: var(--cat-crayon);
   transition: transform .24s ease;
 }
 .cat.open .cat-chev { transform: rotate(180deg); }
@@ -123,13 +128,13 @@ h1 {
   transition: grid-template-rows .26s ease;
 }
 .cat.open .cat-body { grid-template-rows: 1fr; }
-/* 묶음별 색 (DESIGN.md chunk 공식 — 같은 hue에서 명도 −18~25%p) */
-.cat-learn { --cat-accent: 245,179,1;   --cat-chunk: #C68C00; --cat-tint: #FFF4D6; --cat-ink: #7A5A08; }
-.cat-draw  { --cat-accent: 92,184,232;  --cat-chunk: #2F8CC2; --cat-tint: #E4F3FC; --cat-ink: #1D5A85; }
-.cat-shape { --cat-accent: 46,196,182;  --cat-chunk: #1E8F84; --cat-tint: #DFF6F3; --cat-ink: #12645C; }
-.cat-color { --cat-accent: 138,123,224; --cat-chunk: #5F50B8; --cat-tint: #EDEAFB; --cat-ink: #493C8F; }
-.cat-order { --cat-accent: 230,140,60;  --cat-chunk: #B4701C; --cat-tint: #FBEAD8; --cat-ink: #8A4A16; }
-.cat-find  { --cat-accent: 232,93,154;  --cat-chunk: #C13B78; --cat-tint: #FCE7F1; --cat-ink: #8B3A5B; }
+/* 묶음별 크레용 원색 — 토끼 뒤 동그라미(assets/cat-*.svg)와 같은 색을 쓴다 */
+.cat-learn { --cat-crayon: #F2B705; --cat-tint: #FFFAEC; } /* 노랑 */
+.cat-draw  { --cat-crayon: #2E7BC4; --cat-tint: #EEF5FC; } /* 파랑 */
+.cat-shape { --cat-crayon: #4CA64C; --cat-tint: #F0F8F0; } /* 초록 */
+.cat-color { --cat-crayon: #9B59B6; --cat-tint: #F7F1FA; } /* 보라 */
+.cat-order { --cat-crayon: #FF8C42; --cat-tint: #FFF4EC; } /* 주황 */
+.cat-find  { --cat-crayon: #E8453C; --cat-tint: #FDEFEE; } /* 빨강 */
 /* 놀이 버튼 — 상자 안에 격자로 깔린다.
    overflow:hidden 은 접힘 애니메이션(0fr↔1fr)에서 내용이 삐져나오지 않게 하는 것 */
 .cat-cards {
@@ -141,21 +146,16 @@ h1 {
 }
 .cat.open .cat-cards { padding-bottom: clamp(10px, 2vmin, 16px); }
 .app-card {
-  /* 기본은 메인홈 라벤더 — 아래에서 버튼마다 자기 앱 색으로 덮는다 */
-  --accent: 201,188,232; /* 원거리 그림자용 rgb 삼중값 */
-  --chunk: #B7A6DE;      /* 버튼색을 짙게 만든 바닥 단면색 */
-  --tint: #F4EFFC;       /* 표면에 스미는 옅은 틴트 */
   display: flex;
   align-items: center;
   gap: clamp(5px, 1.2vmin, 9px);
   min-height: 48px; /* 5세 터치 영역 하한 */
   padding: clamp(8px, 1.7vmin, 12px) clamp(8px, 1.6vmin, 12px);
-  border-radius: 14px;
-  background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.75),
-    0 3px 0 var(--chunk),
-    0 7px 12px rgba(var(--accent), .16);
+  /* 손으로 그린 듯 네 귀퉁이를 다르게 */
+  border-radius: 13px 10px 14px 11px;
+  border: 2.5px solid var(--ink);
+  background: #fff;
+  box-shadow: 2px 3px 0 rgba(58,46,38,.14);
   text-decoration: none;
   transition: transform .12s, box-shadow .12s;
 }
@@ -163,40 +163,10 @@ h1 {
 .gn {
   font-size: clamp(11px, 2.5vmin, 15px);
   font-weight: 800;
-  color: #43391E;
+  color: var(--ink);
   line-height: 1.25;
   word-break: keep-all;
 }
-/* 카드별 대표색 (DESIGN.md 색표) — HTML을 안 고치고 href로 입힌다 */
-.app-card[href="./play/"]     { --accent: 255,217,61;  --chunk: #D9A800; --tint: #FFF6D9; }
-.app-card[href="./english/"]  { --accent: 255,143,176; --chunk: #E05C86; --tint: #FFEAF1; }
-.app-card[href="./pixel/"]    { --accent: 77,201,143;  --chunk: #2E9E6B; --tint: #E3F7EC; }
-.app-card[href="./hangul/"]   { --accent: 245,179,1;   --chunk: #C68C00; --tint: #FFF4D6; }
-.app-card[href="./japanese/"] { --accent: 247,168,196; --chunk: #D9739B; --tint: #FDEBF2; }
-.app-card[href="./write/"]    { --accent: 92,184,232;  --chunk: #2F8CC2; --tint: #E4F3FC; }
-.app-card[href="./math/"]     { --accent: 255,154,77;  --chunk: #DB6E1E; --tint: #FFEEDF; }
-.app-card[href="./shape/"]    { --accent: 46,196,182;  --chunk: #1E8F84; --tint: #DFF6F3; }
-.app-card[href="./market/"]   { --accent: 255,138,101; --chunk: #D95B32; --tint: #FFEDE5; }
-.app-card[href="./lab/"]      { --accent: 156,204,101; --chunk: #6B9E3A; --tint: #F0F7E6; }
-.app-card[href="./bag/"]      { --accent: 201,154,91;  --chunk: #A5763A; --tint: #F6ECDD; }
-.app-card[href="./coloring/"] { --accent: 232,93,154;  --chunk: #C13B78; --tint: #FCE7F1; }
-.app-card[href="./burger/"]   { --accent: 226,75,59;   --chunk: #B8321F; --tint: #FCE4E0; }
-.app-card[href="./kkochi/"]   { --accent: 230,140,60;  --chunk: #B4701C; --tint: #FBEAD8; }
-.app-card[href="./pattern/"]  { --accent: 31,158,147;  --chunk: #147A70; --tint: #D6F1EE; }
-.app-card[href="./matrix/"]   { --accent: 76,175,110;  --chunk: #3E8F58; --tint: #E6F5EC; }
-.app-card[href="./beads/"]    { --accent: 79,163,232;  --chunk: #2E77B0; --tint: #E4F0FB; }
-.app-card[href="./cups/"]     { --accent: 224,80,150;  --chunk: #C43179; --tint: #FCE4F1; }
-.app-card[href="./tubes/"]    { --accent: 92,120,190;  --chunk: #4A5F9E; --tint: #E9EEFA; }
-.app-card[href="./connect/"]  { --accent: 242,105,75;  --chunk: #C74A30; --tint: #FFE7DC; }
-.app-card[href="./dice/"]     { --accent: 96,178,110;  --chunk: #3E9B5B; --tint: #E8F6EC; }
-.app-card[href="./rings/"]    { --accent: 255,122,162; --chunk: #E86A93; --tint: #FFEAF1; }
-.app-card[href="./slide/"]    { --accent: 233,78,52;   --chunk: #C6371F; --tint: #FCE6DE; }
-.app-card[href="./donut/"]    { --accent: 224,92,134;  --chunk: #C24A72; --tint: #FCE7EE; }
-.app-card[href="./twist/"]    { --accent: 199,138,74;  --chunk: #A56A2A; --tint: #FBEEDD; }
-.app-card[href="./tangram/"]  { --accent: 232,120,60;  --chunk: #C25E24; --tint: #FDECE0; }
-.app-card[href="./geoboard/"] { --accent: 124,108,224;  --chunk: #6C5CE7; --tint: #ECEAFB; }
-.app-card[href="./lines/"]    { --accent: 88,178,164;   --chunk: #3F9C87; --tint: #E5F5F1; }
-.app-card[href="./practika/"] { --accent: 138,123,224; --chunk: #5F50B8; --tint: #EDEAFB; }
 /* 묶음 상자 자체는 스태거로 등장한다 (버튼은 접혀 있어 개별 지연이 의미 없다) */
 .apps .cat:nth-child(1) { animation-delay: .05s; }
 .apps .cat:nth-child(2) { animation-delay: .11s; }
@@ -205,20 +175,18 @@ h1 {
 .apps .cat:nth-child(5) { animation-delay: .29s; }
 .apps .cat:nth-child(n+6) { animation-delay: .35s; }
 .app-card:active {
-  /* chunk가 3px→1px로 줄며 블록이 눌리는 느낌 */
-  transform: translateY(2px) scale(.97);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.75),
-    0 1px 0 var(--chunk),
-    0 4px 8px rgba(var(--accent), .12);
+  /* 그림자가 줄며 종이가 눌리는 느낌 */
+  transform: translate(2px, 3px);
+  box-shadow: 0 0 0 rgba(58,46,38,.14);
 }
 .app-card[hidden] { display: none; } /* hidden 속성이 위 display:flex에 밀리지 않게 */
 .app-name { display: contents; } /* koName()이 읽는 래퍼 — 배치는 .ge/.gn 이 맡는다 */
 /* 잠긴 버튼(일본어 — 한글 카드 10장을 모으면 열림) */
 .app-card.locked {
   position: relative;
-  opacity: .8;
-  --accent: 150,142,170; --chunk: #C7C0D4; --tint: #F1EFF6; /* 회색 처리 */
+  opacity: .75;
+  border-color: #A79C90;   /* 연필을 옅게 — 아직 못 여는 놀이 */
+  background: #F7F4EC;
 }
 .app-card.locked .ge { filter: grayscale(.9); }
 .lock-badge {
@@ -239,13 +207,13 @@ h1 {
 .parent-link {
   font-size: clamp(12px, 2.6vmin, 16px);
   font-weight: 700;
-  color: #9A8BBF; /* 한 톤 짙게 — 가독성 */
+  color: var(--ink-2);
   text-decoration: none;
   padding: 8px 14px;
   border-radius: 999px;
   animation: card-in .35s ease-out .45s backwards;
 }
-.parent-link:active { color: #5E3D7C; }
+.parent-link:active { color: var(--ink); }
 /* 누가 놀 건지 고르기 (은아·서하) */
 .profiles {
   display: flex;
@@ -256,38 +224,29 @@ h1 {
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 4px solid transparent;
+  border: 3px solid var(--ink);
   cursor: pointer;
   padding: clamp(8px, 2vmin, 14px) clamp(16px, 3.6vmin, 30px);
   border-radius: 999px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #F4EFFC 100%);
+  background: #fff;
   font-family: inherit;
   font-size: clamp(17px, 4.2vmin, 28px);
   font-weight: 900;
-  color: #5E3D7C;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.65),
-    0 5px 0 #CBBFE4,
-    0 12px 20px rgba(139,120,190,.16);
+  color: var(--ink);
+  box-shadow: 3px 4px 0 rgba(58,46,38,.14);
   transition: transform .12s, box-shadow .12s;
 }
 .profile-btn:active {
-  transform: translateY(3px) scale(.98);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.65),
-    0 2px 0 #CBBFE4,
-    0 7px 12px rgba(139,120,190,.12);
+  transform: translate(2px, 3px);
+  box-shadow: 0 0 0 rgba(58,46,38,.14);
 }
 .profile-btn .p-emoji { font-size: clamp(24px, 5.6vmin, 40px); }
 .profile-btn.sel {
-  background: linear-gradient(180deg, #FFFFFF 0%, #FFF6DC 100%);
-  border-color: #FFB800;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.7),
-    0 5px 0 #DFA400,
-    0 12px 20px rgba(255,184,0,.22);
+  background: #FFF9E6;
+  border-color: #F2B705;   /* 노랑 크레용으로 동그라미 친 느낌 */
+  box-shadow: 3px 4px 0 rgba(242,183,5,.35);
 }
-.profile-btn.sel::after { content: '✔'; color: #FFB800; font-size: .8em; }
+.profile-btn.sel::after { content: '✔'; color: #F2B705; font-size: .8em; }
 /* 모션 줄이기 설정 존중 */
 @media (prefers-reduced-motion: reduce) {
   h1, .profiles, .parent-link, .app-card, .app-card.nope, .cat { animation: none; }
