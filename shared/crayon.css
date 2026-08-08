@@ -169,3 +169,67 @@ h1, h2 {
     transform: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 낙서장 층 — 부모님이 고르신 「시안 3 · 낙서장」
+ *
+ * 앞의 크레용 스킨이 부품의 '재질'을 바꿨다면, 이 층은 **문법**을 바꾼다.
+ * 걷어내는 것 (이게 화면을 옛날 것처럼 보이게 하던 것들):
+ *   · 카드 아래 두툼한 색 단면 그림자
+ *   · 반질반질한 그라데이션 채움
+ *   · 모든 것을 감싸는 굵은 상자
+ * 대신 두는 것:
+ *   · 모눈 공책 바탕 — 아이가 실제로 낙서하는 종이
+ *   · 얇고 삐뚤한 손그림 윤곽
+ *
+ * 놀잇감(자모·과일·구슬·도형)의 색은 그대로 둔다.
+ * 자유 배치(낙서장식으로 흩뿌리기)는 앱마다 자리를 따로 잡아야 해서
+ * 이 층에 넣지 않는다 — 앱별로 순차 진행한다.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --paper: #FCFBF4;
+  --grid:  rgba(120,150,180,.16);
+  --ink:   #2E2A24;
+}
+
+/* 모눈 공책 */
+body {
+  background:
+    repeating-linear-gradient(0deg,  var(--grid) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 34px),
+    var(--paper) !important;
+  background-attachment: fixed !important;
+}
+
+/* 카드 — 두툼한 단면과 광택을 걷고, 손으로 그은 얇은 윤곽만 남긴다 */
+.menu-card, .theme-card, .mission-card, .round-card, .puzzle-card, .reward-card, .pic-card {
+  background: rgba(255,255,255,.72) !important;
+  border: 3px solid rgba(46,42,36,.85) !important;
+  border-radius: 24px 19px 26px 21px !important;
+  box-shadow: none !important;
+}
+/* 손으로 붙인 듯 살짝 삐뚤게 — 메뉴 카드에만 준다
+   (놀이판 조각을 돌리면 끌어 놓기 좌표가 틀어진다) */
+.menu-card { transform: rotate(-.7deg); }
+.menu-card:nth-child(even) { transform: rotate(.8deg); }
+.menu-card:active, .theme-card:active { transform: translateY(2px) rotate(0); }
+
+/* 작은 단추들도 같은 손으로 */
+.icon-btn, .vs-btn, .stat, .back {
+  border: 3px solid rgba(46,42,36,.8) !important;
+  border-radius: 22px 17px 24px 19px !important;
+  box-shadow: none !important;
+  background: rgba(255,255,255,.8) !important;
+}
+.back { border-radius: 52% 48% 51% 49% / 49% 52% 48% 51% !important; }
+
+/* 제목은 상자 없이 크게 — 여백이 상자 노릇을 한다 */
+.home-head h1, .bar h1 {
+  font-weight: 900;
+  letter-spacing: -.05em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-card, .menu-card:nth-child(even) { transform: none; }
+}
