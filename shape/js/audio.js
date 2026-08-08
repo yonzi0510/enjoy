@@ -60,24 +60,32 @@ window.Audio2 = (() => {
       let it = items[i++];
       if (typeof it === 'string') it = { text: it };
       try {
-        const u = new SpeechSynthesisUtterance(it.text);
+        const VS = window.VoiceSettings;
+        // 이모지를 빼고 감탄사 뒤에 숨을 넣어 읽는다 (그냥 두면 이모지를 엉뚱하게 읽는다)
+        const txt = VS ? VS.say(it.text) : it.text;
+        const u = new SpeechSynthesisUtterance(txt);
         u.lang = 'ko-KR';
-        const sel = (window.VoiceSettings && VoiceSettings.koVoice()) || koVoice;
+        const sel = (VS && VS.koVoice()) || koVoice;
         if (sel) u.voice = sel;
-        u.rate = (it.rate || 0.9) * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
-        u.pitch = it.pitch || 1.15;
+        u.rate = (it.rate || 0.9) * (VS ? VS.rateFactor() : 1);
+        u.pitch = VS ? VS.pitchOf(it.pitch || 1.15) : (it.pitch || 1.15); // 높낮이는 1.0 쪽이 제 소리
         // 음성 엔진이 없거나 멈춰도 흐름이 끊기지 않게 워치독으로 강제 진행
         let advanced = false;
         const step = () => { if (!advanced) { advanced = true; clearTimeout(wd); next(); } };
-        const wd = setTimeout(step, 1000 + it.text.length * 450);
+        const wd = setTimeout(step, 1000 + txt.length * 450);
         u.onend = step;
         u.onerror = step;
         speechSynthesis.speak(u);
       } catch (e) { next(); }
     }
-    next();
+    // cancel() 직후 바로 speak() 하면 크롬에서 첫 글자가 잘린다 — 아주 잠깐 두고 시작
+    const wait = window.VoiceSettings ? VoiceSettings.startDelay() : 0;
+    if (wait) setTimeout(next, wait); else next();
   }
-  function speak(text, onDone) { speakSeq([text], onDone); }
+  // 통짜 문장은 두 마디로 나눠 읽는다 — 그 사이가 자연스러운 쉼이 된다
+  function speak(text, onDone) {
+    speakSeq(window.VoiceSettings ? VoiceSettings.parts(text) : [text], onDone);
+  }
 
   return { sfx, speak, speakSeq, stop };
 })();

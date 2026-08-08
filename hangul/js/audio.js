@@ -1,4 +1,5 @@
-/* 소리 — TTS(ko-KR) + Web Audio 효과음 (외부 파일 없음) */
+/* 소리 — TTS(ko-KR) + Web Audio 효과음 (외부 파일 없음).
+ * 한국어 안내는 공용 목소리 설정(VoiceSettings)으로 다듬어 부드럽게 읽는다. */
 window.Audio2 = (() => {
   /* ─────────── 효과음 ─────────── */
   let ctx = null;
@@ -58,13 +59,16 @@ window.Audio2 = (() => {
       if (i >= items.length) { if (onDone) onDone(); return; }
       let it = items[i++];
       if (typeof it === 'string') it = { text: it };
+      const VS = window.VoiceSettings || null;
       try {
-        const u = new SpeechSynthesisUtterance(it.text);
+        // 이모지를 빼고 감탄사 뒤에 숨을 넣어 읽는다 (공용 다듬기)
+        const u = new SpeechSynthesisUtterance(VS ? VS.say(it.text) : it.text);
         u.lang = 'ko-KR';
-        const sel = (window.VoiceSettings && VoiceSettings.koVoice()) || koVoice;
+        const sel = (VS && VS.koVoice()) || koVoice;
         if (sel) u.voice = sel;
-        u.rate = (it.rate || 0.9) * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
-        u.pitch = it.pitch || 1.15;
+        u.rate = (it.rate || 0.9) * (VS ? VS.rateFactor() : 1);
+        // 높낮이를 1.0 쪽으로 되돌린다 — 올릴수록 얇고 딱딱하게 들린다
+        u.pitch = VS ? VS.pitchOf(it.pitch || 1.15) : (it.pitch || 1.15);
         // 음성 엔진이 없거나 멈춰도 흐름이 끊기지 않게 워치독으로 강제 진행
         let advanced = false;
         const step = () => { if (!advanced) { advanced = true; clearTimeout(wd); next(); } };
@@ -74,9 +78,13 @@ window.Audio2 = (() => {
         speechSynthesis.speak(u);
       } catch (e) { next(); }
     }
-    next();
+    // 첫 발화만 아주 잠깐 미룬다 — cancel() 직후 바로 speak() 하면 첫 글자가 잘린다
+    const delay = window.VoiceSettings ? VoiceSettings.startDelay() : 0;
+    if (delay) setTimeout(next, delay); else next();
   }
-  function speak(text, onDone) { speakSeq([text], onDone); }
+  // 통짜 문장은 두 마디로 나눠 읽는다 — 마디 사이가 자연스러운 쉼이 된다
+  // (speakSeq([...]) 로 항목별 rate 를 지정해 부르는 곳은 그대로 둔다)
+  function speak(text, onDone) { speakSeq(window.VoiceSettings ? VoiceSettings.parts(text) : [text], onDone); }
 
   return { sfx, speak, speakSeq, stop };
 })();

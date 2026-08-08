@@ -60,29 +60,37 @@ window.Audio2 = (() => {
       let it = items[i++];
       if (typeof it === 'string') it = { text: it };
       try {
-        const u = new SpeechSynthesisUtterance(it.text);
-        if (it.lang === 'ko') {
+        const VS = window.VoiceSettings;
+        const isKo = it.lang === 'ko';
+        // 한국어 안내만 다듬는다 — 이모지를 빼고 감탄사 뒤에 숨을 넣는다 (일본어 발화는 손대지 않는다)
+        const spoken = (isKo && VS) ? (VS.say(it.text) || it.text) : it.text;
+        const u = new SpeechSynthesisUtterance(spoken);
+        if (isKo) {
           u.lang = 'ko-KR';
-          const sel = (window.VoiceSettings && VoiceSettings.koVoice()) || koVoice;
+          const sel = (VS && VS.koVoice()) || koVoice;
           if (sel) u.voice = sel;
-          u.rate = (it.rate || 0.85) * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1);
+          u.rate = (it.rate || 0.85) * (VS ? VS.rateFactor() : 1);
+          u.pitch = VS ? VS.pitchOf(it.pitch || 1.15) : (it.pitch || 1.15); // 높낮이는 1.0 이 제 소리라 되돌린다
         } else {
           u.lang = 'ja-JP';
           if (jaVoice) u.voice = jaVoice;
           u.rate = it.rate || 0.85;
+          u.pitch = it.pitch || 1.15;                                       // 일본어는 예전 그대로 둔다
         }
-        u.pitch = it.pitch || 1.15;
         // 음성 엔진이 없거나 멈춰도 흐름이 끊기지 않게 워치독으로 강제 진행
         let advanced = false;
         const step = () => { if (!advanced) { advanced = true; clearTimeout(wd); next(); } };
-        const wd = setTimeout(step, 1000 + it.text.length * 450);
+        const wd = setTimeout(step, 1000 + spoken.length * 450);
         u.onend = step;
         u.onerror = step;
         speechSynthesis.speak(u);
       } catch (e) { next(); }
     }
-    next();
+    // 크롬은 cancel() 직후 speak() 하면 첫 글자를 삼킨다 — 아주 잠깐 두고 시작한다
+    if (window.VoiceSettings) setTimeout(next, VoiceSettings.startDelay());
+    else next();
   }
+  // 이 진입점은 기본이 일본어 발화라 마디로 나누지 않는다 (한국어 안내는 speakSeq 로 lang:'ko' 를 준다)
   function speak(text, onDone) { speakSeq([text], onDone); }
 
   return { sfx, speak, speakSeq, stop };

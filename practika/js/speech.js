@@ -61,15 +61,20 @@ window.Speech = (() => {
     if (!window.speechSynthesis) { if (onDone) onDone(); return; }
     speechSynthesis.cancel();
     let i = 0;
+    const startWait = window.VoiceSettings ? VoiceSettings.startDelay() : 0;
     function next() {
       if (i >= items.length) { if (onDone) onDone(); return; }
       const it = items[i++];
       try {
-        const u = new SpeechSynthesisUtterance(it.text);
+        const VS = window.VoiceSettings;
+        // 한국어 안내만 다듬는다 — 목표 언어(영·일·중) 대사는 발음이 달라지면 안 되니 손대지 않는다
+        const isKo = it.lang === 'ko';
+        const u = new SpeechSynthesisUtterance(isKo && VS ? VS.say(it.text) : it.text);
         if (it.lang === 'ko') {
           u.lang = 'ko-KR';
-          const v = (window.VoiceSettings && VoiceSettings.koVoice()) || voiceFor('ko-KR'); if (v) u.voice = v;
-          u.rate = (it.rate || 0.98) * (window.VoiceSettings ? VoiceSettings.rateFactor() : 1); u.pitch = 1.05;
+          const v = (VS && VS.koVoice()) || voiceFor('ko-KR'); if (v) u.voice = v;
+          // 0.98 → 0.92 로 조금 더 느긋하게, 높낮이는 1.0 쪽이 제 소리
+          u.rate = (it.rate || 0.92) * (VS ? VS.rateFactor() : 1); u.pitch = VS ? VS.pitchOf(1.05) : 1.05;
         } else {
           u.lang = targetTts;
           const v = voiceFor(targetTts); if (v) u.voice = v;
@@ -80,7 +85,8 @@ window.Speech = (() => {
         speechSynthesis.speak(u);
       } catch (e) { next(); }
     }
-    next();
+    // cancel() 직후 바로 speak() 하면 크롬에서 첫 글자가 잘린다 — 아주 잠깐 두고 시작
+    if (startWait) setTimeout(next, startWait); else next();
   }
 
   /* ─────────── STT ─────────── */
@@ -162,7 +168,11 @@ window.Speech = (() => {
     setTarget,
     sttSupported, ttsSupported, hasVoices, inAppBrowser,
     startListen, stopListen, speakSeq,
-    speakKo(text, onDone) { speakSeq([{ lang: 'ko', text }], onDone); },
+    // 한국어 안내는 긴 말이면 두 마디로 나눠 읽는다 — 그 사이가 자연스러운 쉼이 된다
+    speakKo(text, onDone) {
+      const VS = window.VoiceSettings;
+      speakSeq(VS ? VS.parts(text).map(t => ({ lang: 'ko', text: t })) : [{ lang: 'ko', text }], onDone);
+    },
     speakTarget(text, rate, onDone) { speakSeq([{ lang: 'target', text, rate }], onDone); },
     stopSpeak() { if (window.speechSynthesis) speechSynthesis.cancel(); },
     ding() { tone(784, 0, 0.18, 0.25, 'triangle'); tone(1175, 0.09, 0.3, 0.25, 'triangle'); },
