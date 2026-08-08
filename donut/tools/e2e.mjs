@@ -262,6 +262,31 @@ await check('놀이판 무변형: 자리판·자리·도넛에 회전·확대가
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+await check('진짜 끌어 놓기: 트레이 도넛을 자리 한가운데로 끌면 얹힌다', async () => {
+  // 낙서장 배치를 넣은 뒤에도 좌표 판정이 그대로인지 — 실제 포인터로 끌어 본다
+  for (const s of [{ w: 1180, h: 820, name: '패드 가로' }, { w: 390, h: 844, name: '폰 세로' }]) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    await page.click('.menu-card.c-l2');
+    await page.waitForSelector('#scr-list.on');
+    await page.click('#puzzle-list .puzzle-card');
+    await page.waitForSelector('#scr-play.on');
+    await page.waitForTimeout(200);
+    const target = await page.evaluate(() => App.debug().slots[0].target);
+    const from = await page.locator('.tray-item[data-id="' + target + '"]').boundingBox();
+    const to = await page.locator('.slot[data-i="0"]').boundingBox();
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForTimeout(150);
+    const d = await page.evaluate(() => App.debug());
+    expect(d.slots[0].placed === true, s.name + ': 끌어 놓았는데 안 얹힘');
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
+});
+
 await check('머리줄 겹침 없음: 제목·듣기·뒤로 ↔ 집 단추·남은 시간 쪽지', async () => {
   for (const s of [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드 가로' },
                    { w: 844, h: 390, name: '폰 가로' }]) {
@@ -270,6 +295,20 @@ await check('머리줄 겹침 없음: 제목·듣기·뒤로 ↔ 집 단추·남
     await page.waitForSelector('#scr-home.on');
     await page.click('.menu-card.c-l3');
     await page.waitForSelector('#scr-list.on');
+    await page.waitForTimeout(160);
+    const listHits = await page.evaluate(() => {
+      const R = sel => { const el = document.querySelector(sel); if (!el) return null;
+        const r = el.getBoundingClientRect(); return (r.width && r.height) ? r : null; };
+      const mine = [['목록 제목', R('#list-title')], ['진행 표기', R('#list-count')]];
+      const theirs = [['집 단추', R('.enjoy-home-btn')], ['남은 시간', R('.tl-bar-tag')]];
+      const bad = [];
+      mine.forEach(([an, a]) => theirs.forEach(([bn, b]) => {
+        if (!a || !b) return;
+        if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) bad.push(an + '↔' + bn);
+      }));
+      return bad;
+    });
+    expect(listHits.length === 0, s.name + '(목록): ' + listHits.join(', '));
     await page.click('#puzzle-list .puzzle-card');
     await page.waitForSelector('#scr-play.on');
     await page.waitForTimeout(200);

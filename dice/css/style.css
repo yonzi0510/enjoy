@@ -352,6 +352,12 @@ h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -
 .rd-badge .ic { width: 1.4em; height: 1.4em; }
 .die.tiny { width: clamp(44px, 9vmin, 76px); } /* 라운드 딱지의 찾을 동물도 알아볼 만큼 */
 .back { display: inline-flex; align-items: center; justify-content: center; }
+/* 폰 세로에서 "어려운 주사/위" 처럼 제목이 낱말 가운데서 끊기지 않게 */
+.bar h2 { word-break: keep-all; }
+@media (max-width: 480px) {
+  .bar h2 { font-size: clamp(15px, 4.6vw, 20px); }
+  .bigbtn.small { padding: 8px 10px; }
+}
 
 /* ── 첫 화면: 크기 위계 + 시작 화살표 ── */
 .menu { align-items: center; max-width: 1040px; }

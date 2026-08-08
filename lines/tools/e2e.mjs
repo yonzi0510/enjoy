@@ -104,7 +104,8 @@ await check('손그림 아이콘: 화면 틀에 이모지가 남아 있지 않�
     const bad = [];
     // 화면 틀(제목·알약·단추·카드 이름) — 캔버스 위 캐릭터 얼굴은 놀잇감이라 검사 대상이 아니다
     ['h1', '.stat', '#btn-voice', '#btn-listen', '#btn-clear', '#scr-list .back',
-      '#btn-play-back', '.mc-name', '.mc-prog', '#list-title'].forEach(s => {
+      '#btn-play-back', '.mc-name', '.mc-prog', '#list-title',
+      '#reward-next', '#reward-close', '.pz-badge'].forEach(s => {
       document.querySelectorAll(s).forEach(el => { if (EMO.test(el.textContent)) bad.push(s + ':' + el.textContent.trim()); });
     });
     return {
