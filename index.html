@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#fffaf0">
+<meta name="theme-color" content="#FDFBF3">
 <title>은아와 서하의 놀이터</title>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -12,269 +12,305 @@
 <link rel="stylesheet" href="./shared/pet.css">
 
 <style>
+/* 홈 화면은 그림 한 장이 아니라 코드로 짠다.
+   손그림 느낌은 SVG(제목 글씨·크레용 테두리·놀이 아이콘·낙서)가 맡고,
+   자리 배치와 크기는 CSS 가 맡는다. 그래서 화면이 바뀌면 알아서 다시 놓인다. */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;min-height:100%;background:#fffaf0}
+html,body{margin:0;min-height:100%}
 body{
-  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-  color:#3e342e;
-  user-select:none;
+  font-family:"Apple SD Gothic Neo","Pretendard","Malgun Gothic","Noto Sans KR",sans-serif;
+  color:#3E342E;user-select:none;background:#FDFBF3;
 }
-.page{
-  width:min(914px,100%);
-  margin:0 auto;
-  padding:0 0 calc(26px + env(safe-area-inset-bottom));
-}
-/* 그림은 세로로 긴 비율(914:1536)이라, 화면 너비에만 맞추면 가로 화면에서
-   아래가 잘려 버튼 절반이 화면 밖으로 나간다. 그래서 화면 '높이'에도 맞춘다:
-   아래에 들어갈 찾기 막대(96px)와 부모님 링크(74px) 자리를 빼고 계산한다.
-   놀이 버튼 높이는 틀 너비의 12.26%라, 5세 터치 하한 44px 을 지키려면
-   틀이 최소 359px 이어야 한다. 그래서 366px 아래로는 줄이지 않는다
-   (그보다 짧은 화면에서는 스크롤이 생기는 편이 낫다). */
-.stage{
-  position:relative;
-  container-type:inline-size;   /* 위에 얹는 표시들이 화면이 아니라 '틀' 크기를 따르게 */
-  width:min(100%, max(366px, calc((100svh - 170px) * 0.5951)));
-  margin-inline:auto;
-  aspect-ratio:914 / 1536;
-  overflow:hidden;
-  background:#fffaf0;
-}
-.design{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  display:block;
-}
-.hotspot{
-  position:absolute;
-  display:block;
-  border:0;
-  padding:0;
-  margin:0;
-  background:transparent;
-  cursor:pointer;
-  border-radius:24px;
-  text-decoration:none;
-  z-index:3;
-}
-.hotspot:focus-visible{
-  outline:4px dashed rgba(214,157,19,.9);
-  outline-offset:-5px;
-}
-
-/* invisible hit areas aligned to the approved artwork */
-.euna{left:21.4%;top:12.55%;width:31.8%;height:8.0%}
-.seoha{left:53.3%;top:12.55%;width:25.7%;height:8.0%}
-
-.hangul{left:7.8%;top:30.1%;width:41.6%;height:7.3%}
-.english{left:51.0%;top:30.1%;width:41.3%;height:7.3%}
-.japanese{left:7.8%;top:38.0%;width:41.6%;height:7.3%}
-.math{left:51.0%;top:38.0%;width:41.3%;height:7.3%}
-.market{left:7.8%;top:45.7%;width:41.6%;height:7.3%}
-.pixel{left:51.0%;top:45.7%;width:41.3%;height:7.3%}
-
-.draw-cat{left:4.5%;top:55.7%;width:91.0%;height:9.0%}
-.shape-cat{left:4.5%;top:65.5%;width:91.0%;height:8.8%}
-.color-cat{left:4.5%;top:75.0%;width:91.0%;height:8.8%}
-.order-cat{left:4.5%;top:84.3%;width:91.0%;height:9.2%}
-.find-cat{right:0;bottom:0;width:22%;height:9.5%}
-
-/* 찾기 막대 — 그림 속 다른 묶음 막대와 같은 모양으로 맞춘다 */
-.find-bar{
-  width:min(100%, max(366px, calc((100svh - 170px) * 0.5951)));
-  margin:10px auto 0;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:9px 14px;
-  border:4px solid #d8665f;
-  border-radius:34px 26px 36px 28px;
-  background:#fdeceb;
-  color:#3e342e;
-  font:inherit;
-  font-size:clamp(16px,3vw,23px);
-  font-weight:900;
-  letter-spacing:-.03em;
-  text-align:left;
-  cursor:pointer;
-  transform:rotate(.2deg);
-}
-.find-bar:active{transform:translate(2px,2px) rotate(0)}
-.find-rabbit{width:clamp(46px,9vw,66px);height:clamp(46px,9vw,66px);flex:none;border-radius:50%}
-.find-name{flex:1;word-break:keep-all}
-.find-chev{
-  width:clamp(34px,6vw,46px);height:clamp(34px,6vw,46px);
-  display:grid;place-items:center;flex:none;
-  border:4px solid #d8665f;border-radius:50%;
-  background:rgba(255,255,255,.5);color:#d8665f;
-  font-family:sans-serif;font-size:clamp(16px,3vw,22px);font-weight:900;
-}
-
-/* dynamic state overlays */
-.state-check{
-  position:absolute;
-  z-index:4;
-  color:#efaa24;
-  font-size:4.1cqw;
-  font-weight:1000;
-  line-height:1;
-  transform:rotate(-10deg);
-  pointer-events:none;
-}
-.state-check.euna-check{left:43.1%;top:15.35%}
-.state-check.seoha-check{left:73.8%;top:15.35%}
-
-.state-lock{
-  position:absolute;
-  z-index:4;
-  left:42.0%;
-  top:40.6%;
-  font-size:4cqw;
-  line-height:1;
-  pointer-events:none;
-}
-
-/* Secondary drawers: initial screen remains exactly the artwork. */
-.drawer-backdrop{
-  position:fixed;
-  inset:0;
-  z-index:50;
-  display:none;
-  place-items:center;
-  padding:18px;
-  background:rgba(59,48,40,.28);
-  backdrop-filter:blur(2px);
-}
-.drawer-backdrop.open{display:grid}
-.drawer{
-  width:min(680px,96vw);
-  max-height:min(78vh,760px);
-  overflow:auto;
-  padding:22px;
-  border:4px solid var(--accent,#4e9bd2);
-  border-radius:30px 23px 32px 25px;
+/* 종이 결 — 그림 파일이 아니라 옅은 줄무늬 두 겹이다 */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
   background:
-    repeating-linear-gradient(178deg,rgba(110,80,45,.025) 0 1px,transparent 1px 6px),
-    #fffaf0;
-  box-shadow:7px 8px 0 rgba(62,52,46,.14);
+    repeating-linear-gradient(102deg,rgba(190,160,110,.05) 0 1px,transparent 1px 7px),
+    repeating-linear-gradient(8deg,rgba(190,160,110,.04) 0 1px,transparent 1px 9px);
 }
-.drawer-head{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  margin-bottom:18px;
+.page{position:relative;z-index:1;max-width:1500px;margin:0 auto;
+      padding:10px 14px calc(18px + env(safe-area-inset-bottom))}
+
+/* ── 머리: 제목 + 낙서 ─────────────────────────────── */
+.head{position:relative;display:grid;place-items:center;padding:8px 0 4px}
+.title{width:min(640px,72%);height:auto;display:block;position:relative;z-index:2}
+.head .dd{position:absolute;pointer-events:none}
+.dd-rainbow{left:0;top:6%;width:clamp(50px,9%,104px)}
+.dd-sun{right:0;top:2%;width:clamp(48px,8.5%,98px)}
+.dd-cloud{left:9%;bottom:-2%;width:clamp(34px,6%,72px);opacity:.8}
+.dd-star{right:11%;bottom:-4%;width:clamp(22px,4%,44px);opacity:.9}
+
+/* ── 누가 노나 ──────────────────────────────────────── */
+.who{display:flex;justify-content:center;gap:14px;margin:6px 0 14px}
+.who button{
+  position:relative;display:flex;align-items:center;gap:10px;
+  padding:8px 20px 8px 10px;border:0;background:none;cursor:pointer;
+  font:inherit;font-size:clamp(19px,2.6vw,26px);font-weight:900;color:#3E342E;
 }
-.drawer-title{
-  flex:1;
-  margin:0;
-  font-size:clamp(26px,6vw,42px);
-  font-weight:1000;
-  letter-spacing:-.04em;
+.who button>:not(.fr){position:relative;z-index:1}
+.who .face{width:clamp(38px,5vw,52px);height:clamp(38px,5vw,52px);flex:none}
+.who .tick{color:#EFAA24;font-weight:1000;font-size:.9em}
+
+/* ── 묶음 ───────────────────────────────────────────── */
+.groups{display:grid;gap:12px}
+.group{position:relative}
+.bar{
+  position:relative;width:100%;display:flex;align-items:center;gap:clamp(8px,1.4vw,16px);
+  padding:clamp(9px,1.3vw,15px) clamp(12px,1.6vw,20px);
+  border:0;background:none;cursor:pointer;font:inherit;text-align:left;color:#3E342E;
 }
-.close{
-  width:48px;height:48px;
-  border:3px solid var(--accent,#4e9bd2);
-  border-radius:50%;
-  background:#fff;
-  color:#493e36;
-  font-size:24px;
-  font-weight:900;
+.bar>:not(.fr):not(.fill),.game>:not(.fr):not(.fill){position:relative;z-index:1}
+.bar .rabbit{width:clamp(50px,6.6vw,84px);height:clamp(50px,6.6vw,84px);flex:none}
+.bar .cat-ico{width:clamp(34px,4.4vw,54px);height:clamp(34px,4.4vw,54px);flex:none}
+.bar .name{flex:1;font-size:clamp(19px,2.7vw,30px);font-weight:900;letter-spacing:-.03em;
+           word-break:keep-all}
+.bar .chev{width:clamp(30px,3.6vw,44px);height:clamp(30px,3.6vw,44px);flex:none}
+.bar:active{transform:translate(1px,1px)}
+
+/* 크레용 테두리 — 늘여 써도 선 굵기가 변하지 않게 non-scaling-stroke 를 쓴다.
+   (CSS border 로는 손으로 그은 선을 못 만든다) */
+.fr{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;color:var(--c);z-index:0}
+.fill{position:absolute;inset:3px;border-radius:26px;pointer-events:none;z-index:0;
+      background:repeating-linear-gradient(36deg,
+        color-mix(in srgb,var(--c) 13%,transparent) 0 3px,
+        transparent 3px 11px);}
+
+/* ── 묶음 안의 놀이 단추 ────────────────────────────── */
+.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+       gap:clamp(7px,1vw,12px);padding:0 clamp(10px,1.4vw,18px) clamp(11px,1.4vw,16px)}
+.game{
+  position:relative;display:flex;align-items:center;gap:10px;
+  padding:clamp(8px,1.1vw,13px) clamp(10px,1.2vw,15px);
+  border:0;background:none;cursor:pointer;font:inherit;text-decoration:none;color:#3E342E;
+  font-size:clamp(15px,2vw,22px);font-weight:800;letter-spacing:-.03em;min-height:52px;
 }
-.drawer-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
+.game .gi{width:clamp(30px,3.6vw,44px);height:clamp(30px,3.6vw,44px);flex:none}
+.game .fill{inset:2px;border-radius:18px;background:rgba(255,255,255,.62)}
+.game.locked{opacity:.55}
+.game[hidden]{display:none}
+.game .lock{margin-left:auto;font-size:.95em}
+.group[aria-expanded="false"] .games{display:none}
+
+/* ── 바닥 ───────────────────────────────────────────── */
+.foot{position:relative;margin-top:16px}
+.foot .scene{display:block;width:100%;height:clamp(54px,7vw,86px)}
+.parent-link{display:block;width:max-content;margin:8px auto 0;padding:8px 14px;color:#7B6F65;
+             text-decoration:none;font-weight:800;border-bottom:2px dashed rgba(62,52,46,.28)}
+
+/* ── 가로 화면: 두 줄로 나눠 화면을 다 쓴다 ─────────── */
+@media (orientation:landscape) and (min-width:820px){
+  .page{padding-inline:22px}
+  .head{padding:2px 0 0}
+  .title{width:min(520px,44%)}
+  .who{margin:2px 0 10px}
+  .groups{grid-template-columns:1fr 1fr;align-items:start;gap:10px}
+  .group.wide{grid-column:1 / -1}
+  .games{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-bottom:10px}
+  .bar{padding-block:clamp(7px,0.9vw,11px)}
+  .game{min-height:48px;padding-block:8px}
+  .foot{margin-top:8px}
+  .foot .scene{height:clamp(40px,4.4vw,60px)}
 }
-.drawer-card{
-  min-height:78px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:12px 14px;
-  border:3px solid #50433a;
-  border-radius:18px 14px 20px 15px;
-  background:rgba(255,255,255,.78);
-  color:#3e342e;
-  text-decoration:none;
-  font-size:clamp(18px,4.3vw,28px);
-  font-weight:900;
-  box-shadow:3px 4px 0 rgba(62,52,46,.08);
+/* 폰을 눕히면 세로가 아주 짧다 — 묶음을 세 줄로 벌리고 여백을 더 줄인다 */
+@media (orientation:landscape) and (max-height:520px){
+  .head{padding:0}
+  .title{width:min(360px,34%)}
+  .who{margin:0 0 6px}
+  .who .face{width:34px;height:34px}
+  .who button{font-size:17px;padding:6px 14px 6px 8px}
+  .groups{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .group.wide{grid-column:1 / -1}
+  .games{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0 8px 8px}
+  .bar{gap:8px;padding:5px 10px}
+  .bar .rabbit{width:42px;height:42px}
+  .bar .cat-ico{width:26px;height:26px}
+  .bar .name{font-size:17px}
+  .bar .chev{width:26px;height:26px}
+  .game{min-height:44px;font-size:14px;gap:7px;padding:5px 8px}
+  .game .gi{width:26px;height:26px}
+  .foot{margin-top:4px}
+  .foot .scene{height:30px}
+  .parent-link{margin-top:2px;padding:4px 12px;font-size:14px}
 }
-.drawer-card .ico{font-size:1.5em}
-.drawer-card.locked{opacity:.55}
-.parent-link{
-  display:block;
-  width:max-content;
-  margin:18px auto 0;
-  padding:10px 16px;
-  color:#776b62;
-  text-decoration:none;
-  font-weight:800;
-  border-bottom:2px dashed rgba(62,52,46,.3);
-}
-.sr-only{
-  position:absolute!important;
-  width:1px!important;height:1px!important;
-  padding:0!important;margin:-1px!important;
-  overflow:hidden!important;clip:rect(0,0,0,0)!important;
-  white-space:nowrap!important;border:0!important;
-}
-@media(max-width:520px){
-  .drawer-grid{grid-template-columns:1fr}
-}
-@media(prefers-reduced-motion:reduce){
-  *{scroll-behavior:auto!important}
-}
+
+:focus-visible{outline:4px dashed rgba(214,157,19,.9);outline-offset:-4px;border-radius:18px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
-
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <!-- 손으로 그은 네모. preserveAspectRatio=none 으로 늘여 쓰고,
+       non-scaling-stroke 로 선 굵기만은 그대로 둔다. -->
+  <symbol id="crayon-frame" viewBox="0 0 200 100" preserveAspectRatio="none">
+    <path d="M14 6 C60 2, 140 3, 187 6 C193 7, 197 14, 197 26
+             C198 48, 197 74, 195 88 C194 95, 188 97, 176 97
+             C120 99, 62 98, 20 96 C9 95, 4 90, 3.5 78
+             C2.5 56, 3 28, 4.5 16 C5.2 9, 8 6.4, 14 6 Z"
+          fill="none" stroke="currentColor" stroke-width="var(--w,4)"
+          stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+  </symbol>
+  <symbol id="crayon-pill" viewBox="0 0 200 100" preserveAspectRatio="none">
+    <path d="M30 5 C90 1, 130 2, 172 6 C188 8, 197 26, 196 52
+             C195 78, 186 94, 168 96 C118 100, 70 99, 28 95
+             C10 93, 3 74, 4 48 C5 22, 14 7, 30 5 Z"
+          fill="none" stroke="currentColor" stroke-width="var(--w,4)"
+          stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+  </symbol>
+  <symbol id="chev" viewBox="0 0 44 44">
+    <circle cx="22" cy="22" r="18" fill="rgba(255,255,255,.55)" stroke="currentColor" stroke-width="3.4"/>
+    <path d="M13 18 L22 29 L31 18" fill="none" stroke="currentColor" stroke-width="4.4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="chev-up" viewBox="0 0 44 44">
+    <circle cx="22" cy="22" r="18" fill="rgba(255,255,255,.55)" stroke="currentColor" stroke-width="3.4"/>
+    <path d="M13 26 L22 15 L31 26" fill="none" stroke="currentColor" stroke-width="4.4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="i-learn" viewBox="0 0 48 48"><g fill="none" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 13 h15 a4 4 0 0 1 3 3 a4 4 0 0 1 3 -3 h15 v24 h-15 a4 4 0 0 0 -3 3 a4 4 0 0 0 -3 -3 h-15 z" stroke="#B8791E" fill="#FFF3D6"/>
+    <path d="M24 16 v24" stroke="#B8791E"/><path d="M10 20 h9 M10 26 h9 M29 20 h9 M29 26 h9" stroke="#E2B457"/></g></symbol>
+  <symbol id="i-draw" viewBox="0 0 48 48"><g fill="none" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 37 l4 -10 L33 9 l7 7 L22 34 z" stroke="#3E86BE" fill="#DCEBF7"/>
+    <path d="M33 9 l7 7 M15 27 l7 7" stroke="#3E86BE"/><path d="M11 37 l6 -3" stroke="#8A6A4F"/></g></symbol>
+  <symbol id="i-shape" viewBox="0 0 48 48"><g fill="none" stroke-width="3.8" stroke-linejoin="round">
+    <path d="M24 6 L40 24 L24 42 L8 24 z" stroke="#4E9B48" fill="#DFF0DC"/>
+    <path d="M24 14 L33 24 L24 34 L15 24 z" stroke="#4E9B48"/></g></symbol>
+  <symbol id="i-color" viewBox="0 0 48 48"><g fill="none" stroke-width="4" stroke-linecap="round">
+    <path d="M7 36 a17 17 0 0 1 34 0" stroke="#D24B4B"/><path d="M13 36 a11 11 0 0 1 22 0" stroke="#E8A32C"/>
+    <path d="M19 36 a5 5 0 0 1 10 0" stroke="#4E9B48"/></g></symbol>
+  <symbol id="i-order" viewBox="0 0 48 48"><g fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 18 h25 l-6 -6 M39 30 h-25 l6 6" stroke="#DD8329"/></g></symbol>
+  <symbol id="i-find" viewBox="0 0 48 48"><g fill="none" stroke-width="4" stroke-linecap="round">
+    <circle cx="21" cy="20" r="12" stroke="#4E86B5" fill="#DCEBF7"/><path d="M30 30 l10 10" stroke="#B8793A" stroke-width="5.4"/></g></symbol>
+
+  <symbol id="i-hangul" viewBox="0 0 48 48"><path d="M24 6 l5.6 11.6 12.4 1.8 -9 8.9 2.2 12.7 -11.2 -6 -11.2 6 2.2 -12.7 -9 -8.9 12.4 -1.8 z"
+    fill="#FFE08A" stroke="#E0A21B" stroke-width="3.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-english" viewBox="0 0 48 48"><g stroke-linejoin="round" stroke-linecap="round">
+    <path d="M8 12 h32 v20 h-17 l-9 8 v-8 h-6 z" fill="#DCEBF7" stroke="#3E86BE" stroke-width="3.6"/>
+    <path d="M15 26 l4 -10 4 10 M17 23 h4 M28 16 v10 h4 a3.4 3.4 0 0 0 0 -10 h-4 a3.4 3.4 0 0 0 0 10" fill="none" stroke="#2E6392" stroke-width="2.8"/></g></symbol>
+  <symbol id="i-japanese" viewBox="0 0 48 48"><g stroke="#D46A93" stroke-width="3" fill="#FBDDE8" stroke-linejoin="round">
+    <ellipse cx="24" cy="11" rx="6" ry="8"/><ellipse cx="37" cy="20" rx="6" ry="8" transform="rotate(72 37 20)"/>
+    <ellipse cx="32" cy="35" rx="6" ry="8" transform="rotate(144 32 35)"/><ellipse cx="16" cy="35" rx="6" ry="8" transform="rotate(216 16 35)"/>
+    <ellipse cx="11" cy="20" rx="6" ry="8" transform="rotate(288 11 20)"/><circle cx="24" cy="24" r="3.4" fill="#E8A32C" stroke="none"/></g></symbol>
+  <symbol id="i-math" viewBox="0 0 48 48"><g fill="none" stroke-width="4" stroke-linecap="round">
+    <path d="M9 16 l4 -3 v20" stroke="#7E57B5"/><path d="M21 24 h9 M25.5 19.5 v9" stroke="#D24B4B"/>
+    <path d="M36 13 h6 v10 h-6 M36 23 h6 v10 h-6" stroke="#3E86BE" stroke-linejoin="round" fill="none"/></g></symbol>
+  <symbol id="i-market" viewBox="0 0 48 48"><g fill="none" stroke="#4E9B48" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 10 h5 l6 20 h18 l5 -14 h-25" fill="#E4F1E1"/><circle cx="19" cy="38" r="3.4"/><circle cx="33" cy="38" r="3.4"/></g></symbol>
+  <symbol id="i-pixel" viewBox="0 0 48 48"><g stroke-width="3.4" stroke-linejoin="round">
+    <path d="M9 9 h13 v5 a4 4 0 0 0 8 0 v-5 h9 v13 h-5 a4 4 0 0 0 0 8 h5 v11 h-13 v-5 a4 4 0 0 0 -8 0 v5 h-9 z"
+      fill="#DCEBD6" stroke="#4E9B48"/></g></symbol>
+
+  <symbol id="i-practika" viewBox="0 0 48 48"><g stroke-linejoin="round" stroke-width="3.2">
+    <path d="M5 10 h24 v16 h-13 l-7 6 v-6 h-4 z" fill="#FBDDE8" stroke="#D46A93"/>
+    <path d="M19 22 h24 v16 h-4 v6 l-7 -6 h-13 z" fill="#DCEBF7" stroke="#3E86BE"/></g></symbol>
+  <symbol id="i-write" viewBox="0 0 48 48"><g fill="none" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 8 h22 v32 h-22 z" fill="#FFFDF3" stroke="#8A6A4F"/><path d="M13 16 h14 M13 23 h14 M13 30 h9" stroke="#C3B6A6"/>
+    <path d="M31 34 l3 -8 8 -16 4 2 -8 16 z" fill="#FFE08A" stroke="#E0A21B"/></g></symbol>
+  <symbol id="i-lines" viewBox="0 0 48 48"><g fill="none" stroke-width="4" stroke-linecap="round">
+    <path d="M6 30 q7 -14 13 0 t13 0 t10 -6" stroke="#3E86BE" stroke-dasharray="1.5 7"/>
+    <path d="M6 39 q7 -10 13 0 t13 0" stroke="#9EC7E4"/></g></symbol>
+  <symbol id="i-coloring" viewBox="0 0 48 48"><g stroke-width="3.4" stroke-linejoin="round">
+    <path d="M24 7 a17 17 0 1 0 0 34 c4 0 3 -4 6 -4 h5 a7 7 0 0 0 0 -14 h-2 a4 4 0 0 1 0 -8 a13 13 0 0 0 -9 -8 z"
+      fill="#FFF3D6" stroke="#B8791E"/><circle cx="16" cy="18" r="3" fill="#D24B4B" stroke="none"/>
+    <circle cx="15" cy="29" r="3" fill="#3E86BE" stroke="none"/><circle cx="25" cy="14" r="3" fill="#4E9B48" stroke="none"/></g></symbol>
+
+  <symbol id="i-tangram" viewBox="0 0 48 48"><g stroke-width="3.4" stroke-linejoin="round" fill="none">
+    <path d="M6 40 a34 34 0 0 1 12 -26 l9 9 a22 22 0 0 0 -8 17 z" fill="#FBDDE8" stroke="#D46A93"/>
+    <path d="M21 14 a30 30 0 0 1 21 -8 v13 a17 17 0 0 0 -12 4 z" fill="#DCEBF7" stroke="#3E86BE"/></g></symbol>
+  <symbol id="i-geoboard" viewBox="0 0 48 48"><g><g fill="#C3B6A6">
+    <circle cx="12" cy="12" r="2.6"/><circle cx="24" cy="12" r="2.6"/><circle cx="36" cy="12" r="2.6"/>
+    <circle cx="12" cy="24" r="2.6"/><circle cx="24" cy="24" r="2.6"/><circle cx="36" cy="24" r="2.6"/>
+    <circle cx="12" cy="36" r="2.6"/><circle cx="24" cy="36" r="2.6"/><circle cx="36" cy="36" r="2.6"/></g>
+    <path d="M12 12 L36 24 L24 36 z" fill="none" stroke="#D24B4B" stroke-width="3.6" stroke-linejoin="round"/></g></symbol>
+  <symbol id="i-cups" viewBox="0 0 48 48"><g stroke-width="3.2" stroke-linejoin="round">
+    <path d="M18 8 h12 l-2 12 h-8 z" fill="#FBDDE8" stroke="#D46A93"/>
+    <path d="M7 26 h12 l-2 12 h-8 z" fill="#DCEBF7" stroke="#3E86BE"/>
+    <path d="M29 26 h12 l-2 12 h-8 z" fill="#E4F1E1" stroke="#4E9B48"/></g></symbol>
+  <symbol id="i-lab" viewBox="0 0 48 48"><g stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 7 v13 L9 38 a3 3 0 0 0 3 4 h24 a3 3 0 0 0 3 -4 L28 20 V7 z" fill="#E8DCF3" stroke="#7E57B5"/>
+    <path d="M17 8 h14" stroke="#7E57B5"/><path d="M14 31 h20" stroke="#B79BE0"/></g></symbol>
+  <symbol id="i-beads" viewBox="0 0 48 48"><g stroke-width="3" stroke="#8A6A4F">
+    <circle cx="14" cy="16" r="7" fill="#F3A0A0"/><circle cx="32" cy="16" r="7" fill="#9EC7E4"/>
+    <circle cx="14" cy="33" r="7" fill="#F7D98B"/><circle cx="32" cy="33" r="7" fill="#A9D3A0"/></g></symbol>
+  <symbol id="i-rings" viewBox="0 0 48 48"><g fill="none" stroke-width="4">
+    <circle cx="19" cy="24" r="11" stroke="#D24B4B"/><circle cx="30" cy="24" r="11" stroke="#3E86BE"/></g></symbol>
+  <symbol id="i-tubes" viewBox="0 0 48 48"><g stroke-width="3.2" stroke-linejoin="round">
+    <path d="M11 7 h11 v28 a5.5 5.5 0 0 1 -11 0 z" fill="#FFF" stroke="#8A6A4F"/>
+    <path d="M11 24 h11 v11 a5.5 5.5 0 0 1 -11 0 z" fill="#9EC7E4" stroke="none"/>
+    <path d="M26 7 h11 v28 a5.5 5.5 0 0 1 -11 0 z" fill="#FFF" stroke="#8A6A4F"/>
+    <path d="M26 18 h11 v17 a5.5 5.5 0 0 1 -11 0 z" fill="#F3A0A0" stroke="none"/>
+    <path d="M11 7 h11 M26 7 h11" stroke="#8A6A4F"/></g></symbol>
+  <symbol id="i-slide" viewBox="0 0 48 48"><g stroke-width="3" stroke="#8A6A4F">
+    <circle cx="12" cy="14" r="6" fill="#F3A0A0"/><circle cx="24" cy="14" r="6" fill="#9EC7E4"/><circle cx="36" cy="14" r="6" fill="#F7D98B"/>
+    <path d="M6 26 h36" fill="none"/><circle cx="18" cy="36" r="6" fill="#A9D3A0"/><circle cx="32" cy="36" r="6" fill="#F3A0A0"/></g></symbol>
+  <symbol id="i-burger" viewBox="0 0 48 48"><g stroke-width="3.2" stroke="#8A6A4F" stroke-linejoin="round">
+    <path d="M8 18 a16 9 0 0 1 32 0 z" fill="#E8A94F"/><path d="M8 22 h32" fill="none" stroke="#4E9B48"/>
+    <path d="M9 27 h30" fill="none" stroke="#C56A4A" stroke-width="5"/>
+    <path d="M8 33 h32 a5 5 0 0 1 -5 6 h-22 a5 5 0 0 1 -5 -6 z" fill="#E8A94F"/></g></symbol>
+  <symbol id="i-kkochi" viewBox="0 0 48 48"><g stroke-width="3" stroke="#8A6A4F">
+    <path d="M24 4 v40" fill="none"/><rect x="15" y="9" width="18" height="9" rx="3" fill="#F3A0A0"/>
+    <rect x="15" y="21" width="18" height="9" rx="3" fill="#A9D3A0"/><rect x="15" y="33" width="18" height="9" rx="3" fill="#F7D98B"/></g></symbol>
+  <symbol id="i-pattern" viewBox="0 0 48 48"><g stroke-width="3" stroke="#DD8329">
+    <circle cx="10" cy="24" r="5.5" fill="#F7D98B"/><rect x="18" y="18" width="11" height="11" rx="2" fill="#9EC7E4"/>
+    <circle cx="38" cy="24" r="5.5" fill="#F7D98B"/></g></symbol>
+  <symbol id="i-connect" viewBox="0 0 48 48"><g><path d="M10 34 L18 13 L31 30 L39 12" fill="none" stroke="#7E57B5" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#7E57B5"><circle cx="10" cy="34" r="4"/><circle cx="18" cy="13" r="4"/><circle cx="31" cy="30" r="4"/><circle cx="39" cy="12" r="4"/></g></g></symbol>
+  <symbol id="i-play" viewBox="0 0 48 48"><g fill="none" stroke-width="4" stroke-linecap="round">
+    <circle cx="21" cy="20" r="12" stroke="#4E86B5" fill="#DCEBF7"/><path d="M30 30 l10 10" stroke="#B8793A" stroke-width="5.4"/></g></symbol>
+  <symbol id="i-dice" viewBox="0 0 48 48"><g><rect x="8" y="8" width="32" height="32" rx="7" fill="#FFFDF3" stroke="#8A6A4F" stroke-width="3.4"/>
+    <g fill="#D24B4B"><circle cx="17" cy="17" r="3.2"/><circle cx="31" cy="17" r="3.2"/><circle cx="24" cy="24" r="3.2"/>
+    <circle cx="17" cy="31" r="3.2"/><circle cx="31" cy="31" r="3.2"/></g></g></symbol>
+  <symbol id="i-donut" viewBox="0 0 48 48"><g><circle cx="24" cy="24" r="16" fill="#F7C9A0" stroke="#B8791E" stroke-width="3.2"/>
+    <circle cx="24" cy="24" r="5.5" fill="#FDFBF3" stroke="#B8791E" stroke-width="3.2"/>
+    <g stroke="#D46A93" stroke-width="2.6" stroke-linecap="round"><path d="M18 12 l2 3"/><path d="M31 15 l-3 2"/><path d="M35 27 l-3 -1"/><path d="M15 32 l3 -2"/><path d="M25 37 l1 -3"/></g></g></symbol>
+  <symbol id="i-twist" viewBox="0 0 48 48"><g stroke="#8A6A4F" stroke-width="3.2" fill="#FFF3D6">
+    <ellipse cx="24" cy="12" rx="13" ry="5"/><path d="M11 12 v10 a13 5 0 0 0 26 0 v-10" fill="#FFF3D6"/>
+    <ellipse cx="24" cy="30" rx="13" ry="5" fill="#FBDDE8"/><path d="M11 30 v6 a13 5 0 0 0 26 0 v-6"/></g></symbol>
+  <symbol id="i-matrix" viewBox="0 0 48 48"><g stroke="#8A6A4F" stroke-width="2.8">
+    <path d="M9 9 h15 v15 h-15 z" fill="#F3A0A0"/><path d="M24 9 h15 v15 h-15 z" fill="#9EC7E4"/>
+    <path d="M9 24 h15 v15 h-15 z" fill="#F7D98B"/><path d="M24 24 h15 v15 h-15 z" fill="#A9D3A0"/></g></symbol>
+  <symbol id="i-bag" viewBox="0 0 48 48"><g fill="none" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 6 a13 13 0 0 1 8 23 v5 h-16 v-5 a13 13 0 0 1 8 -23 z" fill="#FFF3D6" stroke="#E0A21B"/>
+    <path d="M18 38 h12 M20 42 h8" stroke="#B8791E"/></g></symbol>
+
+  <!-- 바닥 풀밭 — 늘여도 되도록 획만으로 그린다 -->
+  <symbol id="scene" viewBox="0 0 900 90" preserveAspectRatio="none">
+    <g fill="none" stroke="#7FA857" stroke-width="5" stroke-linecap="round">
+      <path d="M0 84 H900"/>
+      <path d="M20 84 q4 -18 10 -24 M52 84 q-3 -16 2 -22 M86 84 q6 -20 12 -25 M120 84 q-4 -14 1 -20
+               M156 84 q5 -18 11 -23 M192 84 q-3 -15 2 -21 M228 84 q6 -19 12 -24 M264 84 q-4 -13 1 -19
+               M300 84 q5 -18 11 -24 M338 84 q-3 -15 2 -21 M374 84 q6 -19 12 -24 M410 84 q-4 -14 1 -20
+               M448 84 q5 -18 11 -23 M486 84 q-3 -16 2 -22 M522 84 q6 -19 12 -24 M558 84 q-4 -13 1 -19
+               M596 84 q5 -18 11 -24 M632 84 q-3 -15 2 -21 M668 84 q6 -19 12 -24 M704 84 q-4 -14 1 -20
+               M742 84 q5 -18 11 -23 M778 84 q-3 -16 2 -22 M814 84 q6 -19 12 -24 M852 84 q-4 -13 1 -19
+               M884 84 q5 -17 10 -22"/>
+    </g>
+  </symbol>
+</defs></svg>
+
 <div class="page">
-  <div class="stage" aria-label="은아와 서하의 놀이터">
-    <img class="design" src="./assets/home-design.webp" alt="은아와 서하의 놀이터 손그림 홈 화면">
 
-    <button class="hotspot euna" type="button" data-profile-name="은아" aria-label="은아 선택"></button>
-    <button class="hotspot seoha" type="button" data-profile-name="서하" aria-label="서하 선택"></button>
-
-    <a class="hotspot hangul" href="./hangul/" aria-label="한글 놀이터"></a>
-    <a class="hotspot english" href="./english/" aria-label="영어 놀이터"></a>
-    <a class="hotspot japanese" href="./japanese/" aria-label="일본어 놀이터"></a>
-    <a class="hotspot math" href="./math/" aria-label="산수 놀이터"></a>
-    <a class="hotspot market" href="./market/" aria-label="시장 놀이터"></a>
-    <a class="hotspot pixel" href="./pixel/" aria-label="픽셀 놀이터"></a>
-
-    <button class="hotspot draw-cat" type="button" data-drawer="draw" aria-label="그리기와 쓰기 열기"></button>
-    <button class="hotspot shape-cat" type="button" data-drawer="shape" aria-label="모양 만들기 열기"></button>
-    <button class="hotspot color-cat" type="button" data-drawer="color" aria-label="색 맞추기 열기"></button>
-    <button class="hotspot order-cat" type="button" data-drawer="order" aria-label="순서와 규칙 열기"></button>
-    <button class="hotspot find-cat" type="button" data-drawer="find" aria-label="찾기와 짝맞추기 열기"></button>
-
-    <span class="state-check euna-check" id="check-euna" hidden>✓</span>
-    <span class="state-check seoha-check" id="check-seoha" hidden>✓</span>
-    <span class="state-lock" id="ja-lock" hidden>🔒</span>
+  <div class="head">
+    <img class="dd dd-rainbow" src="./assets/doodle-rainbow.svg" alt="">
+    <img class="dd dd-sun" src="./assets/doodle-sun.svg" alt="">
+    <img class="dd dd-cloud" src="./assets/doodle-cloud.svg" alt="">
+    <img class="dd dd-star" src="./assets/doodle-star.svg" alt="">
+    <img class="title" src="./assets/title.svg" alt="은아와 서하의 놀이터">
   </div>
 
-  <!-- 이 묶음만 그림에 그려져 있지 않다. 돌고래를 눌러야 열리는데 글 못 읽는
-       아이는 그걸 알 수 없어서, 그림과 같은 모양의 막대를 밖으로 꺼냈다. -->
-  <button class="find-bar" type="button" data-drawer="find">
-    <img class="find-rabbit" src="./assets/cat-find.svg" alt="">
-    <span class="find-name">👀 찾기와 짝맞추기</span>
-    <span class="find-chev" aria-hidden="true">▾</span>
-  </button>
+  <div class="who" id="who"></div>
 
-  <a class="parent-link" href="./parent/">🔑 부모님 페이지</a>
-</div>
+  <div class="groups" id="groups"></div>
 
-<div class="drawer-backdrop" id="drawer-backdrop" aria-hidden="true">
-  <section class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
-    <div class="drawer-head">
-      <h2 class="drawer-title" id="drawer-title"></h2>
-      <button class="close" id="drawer-close" type="button" aria-label="닫기">×</button>
-    </div>
-    <div class="drawer-grid" id="drawer-grid"></div>
-  </section>
+  <div class="foot">
+    <svg class="scene" viewBox="0 0 900 90" preserveAspectRatio="none" aria-hidden="true">
+      <use href="#scene"></use>
+    </svg>
+    <a class="parent-link" href="./parent/">🔑 부모님 페이지</a>
+  </div>
 </div>
 
 <script>window.EnjoyProfileBadge = false;</script>
@@ -283,60 +319,28 @@ body{
 
 <script>
 (() => {
-  const DATA = {
-    draw: {
-      title:'✏️ 그리기와 쓰기',
-      accent:'#4e9bd2',
-      items:[
-        ['✍️','글씨 놀이터','./write/'],
-        ['✏️','선 따라 그리기','./lines/'],
-        ['🎨','색칠공부','./coloring/']
-      ]
-    },
-    shape: {
-      title:'🔷 모양 만들기',
-      accent:'#64a95e',
-      items:[
-        ['🔷','도형 놀이터','./shape/'],
-        ['🌈','무지개 탱그램','./tangram/'],
-        ['📌','지오보드','./geoboard/'],
-        ['🥤','컵 쌓기','./cups/']
-      ]
-    },
-    color: {
-      title:'🌈 색 맞추기',
-      accent:'#8a64b5',
-      items:[
-        ['🧪','색깔 실험실','./lab/'],
-        ['🔵','구슬 보드','./beads/'],
-        ['💍','손가락 고무줄','./rings/'],
-        ['⚗️','시험관 구슬','./tubes/'],
-        ['🔴','네 색 슬라이드','./slide/']
-      ]
-    },
-    order: {
-      title:'🔁 순서와 규칙',
-      accent:'#e58a2f',
-      items:[
-        ['🍔','햄버거 가게','./burger/'],
-        ['🍢','꼬치 가게','./kkochi/'],
-        ['🔁','패턴 놀이터','./pattern/'],
-        ['✏️','점 잇기','./connect/']
-      ]
-    },
-    find: {
-      title:'👀 찾기와 짝맞추기',
-      accent:'#d9625b',
-      items:[
-        ['🔍','찾기 놀이터','./play/'],
-        ['🎲','동물 주사위','./dice/'],
-        ['🍩','도넛 짝맞추기','./donut/'],
-        ['🎡','돌림 블록','./twist/'],
-        ['🧭','방향·색 놀이터','./matrix/'],
-        ['💡','생각 놀이터','./bag/']
-      ]
-    }
-  };
+  /* 묶음 여섯. 놀이를 새로 넣을 때는 여기 한 줄만 더하면 된다
+     (아이콘은 위 <defs> 에 #i-<아이디> 로 그려 넣는다). */
+  const GROUPS = [
+    { key:'learn', name:'배우기', c:'#E0A21B', rabbit:'cat-learn', wide:true, open:true,
+      games:[['한글 놀이터','hangul'],['영어 놀이터','english'],['일본어 놀이터','japanese'],
+             ['산수 놀이터','math'],['시장 놀이터','market'],['픽셀 놀이터','pixel'],
+             ['프랙티카 놀이터','practika']] },
+    { key:'draw', name:'그리기와 쓰기', c:'#3E86BE', rabbit:'cat-draw',
+      games:[['글씨 놀이터','write'],['선 따라 그리기','lines'],['색칠공부','coloring']] },
+    { key:'shape', name:'모양 만들기', c:'#4E9B48', rabbit:'cat-shape',
+      games:[['도형 놀이터','shape'],['무지개 탱그램','tangram'],['지오보드','geoboard'],
+             ['컵 쌓기','cups']] },
+    { key:'color', name:'색 맞추기', c:'#7E57B5', rabbit:'cat-color',
+      games:[['색깔 실험실','lab'],['구슬 보드','beads'],['손가락 고무줄','rings'],
+             ['시험관 구슬','tubes'],['네 색 슬라이드','slide']] },
+    { key:'order', name:'순서와 규칙', c:'#DD8329', rabbit:'cat-order',
+      games:[['햄버거 가게','burger'],['꼬치 가게','kkochi'],['패턴 놀이터','pattern'],
+             ['점 잇기','connect']] },
+    { key:'find', name:'찾기와 짝맞추기', c:'#CE5C55', rabbit:'cat-find',
+      games:[['찾기 놀이터','play'],['동물 주사위','dice'],['도넛 짝맞추기','donut'],
+             ['돌림 블록','twist'],['방향·색 놀이터','matrix'],['생각 놀이터','bag']] },
+  ];
 
   function speak(text){
     if(!window.speechSynthesis) return 0;
@@ -344,95 +348,99 @@ body{
       speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(text);
       u.lang='ko-KR';u.rate=1;u.pitch=1.15;
+      if(window.VoiceSettings){
+        const v=VoiceSettings.koVoice(); if(v) u.voice=v;
+        u.rate=1*VoiceSettings.rateFactor();
+      }
       speechSynthesis.speak(u);
       return 1;
     }catch(e){return 0}
   }
 
-  function profileName(){
-    if(!window.Profile) return '은아';
-    const current=Profile.current();
-    const p=Profile.LIST.find(x=>x.id===current);
-    return p ? p.name : '은아';
+  function go(href,say){
+    const spoke=speak(say);
+    setTimeout(()=>{location.href=href}, spoke?700:0);
   }
+
+  /* ── 누가 노나 ── */
+  const FACE={ euna:'cat-learn', seoha:'cat-order' };
+  const who=document.getElementById('who');
+  const list=(window.Profile && Profile.LIST) || [{id:'euna',name:'은아'},{id:'seoha',name:'서하'}];
+  who.innerHTML=list.map(p=>`
+    <button type="button" data-id="${p.id}" aria-pressed="false" aria-label="${p.name} 선택">
+      <svg class="fr" preserveAspectRatio="none"><use href="#crayon-pill"></use></svg>
+      <img class="face" src="./assets/${FACE[p.id]||'cat-learn'}.svg" alt="">
+      <span>${p.name}</span><span class="tick" hidden>✓</span>
+    </button>`).join('');
 
   function syncProfile(){
-    const name=profileName();
-    document.getElementById('check-euna').hidden = name !== '은아';
-    document.getElementById('check-seoha').hidden = name !== '서하';
+    const cur = window.Profile ? Profile.current() : 'euna';
+    who.querySelectorAll('button').forEach(b=>{
+      const on = b.dataset.id===cur;
+      b.setAttribute('aria-pressed', on?'true':'false');
+      b.querySelector('.tick').hidden = !on;
+      b.querySelector('.fr').style.cssText = on
+        ? '--c:#EFAA24;--w:5.4' : '--c:#8A6A4F;--w:4';
+    });
   }
-
-  document.querySelectorAll('[data-profile-name]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      if(!window.Profile) return;
-      const name=btn.dataset.profileName;
-      const p=Profile.LIST.find(x=>x.name===name);
-      if(!p) return;
-      if(p.id!==Profile.current()) Profile.set(p.id);
+  who.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      if(window.Profile && b.dataset.id!==Profile.current()) Profile.set(b.dataset.id);
       syncProfile();
-      speak(name+', 어서 와!');
+      speak(b.querySelector('span').textContent+', 어서 와!');
     });
   });
 
-  const ja=document.querySelector('.japanese');
-  const jaLocked=window.ParentSettings && !ParentSettings.japaneseUnlocked();
-  document.getElementById('ja-lock').hidden=!jaLocked;
+  /* ── 묶음과 놀이 ── */
+  const jaLocked = window.ParentSettings && !ParentSettings.japaneseUnlocked();
+  /* 프랙티카는 회화라 5세에겐 어렵다 — 부모님이 켜야 보인다 */
+  const showPractika = !!(window.ParentSettings && ParentSettings.get('showPractika'));
 
-  ja.addEventListener('click',e=>{
-    if(!jaLocked) return;
-    e.preventDefault();
-    speak('한글 놀이터에서 낱말 카드를 열 장 모으면 열려요!');
+  document.getElementById('groups').innerHTML = GROUPS.map(g=>`
+    <section class="group${g.wide?' wide':''}" data-key="${g.key}"
+             aria-expanded="${g.open?'true':'false'}" style="--c:${g.c}">
+      <button class="bar" type="button" aria-label="${g.name} 열기">
+        <svg class="fr" preserveAspectRatio="none" style="--w:5"><use href="#crayon-frame"></use></svg>
+        <div class="fill"></div>
+        <img class="rabbit" src="./assets/${g.rabbit}.svg" alt="">
+        <svg class="cat-ico" aria-hidden="true"><use href="#i-${g.key}"></use></svg>
+        <span class="name">${g.name}</span>
+        <svg class="chev" aria-hidden="true"><use href="#${g.open?'chev-up':'chev'}"></use></svg>
+      </button>
+      <div class="games">${g.games.map(([name,id])=>{
+        const locked = id==='japanese' && jaLocked;
+        const hide = id==='practika' && !showPractika;
+        return `<a class="game${locked?' locked':''}" href="./${id}/" data-id="${id}"
+                   aria-label="${name}"${hide?' hidden':''}>
+          <svg class="fr" preserveAspectRatio="none" style="--w:3.4"><use href="#crayon-frame"></use></svg>
+          <div class="fill"></div>
+          <svg class="gi" aria-hidden="true"><use href="#i-${id}"></use></svg>
+          <span>${name}</span>${locked?'<span class="lock">🔒</span>':''}
+        </a>`;
+      }).join('')}</div>
+    </section>`).join('');
+
+  document.querySelectorAll('.bar').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const s=b.closest('.group');
+      const open = s.getAttribute('aria-expanded')==='true';
+      s.setAttribute('aria-expanded', open?'false':'true');
+      b.querySelector('.chev use').setAttribute('href', open?'#chev':'#chev-up');
+      if(!open) speak(s.querySelector('.name').textContent);
+    });
   });
 
-  document.querySelectorAll('.stage a.hotspot').forEach(a=>{
-    if(a.classList.contains('japanese')) return;
+  document.querySelectorAll('.game').forEach(a=>{
     a.addEventListener('click',e=>{
       e.preventDefault();
-      const label=a.getAttribute('aria-label') || '';
-      const spoke=speak(label);
-      setTimeout(()=>location.href=a.href,spoke?700:0);
+      const name=a.querySelector('span').textContent;
+      if(a.classList.contains('locked')){
+        speak('한글 놀이터에서 낱말 카드를 열 장 모으면 열려요!');
+        return;
+      }
+      go(a.getAttribute('href'), name);
     });
   });
-
-  const backdrop=document.getElementById('drawer-backdrop');
-  const drawer=document.getElementById('drawer');
-  const title=document.getElementById('drawer-title');
-  const grid=document.getElementById('drawer-grid');
-
-  function openDrawer(key){
-    const d=DATA[key];
-    if(!d) return;
-    drawer.style.setProperty('--accent',d.accent);
-    title.textContent=d.title;
-    grid.innerHTML='';
-    d.items.forEach(([ico,name,href])=>{
-      const a=document.createElement('a');
-      a.className='drawer-card';
-      a.href=href;
-      a.innerHTML='<span class="ico">'+ico+'</span><span>'+name+'</span>';
-      a.addEventListener('click',e=>{
-        e.preventDefault();
-        const spoke=speak(name);
-        setTimeout(()=>location.href=href,spoke?700:0);
-      });
-      grid.appendChild(a);
-    });
-    backdrop.classList.add('open');
-    backdrop.setAttribute('aria-hidden','false');
-    speak(d.title.replace(/[^\uAC00-\uD7A30-9 ]/g,'').trim());
-  }
-
-  function closeDrawer(){
-    backdrop.classList.remove('open');
-    backdrop.setAttribute('aria-hidden','true');
-  }
-
-  document.querySelectorAll('[data-drawer]').forEach(b=>{
-    b.addEventListener('click',()=>openDrawer(b.dataset.drawer));
-  });
-  document.getElementById('drawer-close').addEventListener('click',closeDrawer);
-  backdrop.addEventListener('click',e=>{if(e.target===backdrop)closeDrawer()});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
 
   syncProfile();
 })();

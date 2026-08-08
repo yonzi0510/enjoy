@@ -52,7 +52,6 @@
 
 - **바닐라 HTML/CSS/JS만.** 빌드 도구, npm 의존성, CDN 스크립트, 외부 API, 서버, 로그인 전부 금지.
 - 그림은 **이모지·인라인 SVG·캔버스**, 소리는 **Web Speech TTS + Web Audio 합성 효과음**. 외부 이미지·오디오 파일을 받지 않는다.
-  (유일한 예외 — 홈 화면은 승인된 손그림 시안 이미지를 그대로 쓴다. 아래 "홈 화면" 절 참고.)
 - 저장은 **localStorage만** 쓴다.
 - 한국어 TTS 발화 시 공용 목소리 설정을 따른다:
   `VoiceSettings.koVoice()` / `기본빠르기 * VoiceSettings.rateFactor()` (사용법은 `shared/voice-settings.js` 머리 주석 참고).
@@ -108,6 +107,7 @@ node coloring/tools/validate-data.js
 
 # 2) e2e (저장소 루트에서 정적 서버를 띄운 뒤 실행)
 python3 -m http.server 8777 &
+node tools/e2e-home.mjs                   # 홈 화면 (폰·패드 × 가로·세로)
 node hangul/tools/e2e.mjs                 # japanese·write·math·play·shape·market·lab도 같은 포트
 BASE_URL=http://127.0.0.1:8777/practika/ node practika/tools/e2e.mjs   # 기본값은 8788 포트
 PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
@@ -125,28 +125,33 @@ PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
   `README.md`에 항목을 추가하며, 규모가 있으면 `PLAN.md`로 설계를 남긴다.
 - 데이터(도안·사전·씬 등)를 추가·수정하면 해당 validate 스크립트가 그 계약을 검사하는지 확인하고, 필요하면 검증기도 함께 고친다.
 
-## 홈 화면 (⚠️ 이미지 기반 — 새 놀이 추가 전에 반드시 읽을 것)
+## 홈 화면 (코드로 짜여 있다 — 새 놀이 추가 전에 읽을 것)
 
-루트 `index.html`은 **승인된 손그림 시안 이미지(`assets/home-design.webp`)를 화면 그대로 깔고,
-그 위에 투명 버튼(`.hotspot`)을 %좌표로 얹는** 방식이다. 보이는 그림이 곧 시안이라 재현 오차가 없다.
+루트 `index.html`은 **그림 파일 없이 코드로만** 만든다. 손그림 느낌은 SVG가, 자리 배치는 CSS가 맡는다.
+(2026-08 이전에는 손그림 시안 이미지 한 장을 깔았는데, 가로 화면을 못 쓰고 새 놀이를 넣으려면
+그림을 다시 그려야 해서 걷어냈다.)
 
 **묶음 6종**: 📚 배우기 · ✏️ 그리기와 쓰기 · 🔷 모양 만들기 · 🌈 색 맞추기 · 🔁 순서와 규칙 · 👀 찾기와 짝맞추기
+막대를 누르면 그 자리에서 펼쳐진다(아코디언). 처음에는 배우기만 펼쳐져 있다.
 
-| 묶음 | 어디에 있나 | 놀이를 추가하려면 |
+**놀이를 새로 넣으려면** `index.html`의 `GROUPS` 배열에 `['이름','폴더id']` 한 줄을 더하고,
+같은 파일 위쪽 `<defs>`에 `#i-<폴더id>` 아이콘을 그려 넣으면 끝이다. 여섯 묶음 어디든 똑같다.
+
+| 무엇 | 어디에 | 만드는 법 |
 |---|---|---|
-| 📚 배우기 (6개) | **그림 안에** 그려져 있고 그 위에 투명 링크 | **그림을 다시 그려야 한다** — 코드만으로는 못 늘린다 |
-| 나머지 5묶음 | 막대를 누르면 열리는 펼침 메뉴(드로어) | `index.html`의 드로어 목록에 **한 줄 추가**하면 끝 |
+| 제목 글씨 | `assets/title.svg` | `node tools/make-title.mjs` — 은아 손글씨를 보고 자모 획으로 그린다 |
+| 묶음 토끼 6마리 | `assets/cat-*.svg` | `node tools/make-category-icons.mjs` |
+| 낙서(무지개·해·구름·별) | `assets/doodle-*.svg` | `node tools/make-doodles.mjs` |
+| 놀이 아이콘 29종 + 묶음 아이콘 6종 | `index.html` 안 `<symbol id="i-…">` | 파일에 직접 그린다 |
+| 크레용 테두리 | `index.html` 안 `#crayon-frame` / `#crayon-pill` | 아래 주의사항 참고 |
 
-- 그러므로 **새 놀이는 되도록 배우기 외 묶음에 넣는다.** 배우기에 꼭 넣어야 하면 시안 이미지 재작업이 함께 필요하다.
-- 👀 찾기와 짝맞추기는 시안 그림에 없어서, 그림 아래에 **같은 모양의 막대(`.find-bar`)를 코드로 따로 그려** 뒀다.
-  (원래는 하단 돌고래를 눌러야 열렸는데, 글 못 읽는 아이는 찾을 수 없어 밖으로 꺼냈다.)
-- **틀 크기**: 그림이 세로로 긴 비율(914:1536)이라 화면 너비에만 맞추면 가로 화면에서 아래가 잘린다.
-  `.stage` 는 화면 **높이**에도 맞추고, 놀이 버튼이 5세 터치 하한 44px 밑으로 내려가지 않게 최소 366px을 지킨다.
-- 그림 위에 얹는 표시(자물쇠·체크)는 **화면 너비(vw)가 아니라 틀 너비(cqw) 기준**이어야 한다.
-  vw로 두면 틀이 화면보다 좁아지는 가로 화면에서 혼자만 커져 엉뚱한 자리에 찍힌다.
-- 이미지는 **WebP 0.3MB**다. 다시 만들 때 PNG로 두면 1.6MB가 되니, Chromium 캔버스로 재인코딩한다
-  (이 환경엔 이미지 도구가 없다).
-
-> 이 방식은 "그림은 이모지·인라인 SVG·캔버스" 원칙의 **유일한 예외**다. 부모님이 시안을 그대로
-> 쓰기로 정하셔서 홈에만 적용했다. 다른 앱은 예외 없이 원칙을 따른다.
-
+- **크레용 테두리는 CSS `border`로 못 만든다.** 늘어나는 `<symbol>`에 `preserveAspectRatio="none"`,
+  선에 `vector-effect="non-scaling-stroke"`를 줘서 늘여도 굵기가 그대로이게 한다.
+  `border-image` 9분할은 필터 걸린 SVG의 모서리를 뭉갠다 — 쓰지 말 것.
+- **테두리·칠은 `position:absolute`라 글자를 덮는다.** 안쪽 내용에 `position:relative;z-index:1`을 줘야
+  글자가 위로 올라온다(`.bar>:not(.fr):not(.fill)` 규칙).
+- **가로 화면**: `orientation:landscape`에서 묶음을 두 줄(폰처럼 세로가 짧으면 세 줄)로 벌려 화면을 다 쓴다.
+  터치 하한 44px은 네 경우(폰·패드 × 가로·세로) 모두 지킨다.
+- **한글 글꼴 파일은 못 쓴다**(2~6MB). 대신 **정해진 문구는 자모 획으로 그리면 된다** — 제목 2.6KB가 그 예다.
+- 고치면 반드시 `node tools/e2e-home.mjs`를 돌린다(정적 서버 필요). 네 화면 × 각 검사 항목을 전부 잰다.
+- 프랙티카는 배우기 안에 있으나 부모님이 켜야 보인다(`ParentSettings.get('showPractika')`, 기본 꺼짐).

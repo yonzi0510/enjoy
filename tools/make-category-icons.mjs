@@ -36,37 +36,33 @@ const SHIFT = 2.5;
 
 /* ── 공용 핑크 토끼 베이스 (앱 아이콘과 같은 모양) ─────────────────── */
 function rabbit() {
-  const eye = { l: [83, 92], r: [117, 92] };
+  /* 납작한 손그림 토끼 — 참고 그림처럼 굵은 크레용 윤곽에 단색으로 칠한다.
+     예전 벡터 토끼(그라데이션·반짝이 눈·여러 겹 타원)는 매끈해서 크레용과 겉돌았다.
+     귀·머리·몸을 한 덩어리로 단순화하고, 획을 굵게(5) 잡아 작은 크기에서도 버틴다. */
+  const S = 5;                 // 크레용 획 굵기
+  const L = '#5A4632';         // 크레용 갈색 윤곽
+  const P = '#F9B8CE';         // 납작한 분홍
+  const I = '#F08CAE';         // 안쪽 귀·볼
   return `
-    <g>
-      <g transform="rotate(-14 84 62)">
-        <ellipse cx="84" cy="40" rx="15" ry="40" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-        <ellipse cx="84" cy="44" rx="7" ry="27" fill="#FF9BBB"/>
-      </g>
-      <g transform="rotate(14 116 62)">
-        <ellipse cx="116" cy="40" rx="15" ry="40" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-        <ellipse cx="116" cy="44" rx="7" ry="27" fill="#FF9BBB"/>
-      </g>
-    </g>
-    <ellipse cx="82" cy="187" rx="15" ry="10" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="118" cy="187" rx="15" ry="10" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="82" cy="188" rx="6" ry="4" fill="#FF9BBB"/>
-    <ellipse cx="118" cy="188" rx="6" ry="4" fill="#FF9BBB"/>
-    <ellipse cx="100" cy="150" rx="46" ry="43" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="100" cy="158" rx="27" ry="30" fill="#FFFDF8"/>
-    <ellipse cx="66" cy="150" rx="12" ry="14" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="134" cy="150" rx="12" ry="14" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="100" cy="95" rx="50" ry="46" fill="url(#body)" stroke="#3A2E26" stroke-width="3"/>
-    <ellipse cx="71" cy="103" rx="11" ry="8" fill="#FF9BBB" opacity=".6"/>
-    <ellipse cx="129" cy="103" rx="11" ry="8" fill="#FF9BBB" opacity=".6"/>
-    <ellipse cx="${eye.l[0]}" cy="${eye.l[1]}" rx="8.5" ry="11" fill="#3A2233"/>
-    <ellipse cx="${eye.r[0]}" cy="${eye.r[1]}" rx="8.5" ry="11" fill="#3A2233"/>
-    <circle cx="${eye.l[0] - 3}" cy="${eye.l[1] - 4}" r="3.2" fill="#fff"/>
-    <circle cx="${eye.r[0] - 3}" cy="${eye.r[1] - 4}" r="3.2" fill="#fff"/>
-    <circle cx="${eye.l[0] + 3}" cy="${eye.l[1] + 4}" r="1.5" fill="#fff" opacity=".85"/>
-    <circle cx="${eye.r[0] + 3}" cy="${eye.r[1] + 4}" r="1.5" fill="#fff" opacity=".85"/>
-    <path d="M95 105 h10 l-5 5.5 z" fill="#3A2E26"/>
-    <path d="M100 110.5 q-5 6 -11 3 M100 110.5 q5 6 11 3" fill="none" stroke="#3A2E26" stroke-width="2.4" stroke-linecap="round"/>`;
+    <g stroke="${L}" stroke-width="${S}" stroke-linecap="round" stroke-linejoin="round">
+      <!-- 귀 -->
+      <path d="M78 66 Q70 24 82 16 Q94 24 90 66 Z" fill="${P}"/>
+      <path d="M122 66 Q130 24 118 16 Q106 24 110 66 Z" fill="${P}"/>
+      <path d="M81 58 Q77 34 83 27 Q89 34 87 58 Z" fill="${I}" stroke="none"/>
+      <path d="M119 58 Q123 34 117 27 Q111 34 113 58 Z" fill="${I}" stroke="none"/>
+      <!-- 몸 -->
+      <path d="M100 178 Q58 178 58 142 Q58 118 100 118 Q142 118 142 142 Q142 178 100 178 Z" fill="${P}"/>
+      <!-- 머리 -->
+      <circle cx="100" cy="92" r="44" fill="${P}"/>
+      <!-- 볼 -->
+      <ellipse cx="72" cy="102" rx="9" ry="6.5" fill="${I}" stroke="none"/>
+      <ellipse cx="128" cy="102" rx="9" ry="6.5" fill="${I}" stroke="none"/>
+      <!-- 눈·코·입: 점과 짧은 획으로만 (크레용으로 콕 찍은 느낌) -->
+      <circle cx="86" cy="88" r="4.6" fill="${L}" stroke="none"/>
+      <circle cx="114" cy="88" r="4.6" fill="${L}" stroke="none"/>
+      <path d="M96 103 h8 l-4 4 z" fill="${L}" stroke="none"/>
+      <path d="M100 107 q-6 6 -12 2 M100 107 q6 6 12 2" fill="none" stroke-width="3.4"/>
+    </g>`;
 }
 
 /* ── 묶음 6종 ──────────────────────────────────────────────────────

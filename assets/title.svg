@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 916 120"
+     role="img" aria-label="은아와 서하의 놀이터">
+  <defs>
+    <!-- 사인펜이라 번짐은 없고, 손 떨림만 아주 조금 -->
+    <filter id="h" x="-3%" y="-8%" width="106%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.019" numOctaves="2" seed="11" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.7"/>
+    </filter>
+  </defs>
+  <g filter="url(#h)" fill="none" stroke-width="11"
+     stroke-linecap="round" stroke-linejoin="round">
+    <g transform="translate(56 61) rotate(-1.8) scale(1.02) translate(-46 -59)"
+       stroke="#C93C9B"><path d="M46 15 a16.48 15.2 0 1 1 -1.5 0.2"/><path d="M44.5 15.2 l3.5 -1.2"/><path d="M19 55 h57"/><path d="M21 65 v27 h53"/></g>
+    <g transform="translate(148 56) rotate(1.4) scale(0.97) translate(-46 -59)"
+       stroke="#C93C9B"><path d="M33 34 a21.63 19.95 0 1 1 -1.5 0.2"/><path d="M31.5 34.2 l3.5 -1.2"/><path d="M68 19 v75"/><path d="M68 52.75 h19"/></g>
+    <g transform="translate(240 60) rotate(-0.9) scale(1.04) translate(-46 -59)"
+       stroke="#C93C9B"><path d="M27 18 a15.450000000000001 14.25 0 1 1 -1.5 0.2"/><path d="M25.5 18.2 l3.5 -1.2"/><path d="M7 61 h45"/><path d="M29.5 44 v17"/><path d="M70 17 v78"/><path d="M70 52.1 h19"/></g>
+    <g transform="translate(366 58) rotate(2.1) scale(0.99) translate(-46 -59)"
+       stroke="#7B3FC4"><path d="M28 25 l-17 63"/><path d="M28 41.379999999999995 l15 46.62"/><path d="M77 19 v75"/><path d="M58 52 h19"/></g>
+    <g transform="translate(458 62) rotate(-1.5) scale(1.03) translate(-46 -59)"
+       stroke="#7B3FC4"><path d="M28 24 v-7"/><path d="M9 36 h44"/><path d="M31 45 a16.48 15.2 0 1 1 -1.5 0.2"/><path d="M29.5 45.2 l3.5 -1.2"/><path d="M72 19 v75"/><path d="M72 52.75 h19"/></g>
+    <g transform="translate(550 59) rotate(0.8) scale(0.96) translate(-46 -59)"
+       stroke="#7B3FC4"><path d="M27 19 a16.48 15.2 0 1 1 -1.5 0.2"/><path d="M25.5 19.2 l3.5 -1.2"/><path d="M9 67 h41"/><path d="M72 17 v77"/></g>
+    <g transform="translate(676 57) rotate(-2.2) scale(1.05) translate(-46 -59)"
+       stroke="#2E56C8"><path d="M25 13 v23 h31"/><path d="M13 51 h51"/><path d="M38.5 34 v17"/><path d="M21 65 h51 v13.5 h-51 v13.5 h51"/></g>
+    <g transform="translate(768 61) rotate(1.1) scale(0.98) translate(-46 -59)"
+       stroke="#2E56C8"><path d="M33 34 a21.63 19.95 0 1 1 -1.5 0.2"/><path d="M31.5 34.2 l3.5 -1.2"/><path d="M74 19 v75"/></g>
+    <g transform="translate(860 58) rotate(-0.6) scale(1.01) translate(-46 -59)"
+       stroke="#2E56C8"><path d="M13 29 h41"/><path d="M13 52.5 h38"/><path d="M13 29 v47 h41"/><path d="M79 19 v75"/><path d="M60 52 h19"/></g>
+  </g>
+</svg>
