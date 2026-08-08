@@ -1,0 +1,171 @@
+/* shared/crayon.css — 디자인 시안 C "크레용 스케치북" 공용 스킨
+ *
+ * 앱마다 style.css 를 다시 쓰지 않는다. 29개 놀이가 전부 같은 표면 공식
+ * (`box-shadow: inset ..., 0 Npx 0 var(--chunk), 0 Npx Npx rgba(var(--accent), ...)`)
+ * 을 쓰고 있어서, 이 파일 한 장을 **맨 마지막에** 불러 재질만 덮어쓴다.
+ *
+ * 원칙 — **틀만 바꾸고 놀잇감은 건드리지 않는다.**
+ *   바탕·카드·버튼 같은 '화면 틀'은 크레용 종이로 바꾸고,
+ *   놀이 안의 색(구슬·물감·도형·조각)은 그대로 둔다. 오히려 바탕이 조용해져서
+ *   놀잇감 색이 더 또렷해지는 게 이 시안을 고른 이유다.
+ *
+ * 색은 앱이 정한 것을 그대로 쓴다 — `--tint`(옅은 표면색)를 살려 두어
+ * 앱마다·단계마다의 색 구분이 사라지지 않게 하고, **재질만** 바꾼다:
+ *   광택 그라데이션 + 유채색 바닥 단면  →  흰 종이 + 연필심 윤곽 + 크레용 자국 그림자
+ *
+ * 불러오는 위치: 각 앱 index.html 의 스타일시트 중 **가장 마지막**
+ * (css/style.css 보다 뒤여야 덮어쓴다)
+ */
+
+:root {
+  --paper: #FFFDF6;   /* 스케치북 종이 */
+  --ink:   #3A2E26;   /* 연필심 — 윤곽선과 글자 */
+  --ink-2: #7A6E60;   /* 옅은 연필 — 보조 글자 */
+  --crayon-shadow: 4px 5px 0 rgba(58, 46, 38, .16);
+  --crayon-shadow-sm: 2px 3px 0 rgba(58, 46, 38, .14);
+}
+
+/* ── 바탕: 스케치북 종이 + 아주 옅은 줄노트 선 ───────────────────── */
+body {
+  background:
+    repeating-linear-gradient(180deg, transparent 0 39px, rgba(58, 46, 38, .05) 39px 40px),
+    var(--paper) !important;
+  background-size: auto, auto !important;
+}
+
+/* ── 카드·판·버튼: 흰 종이 + 연필 윤곽 + 크레용 자국 그림자 ───────
+   모서리 반경을 네 귀퉁이마다 다르게 줘 '자로 그린 게 아니라 손으로 그린' 티를 낸다.
+   (손그림 효과에 SVG 필터를 쓰지 않는 이유 — 낮은 사양 기기에서 느려진다) */
+.menu-card,
+.puzzle-card,
+.round-card,
+.mission-card,
+.item-main,
+.pic-card,
+.theme-card {
+  border: 3px solid var(--ink) !important;
+  border-radius: 22px 18px 23px 19px !important;
+  background: var(--tint, #fff) !important;
+  box-shadow: var(--crayon-shadow) !important;
+}
+.menu-card:active,
+.puzzle-card:active,
+.round-card:active,
+.mission-card:active,
+.item-main:active,
+.pic-card:active,
+.theme-card:active {
+  transform: translate(2px, 3px) !important;
+  box-shadow: 0 0 0 rgba(58, 46, 38, .16) !important;
+}
+
+/* 완성한 것 — 크레용으로 동그라미 친 느낌 */
+.puzzle-card.done,
+.round-card.done,
+.mission-card.done {
+  border-color: #4CA64C !important;
+  box-shadow: 4px 5px 0 rgba(76, 166, 76, .3) !important;
+}
+
+/* ── 뒤로가기·둥근 버튼 ─────────────────────────────────────────── */
+.back,
+.btn-back,
+.icon-btn {
+  border: 3px solid var(--ink) !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+  box-shadow: var(--crayon-shadow-sm) !important;
+}
+.back:active,
+.btn-back:active,
+.icon-btn:active {
+  transform: translate(2px, 3px) !important;
+  box-shadow: 0 0 0 rgba(58, 46, 38, .14) !important;
+}
+
+/* ── 머리 부분 알약·동그란 버튼 ────────────────────────────────────
+   ⭐ 별 개수, 🏠 홈, 🗣️ 목소리 같은 화면 틀 요소. 놀잇감이 아니라 틀이라 종이로 바꾼다. */
+.stat,
+.vs-btn {
+  border: 2.5px solid var(--ink) !important;
+  background: #fff !important;
+  box-shadow: var(--crayon-shadow-sm) !important;
+}
+.stat { color: var(--ink) !important; }
+.vs-btn:active {
+  transform: translate(2px, 3px) !important;
+  box-shadow: 0 0 0 rgba(58, 46, 38, .14) !important;
+}
+
+/* 지금 누가 노는지 보여주는 배지 (shared/profile.js — 인라인 스타일이라 !important 로 덮는다) */
+.enjoy-profile-badge {
+  background: #fff !important;
+  border: 2.5px solid var(--ink) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--crayon-shadow-sm) !important;
+}
+
+/* 남은 시간 알림 — 연필로 적어 둔 쪽지처럼 */
+.tl-bar-tag {
+  background: #fff !important;
+  border: 2.5px solid var(--ink) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--crayon-shadow-sm) !important;
+}
+
+/* ── 제목 글씨: 흰 테두리 그림자를 빼고 연필로 쓴 것처럼 ─────────── */
+.bar h2,
+.scr-title,
+h1, h2 {
+  text-shadow: none !important;
+}
+
+/* ── 큰 동작 버튼 (다음·다시·그만할래 등, 25개 앱 공통) ───────────── */
+.bigbtn,
+.big-btn,
+.btn-primary,
+.reward-btn,
+.reward-btns button {
+  border: 3px solid var(--ink) !important;
+  border-radius: 18px 15px 19px 16px !important;
+  box-shadow: var(--crayon-shadow) !important;
+}
+.bigbtn:active,
+.big-btn:active,
+.btn-primary:active,
+.reward-btn:active,
+.reward-btns button:active {
+  transform: translate(2px, 3px) !important;
+  box-shadow: 0 0 0 rgba(58, 46, 38, .16) !important;
+}
+
+/* 조각을 담아 두는 트레이 — 담긴 놀잇감은 그대로 두고 바탕만 종이로 */
+.tray {
+  border: 2.5px dashed var(--ink) !important;
+  border-radius: 20px 17px 21px 18px !important;
+  background: rgba(255, 255, 255, .72) !important;
+  box-shadow: none !important;
+}
+
+/* ── 축하 패널 ──────────────────────────────────────────────────── */
+.reward-card,
+.reward-panel,
+.reward > div {
+  border: 3px solid var(--ink) !important;
+  border-radius: 26px 21px 27px 22px !important;
+  box-shadow: var(--crayon-shadow) !important;
+}
+
+/* 모션 줄이기 설정 존중 — 눌림 이동도 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  .menu-card:active,
+  .puzzle-card:active,
+  .round-card:active,
+  .mission-card:active,
+  .item-main:active,
+  .back:active,
+  .btn-back:active,
+  .icon-btn:active {
+    transform: none !important;
+  }
+}
