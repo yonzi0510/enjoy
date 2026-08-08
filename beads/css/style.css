@@ -317,6 +317,9 @@ h1 {
   .pal-bead { width: clamp(38px, 12vmin, 56px); height: clamp(38px, 12vmin, 56px); }
   .board-holder .bead-grid.is-board { max-width: min(40vw, 66vh); }
   .sample-holder .bead-grid.is-card { max-width: min(40vw, 74vh); }
+  /* 폰 가로에서는 오른쪽 위 집 단추가 보드 맨 윗줄 오른쪽 구멍에 걸쳤다.
+     구멍 크기·간격은 그대로 두고 보드를 통째로 왼쪽으로 밀어 손가락이 집 단추에 안 닿게 한다. */
+  .board-holder { padding-right: clamp(48px, 7vw, 72px); }
 }
 
 /* ─────────── 보상 오버레이 ─────────── */
@@ -480,6 +483,10 @@ h1 { display: flex; align-items: center; justify-content: center; gap: .18em; }
 @media (max-width: 520px) {
   .bar { gap: 6px; }
   .bar h2 { font-size: 18px; }
+}
+/* 넓은 화면에서는 남은 시간 쪽지가 상단 바 오른쪽 끝에 나란히 앉는다 — 제목을 그만큼 왼쪽으로 민다 */
+@media (min-width: 701px) {
+  .bar h2 { padding-right: 92px; }
   /* 듣기는 나팔 그림만 남긴다 — 글자를 못 읽는 나이라 그림이 더 잘 통하고, 자리도 넓어진다 */
   #btn-listen .btn-label { display: none; }
   #btn-listen { width: 46px; height: 46px; padding: 0; border-radius: 22px 17px 24px 19px; }

@@ -179,14 +179,14 @@ h1 { display: flex; }
    공용 층(shared/home-button.js)이 700px 미만에서는 쪽지를 집 단추 아래로 내려 준다.
    그런데 폰 **가로**(844×390)는 700px 을 넘어서 그 규칙에 안 걸리고,
    쪽지(687~745)가 「듣기」 단추(660~739)를 52px 덮었다. 목록 화면의 `0 / 10` 도 같다.
-   이 앱 머리줄은 오른쪽 끝까지 단추가 차 있어서, 쪽지를 내리는 구간을 900px 까지 넓힌다.
+   패드 가로(1180×820)에서도 쪽지가 「듣기」 를 12px 물었다.
+   이 앱 머리줄은 어느 크기에서든 오른쪽 끝까지 단추(듣기 · 0/10)가 차 있어서
+   쪽지가 옆으로 비킬 자리가 아예 없다. 그래서 크기를 가리지 않고 늘 집 단추 **아래**에 둔다.
    (공용 파일은 다른 팀들과 함께 쓰는 곳이라 여기서 이 앱만 고친다.
     클래스를 두 번 겹쳐 적어야 실행 중에 <head> 끝에 붙는 공용 <style> 을 넘어선다.) */
-@media (max-width: 900px) {
-  .tl-bar-tag.tl-bar-tag {
-    right: calc(12px + env(safe-area-inset-right, 0px)) !important;
-    top: calc(clamp(60px, 8.6vw, 80px) + 18px + env(safe-area-inset-top, 0px)) !important;
-  }
+.tl-bar-tag.tl-bar-tag {
+  right: calc(12px + env(safe-area-inset-right, 0px)) !important;
+  top: calc(clamp(60px, 8.6vw, 80px) + 18px + env(safe-area-inset-top, 0px)) !important;
 }
 /* 제목이 낱말 가운데서 끊기지 않게 (한국어는 띄어쓰기에서만 끊는다) */
 .bar h2 { word-break: keep-all; }
