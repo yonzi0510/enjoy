@@ -51,15 +51,6 @@ body::before{
 .who .face{width:clamp(38px,5vw,52px);height:clamp(38px,5vw,52px);flex:none}
 .who .tick{color:#EFAA24;font-weight:1000;font-size:.9em}
 
-/* ── 이어서 하기 — 최근에 논 놀이 세 개 ─────────────── */
-.recent{position:relative;--c:#C77FA8;margin:0 0 12px;padding:clamp(8px,1.1vw,12px) 0 0}
-.recent>:not(.fr):not(.fill){position:relative;z-index:1}
-.recent-title{display:flex;align-items:center;gap:8px;margin:0 0 clamp(6px,0.9vw,10px);
-              padding-inline:clamp(12px,1.6vw,20px);
-              font-size:clamp(16px,2.1vw,23px);font-weight:900;letter-spacing:-.03em;color:#7C4E68}
-.recent .r-ico{width:1.5em;height:1.5em;flex:none}
-.recent .games{padding-bottom:clamp(9px,1.2vw,13px)}
-
 /* ── 묶음 ───────────────────────────────────────────── */
 .groups{display:grid;gap:12px}
 .group{position:relative}
@@ -184,11 +175,6 @@ body::before{
     <path d="M13 26 L22 15 L31 26" fill="none" stroke="currentColor" stroke-width="4.8"
           stroke-linecap="round" stroke-linejoin="round"/></g>
   </symbol>
-
-  <symbol id="i-recent" viewBox="0 0 48 48"><g filter="url(#kid-hand)"><g fill="none" stroke="#C77FA8" stroke-width="5.4"
-      stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 24 a14 14 0 1 0 5 -11"/><path d="M9 9 v10 h10"/>
-    <path d="M24 17 v8 l6 4" stroke-width="4.6"/></g></g></symbol>
   <symbol id="i-learn" viewBox="0 0 48 48"><g filter="url(#kid-hand)"><g fill="none" stroke-width="4.9" stroke-linecap="round" stroke-linejoin="round">
     <path d="M6 13 h15 a4 4 0 0 1 3 3 a4 4 0 0 1 3 -3 h15 v24 h-15 a4 4 0 0 0 -3 3 a4 4 0 0 0 -3 -3 h-15 z" stroke="#B8791E" fill="#FFF3D6"/>
     <path d="M24 16 v24" stroke="#B8791E"/><path d="M10 20 h9 M10 26 h9 M29 20 h9 M29 26 h9" stroke="#E2B457"/></g></g></symbol>
@@ -324,13 +310,6 @@ body::before{
 
   <div class="who" id="who"></div>
 
-  <section class="recent" id="recent" hidden aria-label="이어서 하기">
-    <svg class="fr" preserveAspectRatio="none" style="--w:4.4"><use href="#crayon-frame"></use></svg>
-    <div class="fill"></div>
-    <h2 class="recent-title"><svg class="r-ico" aria-hidden="true"><use href="#i-recent"></use></svg>이어서 하기</h2>
-    <div class="games" id="recent-games"></div>
-  </section>
-
   <div class="groups" id="groups"></div>
 
   <div class="foot">
@@ -350,7 +329,7 @@ body::before{
   /* 묶음 여섯. 놀이를 새로 넣을 때는 여기 한 줄만 더하면 된다
      (아이콘은 위 <defs> 에 #i-<아이디> 로 그려 넣는다). */
   const GROUPS = [
-    { key:'learn', name:'배우기', c:'#E0A21B', rabbit:'cat-learn', wide:true, open:true,
+    { key:'learn', name:'배우기', c:'#E0A21B', rabbit:'cat-learn', wide:true,
       games:[['한글 놀이터','hangul'],['영어 놀이터','english'],['일본어 놀이터','japanese'],
              ['산수 놀이터','math'],['시장 놀이터','market'],['픽셀 놀이터','pixel'],
              ['프랙티카 놀이터','practika']] },
@@ -415,30 +394,9 @@ body::before{
     b.addEventListener('click',()=>{
       if(window.Profile && b.dataset.id!==Profile.current()) Profile.set(b.dataset.id);
       syncProfile();
-      if(typeof drawRecent==='function') drawRecent();
       speak(b.querySelector('span').textContent+', 어서 와!');
     });
   });
-
-  /* ── 이어서 하기 ──
-     아이가 마지막에 논 놀이를 홈 맨 위에 다시 꺼내 준다.
-     아이별로 따로 기억한다 (Profile.key). */
-  const RECENT_KEY = 'enjoy-recent-v1';
-  const RECENT_MAX = 3;
-  const NAME_OF = {};
-  function recentKey(){ return window.Profile ? Profile.key(RECENT_KEY) : RECENT_KEY; }
-  function recentRead(){
-    try{
-      const v = JSON.parse(localStorage.getItem(recentKey()) || '[]');
-      return Array.isArray(v) ? v.filter(id => NAME_OF[id]) : [];
-    }catch(e){ return []; }
-  }
-  function recentPush(id){
-    try{
-      const list = [id, ...recentRead().filter(x => x !== id)].slice(0, 6);
-      localStorage.setItem(recentKey(), JSON.stringify(list));
-    }catch(e){}
-  }
 
   /* ── 묶음과 놀이 ── */
   const jaLocked = window.ParentSettings && !ParentSettings.japaneseUnlocked();
@@ -469,33 +427,21 @@ body::before{
       }).join('')}</div>
     </section>`).join('');
 
+  /* 한 번에 한 묶음만 펼친다 — 다른 것을 열면 열려 있던 쪽은 저절로 접힌다.
+     화면에 늘 한 묶음만 있어야 다섯 살이 헷갈리지 않는다. */
+  function setOpen(section, open){
+    section.setAttribute('aria-expanded', open?'true':'false');
+    section.querySelector('.chev use').setAttribute('href', open?'#chev-up':'#chev');
+  }
   document.querySelectorAll('.bar').forEach(b=>{
     b.addEventListener('click',()=>{
-      const s=b.closest('.group');
-      const open = s.getAttribute('aria-expanded')==='true';
-      s.setAttribute('aria-expanded', open?'false':'true');
-      b.querySelector('.chev use').setAttribute('href', open?'#chev':'#chev-up');
-      if(!open) speak(s.querySelector('.name').textContent);
+      const me=b.closest('.group');
+      const willOpen = me.getAttribute('aria-expanded')!=='true';
+      document.querySelectorAll('.group').forEach(g=>setOpen(g,false));
+      setOpen(me, willOpen);
+      if(willOpen) speak(me.querySelector('.name').textContent);
     });
   });
-
-  /* 이어서 하기 줄을 그린다 (놀이 단추와 같은 모양) */
-  const recentBox = document.getElementById('recent');
-  const recentGames = document.getElementById('recent-games');
-  function drawRecent(){
-    const ids = recentRead()
-      .filter(id => !(id==='practika' && !showPractika))
-      .slice(0, RECENT_MAX);
-    recentBox.hidden = ids.length === 0;
-    recentGames.innerHTML = ids.map(id=>`
-      <a class="game" href="./${id}/" data-id="${id}" aria-label="${NAME_OF[id]}">
-        <svg class="fr" preserveAspectRatio="none" style="--w:3.4"><use href="#crayon-frame"></use></svg>
-        <div class="fill"></div>
-        <svg class="gi" aria-hidden="true"><use href="#i-${id}"></use></svg>
-        <span>${NAME_OF[id]}</span>
-      </a>`).join('');
-    bindGames(recentGames);
-  }
 
   function bindGames(root){
     root.querySelectorAll('.game').forEach(a=>{
@@ -506,15 +452,12 @@ body::before{
           speak('한글 놀이터에서 낱말 카드를 열 장 모으면 열려요!');
           return;
         }
-        recentPush(a.dataset.id);
         go(a.getAttribute('href'), name);
       });
     });
   }
 
-  GROUPS.forEach(g=>g.games.forEach(([name,id])=>{ NAME_OF[id]=name; }));
   bindGames(document.getElementById('groups'));
-  drawRecent();
 
   syncProfile();
 })();

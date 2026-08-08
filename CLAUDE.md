@@ -67,8 +67,8 @@
   `japanese-playground-v1`, `practika-playground-v1`, `write-playground-v1`, `math-playground-v1`,
   `shape-playground-v1`·`market-playground-v1`·`lab-playground-v1`·`bag-playground-v1`·`coloring-playground-v1`·`burger-playground-v1`,
   `enjoy-voice-ko`·`enjoy-rate-factor`·`enjoy-timelimit-v1`·`enjoy-parent-v1`·`enjoy-profile`(공용),
-  `enjoy-pet-v1`(학습 펫 — `Profile.key()` 적용, 아이별로 각자 키움),
-  `enjoy-recent-v1`(홈 "이어서 하기" — 최근 논 놀이 6개, `Profile.key()` 적용).
+  `enjoy-pet-v1`(학습 펫 — `Profile.key()` 적용, 아이별로 각자 키움).
+  (`enjoy-recent-v1`은 홈 "이어서 하기" 줄에 쓰던 키 — 그 줄을 걷어내며 더 안 쓴다. 새 키를 만들 때 이름만 겹치지 않게.)
   (`chatgi-timelimit-v1`은 예전 play 전용 시간제한 키 — `shared/time-limit.js`가 이어받는다.)
 - **아이 프로필(은아·서하)**: 진행도 키는 `shared/profile.js`의 `Profile.key()`를 거친다 —
   은아는 원래 키 그대로(예전 진행도 보존), 서하는 `p2:` 접두어(예: `p2:hangul-playground-v1`).
@@ -133,7 +133,8 @@ PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
 그림을 다시 그려야 해서 걷어냈다.)
 
 **묶음 6종**: 📚 배우기 · ✏️ 그리기와 쓰기 · 🔷 모양 만들기 · 🌈 색 맞추기 · 🔁 순서와 규칙 · 👀 찾기와 짝맞추기
-막대를 누르면 그 자리에서 펼쳐진다(아코디언). 처음에는 배우기만 펼쳐져 있다.
+막대를 누르면 그 자리에서 펼쳐진다(아코디언). **처음에는 여섯 묶음이 모두 접혀 있고, 한 번에 하나만 펼쳐진다** —
+다른 막대를 누르면 열려 있던 쪽은 저절로 접힌다. 화면에 놀이가 한 묶음만 보여야 다섯 살이 고르기 쉽다.
 
 **놀이를 새로 넣으려면** `index.html`의 `GROUPS` 배열에 `['이름','폴더id']` 한 줄을 더하고,
 같은 파일 위쪽 `<defs>`에 `#i-<폴더id>` 아이콘을 그려 넣으면 끝이다. 여섯 묶음 어디든 똑같다.
@@ -158,7 +159,7 @@ PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
 - 프랙티카는 배우기 안에 있으나 부모님이 켜야 보인다(`ParentSettings.get('showPractika')`, 기본 꺼짐).
 - **놀이 이름은 한 줄로.** 칸 수를 못 박지 말고 `repeat(auto-fill,minmax(min(100%,12.6em),1fr))` 로
   글자 크기에 맞춰 칸을 나눈다. 칸 수를 3·4로 고정하면 반쪽 폭 묶음에서 이름이 두 줄로 넘어간다.
-- 맨 위 "이어서 하기" 줄은 최근 논 놀이 3개를 보여준다. 논 적이 없으면 나오지 않는다.
+- 예전에 맨 위에 있던 "이어서 하기" 줄은 걷어냈다 — 아이가 그 줄만 누르고 새 놀이를 안 찾았다.
 
 ## 놀이 화면 (낙서장 — 29개가 같은 결)
 

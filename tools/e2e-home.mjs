@@ -58,6 +58,7 @@ for (const [label, width, height] of CASES) {
                     h: Math.round(el.getBoundingClientRect().height) }));
     return {
       groups: document.querySelectorAll('.group').length,
+      openCount: document.querySelectorAll('.group[aria-expanded="true"]').length,
       games: [...document.querySelectorAll('.game')].map(a => a.dataset.id),
       titleShown: !!document.querySelector('.title')?.clientWidth,
       touch,
@@ -67,79 +68,94 @@ for (const [label, width, height] of CASES) {
   });
 
   ok('묶음 6개', info.groups === 6, `${info.groups}개`);
+  ok('처음에는 모두 접혀 있음', info.openCount === 0, `${info.openCount}개 펼침`);
   ok('제목 글씨 보임', info.titleShown);
 
-  const small = info.touch.filter(t => t.h < TOUCH_MIN);
-  ok(`펼쳐진 단추가 모두 ${TOUCH_MIN}px 이상`, small.length === 0,
-     small.map(t => `${t.name} ${t.h}px`).join(', '));
+  const smallTop = info.touch.filter(t => t.h < TOUCH_MIN);
+  ok(`첫 화면 단추가 모두 ${TOUCH_MIN}px 이상`, smallTop.length === 0,
+     smallTop.map(t => `${t.name} ${t.h}px`).join(', '));
 
   ok('가로 스크롤 없음', !info.overflowX);
   ok('한 화면에 대체로 들어옴 (1.3쪽 이하)', info.screens <= 1.3, `${info.screens}쪽`);
 
-  /* 묶음을 모두 펼쳐 아이콘과 링크를 확인한다 */
-  const closed = await page.$$('.group[aria-expanded="false"] .bar');
-  for (const bar of closed) await bar.click();
-  await page.waitForTimeout(150);
-
-  const opened = await page.evaluate(() => {
-    const games = [...document.querySelectorAll('.game')];
-    const noIcon = games.filter(a => {
-      const use = a.querySelector('.gi use');
-      const id = use && use.getAttribute('href').slice(1);
-      return !id || !document.getElementById(id);
-    }).map(a => a.dataset.id);
-    /* 이름이 두 줄로 넘어가면 안 된다 — 5세는 한 줄로 읽는다 */
-    const wrapped = [...document.querySelectorAll('.game:not([hidden])>span:not(.lock), .bar .name')]
-      .filter(el => {
+  /* 한 번에 한 묶음만 열리므로(아코디언) 하나씩 열어 가며 잰다 */
+  const keys = await page.$$eval('.group', gs => gs.map(g => g.dataset.key));
+  const small = [], wrapped = [], noIcon = [];
+  let shownTotal = 0;
+  for (const k of keys) {
+    await page.click(`.group[data-key="${k}"] .bar`);
+    await page.waitForTimeout(120);
+    const r = await page.evaluate(() => {
+      const games = [...document.querySelectorAll('.group[aria-expanded="true"] .game:not([hidden])')];
+      const lineOver = el => {
         const st = getComputedStyle(el);
         const lh = parseFloat(st.lineHeight) || parseFloat(st.fontSize) * 1.4;
         return el.getBoundingClientRect().height / lh > 1.5;
-      }).map(el => el.textContent.trim());
-    const shown = games.filter(a => !a.hidden);
-    const small = shown.filter(a => a.getBoundingClientRect().height < 44)
-                       .map(a => a.dataset.id);
-    return { count: games.length, noIcon, small, wrapped,
+      };
+      return {
+        shown: games.length,
+        small: games.filter(a => a.getBoundingClientRect().height < 44).map(a => a.dataset.id),
+        wrapped: games.map(a => a.querySelector('span:not(.lock)'))
+                      .filter(el => el && lineOver(el)).map(el => el.textContent.trim()),
+        noIcon: games.filter(a => {
+          const u = a.querySelector('.gi use');
+          const id = u && u.getAttribute('href').slice(1);
+          return !id || !document.getElementById(id);
+        }).map(a => a.dataset.id),
+      };
+    });
+    shownTotal += r.shown;
+    small.push(...r.small); wrapped.push(...r.wrapped); noIcon.push(...r.noIcon);
+  }
+  /* 마지막으로 연 묶음은 닫아 둔다 */
+  await page.click(`.group[data-key="${keys[keys.length - 1]}"] .bar`);
+  await page.waitForTimeout(100);
+
+  const opened = await page.evaluate(() => {
+    const games = [...document.querySelectorAll('.game')];
+    /* 묶음 이름이 두 줄로 넘어가면 안 된다 — 5세는 한 줄로 읽는다 */
+    const barWrapped = [...document.querySelectorAll('.bar .name')].filter(el => {
+      const st = getComputedStyle(el);
+      const lh = parseFloat(st.lineHeight) || parseFloat(st.fontSize) * 1.4;
+      return el.getBoundingClientRect().height / lh > 1.5;
+    }).map(el => el.textContent.trim());
+    return { count: games.length, barWrapped,
              practikaHidden: !!document.querySelector('.game[data-id="practika"]')?.hidden };
   });
 
   ok('놀이 29개', opened.count === 29, `${opened.count}개`);
-  ok('모든 놀이에 아이콘이 있음', opened.noIcon.length === 0, opened.noIcon.join(', '));
-  ok(`펼친 뒤에도 ${TOUCH_MIN}px 이상`, opened.small.length === 0, opened.small.join(', '));
+  ok('모든 놀이에 아이콘이 있음', noIcon.length === 0, noIcon.join(', '));
+  ok(`펼친 뒤에도 ${TOUCH_MIN}px 이상`, small.length === 0, small.join(', '));
   ok('프랙티카는 부모님이 켜야 보임 (기본 숨김)', opened.practikaHidden);
-  ok('이름이 두 줄로 안 넘어감', opened.wrapped.length === 0, opened.wrapped.join(', '));
+  ok('이름이 두 줄로 안 넘어감',
+     wrapped.length === 0 && opened.barWrapped.length === 0,
+     [...wrapped, ...opened.barWrapped].join(', '));
 
   await page.close();
 }
 
-/* 이어서 하기 — 논 적이 없으면 안 보이고, 놀면 생기고, 아이별로 따로 기억한다 */
-console.log('\n[이어서 하기]');
+/* 아코디언 — 한 번에 한 묶음만 펼쳐진다 */
+console.log('\n[아코디언]');
 {
-  const ctx = await browser.newContext({ viewport: { width: 820, height: 1180 } });
-  const pg = await ctx.newPage();
-  const home = () => pg.goto(BASE, { waitUntil: 'networkidle' });
+  const pg = await browser.newPage({ viewport: { width: 820, height: 1180 } });
+  await pg.goto(BASE, { waitUntil: 'networkidle' });
+  const openCount = () => pg.$$eval('.group[aria-expanded="true"]', e => e.length);
 
-  await home();
-  ok('처음에는 안 보임', !(await pg.isVisible('#recent')));
+  ok('처음엔 하나도 안 펼쳐짐', (await openCount()) === 0);
 
-  await pg.click('.game[data-id="market"]');
-  await pg.waitForURL('**/market/**', { timeout: 5000 });
-  await home();
-  ok('한 번 놀면 생김', await pg.isVisible('#recent'));
-  ok('논 놀이가 들어 있음',
-     (await pg.$$eval('#recent-games .game', es => es.map(e => e.dataset.id))).includes('market'));
+  await pg.click('.group[data-key="learn"] .bar');
+  await pg.waitForTimeout(120);
+  ok('배우기를 누르면 그것만 펼쳐짐', (await openCount()) === 1);
 
-  await pg.click('.who button[data-id="seoha"]');
-  await pg.waitForTimeout(150);
-  ok('아이를 바꾸면 그 아이 것만 보임 (서하는 아직 빈칸)', !(await pg.isVisible('#recent')));
+  await pg.click('.group[data-key="find"] .bar');
+  await pg.waitForTimeout(120);
+  const only = await pg.$$eval('.group[aria-expanded="true"]', e => e.map(x => x.dataset.key));
+  ok('다른 것을 열면 앞의 것은 저절로 접힘', only.length === 1 && only[0] === 'find', only.join(','));
 
-  await pg.click('.who button[data-id="eunah"]');
-  await pg.waitForTimeout(150);
-  ok('되돌리면 은아 것이 그대로', await pg.isVisible('#recent'));
-
-  const saved = await pg.evaluate(() => [localStorage.getItem('enjoy-recent-v1'),
-                                         localStorage.getItem('p2:enjoy-recent-v1')]);
-  ok('저장 키를 아이별로 나눠 쓴다', !!saved[0] && !saved[1], JSON.stringify(saved));
-  await ctx.close();
+  await pg.click('.group[data-key="find"] .bar');
+  await pg.waitForTimeout(120);
+  ok('같은 것을 다시 누르면 접힘', (await openCount()) === 0);
+  await pg.close();
 }
 
 /* 링크가 실제 폴더를 가리키는지 (화면 크기와 무관하므로 한 번만) */
