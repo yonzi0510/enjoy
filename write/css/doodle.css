@@ -170,6 +170,7 @@ h1 .di, .bar h2 .di { margin-right: .22em; }
 .dock-btn .di,
 .pen-btn .di,
 .navbtn .di,
+.item-play .di,
 .line-clear .di {
   width: 1em;
   height: 1em;

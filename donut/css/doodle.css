@@ -1,0 +1,214 @@
+/* 도넛 짝맞추기 — 「낙서장」 층 (스타일시트 중 가장 마지막에 불러온다)
+ *
+ * 공용 shared/crayon.css(모눈 공책 바탕·손그림 윤곽)와 shared/doodle-menu.css(첫 화면 흩뿌리기)
+ * 위에, 이 앱에만 필요한 것을 얹는다.
+ *   1) 첫 화면(단계 고르기)·퍼즐 고르기 — 자리·기울기·크기를 칸마다 달리해 격자를 깬다
+ *   2) 크기 위계 — 먼저 할 것을 크게. 아직 안 한 첫 퍼즐 하나에만 `.next` 를 붙인다
+ *   3) 손그림 아이콘(js/icons.js) 자리 잡기 — 이모지 자리를 대신한다
+ *   4) 머리줄 자리 정리 — 공용 집 단추·남은 시간 쪽지와 안 겹치게
+ *   5) 남아 있던 반질반질한 면(자리판·트레이·알약)을 종이로
+ *
+ * ⚠️ 절대 건드리지 않는 것
+ *   · 도넛 무늬 — 같은 무늬 찾기가 곧 놀이다. .mini-donut / .slot-ghost / .slot-fill /
+ *     .ti-donut / .drag-ghost 안의 SVG 는 색도 무늬도 그대로 둔다.
+ *   · **자리판(.board·.slot)과 도넛(.tray-item)에는 회전·확대를 절대 주지 않는다.**
+ *     끌어 놓은 자리를 좌표(getBoundingClientRect)로 재기 때문에 판정이 틀어진다.
+ *     흩뿌리기·기울이기는 **고르는 칸(.menu-card, .puzzle-card)** 에만 준다.
+ */
+
+/* ═══════════ 1. 손그림 아이콘 자리 ═══════════ */
+.ic { display: inline-block; width: 1.05em; height: 1.05em; line-height: 0; vertical-align: -.19em; flex: none; }
+.dn-ico { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* 제목은 아이콘과 글씨를 나란히 — 연필로 쓴 글씨 색으로 */
+h1, .bar h2 {
+  display: flex; align-items: center; justify-content: center; gap: .26em;
+  color: #2E2A24;
+}
+h1 .ic { width: 1.18em; height: 1.18em; }
+
+/* 뒤로가기 — 화살표 하나가 동그라미를 꽉 채운다 */
+.back { display: grid; place-items: center; padding: 0; }
+.back .ic { width: 58%; height: 58%; vertical-align: 0; }
+
+/* 머리줄의 작은 단추·알약 */
+.vs-btn { display: inline-flex; align-items: center; justify-content: center; }
+#btn-voice .ic { width: 62%; height: 62%; vertical-align: 0; }
+#btn-listen { display: inline-flex; align-items: center; gap: .3em; color: #2E2A24; }
+#btn-listen .ic { width: 1.2em; height: 1.2em; }
+.stat { display: inline-flex; align-items: center; gap: .25em; color: #2E2A24 !important; }
+.stat .ic { width: 1.15em; height: 1.15em; }
+.mc-prog { display: inline-flex; align-items: center; gap: .25em; }
+.mc-prog .ic { width: 1.05em; height: 1.05em; }
+
+/* 퍼즐 칸 배지 — 다 하면 별, 아직이면 색 없는 도넛 윤곽 */
+.pz-badge { width: clamp(20px, 3.8vmin, 28px); height: clamp(20px, 3.8vmin, 28px); line-height: 0; display: block; }
+.pz-badge .dn-ico { width: 100%; height: 100%; }
+
+/* 완성 축하의 큰 도넛 */
+.reward-donut {
+  width: clamp(74px, 17vmin, 124px); height: clamp(74px, 17vmin, 124px);
+  font-size: 0; line-height: 0;
+}
+.reward-donut .dn-ico { width: 100%; height: 100%; }
+
+/* ═══════════ 2. 첫 화면 — 낙서장 배치 + 크기 위계 ═══════════
+ * 흩뿌리기(자리·기울기)는 공용 shared/doodle-menu.css 가 맡는다.
+ * 여기서는 단계가 셋뿐인 이 앱에 맞춰 **크기**를 다시 준다 —
+ * 먼저 할 '작은 도넛판'이 가장 크고 뒤로 갈수록 작아져, 글자 없이도 어디부터 누를지 안다. */
+#scr-home, #scr-list { overflow-x: hidden; }   /* 흩뿌린 칸이 옆으로 나가도 가로 스크롤이 안 생기게 */
+
+.menu {
+  align-items: flex-start;
+  row-gap: clamp(22px, 3.6vh, 44px) !important;
+}
+.menu > .menu-card:nth-child(1) {          /* 작은 도넛판 — 가장 먼저, 가장 크게 */
+  width: clamp(178px, 33vmin, 268px);
+  padding: clamp(16px, 3.4vmin, 26px);
+}
+.menu > .menu-card:nth-child(2) { width: clamp(152px, 27vmin, 214px); }
+.menu > .menu-card:nth-child(3) { width: clamp(134px, 23vmin, 182px); }
+
+/* 카드 안 미리보기 도넛판도 카드 크기를 따라간다 (미리보기라 무늬는 그대로, 크기만) */
+.menu > .menu-card:nth-child(1) .mini-board { width: clamp(104px, 21vmin, 148px); }
+.menu > .menu-card:nth-child(2) .mini-board { width: clamp(84px, 17vmin, 118px); }
+.menu > .menu-card:nth-child(3) .mini-board { width: clamp(70px, 14vmin, 96px); }
+
+.menu > .menu-card:nth-child(1) .mc-name { font-size: clamp(21px, 4.2vmin, 30px); }
+.menu > .menu-card:nth-child(3) .mc-name { font-size: clamp(16px, 3.1vmin, 22px); }
+
+/* 폰 세로처럼 좁은 화면에서는 첫 단계가 한 줄을 통째로 써서 더 크게 —
+   아랫줄에 나머지 둘이 나란히 붙어 무엇부터 할지가 한눈에 보인다. */
+@media (max-width: 560px) {
+  .menu > .menu-card:nth-child(1) { width: min(76%, 300px); }
+  .menu > .menu-card:nth-child(1) .mini-board { width: clamp(112px, 30vmin, 160px); }
+  .menu > .menu-card:nth-child(2) { width: min(44%, 190px); }
+  .menu > .menu-card:nth-child(3) { width: min(39%, 168px); }
+}
+
+/* 등장 모션이 transform 을 건드리면 끝나는 순간 흩뿌린 기울기로 툭 튄다 —
+   첫 화면·목록 카드는 흐릿하게 나타나기만 하고 자리는 CSS 가 잡게 둔다. */
+@keyframes doodle-in { from { opacity: 0; } to { opacity: 1; } }
+.menu-card, .puzzle-card { animation-name: doodle-in; }
+
+/* ═══════════ 3. 퍼즐 고르기 — 종이에 붙인 것처럼 ═══════════
+ * 자리를 하나하나 정하지 않고 순서(nth-child)로 준다. 퍼즐이 늘거나 줄어도 안 무너진다. */
+.puzzle-list {
+  column-gap: clamp(14px, 3vmin, 26px);
+  row-gap: clamp(22px, 4vmin, 34px);
+  padding: clamp(6px, 1.2vh, 14px) clamp(6px, 1.4vw, 14px) 18px;
+}
+.puzzle-list > * { transition: transform .12s ease; }
+.puzzle-list > *:nth-child(6n+1) { transform: translate(-2%,  2%) rotate(-2.2deg); }
+.puzzle-list > *:nth-child(6n+2) { transform: translate( 2%, -2%) rotate( 1.7deg); }
+.puzzle-list > *:nth-child(6n+3) { transform: translate(-1%, -3%) rotate( 2.3deg); }
+.puzzle-list > *:nth-child(6n+4) { transform: translate( 3%,  2%) rotate(-1.4deg); }
+.puzzle-list > *:nth-child(6n+5) { transform: translate(-3%, -1%) rotate( 1.2deg); }
+.puzzle-list > *:nth-child(6n+6) { transform: translate( 1%,  3%) rotate(-1.9deg); }
+
+/* 다음에 할 퍼즐 하나만 크게 — 아직 안 한 것 중 첫 번째(app.js 가 .next 를 붙인다) */
+.puzzle-list > .puzzle-card.next {
+  transform: rotate(-1deg) scale(1.07);
+  border-width: 4px !important;
+  background: #FFFBEA !important;
+}
+.puzzle-list > *:active,
+.puzzle-list > .puzzle-card.next:active { transform: translate(2px, 3px) rotate(0) !important; }
+
+/* 완성한 퍼즐은 살짝 뒤로 물러난다 — 남은 것이 먼저 눈에 들어오게 */
+.puzzle-card.done { opacity: .84; }
+
+/* ═══════════ 4. 머리줄 자리 정리 ═══════════
+ * 오른쪽 위는 공용 집 단추와 '남은 시간' 쪽지가 이미 차지하고 있다.
+ * shared/home-button.js 가 비워 주는 폭(집 단추 + 22px)으로는 쪽지 밑에 제목이 깔린다.
+ * 그 스크립트가 `.bar{padding-right:…!important}` 를 나중에 끼워 넣으므로
+ * 선택자를 한 단계 더 구체적으로(.screen > .bar) 써야 이긴다. */
+@media (min-width: 561px) {
+  .screen > .bar { padding-right: clamp(172px, 16vw, 200px) !important; }
+}
+.bar h2 { white-space: nowrap; }
+
+/* 폰 세로에서는 쪽지가 집 단추 '아래'로 내려가므로 옆으로 더 비울 필요가 없다.
+   대신 [뒤로][제목]만으로도 한 줄이 빠듯해서, '듣기' 단추를 제목 아랫줄 가운데로 내린다.
+   (::after 는 flex 줄을 바꾸기 위한 빈 칸) */
+@media (max-width: 560px) {
+  .screen > .bar { flex-wrap: wrap; }
+  .screen > .bar::after { content: ""; flex-basis: 100%; height: 0; order: 2; }
+  #btn-listen { order: 3; margin: 4px auto 0; }
+}
+
+/* ═══════════ 5. 남은 광택 걷어내기 ═══════════ */
+
+/* 자리판 — 두툼한 색 단면과 광택을 걷고 손으로 그은 윤곽만.
+   ⚠️ transform 은 절대 주지 않는다(놓는 자리 판정). */
+.board {
+  background: rgba(255,255,255,.66) !important;
+  border: 3px solid rgba(46,42,36,.85);
+  border-radius: 26px 21px 27px 22px;
+  box-shadow: none !important;
+}
+/* 놓을 자리 구멍 — 연필로 그린 점선 동그라미 */
+.slot::before {
+  background: rgba(255,255,255,.5) !important;
+  border: 2.5px dashed rgba(46,42,36,.45);
+  box-shadow: none !important;
+}
+.slot.hover:not(.filled)::before {
+  background: #FFF0B8 !important;
+  border-style: solid; border-color: rgba(46,42,36,.8);
+  box-shadow: none !important;
+}
+.slot.filled::before { border-style: solid; border-color: rgba(46,42,36,.28); }
+
+/* 트레이 알 — 담긴 도넛은 그대로, 바탕만 종이로 */
+.tray-item {
+  background: #fff !important;
+  border: 2.5px solid rgba(46,42,36,.7);
+  box-shadow: none !important;
+}
+.tray-item.sel {
+  border-width: 4px; border-color: #D69D13;
+  background: #FFF6DC !important;
+  box-shadow: none !important;
+}
+.drag-ghost { filter: none; }
+
+/* 미리보기 도넛판 — 광택 대신 옅은 종이 */
+.mini-board {
+  background: rgba(255,255,255,.6) !important;
+  box-shadow: none !important;
+  border-radius: 14px 11px 15px 12px;
+}
+
+/* 알약·번호 — 흰 종이에 연필 테두리 */
+.page-count, .mc-prog {
+  background: #fff !important;
+  border: 2.5px solid rgba(46,42,36,.75);
+  border-radius: 999px;
+  color: #2E2A24 !important;
+  box-shadow: none !important;
+}
+.pz-no {
+  background: #fff !important;
+  border: 2.5px solid rgba(46,42,36,.8);
+  color: #2E2A24 !important;
+  box-shadow: none !important;
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+}
+.puzzle-card.done .pz-no { background: #F6C453 !important; }
+
+/* 카드 글씨도 연필 색으로 (도넛 색은 그대로) */
+.mc-name { color: #2E2A24; }
+.mc-desc { color: #6B6154; }
+.reward-praise { color: #2E2A24; }
+
+/* 큰 단추 — 그라데이션 대신 단색 */
+.bigbtn { background: #fff !important; color: #2E2A24 !important; }
+.bigbtn.primary { background: #F6C453 !important; color: #2E2A24 !important; }
+
+/* ═══════════ 모션 줄이기 존중 ═══════════ */
+@media (prefers-reduced-motion: reduce) {
+  .menu > .menu-card,
+  .puzzle-list > *,
+  .puzzle-list > .puzzle-card.next { transform: none !important; }
+}

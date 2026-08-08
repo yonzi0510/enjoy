@@ -21,7 +21,7 @@
 .menu {
   align-items: flex-start;
   /* 화살표가 첫 칸 위로 삐져나올 자리를 비워 둔다 (doodle-menu.css 의 padding !important 를 덮는다) */
-  padding-top: clamp(40px, 7.4vmin, 76px) !important;
+  padding-top: clamp(50px, 8.6vmin, 90px) !important;
 }
 
 .menu > .menu-card.c-l1 {          /* 시작해봐요 — 가장 먼저, 가장 크게 */
@@ -53,11 +53,12 @@
 /* 제목 쪽에서 첫 칸으로 내려꽂는 손그림 점선 화살표.
    첫 칸에 붙여 두어(칸 기준 절대배치) 화면이 어떻게 접히든 늘 첫 칸을 가리킨다. */
 .start-arrow {
+  --ar-h: clamp(58px, 9.6vmin, 100px);   /* 화살표 키 — 자리 계산에 그대로 쓴다 */
   position: absolute; display: block;
-  left: 6%;
-  top: calc(-1 * clamp(36px, 6.6vmin, 68px));
-  width: clamp(30px, 5.6vmin, 56px);
-  height: clamp(36px, 6.7vmin, 67px);
+  left: 3%;
+  top: calc(var(--ar-h) * -.84);         /* 화살촉(그림 84% 지점)이 칸 윗변에 닿게 */
+  height: var(--ar-h);
+  width: calc(var(--ar-h) / 1.2);        /* viewBox 100×120 비율 */
   overflow: visible;
   pointer-events: none;
 }

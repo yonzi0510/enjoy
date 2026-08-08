@@ -163,7 +163,7 @@ window.App = (() => {
         const play = document.createElement('button');
         play.type = 'button';
         play.className = 'item-play';
-        play.textContent = '▶️';
+        play.innerHTML = '<i class="di di-speaker" aria-hidden="true"></i>'; // 손그림 확성기 = 전체 듣기
         play.setAttribute('aria-label', it.name + ' 전체 듣기');
         play.addEventListener('click', ev => {
           ev.preventDefault();
