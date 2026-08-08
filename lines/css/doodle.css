@@ -63,6 +63,11 @@
 .c-s3 .mc-name { font-size: clamp(14px, 2.6vmin, 19px); }   /* 놀이 이름은 한 줄로 */
 .c-s3 .mc-desc { font-size: clamp(11px, 2.1vmin, 14px); }
 
+/* 등장 모션은 흐려졌다 진해지기만 — 원래 card-in 은 transform 을 애니메이션해서
+   그동안 카드 기울기를 지워 버린다(반듯하게 놓였다가 뒤늦게 삐뚤어진다). */
+@keyframes doodle-in { from { opacity: 0; } to { opacity: 1; } }
+.menu-card, .puzzle-card { animation-name: doodle-in; }
+
 /* 등장 모션 차례 — 첫 칸이 화살표라 카드는 둘째부터다 */
 .menu .menu-card:nth-child(2) { animation-delay: .05s; }
 .menu .menu-card:nth-child(3) { animation-delay: .10s; }

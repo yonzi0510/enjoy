@@ -53,16 +53,17 @@ window.DonutIcons = (() => {
     /* 도넛 — 색 없는 윤곽선. 놀잇감이 아니라 가게 간판 그림이다.
        바깥 동그라미도 가운데 구멍도 끝을 안 닫고 살짝 지나쳐 그린다. */
     donut: {
-      w: 8,
+      w: 7,
       d: /* 크레용 칠이 윤곽에서 비켜 나간 자국 — 도우 색 하나뿐, 아이싱 색은 없다 */
          `<circle cx="53.5" cy="49" r="34" fill="${DOUGH}" stroke="none"/>` +
          `<circle cx="50" cy="52" r="13" fill="${PAPER}" stroke="none"/>` +
          `<path d="M50 17 A35 35 0 1 1 43.5 17.7"/>` +
-         `<path d="M50 39 A13 13 0 1 1 45.8 39.7" stroke-width="7"/>` +
+         `<path d="M50 39 A13 13 0 1 1 45.8 39.7" stroke-width="6"/>` +
          /* 설탕 가루 몇 알 — 색 없이 연필 자국으로만 */
-         `<path d="M28 35 L33.5 30" stroke-width="6.5"/>` +
-         `<path d="M67 30 L72 35.5" stroke-width="6.5"/>` +
-         `<path d="M26 68 L31.5 72" stroke-width="6.5"/>`,
+         `<path d="M28 35 L33.5 30" stroke-width="6"/>` +
+         `<path d="M67 30 L72 35.5" stroke-width="6"/>` +
+         `<path d="M26 68 L31.5 72" stroke-width="6"/>` +
+         `<path d="M69 71 L74 66" stroke-width="6"/>`,
     },
 
     /* 소리 — 네모 나팔에 소리 줄 둘 */
@@ -86,6 +87,9 @@ window.DonutIcons = (() => {
 
     /* 뒤로 — 왼쪽으로 꺾어 그은 화살표 하나 */
     back: { w: 11, sm: true, d: '<path d="M63 16 L29 50 L63 84"/>' },
+
+    /* 다음 — 오른쪽으로 그은 화살표 */
+    next: { w: 10, sm: true, d: '<path d="M14 50 L84 51"/><path d="M57 24 L85 50 L56 77"/>' },
   };
 
   /* 아이콘 하나를 SVG 문자열로 */

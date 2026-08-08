@@ -317,11 +317,13 @@ await check('폰·패드: 겹침 없음 · 터치 44px · 화면 이탈 없음',
           .filter(b => b.w < 44 || b.h < 44)
           .map(b => b.n + ' ' + Math.round(b.w) + '×' + Math.round(b.h));
 
-        // 화면 밖으로 나간 것
+        // 화면 밖으로 나간 것 — 좌우로 삐져나가거나 위로 잘린 것.
+        // (아래로 넘치는 것은 목록처럼 세로로 굴리는 화면에선 정상이라 세지 않는다.
+        //  놀이 화면의 세로 잘림은 '3해상도 잘림 없음' 검사가 따로 잰다.)
         const outSel = targetSel + ', .screen.on .board-box';
         const out = [...document.querySelectorAll(outSel)].filter(vis)
           .map(el => ({ n: el.id || el.className, ...box(el) }))
-          .filter(b => b.l < -1 || b.r > window.innerWidth + 1 || b.t < -1 || b.b > window.innerHeight + 1)
+          .filter(b => b.l < -1 || b.r > window.innerWidth + 1 || b.t < -1)
           .map(b => b.n + ' [' + [b.l, b.t, b.r, b.b].map(Math.round).join(',') + ']');
 
         return {

@@ -263,14 +263,15 @@ await check('단계3 완성(_trace) → 별·펫 간식 증가', async () => {
   await page.waitForSelector('#scr-list.on');
 });
 
-await check('새로고침 후 진행도 유지(별·단계별 1/10)', async () => {
+await check('새로고침 후 진행도 유지(별·단계별 2/10·1/10)', async () => {
   const starsBefore = await page.evaluate(() => App.debug().stars);
   await page.goto(BASE);
   await page.waitForSelector('#scr-home.on');
   expect((await page.locator('#home-stars').textContent()) === String(starsBefore), '별 수 유지: ' + starsBefore);
-  for (const cls of ['c-s1', 'c-s2', 'c-s3']) {
+  const want = { 'c-s1': '2 / 10', 'c-s2': '1 / 10', 'c-s3': '1 / 10' };
+  for (const cls of Object.keys(want)) {
     const prog = await page.locator('.menu-card.' + cls + ' .mc-prog').textContent();
-    expect(prog.includes('1 / 10'), cls + ' 진행 유지: ' + prog);
+    expect(prog.includes(want[cls]), cls + ' 진행 유지: ' + prog + ' (기대 ' + want[cls] + ')');
   }
 });
 
@@ -304,6 +305,67 @@ await check('3해상도 잘림 없음 (가로 스크롤·상하좌우 잘림 검
     expect(m.canvasLeft >= -2, s.name + ': 캔버스가 왼쪽으로 잘림 left=' + m.canvasLeft);
     expect(m.canvasRight <= m.iw + 2, s.name + ': 캔버스가 오른쪽으로 잘림 ' + m.canvasRight + ' > ' + m.iw);
     expect(m.clearBottom <= m.ih + 2, s.name + ': 다시 그릴래 버튼이 아래로 잘림 ' + m.clearBottom + ' > ' + m.ih);
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
+});
+
+await check('폰·패드: 겹침 없음 · 터치 44px · 캔버스 무변형', async () => {
+  const sizes = [
+    { w: 390, h: 844, name: '폰 세로' },
+    { w: 1180, h: 820, name: '패드 가로' },
+  ];
+  for (const s of sizes) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    for (const scr of ['home', 'list', 'play']) {
+      if (scr === 'list') {
+        await page.click('.menu-card.c-s1');
+        await page.waitForSelector('#scr-list.on');
+      }
+      if (scr === 'play') {
+        await page.click('#list .puzzle-card >> nth=0');
+        await page.waitForSelector('#scr-play.on');
+      }
+      const m = await page.evaluate(() => {
+        const vis = el => {
+          const b = el.getBoundingClientRect();
+          return b.width > 0 && b.height > 0 && getComputedStyle(el).visibility !== 'hidden';
+        };
+        const R = el => el.getBoundingClientRect();
+        // 손가락으로 누르는 것들 — 44px 하한
+        const small = [];
+        document.querySelectorAll('button, a.enjoy-home-btn, .menu-card, .puzzle-card').forEach(el => {
+          if (!vis(el)) return;
+          const b = R(el);
+          if (b.width < 44 || b.height < 44) small.push((el.id || el.className) + ' ' + Math.round(b.width) + '×' + Math.round(b.height));
+        });
+        // 공용 집 단추·남은시간 쪽지가 화면 것들과 겹치는지
+        const fixed = ['.enjoy-home-btn', '.tl-bar-tag'].map(s => document.querySelector(s)).filter(e => e && vis(e));
+        const targets = [];
+        document.querySelectorAll('h1, .bar h2, .stat, .page-count, #btn-voice, #btn-listen, #btn-clear, .back, .pet-btn, #play-canvas, .menu-card, .puzzle-card')
+          .forEach(el => { if (vis(el)) targets.push(el); });
+        const overlaps = [];
+        fixed.forEach(f => {
+          const a = R(f);
+          targets.forEach(t => {
+            const b = R(t);
+            const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+            const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+            if (ox > 2 && oy > 2) overlaps.push((f.className) + ' ✕ ' + (t.id || t.className));
+          });
+        });
+        return {
+          small, overlaps,
+          horiz: document.documentElement.scrollWidth - window.innerWidth,
+          canvasTf: document.querySelector('#play-canvas') ? getComputedStyle(document.querySelector('#play-canvas')).transform : 'none',
+        };
+      });
+      expect(m.horiz <= 1, s.name + '/' + scr + ': 가로 스크롤 ' + m.horiz + 'px');
+      expect(m.small.length === 0, s.name + '/' + scr + ': 44px 미만 → ' + m.small.join(' | '));
+      expect(m.overlaps.length === 0, s.name + '/' + scr + ': 겹침 → ' + m.overlaps.join(' | '));
+      expect(m.canvasTf === 'none', s.name + '/' + scr + ': 캔버스 transform=' + m.canvasTf);
+    }
   }
   await page.setViewportSize({ width: 1180, height: 820 });
 });

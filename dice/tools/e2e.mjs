@@ -236,6 +236,29 @@ await check('기울어 놓인 주사위: 탭 판정이 그림과 어긋나지 �
   expect((await page.evaluate(() => App.debug().foundCount)) === 1, '가운데를 찍었는데 정답으로 잡히지 않음');
 });
 
+await check('윗줄: 「듣기」가 남은시간 쪽지·집 단추와 겹치지 않는다', async () => {
+  const boxes = () => page.evaluate(() => {
+    const g = s => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
+    const ov = (a, b) => !!(a && b && a[0] < b[2] - .5 && b[0] < a[2] - .5 && a[1] < b[3] - .5 && b[1] < a[3] - .5);
+    const listen = g('#btn-listen'), title = g('#play-title'), tag = g('.tl-bar-tag'), home = g('.enjoy-home-btn');
+    return { tag: ov(listen, tag), home: ov(listen, home), title: ov(listen, title), hasTag: !!tag };
+  });
+  for (const s of [{ w: 1180, h: 820, name: '패드 가로' }, { w: 844, h: 390, name: '폰 가로' }, { w: 390, h: 844, name: '폰 세로' }]) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    await page.click('.menu-card.c-l1');
+    await page.click('#rounds-list .round-card');
+    await page.waitForSelector('#scr-play.on');
+    await page.waitForTimeout(120);
+    const o = await boxes();
+    expect(o.hasTag, s.name + ': 남은시간 쪽지를 못 찾음');
+    expect(!o.tag, s.name + ': 「듣기」와 남은시간 쪽지가 겹침');
+    expect(!o.home, s.name + ': 「듣기」와 집 단추가 겹침');
+    expect(!o.title, s.name + ': 「듣기」와 제목이 겹침');
+  }
+});
+
 await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침 검사)', async () => {
   const sizes = [
     { w: 1180, h: 820, name: '패드 가로' },

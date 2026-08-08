@@ -121,11 +121,15 @@ h1, .bar h2 {
 h1 .ico-title { width: 1.2em; height: 1.2em; vertical-align: -.18em; }
 .bar h2 { word-break: keep-all; }
 
-/* 뒤로가기 — 화살표 하나가 단추를 꽉 채운다 */
-.back { display: inline-flex; align-items: center; justify-content: center; }
+/* 뒤로가기 — 화살표 하나가 단추를 꽉 채운다 (손 닿는 하한 46px) */
+.back {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: clamp(46px, 9vmin, 54px); height: clamp(46px, 9vmin, 54px);
+}
 .back .ico { width: 56%; height: 56%; vertical-align: 0; }
 
-/* 목소리 단추 */
+/* 목소리 단추 — 폰에서 42px 까지 줄어 손가락이 빗나갔다. 하한 46px */
+.vs-btn { width: clamp(46px, 8vmin, 52px); height: clamp(46px, 8vmin, 52px); }
 #btn-voice .ico { width: 62%; height: 62%; vertical-align: 0; }
 
 /* 듣기 단추 */

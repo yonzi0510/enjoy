@@ -47,10 +47,14 @@ h1 .ic { width: 1.18em; height: 1.18em; }
 
 /* 완성 축하의 큰 도넛 */
 .reward-donut {
-  width: clamp(74px, 17vmin, 124px); height: clamp(74px, 17vmin, 124px);
+  width: clamp(92px, 20vmin, 148px); height: clamp(92px, 20vmin, 148px);
   font-size: 0; line-height: 0;
 }
 .reward-donut .dn-ico { width: 100%; height: 100%; }
+
+/* 축하 단추의 화살표 */
+.reward-btns .ic { width: 1.05em; height: 1.05em; }
+.reward-btns button { display: inline-flex; align-items: center; gap: .3em; }
 
 /* ═══════════ 2. 첫 화면 — 낙서장 배치 + 크기 위계 ═══════════
  * 흩뿌리기(자리·기울기)는 공용 shared/doodle-menu.css 가 맡는다.
@@ -209,6 +213,9 @@ h1 .ic { width: 1.18em; height: 1.18em; }
 .mc-name { color: #2E2A24; }
 .mc-desc { color: #6B6154; }
 .reward-praise { color: #2E2A24; }
+
+/* 축하 뒤 어두운 막 — 분홍빛 대신 연필심 색으로 (종이 위 놀이에 맞게) */
+.reward { background: rgba(46,42,36,.28); }
 
 /* 큰 단추 — 그라데이션 대신 단색 */
 .bigbtn { background: #fff !important; color: #2E2A24 !important; }

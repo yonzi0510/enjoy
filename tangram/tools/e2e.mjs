@@ -256,6 +256,11 @@ await check('놀이판 무변형: 판·조각에 장식용 회전·확대가 없
 await check('첫 화면은 반대로 삐뚤게 흩뿌려져 있다 (칸마다 다른 기울기·크기)', async () => {
   await page.goto(BASE);
   await page.waitForSelector('#scr-home.on');
+  // 등장 모션(card-in)이 도는 동안에는 그 transform 이 흩뿌림을 덮으므로 끝날 때까지 기다린다
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('#menu .menu-card')].every(el => el.getAnimations().length === 0),
+    null, { timeout: 4000 }
+  );
   const r = await page.evaluate(() => {
     const cards = [...document.querySelectorAll('#menu .menu-card')];
     return cards.map(el => ({
