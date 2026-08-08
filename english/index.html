@@ -55,10 +55,67 @@
         <circle cx="112" cy="188" r="13" fill="#FFA8C8" stroke="#E88CB0" stroke-width="3.5"/>
       </svg>
     </button>
+    <!-- 낙서장 배치 — 칸마다 기울기·크기가 다르다(css/style.css 「홈: 낙서장 배치」).
+         아이콘은 이모지 대신 아이가 크레용으로 그린 듯한 손그림 SVG:
+         획을 feTurbulence+feDisplacementMap 으로 실제로 떨리게 하고,
+         칠은 윤곽선보다 살짝 밀어서 색이 밖으로 삐져나오게 그린다. -->
     <div class="home-nav">
-      <button id="btn-dict" class="nav-card nav-dict"><span class="nav-emoji">📖</span><span>그림 단어장</span></button>
-      <button id="btn-learned" class="nav-card nav-learned"><span class="nav-emoji">⭐</span><span>배운 단어 <b id="learned-count">0</b></span></button>
-      <button id="btn-quiz" class="nav-card nav-quiz"><span class="nav-emoji">🎯</span><span>퀴즈 놀이</span></button>
+      <button id="btn-dict" class="nav-card nav-dict">
+        <svg class="nav-ico" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><filter id="ico-book" x="-18%" y="-18%" width="136%" height="136%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="2" seed="4"/>
+            <feDisplacementMap in="SourceGraphic" scale="3"/>
+          </filter></defs>
+          <!-- 칠 먼저 — 윤곽에서 왼쪽 아래로 밀어 색이 선 밖으로 나가게 -->
+          <g transform="translate(-6 6) rotate(-4 50 52)">
+            <path d="M14 29C30 21 44 23 50 32L50 79C44 70 30 68 14 76Z" fill="#8FD3F4"/>
+            <path d="M86 29C70 21 56 23 50 32L50 79C56 70 70 68 86 76Z" fill="#C4E9FB"/>
+          </g>
+          <g filter="url(#ico-book)" fill="none" stroke="#2E2A24" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 30C30 22 44 24 50 33C56 24 70 22 85 30"/>
+            <path d="M15 31L15 75"/><path d="M85 30L85 74"/>
+            <path d="M15 75C30 67 44 69 50 77C56 69 70 67 85 75"/>
+            <path d="M50 33L50 77"/>
+            <path d="M25 46Q33 43 41 47M25 57Q33 54 41 58M59 47Q67 44 75 48M59 58Q67 55 75 59" stroke-width="4.5"/>
+          </g>
+        </svg>
+        <span>그림 단어장</span>
+      </button>
+      <button id="btn-learned" class="nav-card nav-learned">
+        <svg class="nav-ico" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><filter id="ico-star" x="-18%" y="-18%" width="136%" height="136%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.042" numOctaves="2" seed="7"/>
+            <feDisplacementMap in="SourceGraphic" scale="3.4"/>
+          </filter></defs>
+          <path d="M50 16L58.8 39.9L84.2 40.9L64.3 56.6L71.2 81.1L50 67L28.8 81.1L35.7 56.6L15.8 40.9L41.2 39.9Z"
+                fill="#FFD34D" transform="translate(5 5) rotate(5 50 52)"/>
+          <!-- 끝을 잇지 않는다 — 아이가 그린 별은 잘 안 닫힌다 -->
+          <g filter="url(#ico-star)" fill="none" stroke="#2E2A24" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M50 16L58.8 39.9L84.2 40.9L64.3 56.6L71.2 81.1L50 67L28.8 81.1L35.7 56.6L15.8 40.9L41.2 39.9L46.5 20"/>
+          </g>
+        </svg>
+        <span>배운 단어 <b id="learned-count">0</b></span>
+      </button>
+      <button id="btn-quiz" class="nav-card nav-quiz">
+        <svg class="nav-ico" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><filter id="ico-target" x="-18%" y="-18%" width="136%" height="136%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.034" numOctaves="2" seed="2"/>
+            <feDisplacementMap in="SourceGraphic" scale="3.2"/>
+          </filter></defs>
+          <g transform="translate(-4 5) rotate(-3 50 52)">
+            <circle cx="50" cy="52" r="34" fill="#A9DF8B"/>
+            <circle cx="50" cy="52" r="20" fill="#FFF3C4"/>
+            <circle cx="50" cy="52" r="8" fill="#FF8FB0"/>
+          </g>
+          <!-- 동그라미마다 한 군데씩 안 닫힌 틈을 남긴다 -->
+          <g filter="url(#ico-target)" fill="none" stroke="#2E2A24" stroke-linecap="round">
+            <path d="M55.9 18.5A34 34 0 1 1 44.1 18.5" stroke-width="6"/>
+            <path d="M59.5 68.5A19 19 0 1 1 64.6 64.2" stroke-width="5"/>
+            <path d="M55.3 46.7A7.5 7.5 0 1 1 53.7 45.5" stroke-width="5"/>
+          </g>
+        </svg>
+        <span>퀴즈 놀이</span>
+      </button>
     </div>
   </div>
 </div>
