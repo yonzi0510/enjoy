@@ -148,6 +148,94 @@ await check('새로고침 후 진행도 유지', async () => {
   expect(l2.includes('1 / 10'), '단계2 진행: ' + l2);
 });
 
+await check('낙서장 첫 화면: 손그림 아이콘 · 시작 화살표 · 크기 위계', async () => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  expect(await page.locator('#menu .start-arrow').count() === 1, '제목에서 첫 놀이로 가는 화살표 없음');
+  expect(await page.locator('.home-head h1 svg.ic').count() === 1, '제목 손그림 없음');
+  expect(await page.locator('.stat svg.ic').count() === 1, '별 손그림 없음');
+  expect(await page.locator('#btn-voice svg.ic').count() === 1, '목소리 손그림 없음');
+  // 화면 틀에서 이모지가 사라졌는지 (주사위에 그려진 동물 그림은 SVG 라 글자로 잡히지 않는다)
+  const txt = (await page.locator('.home-head h1').innerText()) + (await page.locator('#menu').innerText());
+  const emo = txt.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || [];
+  expect(emo.length === 0, '첫 화면에 이모지가 남음: ' + emo.join(' '));
+  // 크기 위계 — 가장 먼저 할 「쉬운 주사위」가 제일 크다
+  const w = async s => (await page.locator(s).boundingBox()).width;
+  const w1 = await w('.menu-card.c-l1'), w2 = await w('.menu-card.c-l2'), w3 = await w('.menu-card.c-l3');
+  expect(w1 > w2 && w2 > w3, '크기 위계가 아님: ' + [w1, w2, w3].join(' / '));
+});
+
+await check('첫 화면 낙서장 배치: 폰·패드에서 겹침·이탈 없음', async () => {
+  for (const s of [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드 가로' }]) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    const m = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('#menu .menu-card')].map(c => c.getBoundingClientRect());
+      let overlap = 0;
+      for (let i = 0; i < cards.length; i++) for (let j = i + 1; j < cards.length; j++) {
+        const a = cards[i], b = cards[j];
+        if (a.left < b.right - .5 && b.left < a.right - .5 && a.top < b.bottom - .5 && b.top < a.bottom - .5) overlap++;
+      }
+      return {
+        overlap,
+        horiz: document.documentElement.scrollWidth - window.innerWidth,
+        minLeft: Math.min(...cards.map(c => c.left)),
+        maxRight: Math.max(...cards.map(c => c.right)),
+        minSide: Math.min(...cards.map(c => Math.min(c.width, c.height))),
+        iw: window.innerWidth,
+      };
+    });
+    expect(m.overlap === 0, s.name + ': 흩뿌린 칸끼리 겹침 ' + m.overlap + '곳');
+    expect(m.horiz <= 1, s.name + ': 가로 스크롤 ' + m.horiz + 'px');
+    expect(m.minLeft >= -2 && m.maxRight <= m.iw + 2, s.name + ': 칸이 화면 밖 left=' + m.minLeft + ' right=' + m.maxRight);
+    expect(m.minSide >= 44, s.name + ': 터치 하한 44px 미달 ' + m.minSide);
+  }
+});
+
+await check('기울어 놓인 주사위: 탭 판정이 그림과 어긋나지 않는다', async () => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-l3'); // 주사위가 가장 많은 단계로
+  await page.click('#rounds-list .round-card');
+  await page.waitForSelector('#scr-play.on');
+  await roll(page);
+  const info = await page.evaluate(() => {
+    const btns = [...document.querySelectorAll('#dice-grid .die-btn')];
+    const boxes = btns.map(b => b.getBoundingClientRect());
+    // 1) 정말 조금씩 기울어 있는가
+    const tilted = btns.filter(b => {
+      const t = getComputedStyle(b).transform;
+      return t && t !== 'none' && t !== 'matrix(1, 0, 0, 1, 0, 0)';
+    }).length;
+    // 2) 기울인 탓에 이웃과 겹치지 않는가 (겹치면 엉뚱한 주사위가 눌린다)
+    let overlap = 0;
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i], b = boxes[j];
+      if (a.left < b.right - .5 && b.left < a.right - .5 && a.top < b.bottom - .5 && b.top < a.bottom - .5) overlap++;
+    }
+    // 3) 눈에 보이는 한가운데를 찍으면 바로 그 주사위가 잡히는가
+    let wrongHit = 0;
+    btns.forEach((b, i) => {
+      const r = boxes[i];
+      const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      if (!el || el.closest('.die-btn') !== b) wrongHit++;
+    });
+    return { n: btns.length, tilted, overlap, wrongHit };
+  });
+  expect(info.tilted === info.n, '기울어진 주사위 ' + info.tilted + '/' + info.n);
+  expect(info.overlap === 0, '주사위끼리 겹침 ' + info.overlap + '곳');
+  expect(info.wrongHit === 0, '가운데를 찍었는데 다른 주사위가 잡힘 ' + info.wrongHit + '개');
+  // 손가락으로 실제로 찍어도 정답으로 잡히는가
+  const idx = (await page.evaluate(() => App.debug().targetIndices))[0];
+  const box = await page.locator('.die-btn[data-idx="' + idx + '"]').boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(150);
+  expect((await page.evaluate(() => App.debug().foundCount)) === 1, '가운데를 찍었는데 정답으로 잡히지 않음');
+});
+
 await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침 검사)', async () => {
   const sizes = [
     { w: 1180, h: 820, name: '패드 가로' },

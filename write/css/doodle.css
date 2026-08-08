@@ -150,6 +150,9 @@ h1 .di, .bar h2 .di { margin-right: .22em; }
 /* 목록 화면 머리말 아이콘 (js/app.js 가 넣는다) */
 #items-title .di { width: 1.05em; height: 1.05em; }
 
+/* 축하 판의 커다란 별 */
+.reward-stars .di { width: 1em; height: 1em; vertical-align: -.12em; margin: 0; }
+
 /* 진행도 알약 안의 별·메달·말풍선 */
 .mc-prog .di, .it-prog .di {
   width: 1.05em;

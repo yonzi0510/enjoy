@@ -118,8 +118,11 @@ h1, .bar h2 {
 .back { display: flex; align-items: center; justify-content: center; }
 .back .ic { width: 58%; height: 58%; vertical-align: 0; }
 
-/* 목소리 단추 */
-.vs-btn { display: inline-flex; align-items: center; justify-content: center; }
+/* 목소리 단추 — 폰 세로(vmin 390)에서도 손가락 하한 44px 을 지킨다 */
+.vs-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: clamp(44px, 9vmin, 52px); height: clamp(44px, 9vmin, 52px);
+}
 #btn-voice .ic { width: 62%; height: 62%; vertical-align: 0; }
 
 /* 듣기·다음 단추 */

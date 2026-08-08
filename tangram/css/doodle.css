@@ -75,6 +75,21 @@
   .menu > .menu-card.c-l3 { width: min(39%, 168px); margin-top: clamp(8px, 2vh, 20px); }
 }
 
+/* 폰 가로처럼 세로가 짧은 화면 — 크기 위계는 그대로 두고 전체를 한 단계 줄여
+   첫 칸이 화면 아래로 잘리지 않게 한다 */
+@media (max-height: 500px) {
+  .menu { padding-top: clamp(38px, 11vh, 58px) !important; }
+  .start-arrow { --ar-h: clamp(44px, 12.8vh, 64px); }
+  .menu > .menu-card.c-l1 {
+    width: clamp(150px, 30vmin, 220px);
+    padding: clamp(10px, 2.4vmin, 18px);
+  }
+  .menu > .menu-card.c-l1 .mc-icon { width: clamp(70px, 15vmin, 100px); }
+  .menu > .menu-card.c-l1 .mc-name { font-size: clamp(18px, 3.6vmin, 26px); }
+  .menu > .menu-card.c-l2 .mc-icon { width: clamp(60px, 12.5vmin, 84px); }
+  .menu > .menu-card.c-l3 .mc-icon { width: clamp(52px, 10.5vmin, 72px); }
+}
+
 /* 퍼즐 목록 칸도 손으로 붙인 듯 살짝 삐뚤게 — 여기도 '고르는 칸'이라 안전하다 */
 .puzzle-list > .puzzle-card:nth-child(4n+1) { transform: rotate(-1.6deg); }
 .puzzle-list > .puzzle-card:nth-child(4n+2) { transform: rotate(1.3deg); }

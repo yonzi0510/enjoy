@@ -8,6 +8,8 @@ window.App = (() => {
   const A = window.Audio2;
   const P = window.Progress;
   const $ = id => document.getElementById(id);
+  // 화면 틀의 손그림 아이콘 (js/icons.js). 도넛 무늬는 여기서 만들지 않는다 — D.meta().draw 그대로.
+  const ico = (name) => (window.DonutIcons ? DonutIcons.html(name) : '');
 
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
@@ -33,7 +35,7 @@ window.App = (() => {
         '<span class="mc-icon">' + miniBoard(lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? '<span class="ic">' + ico('star') + '</span> ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(lv); });
       menu.appendChild(b);
     });
@@ -52,23 +54,25 @@ window.App = (() => {
   let curLevel = null;
   function openList(lv) {
     curLevel = lv;
-    $('list-title').textContent = '🍩 ' + lv.name;
+    $('list-title').innerHTML = '<span class="ic">' + ico('donut') + '</span>' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('list-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('puzzle-list');
     box.innerHTML = '';
+    // 아직 안 한 것 중 첫 번째 하나만 크게 그린다 — 어디부터 누를지 글자 없이 알려 준다
+    const nextIdx = list.findIndex(x => !P.isDone(x.id));
     list.forEach((pz, i) => {
       const done = P.isDone(pz.id);
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'puzzle-card' + (done ? ' done' : '');
+      b.className = 'puzzle-card' + (done ? ' done' : '') + (i === nextIdx ? ' next' : '');
       b.dataset.id = pz.id;
       b.innerHTML =
         '<span class="pz-no">' + (i + 1) + '</span>' +
         '<span class="mini-board" style="--cols:' + lv.cols + '">' +
           pz.slots.map(id => '<span class="mini-donut">' + D.meta(id).draw(D.nextUid()) + '</span>').join('') +
         '</span>' +
-        '<span class="pz-badge">' + (done ? '⭐' : '🍩') + '</span>';
+        '<span class="pz-badge">' + ico(done ? 'star' : 'donut') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });

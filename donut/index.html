@@ -21,12 +21,12 @@
 <!-- 홈 -->
 <section class="screen on" id="scr-home">
   <header class="home-head">
-    <h1>🍩 도넛 짝맞추기</h1>
+    <h1><span class="ic" data-icon="donut"></span>도넛 짝맞추기</h1>
     <div class="stats">
-      <span class="stat">⭐ <b id="home-stars">0</b></span>
+      <span class="stat"><span class="ic" data-icon="star"></span> <b id="home-stars">0</b></span>
       <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
       <span id="pet-slot"></span>
-      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정"><span class="ic" data-icon="voice"></span></button>
     </div>
   </header>
   <div class="menu" id="menu"></div>
@@ -35,8 +35,8 @@
 <!-- 퍼즐 목록 -->
 <section class="screen" id="scr-list">
   <header class="bar">
-    <button type="button" class="back" data-go="scr-home">◀</button>
-    <h2 id="list-title">🍩 작은 도넛판</h2>
+    <button type="button" class="back" data-go="scr-home" aria-label="뒤로"><span class="ic" data-icon="back"></span></button>
+    <h2 id="list-title"><span class="ic" data-icon="donut"></span>작은 도넛판</h2>
     <span class="page-count" id="list-count">0 / 10</span>
   </header>
   <div class="puzzle-list" id="puzzle-list"></div>
@@ -45,9 +45,9 @@
 <!-- 놀이(짝맞추기) -->
 <section class="screen" id="scr-play">
   <header class="bar">
-    <button type="button" class="back" id="btn-play-back">◀</button>
-    <h2 id="play-title">🍩 도넛 짝맞추기</h2>
-    <button type="button" class="bigbtn small" id="btn-listen">🔊 듣기</button>
+    <button type="button" class="back" id="btn-play-back" aria-label="뒤로"><span class="ic" data-icon="back"></span></button>
+    <h2 id="play-title"><span class="ic" data-icon="donut"></span>도넛 짝맞추기</h2>
+    <button type="button" class="bigbtn small" id="btn-listen"><span class="ic" data-icon="speaker"></span> 듣기</button>
   </header>
   <div class="play-stage" id="play-stage">
     <!-- 자리판 — 각 칸에 연한 도넛 윤곽 -->
@@ -64,7 +64,7 @@
 <!-- 보상 오버레이 -->
 <div class="reward" id="reward">
   <div class="reward-card">
-    <div class="reward-donut" id="reward-donut">🍩</div>
+    <div class="reward-donut" id="reward-donut" data-icon="donut" aria-label="도넛"></div>
     <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
     <div class="reward-btns">
       <button type="button" class="bigbtn" id="reward-close">그만할래</button>
@@ -78,6 +78,7 @@
 
 <script src="../shared/profile.js"></script>
 <script src="js/data.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/app.js"></script>
