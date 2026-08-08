@@ -160,6 +160,9 @@ h1, .bar h2 {
 /* 폰 세로는 그만큼 비우면 제목이 깨진다 — 대신 '듣기' 단추를 제목 아랫줄 가운데로 내려
    오른쪽 위(집 단추·남은시간 쪽지)와 아예 상관없게 만든다. (::after 는 flex 줄바꿈용 빈 칸) */
 @media (max-width: 700px) {
+  /* 폰 세로에서는 남은시간 쪽지가 집 단추 '아래'로 내려온다(shared/home-button.js).
+     그 자리에 퍼즐 칸 첫 줄이 깔리지 않게 목록을 그만큼 내린다. */
+  .puzzle-list { padding-top: clamp(26px, 4vh, 34px); }
   .screen > .bar { flex-wrap: wrap; padding-right: clamp(90px, 24vw, 116px) !important; }
   .screen > .bar::after { content: ""; flex-basis: 100%; height: 0; order: 2; }
   #btn-listen { order: 3; margin: 4px auto 0; }

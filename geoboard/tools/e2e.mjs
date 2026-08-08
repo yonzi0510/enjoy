@@ -184,6 +184,158 @@ await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침 검사)',
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+/* ═══════════ 낙서장 배치 이후 더한 검사 ═══════════ */
+
+await check('못판·고무줄에 변형 없음 (computed transform none)', async () => {
+  // 못 좌표가 놀이의 전부다. 못판이 조금이라도 기울거나 커지면 탭 자리가 어긋난다.
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-l3');            // 세그먼트가 가장 많은 단계로 빡세게
+  await page.waitForSelector('#scr-list.on');
+  await page.click('#list .puzzle-card');
+  await page.waitForSelector('#scr-play.on');
+  await page.waitForTimeout(150);
+
+  const readTransforms = () => page.evaluate(() => {
+    const sels = [
+      '#board', '#card-board',
+      '#board > .board-svg', '#card-board > .board-svg',
+      '#board .peg', '#card-board .peg',
+      '#board .band', '#card-board .band',
+      '.play-slot .board-box', '.card-slot .board-box', '.board-slot',
+    ];
+    const bad = [];
+    let seen = 0;
+    sels.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        seen++;
+        const t = getComputedStyle(el).transform;
+        if (t !== 'none') bad.push(sel + ' → ' + t);
+      });
+    });
+    return { bad, seen };
+  });
+
+  let r = await readTransforms();
+  expect(r.seen >= 80, '검사한 못판 요소가 너무 적다: ' + r.seen);
+  expect(r.bad.length === 0, '변형이 걸린 못판 요소: ' + r.bad.slice(0, 4).join(' , '));
+
+  // 고무줄을 다 건 뒤(완성 상태)에도 그대로여야 한다
+  await solve(page);
+  await page.waitForSelector('#reward.on', { timeout: 5000 });
+  r = await readTransforms();
+  expect(r.bad.length === 0, '완성 후 변형이 걸린 못판 요소: ' + r.bad.slice(0, 4).join(' , '));
+  const rt = await page.evaluate(() => getComputedStyle(document.querySelector('#reward-board')).transform);
+  expect(rt === 'none', '상 주는 못판에 변형: ' + rt);
+  await page.click('#reward-close');
+  await page.waitForSelector('#scr-list.on');
+});
+
+await check('첫 화면 낙서장 배치 — 칸마다 다른 기울기, 먼저 할 것이 가장 크다', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const m = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('#menu .menu-card')];
+    return {
+      transforms: cards.map(c => getComputedStyle(c).transform),
+      widths: cards.map(c => c.getBoundingClientRect().width),
+      arrow: document.querySelectorAll('#menu .menu-card:first-child .first-arrow').length,
+    };
+  });
+  expect(m.transforms.every(t => t && t !== 'none'), '기울지 않은 칸이 있다: ' + m.transforms.join(' | '));
+  expect(new Set(m.transforms).size === 3, '칸 세 개가 같은 기울기다');
+  expect(m.widths[0] > m.widths[1] && m.widths[1] > m.widths[2],
+    '크기 위계가 없다: ' + m.widths.map(w => Math.round(w)).join(' > '));
+  expect(m.arrow === 1, '첫 놀이를 가리키는 점선 화살표가 없다');
+});
+
+await check('이모지 대신 손그림 아이콘', async () => {
+  const m = await page.evaluate(() => {
+    const EMOJI = /[\u{25A0}-\u{27BF}\u{1F300}-\u{1FAFF}]/u;
+    const bad = [];
+    ['h1', '.stat', '#btn-voice', '.card-cap'].forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        if (EMOJI.test(el.textContent)) bad.push(sel + ': ' + el.textContent.trim());
+      });
+    });
+    return { bad, icons: document.querySelectorAll('svg.ico').length };
+  });
+  expect(m.bad.length === 0, '이모지가 남아 있다 — ' + m.bad.join(' | '));
+  expect(m.icons >= 2, '손그림 아이콘이 안 그려졌다: ' + m.icons);
+});
+
+await check('폰·패드: 겹침 없음 · 터치 44px · 화면 이탈 없음', async () => {
+  const sizes = [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드' }];
+  for (const s of sizes) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    for (const where of ['home', 'list', 'play']) {
+      await page.goto(BASE);
+      await page.waitForSelector('#scr-home.on');
+      if (where !== 'home') {
+        await page.click('.menu-card.c-l3');
+        await page.waitForSelector('#scr-list.on');
+      }
+      if (where === 'play') {
+        await page.click('#list .puzzle-card');
+        await page.waitForSelector('#scr-play.on');
+      }
+      await page.waitForTimeout(200);
+      const m = await page.evaluate(() => {
+        const vis = el => {
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
+        };
+        const box = el => { const r = el.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height }; };
+        const hit = (a, b) => a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1;
+
+        // 오른쪽 위에 떠 있는 것들 vs 화면 틀·조작 요소
+        const floats = [];
+        const home = document.querySelector('.enjoy-home-btn');
+        const tag = document.querySelector('.tl-bar-tag');
+        if (home && vis(home)) floats.push(['집 단추', box(home)]);
+        if (tag && vis(tag) && !tag.closest('.tl-hidden')) floats.push(['시간 쪽지', box(tag)]);
+
+        const targetSel = '.screen.on .bar, .screen.on .home-head, .screen.on .back, .screen.on #btn-listen,' +
+          '.screen.on .menu-card, .screen.on .puzzle-card, .screen.on .tray-item,' +
+          '.screen.on .vs-btn, .screen.on .stat, .screen.on .page-count, .screen.on .pz-badge, .screen.on .card-cap';
+        const targets = [...document.querySelectorAll(targetSel)].filter(vis);
+
+        const overlaps = [];
+        floats.forEach(([fname, f]) => targets.forEach(t => {
+          if (hit(f, box(t))) overlaps.push(fname + ' ↔ ' + (t.id || t.className));
+        }));
+
+        // 터치 하한 44px (못은 6×6 격자라 물리적으로 못 지킨다 — 조작 단추·칸만 잰다)
+        const tapSel = '.screen.on .back, .screen.on #btn-listen, .screen.on .vs-btn,' +
+          '.screen.on .menu-card, .screen.on .puzzle-card, .screen.on .tray-item';
+        const small = [...document.querySelectorAll(tapSel)].filter(vis)
+          .map(el => ({ n: el.id || el.className, ...box(el) }))
+          .filter(b => b.w < 44 || b.h < 44)
+          .map(b => b.n + ' ' + Math.round(b.w) + '×' + Math.round(b.h));
+
+        // 화면 밖으로 나간 것
+        const outSel = targetSel + ', .screen.on .board-box';
+        const out = [...document.querySelectorAll(outSel)].filter(vis)
+          .map(el => ({ n: el.id || el.className, ...box(el) }))
+          .filter(b => b.l < -1 || b.r > window.innerWidth + 1 || b.t < -1 || b.b > window.innerHeight + 1)
+          .map(b => b.n + ' [' + [b.l, b.t, b.r, b.b].map(Math.round).join(',') + ']');
+
+        return {
+          horiz: document.documentElement.scrollWidth - window.innerWidth,
+          floats: floats.length, overlaps, small, out,
+        };
+      });
+      const at = s.name + '/' + where;
+      expect(m.horiz <= 1, at + ': 가로 스크롤 ' + m.horiz + 'px');
+      expect(m.floats >= 2, at + ': 집 단추·시간 쪽지가 안 떠 있다(' + m.floats + ') — 겹침 검사가 헛돈다');
+      expect(m.overlaps.length === 0, at + ': 겹침 — ' + m.overlaps.join(' | '));
+      expect(m.small.length === 0, at + ': 터치 44px 미만 — ' + m.small.join(' | '));
+      expect(m.out.length === 0, at + ': 화면 이탈 — ' + m.out.join(' | '));
+    }
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });

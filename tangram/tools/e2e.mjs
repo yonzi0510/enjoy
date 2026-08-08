@@ -214,6 +214,150 @@ await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침·본보�
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+/* ─── 「낙서장」 디자인이 놀이를 망가뜨리지 않았는지 ───
+ * 첫 화면 칸은 삐뚤게 흩뿌리지만, 놀이판과 조각에는 장식용 변형이 **하나도** 있으면 안 된다.
+ * 조금이라도 돌아가면 드래그 좌표와 각도 판정이 통째로 어긋난다. */
+await check('놀이판 무변형: 판·조각에 장식용 회전·확대가 없다', async () => {
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-l3');            // 조각이 가장 많고 돌리기까지 있는 단계
+  await page.waitForSelector('#scr-list.on');
+  await page.click('#list .puzzle-card');
+  await page.waitForSelector('#scr-play.on');
+  await page.waitForTimeout(200);
+  const r = await page.evaluate(() => {
+    const bad = [];
+    // CSS 변형이 아예 없어야 하는 것들
+    ['#scr-play', '.stage-wrap', '#stage', '.ref-card', '.tray-bg', '.slot', '.deco-layer']
+      .forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          const t = getComputedStyle(el).transform;
+          if (t !== 'none') bad.push(sel + ' → ' + t);
+        });
+      });
+    // 조각은 js 가 transform 속성으로 옮기고 키운다 —
+    // matrix(a,b,c,d,e,f) 의 b·c 가 0 이어야 '회전·기울임 없음'(이동+확대만)이다
+    const pieces = [];
+    document.querySelectorAll('#stage .piece').forEach(el => {
+      const t = getComputedStyle(el).transform;
+      const m = /^matrix\(([^)]+)\)$/.exec(t);
+      if (!m) { bad.push('.piece → ' + t); return; }
+      const n = m[1].split(',').map(Number);
+      if (Math.abs(n[1]) > 1e-6 || Math.abs(n[2]) > 1e-6) bad.push('.piece 회전/기울임 → ' + t);
+      pieces.push(t);
+    });
+    return { bad, count: pieces.length };
+  });
+  expect(r.count > 0, '조각을 찾지 못함');
+  expect(r.bad.length === 0, '장식용 변형 발견: ' + r.bad.join(' | '));
+});
+
+await check('첫 화면은 반대로 삐뚤게 흩뿌려져 있다 (칸마다 다른 기울기·크기)', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const r = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('#menu .menu-card')];
+    return cards.map(el => ({
+      t: getComputedStyle(el).transform,
+      w: Math.round(el.getBoundingClientRect().width),
+    }));
+  });
+  expect(r.every(x => x.t !== 'none'), '기울지 않은 칸이 있다: ' + JSON.stringify(r));
+  expect(new Set(r.map(x => x.t)).size === r.length, '칸들이 같은 각도로 기울었다');
+  // 크기 위계 — 먼저 할 것이 가장 크다
+  expect(r[0].w > r[1].w && r[1].w > r[2].w, '크기 위계가 깨짐: ' + r.map(x => x.w).join(' > '));
+  expect(await page.locator('#menu .menu-card.c-l1 .start-arrow').count() === 1, '시작 화살표가 없다');
+});
+
+await check('UI 이모지 없음: 머리줄·단추·배지가 모두 손그림 SVG', async () => {
+  const r = await page.evaluate(() => {
+    const EMO = /[⌚-➿⬀-⯿️\u{1F000}-\u{1FAFF}]/u;
+    const out = { emoji: [], noSvg: [] };
+    const sels = ['h1', '.bar h2', '.stat', '#btn-voice', '.back', '.mc-prog', '.pz-badge', '#reward-next'];
+    sels.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        if (EMO.test(el.textContent)) out.emoji.push(sel + ': ' + el.textContent.trim());
+        if (!el.querySelector('svg') && sel !== '.mc-prog') out.noSvg.push(sel);
+      });
+    });
+    return out;
+  });
+  expect(r.emoji.length === 0, '이모지가 남음: ' + r.emoji.join(' | '));
+  expect(r.noSvg.length === 0, '손그림 SVG 가 없는 자리: ' + r.noSvg.join(', '));
+});
+
+await check('집 단추·남은시간 쪽지가 머리줄·칸과 겹치지 않는다 (폰·패드)', async () => {
+  const sizes = [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드 가로' }];
+  const problems = [];
+  for (const s of sizes) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    for (const step of ['home', 'list', 'play']) {
+      if (step === 'list') { await page.click('.menu-card.c-l1'); await page.waitForSelector('#scr-list.on'); }
+      if (step === 'play') { await page.click('#list .puzzle-card'); await page.waitForSelector('#scr-play.on'); }
+      await page.waitForTimeout(180);
+      const bad = await page.evaluate(() => {
+        const hit = (a, b) => !(a.right <= b.left + 1 || b.right <= a.left + 1 ||
+                                a.bottom <= b.top + 1 || b.bottom <= a.top + 1);
+        const floats = [];
+        const hb = document.querySelector('.enjoy-home-btn');
+        if (hb) floats.push(['집 단추', hb.getBoundingClientRect()]);
+        const tag = document.querySelector('.tl-bar:not(.tl-hidden) .tl-bar-tag');
+        if (tag) floats.push(['남은시간 쪽지', tag.getBoundingClientRect()]);
+        const targets = [];
+        document.querySelectorAll(
+          '.screen.on .bar > *, .screen.on .home-head > *, .screen.on .menu > .menu-card,' +
+          '.screen.on .puzzle-list > .puzzle-card, .screen.on .ref-card'
+        ).forEach(el => {
+          const r = el.getBoundingClientRect();
+          if (r.width && r.height) targets.push([el.className || el.tagName, r]);
+        });
+        const out = [];
+        floats.forEach(([fn, fr]) => targets.forEach(([tn, tr]) => {
+          if (hit(fr, tr)) out.push(fn + ' × ' + tn);
+        }));
+        return out;
+      });
+      bad.forEach(x => problems.push(s.name + '/' + step + ': ' + x));
+    }
+  }
+  expect(problems.length === 0, problems.join(' | '));
+});
+
+await check('터치 영역 44px 이상 (폰·패드 × 홈·목록·놀이)', async () => {
+  const sizes = [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드 가로' }];
+  const small = [];
+  for (const s of sizes) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    for (const step of ['home', 'list', 'play']) {
+      if (step === 'list') { await page.click('.menu-card.c-l1'); await page.waitForSelector('#scr-list.on'); }
+      if (step === 'play') { await page.click('#list .puzzle-card'); await page.waitForSelector('#scr-play.on'); }
+      await page.waitForTimeout(150);
+      const bad = await page.evaluate(() => {
+        const out = [];
+        document.querySelectorAll(
+          '.screen.on .back, .screen.on #btn-voice, .screen.on .menu-card,' +
+          '.screen.on .puzzle-card, .enjoy-home-btn'
+        ).forEach(el => {
+          const r = el.getBoundingClientRect();
+          if (!r.width || !r.height) return;
+          if (r.width < 44 || r.height < 44) {
+            out.push((el.id || el.className) + ' ' + Math.round(r.width) + '×' + Math.round(r.height));
+          }
+        });
+        return out;
+      });
+      bad.forEach(x => small.push(s.name + '/' + step + ': ' + x));
+    }
+  }
+  expect(small.length === 0, small.join(' | '));
+  await page.setViewportSize({ width: 1180, height: 820 });
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });

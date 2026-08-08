@@ -707,3 +707,58 @@ h1 {
 .bar .back { order: 0; }
 .bar .mini-btn, .bar .page-count { order: 1; }
 .bar h2 { order: 2; }
+
+/* ═══════════ 낙서장 — 이 앱에만 있는 칸·판 ═══════════
+ * 공용 낙서장 층(shared/crayon.css)은 이름을 아는 부품만 손본다.
+ * 색깔 실험실에만 있는 것들(도감 칸·목표 알약·팔레트 판·선반)은 그 손길이 닿지 않아
+ * 혼자 두툼한 초록 단면과 광택을 달고 있었다. 여기서 같은 문법으로 맞춘다 —
+ * 색 단면과 그라데이션을 걷고, 얇고 삐뚤한 손그림 윤곽만 남긴다.
+ *
+ * ★ 안에 든 색은 그대로 둔다. 물감 방울·목표 견본·도감 병·선반 병의 색은
+ *   이 놀이의 내용 그 자체다. 여기서 바꾸는 것은 '테두리와 바탕'뿐이다. */
+.book-cell,
+.palette,
+.shelf,
+.target-chip,
+.mix-name,
+.page-count {
+  background: rgba(255, 255, 255, .72) !important;
+  border: 3px solid rgba(46, 42, 36, .85) !important;
+  box-shadow: none !important;
+}
+.book-cell { border-radius: 24px 19px 26px 21px !important; }
+.palette   { border-radius: 26px 21px 27px 22px !important; }
+.shelf     { border-radius: 22px 18px 23px 19px !important; }
+.target-chip, .mix-name, .page-count {
+  border-width: 2.5px !important;
+  border-radius: 999px !important;
+}
+/* 아직 못 만든 색은 연필로 흐리게 그려 둔 칸 */
+.book-cell:not(.done) { border-color: rgba(46, 42, 36, .3) !important; }
+
+/* 🔊 다시 듣기 — 공용 층이 .back 만 알아서 여기서 같은 손으로 그린다 */
+.mini-btn {
+  border: 3px solid rgba(46, 42, 36, .8) !important;
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51% !important;
+  background: rgba(255, 255, 255, .85) !important;
+  box-shadow: none !important;
+}
+.mini-btn:active { transform: translate(2px, 3px) !important; box-shadow: none !important; }
+
+/* 색 견본·병 — 배경색(= 그 색 자체)은 그대로 두고 반질반질한 안쪽 그림자만 걷어낸다 */
+.mi-swatch, .target-swatch {
+  border: 3px solid rgba(46, 42, 36, .8);
+  box-shadow: none !important;
+}
+.bk-jar {
+  border: 3px solid rgba(46, 42, 36, .8);
+  border-radius: 15px 12px 19px 17px !important;
+  box-shadow: none !important;
+}
+.sj-body {
+  border: 2.5px solid rgba(46, 42, 36, .8);
+  border-radius: 9px 7px 12px 11px;
+  box-shadow: none !important;
+}
+/* 병뚜껑도 회색 플라스틱 대신 연필로 그은 한 획처럼 */
+.bk-jar::before, .sj-body::before { background: rgba(46, 42, 36, .7) !important; }

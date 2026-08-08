@@ -137,6 +137,13 @@ h1 .ic { width: 1.18em; height: 1.18em; }
   #btn-listen { order: 3; margin: 4px auto 0; }
 }
 
+/* 터치 하한 44px — 폰 세로에서 몇몇 단추가 42·40px 로 내려가 있었다.
+   (다섯 살 손가락 기준. 네 경우 모두 e2e 가 잰다) */
+.vs-btn { width: clamp(44px, 8vmin, 48px); height: clamp(44px, 8vmin, 48px); }
+.pet-btn { width: clamp(44px, 7.5vmin, 54px); height: clamp(44px, 7.5vmin, 54px); }
+.back { width: clamp(44px, 9vmin, 54px); height: clamp(44px, 9vmin, 54px); }
+.bigbtn { min-height: 44px; }
+
 /* ═══════════ 5. 남은 광택 걷어내기 ═══════════ */
 
 /* 자리판 — 두툼한 색 단면과 광택을 걷고 손으로 그은 윤곽만.

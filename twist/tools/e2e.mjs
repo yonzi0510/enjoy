@@ -284,6 +284,12 @@ await check('첫 화면 낙서장: 칸마다 다른 기울기·크기, 겹침·�
       return {
         rects: cards.map(c => { const r = c.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height }; }),
         tf: cards.map(c => getComputedStyle(c).transform),
+        // 놀이 이름은 한 줄로 — 줄 수와 칸 안에 들어가는지를 함께 잰다
+        names: cards.map(c => {
+          const n = c.querySelector('.mc-name');
+          const nr = n.getBoundingClientRect(), cr = c.getBoundingClientRect();
+          return { t: n.textContent, lines: nr.height / parseFloat(getComputedStyle(n).fontSize) / 1.45, over: nr.left < cr.left - 1 || nr.right > cr.right + 1 };
+        }),
         horiz: document.documentElement.scrollWidth - window.innerWidth,
         vw: window.innerWidth,
       };
@@ -303,6 +309,10 @@ await check('첫 화면 낙서장: 칸마다 다른 기울기·크기, 겹침·�
     m.rects.forEach((r, i) => {
       expect(r.l >= -1 && r.r <= m.vw + 1, s.name + ': 칸 ' + (i + 1) + ' 화면 이탈 ' + Math.round(r.l) + '~' + Math.round(r.r));
       expect(r.w >= 44 && r.h >= 44, s.name + ': 칸 ' + (i + 1) + ' 터치 영역 부족 ' + Math.round(r.w) + '×' + Math.round(r.h));
+    });
+    m.names.forEach(n => {
+      expect(n.lines <= 1.05, s.name + ': "' + n.t + '" 이름이 한 줄을 넘음');
+      expect(!n.over, s.name + ': "' + n.t + '" 이름이 칸 밖으로 삐져나감');
     });
     expect(m.horiz <= 1, s.name + ': 가로 스크롤 ' + m.horiz + 'px');
   }

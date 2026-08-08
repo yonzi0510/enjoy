@@ -87,7 +87,9 @@
     st.busy = false;
     st.playing = true;
 
-    $('memory-title').textContent = '🃏 짝꿍 카드 · ' + level + '단계';
+    /* 손그림 아이콘 + 글자 (아이콘이 없으면 옛 이모지) */
+    const mIcon = window.DoodleIcons ? '<span class="di" data-di="cards"></span> ' : '🃏 ';
+    $('memory-title').innerHTML = mIcon + '짝꿍 카드 · ' + level + '단계';
 
     // 짝 카드 만들기: 한 벌에서 짝 수만큼 겹침 없이 뽑아 2장씩
     const chosen = shuffle(POOL.slice()).slice(0, st.pairs);

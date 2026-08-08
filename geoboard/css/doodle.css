@@ -170,8 +170,11 @@ h1 .ico-title { width: 1.2em; height: 1.2em; vertical-align: -.18em; }
   box-shadow: none;
 }
 
-/* 색 고무줄 칸 — 담긴 고무줄 색은 그대로, 바탕만 종이로 */
+/* 색 고무줄 칸 — 담긴 고무줄 색은 그대로, 바탕만 종이로.
+   폭이 좁아지면 높이(가로세로비 100/44)가 25px 까지 내려가 손가락이 닿기 어려웠다.
+   손 닿는 하한 48px 을 못 박는다(고무줄 그림은 가운데 그대로). */
 .tray-item {
+  min-height: 48px;
   background: #fff !important;
   border: 2.5px solid rgba(46, 42, 36, .7);
   border-radius: 18px 14px 19px 15px;
@@ -218,6 +221,9 @@ h1 .ico-title { width: 1.2em; height: 1.2em; vertical-align: -.18em; }
 .screen > .bar { padding-right: clamp(150px, 15.5vw, 200px) !important; }
 @media (max-width: 700px) {
   .screen > .bar { padding-right: calc(clamp(60px, 8.6vw, 80px) + 26px) !important; }
+  /* 좁은 화면에서는 쪽지가 집 단추 아래로 내려오면서 퍼즐 첫 줄의 배지를 가렸다 —
+     목록을 쪽지 아래에서 시작하게 한다. */
+  #scr-list .puzzles-list { padding-top: clamp(26px, 5vh, 46px); }
 }
 
 /* 폰 세로는 제목이 두 줄로 접히기 쉽다 — '듣기' 글씨를 빼고 스피커 그림만 남겨

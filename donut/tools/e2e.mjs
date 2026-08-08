@@ -192,13 +192,14 @@ await check('크기 위계: 아직 안 한 첫 퍼즐 하나만 .next 로 크게
       total: cards.length,
       nextCount: nx.length,
       nextIdx: cards.indexOf(nx[0]),
+      firstUndone: cards.findIndex(c => !c.classList.contains('done')),
       nextW: nx[0] ? w(nx[0]) : 0,
       otherW: w(cards[cards.length - 1]),
       tilts: new Set(cards.map(c => getComputedStyle(c).transform)).size,
     };
   });
   expect(r.nextCount === 1, '.next 개수: ' + r.nextCount);
-  expect(r.nextIdx === 0, '아직 안 한 첫 퍼즐이 아님: ' + r.nextIdx);
+  expect(r.nextIdx === r.firstUndone, '아직 안 한 첫 퍼즐이 아님: ' + r.nextIdx + ' ≠ ' + r.firstUndone);
   expect(r.nextW > r.otherW + 2, '.next 가 더 크지 않다: ' + r.nextW + ' vs ' + r.otherW);
   expect(r.tilts >= 3, '퍼즐 칸 기울기가 다 같다: ' + r.tilts);
 });

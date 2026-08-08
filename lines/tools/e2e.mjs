@@ -32,6 +32,32 @@ async function traceAndComplete(page) {
   await page.waitForSelector('#reward.on', { timeout: 5000 });
 }
 
+/* 진짜 마우스로 안내선을 따라 긋는다 — 논리좌표(640×640)를 화면좌표로 바꿔 드래그한다.
+ * 캔버스에 transform 이 걸리면 getBoundingClientRect() 가 커지거나 회전해 이 드래그가
+ * 안내선에서 벗어나므로, 이 검사가 곧 "채점 좌표가 안 틀어졌는지" 검사이기도 하다.
+ * dx,dy(논리 단위)를 주면 일부러 빗나가게 그을 수 있다. */
+async function drawGuideByHand(page, dx = 0, dy = 0) {
+  const box = await page.locator('#play-canvas').boundingBox();
+  const paths = await page.evaluate(() => {
+    const pz = window.LinesData.puzzleById(App.debug().puzzle);
+    return window.LinesData.guideOf(pz);
+  });
+  const k = box.width / 640; // 정사각 캔버스라 가로세로 배율이 같다
+  const at = pt => [
+    box.x + Math.max(0, Math.min(640, pt.x + dx)) * k,
+    box.y + Math.max(0, Math.min(640, pt.y + dy)) * k,
+  ];
+  for (const p of paths) {
+    if (p.length < 2) continue;
+    let [x, y] = at(p[0]);
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    for (let i = 1; i < p.length; i++) { [x, y] = at(p[i]); await page.mouse.move(x, y); }
+    await page.mouse.up();
+    await page.waitForTimeout(30);
+  }
+}
+
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1180, height: 820 } });
 const consoleErrors = [];

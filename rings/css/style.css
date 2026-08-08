@@ -224,7 +224,8 @@ h1 {
 }
 .hand-slot { display: flex; align-items: center; justify-content: center; width: 100%; }
 .card-slot .hand-box { max-width: clamp(150px, 42vmin, 250px); }
-.play-slot .hand-box { max-width: clamp(180px, 52vmin, 300px); }
+/* 놀이 손은 본보기 손보다 확실히 크게 — 어디에 끼워야 하는지가 한눈에 보인다 */
+.play-slot .hand-box { max-width: clamp(200px, 60vmin, 320px); }
 
 /* ─────────── 색 고리 트레이 ─────────── */
 .tray {
