@@ -232,3 +232,25 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .menu-card, .menu-card:nth-child(even) { transform: none; }
 }
+
+/* ── 팀들이 반복해서 보고한 것들 — 공용에서 한 번에 ────────────────────
+ * 29개 팀이 각자 앱에서 같은 문제를 발견했다. 앱마다 따로 막지 않고 여기서 바닥을 깐다.
+ * (앱 CSS 가 이보다 크게 잡았다면 그쪽이 이긴다 — 여기는 '하한'이다.)
+ */
+
+/* ① 머리줄 단추가 5세 손가락 하한(44px)에 못 미쳤다
+ *    — 목소리 42 · 뒤로 42 · 듣기 40 · 펫 42px 이 여러 앱에서 반복 확인됐다 */
+.back, .vs-btn, .icon-btn, .pet-btn {
+  min-width: 46px !important;
+  min-height: 46px !important;
+}
+
+/* ② 아이 이름표가 놀잇감 위에 얹혀 글씨를 가렸다 (색칠·구슬·방향색·도넛 팀 보고)
+ *    누르는 것이 아니라 '지금 누가 노나' 표시라, 종이에 연하게 스민 것처럼 낮춘다 */
+.enjoy-profile-badge {
+  opacity: .55 !important;
+  font-size: 12px !important;
+  padding: 3px 10px !important;
+  box-shadow: none !important;
+  background: rgba(255, 253, 246, .82) !important;
+}

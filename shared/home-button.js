@@ -39,7 +39,9 @@ a.vs-btn[href="../"], .home-head a[href="../"]{ display:none !important }
    남은시간 쪽지를 집 단추 '아래'로 내린다 (tubes 팀이 겹침을 찾아 줬다). */
 .bar, .home-head{ padding-right:calc(clamp(60px,8.6vw,80px) + 22px) !important }
 .tl-bar-tag{ right:calc(clamp(60px,8.6vw,80px) + 26px + env(safe-area-inset-right,0px)) !important }
-@media (max-width:700px){
+/* 폰 가로처럼 '넓지만 낮은' 화면도 옆에 자리가 없다 —
+   패턴·색깔실험실 팀이 이 구간에서 쪽지가 「듣기」를 덮는 것을 찾아냈다. */
+@media (max-width:700px), (max-height:560px){
   .tl-bar-tag{
     right:calc(12px + env(safe-area-inset-right,0px)) !important;
     top:calc(clamp(60px,8.6vw,80px) + 18px + env(safe-area-inset-top,0px)) !important;
