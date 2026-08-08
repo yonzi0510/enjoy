@@ -1,0 +1,175 @@
+/* 컵 쌓기 — 「낙서장」 층 (스타일시트 중 가장 마지막에 불러온다)
+ *
+ * 공용 shared/crayon.css(모눈 종이·얇은 손그림 윤곽)와 shared/doodle-menu.css(첫 화면 흩뿌리기)
+ * 위에, 이 앱에만 필요한 것을 얹는다.
+ *   1) 첫 화면 단계 카드 — 자리·기울기·**크기 위계**(가장 먼저 할 '꼬마 탑'이 가장 크다)
+ *   2) 손그림 아이콘(js/icons.js) 자리 잡기 — 이모지 자리를 대신한다
+ *   3) 남아 있던 반질반질한 면(본보기 카드·트레이·알약)을 종이로
+ *
+ * ⚠️ 절대 건드리지 않는 것
+ *   · 컵 색 — 색 맞추기가 곧 놀이다. .mini-cup / .pyr-cell / .ti-cup 안의 SVG 색은 그대로.
+ *   · 쌓는 피라미드(#pyr-play)와 컵의 회전·확대 — 자리 판정(드래그 히트 영역)이 틀어진다.
+ *     흩뿌리기·기울이기는 **고르는 칸(.menu-card, .puzzle-card)** 에만 준다.
+ */
+
+/* ═══════════ 1. 첫 화면 — 낙서장 배치 + 크기 위계 ═══════════
+ * 공용 doodle-menu.css 는 칸이 여덟 개까지 있는 앱을 기준으로 흩뿌린다.
+ * 컵 쌓기는 단계가 셋뿐이라, 셋을 하나하나 잡아 "먼저 할 것이 가장 크게" 보이도록 다시 준다.
+ * (선택자를 `.menu > .menu-card:nth-child(n)` 로 더 구체적으로 써서 공용 값을 덮는다) */
+.menu { align-items: flex-start; }
+
+.menu > .menu-card:nth-child(1) {          /* 꼬마 탑 — 가장 먼저, 가장 크게 */
+  width: clamp(176px, 33vmin, 268px);
+  padding: clamp(16px, 3.4vmin, 26px);
+  transform: translate(-1%, 1%) rotate(-2.2deg);
+}
+.menu > .menu-card:nth-child(2) {          /* 중간 탑 */
+  width: clamp(152px, 26.5vmin, 212px);
+  margin-top: clamp(6px, 1.6vmin, 18px);
+  transform: translate(1%, -1%) rotate(1.8deg);
+}
+.menu > .menu-card:nth-child(3) {          /* 왕 탑 — 아직 먼 이야기라 가장 작게 */
+  width: clamp(136px, 22.5vmin, 180px);
+  margin-top: clamp(12px, 3vmin, 34px);
+  transform: translate(-1%, 2%) rotate(2.6deg);
+}
+
+/* 카드 안의 미리보기 탑도 카드 크기를 따라간다 */
+.menu > .menu-card:nth-child(1) .mini-pyr { --mc: clamp(27px, 7vmin, 46px); }
+.menu > .menu-card:nth-child(2) .mini-pyr { --mc: clamp(22px, 5.4vmin, 36px); }
+.menu > .menu-card:nth-child(3) .mini-pyr { --mc: clamp(18px, 4.4vmin, 29px); }
+
+.menu > .menu-card:nth-child(1) .mc-name { font-size: clamp(21px, 4.4vmin, 32px); }
+.menu > .menu-card:nth-child(3) .mc-name { font-size: clamp(16px, 3.1vmin, 22px); }
+
+/* 폰 세로처럼 좁은 화면에서는 '꼬마 탑'을 한 줄 통째로 써서 더 크게 —
+   아래 줄에 나머지 둘이 나란히 붙어, 무엇부터 할지가 한눈에 보인다. */
+@media (max-width: 560px) {
+  .menu > .menu-card:nth-child(1) {
+    width: min(74%, 300px);
+    margin-bottom: clamp(4px, 1.4vh, 14px);
+  }
+  .menu > .menu-card:nth-child(1) .mini-pyr { --mc: clamp(34px, 10vmin, 52px); }
+  .menu > .menu-card:nth-child(2) { width: min(43%, 190px); margin-top: 0; }
+  .menu > .menu-card:nth-child(3) { width: min(38%, 168px); margin-top: clamp(8px, 2vh, 20px); }
+}
+
+/* 퍼즐 목록 칸도 손으로 붙인 듯 살짝 삐뚤게 — 여기도 고르는 칸이라 안전하다 */
+.puzzles-list > .puzzle-card:nth-child(4n+1) { transform: rotate(-1.6deg); }
+.puzzles-list > .puzzle-card:nth-child(4n+2) { transform: rotate(1.3deg); }
+.puzzles-list > .puzzle-card:nth-child(4n+3) { transform: rotate(1.9deg); }
+.puzzles-list > .puzzle-card:nth-child(4n+4) { transform: rotate(-1.1deg); }
+.puzzles-list > .puzzle-card:active { transform: translate(2px, 3px) rotate(0) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu > .menu-card, .puzzles-list > .puzzle-card { transform: none !important; }
+}
+
+/* ═══════════ 2. 손그림 아이콘 자리 ═══════════
+ * js/icons.js 가 <span class="ic" data-icon="…"> 안에 SVG 를 채운다. */
+.ic { display: inline-block; width: 1.05em; height: 1.05em; line-height: 0; vertical-align: -.19em; flex: none; }
+.ic svg, .pz-badge svg, .reward-bell svg { width: 100%; height: 100%; display: block; }
+.ic-title { width: 1.2em; height: 1.2em; }
+
+/* 제목은 아이콘과 글씨를 나란히 — 연필로 쓴 글씨 색으로 */
+h1 { display: flex; align-items: center; justify-content: center; gap: .26em; color: #2E2A24; }
+.bar h2 {
+  display: flex; align-items: center; justify-content: center; gap: .26em;
+  color: #2E2A24;
+}
+.sample-cap { color: #2E2A24; display: flex; align-items: center; justify-content: center; gap: .3em; }
+.sample-cap .ic { width: 1.25em; height: 1.25em; }
+
+/* 뒤로가기 — 화살표 하나가 단추를 꽉 채운다 */
+.back { display: flex; align-items: center; justify-content: center; }
+.back .ic { width: 58%; height: 58%; vertical-align: 0; }
+
+/* 목소리 단추 */
+.vs-btn { display: inline-flex; align-items: center; justify-content: center; }
+#btn-voice .ic { width: 62%; height: 62%; vertical-align: 0; }
+
+/* 듣기 단추 */
+#btn-listen { display: inline-flex; align-items: center; gap: .3em; color: #2E2A24; }
+#btn-listen .ic { width: 1.2em; height: 1.2em; }
+
+/* 별 개수 알약 */
+.stat { display: inline-flex; align-items: center; gap: .25em; }
+.stat .ic { width: 1.15em; height: 1.15em; }
+
+/* 완성 축하의 큰 종 */
+.reward-bell {
+  width: clamp(74px, 17vmin, 124px); height: clamp(74px, 17vmin, 124px);
+  font-size: 0;
+}
+
+/* 퍼즐 칸 배지 — 다 하면 별, 아직이면 빈 컵 */
+.pz-badge { width: clamp(20px, 3.8vmin, 28px); height: clamp(20px, 3.8vmin, 28px); line-height: 0; }
+
+/* 단계 카드의 진행 알약 안 별 */
+.mc-prog { display: inline-flex; align-items: center; gap: .25em; }
+.mc-prog .ic { width: 1.05em; height: 1.05em; }
+
+/* ═══════════ 3. 남은 광택 걷어내기 ═══════════ */
+
+/* 본보기 카드 — 종이 한 장 */
+.sample-card {
+  background: rgba(255, 255, 255, .78) !important;
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 26px 20px 24px 22px;
+  box-shadow: none !important;
+}
+
+/* 색 컵 트레이 칸 — 담긴 컵 색은 그대로, 바탕만 종이로 */
+.tray-item {
+  background: #fff !important;
+  border: 2.5px solid rgba(46, 42, 36, .7);
+  border-radius: 18px 14px 19px 15px;
+  box-shadow: none !important;
+}
+.tray-item:active { transform: translate(2px, 3px); }
+
+/* 컵을 얹는 받침 — 연필로 그은 상 다리 하나 */
+.pyr-table {
+  position: relative;
+  height: clamp(10px, 2.4vmin, 18px);
+  background: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border-top: 5px solid rgba(46, 42, 36, .85);
+}
+.pyr-table::before, .pyr-table::after {
+  content: ""; position: absolute; top: 3px;
+  width: 5px; height: 130%; background: rgba(46, 42, 36, .7); border-radius: 3px;
+}
+.pyr-table::before { left: 15%; transform: rotate(5deg); }
+.pyr-table::after { right: 15%; transform: rotate(-5deg); }
+
+/* 오른쪽 위에는 공용 집 단추와 남은 시간 쪽지가 겹쳐 있다.
+   공용 CSS 가 비워 주는 104px 로는 '듣기' 단추가 쪽지 밑에 깔려서 더 비운다.
+   shared/home-button.js 가 `.bar{padding-right:104px!important}` 를 나중에 끼워 넣으므로
+   선택자를 한 단계 더 구체적으로(.screen > .bar) 써야 이긴다. */
+.screen > .bar { padding-right: clamp(172px, 16vw, 200px) !important; }
+
+/* 알약·번호 — 흰 종이에 연필 테두리 */
+.page-count, .mc-prog {
+  background: #fff !important;
+  border: 2.5px solid rgba(46, 42, 36, .75);
+  border-radius: 999px;
+  color: #2E2A24 !important;
+}
+.pz-no {
+  background: #fff !important;
+  border: 2.5px solid rgba(46, 42, 36, .8);
+  color: #2E2A24 !important;
+  box-shadow: none !important;
+}
+.puzzle-card.done .pz-no { background: #F6C453 !important; }
+
+/* 카드 글씨도 연필 색으로 (컵 색은 그대로) */
+.mc-name { color: #2E2A24; }
+.mc-desc { color: #6B6154; }
+
+/* 큰 단추 — 그라데이션 대신 단색 */
+.bigbtn { background: #fff !important; color: #2E2A24 !important; }
+.bigbtn.primary { background: #F6C453 !important; color: #2E2A24 !important; }
+.reward-praise { color: #2E2A24; }

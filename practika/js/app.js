@@ -81,7 +81,9 @@
     for (const l of window.LANGS) {
       const b = document.createElement('button');
       b.className = 'lang-tab' + (l.id === state.lang ? ' active' : '');
-      b.innerHTML = `<span class="flag">${l.flag}</span>${l.label}`;
+      // 국기도 손그림으로 (js/icons.js). 못 그리는 언어면 데이터의 이모지를 그대로 쓴다
+      const flag = (window.PkIcons && PkIcons.flag(l.id)) || l.flag;
+      b.innerHTML = `<span class="flag">${flag}</span>${l.label}`;
       b.addEventListener('click', () => {
         if (state.lang === l.id) return;
         state.lang = l.id;
@@ -135,7 +137,7 @@
         `<span class="lesson-info"><span class="lesson-name">${i + 1}. ${les.title}</span>` +
         `<span class="lesson-meta">레벨 ${les.level}${p.done ? ' · 최고 ' + p.best + '점' : ''}</span>` +
         (stars ? `<span class="lesson-stars">${stars}</span>` : '') + `</span>` +
-        (unlocked ? '' : '<span class="lesson-lock">🔒</span>');
+        (unlocked ? '' : `<span class="lesson-lock">${(window.PkIcons && PkIcons.svg('lock')) || '🔒'}</span>`);
       if (unlocked) card.addEventListener('click', () => startLesson(id));
       else card.addEventListener('click', () => Speech.speakKo('앞 레슨을 먼저 끝내면 열려요'));
       list.appendChild(card);

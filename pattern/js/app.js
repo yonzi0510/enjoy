@@ -8,6 +8,8 @@ window.App = (() => {
   const A = window.Audio2;
   const P = window.Progress;
   const $ = id => document.getElementById(id);
+  const I = window.PatternIcons;              // 손그림 아이콘 (js/icons.js)
+  const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
@@ -33,7 +35,7 @@ window.App = (() => {
         '<span class="mc-icon">' + miniPattern(lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? I.svg('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(lv); });
       menu.appendChild(b);
     });
@@ -52,7 +54,7 @@ window.App = (() => {
   let curLevel = null;
   function openList(lv) {
     curLevel = lv;
-    $('list-title').textContent = '🔁 ' + lv.name;
+    $('list-title').innerHTML = I.svg('repeat') + esc(lv.name);
     const list = D.puzzlesOf(lv.id);
     $('list-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('list');
@@ -72,7 +74,7 @@ window.App = (() => {
             '</span>'
           ).join('') +
         '</span>' +
-        '<span class="pz-badge">' + (done ? '⭐' : '❓') + '</span>';
+        '<span class="pz-badge">' + I.svg(done ? 'star' : 'question') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pzl); });
       box.appendChild(b);
     });
@@ -84,7 +86,7 @@ window.App = (() => {
 
   function openPlay(pzl) {
     cur = { pz: pzl, answers: D.answersOf(pzl), placed: [], locked: false };
-    $('play-title').textContent = '🔁 ' + D.levelDef(pzl.level).name;
+    $('play-title').innerHTML = I.svg('repeat') + esc(D.levelDef(pzl.level).name);
     renderStrip();
     renderTray();
     showScreen('scr-play');
@@ -114,10 +116,10 @@ window.App = (() => {
         cell.innerHTML = D.tile(id).draw('sp' + pz.id + pos);
       } else if (bIdx === placedCount) {
         cell.className = 'cell blank active';
-        cell.innerHTML = '<span class="q">?</span>';
+        cell.innerHTML = '<span class="q">' + I.svg('question', 'currentColor') + '</span>';
       } else {
         cell.className = 'cell blank';
-        cell.innerHTML = '<span class="q">?</span>';
+        cell.innerHTML = '<span class="q">' + I.svg('question', 'currentColor') + '</span>';
       }
       cell.dataset.pos = pos;
       strip.appendChild(cell);

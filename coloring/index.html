@@ -16,16 +16,140 @@
 </head>
 <body>
 
+<!-- ═══════ 손그림 아이콘 모음 ═══════
+     이모지 대신 아이가 크레용으로 그린 듯한 그림을 쓴다.
+     · 굵고 고른 획(stroke-width 6~10) — 작게 줄여도 형태가 뭉개지지 않는다
+     · feTurbulence + feDisplacementMap 으로 곧은 선을 실제로 떨리게 한다
+       (모양마다 seed 를 달리해 같은 손버릇이 반복되지 않게)
+     ※ 이 필터는 화면 틀(단추·머리글)에만 쓴다. 색칠 캔버스·안내선·벽 마스크에는
+       필터도 변형도 절대 걸지 않는다 — 좌표가 틀어지면 물통 색이 엉뚱한 데로 샌다. -->
+<svg class="ico-sprite" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <filter id="dd-a" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.036" numOctaves="2" seed="4"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.6"/>
+    </filter>
+    <filter id="dd-b" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="17"/>
+      <feDisplacementMap in="SourceGraphic" scale="3"/>
+    </filter>
+    <filter id="dd-c" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.042" numOctaves="2" seed="31"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+    </filter>
+  </defs>
+
+  <!-- ⭐ 별 (모은 별·완성 표시) -->
+  <symbol id="i-star" viewBox="0 0 100 100">
+    <g filter="url(#dd-a)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 15 L61 38 L86 41 L68 59 L73 84 L50 72 L27 84 L32 59 L14 41 L39 38 Z"
+            fill="#F6C453" stroke-width="7"/>
+    </g>
+  </symbol>
+
+  <!-- 🖼️ 액자 (갤러리) -->
+  <symbol id="i-gallery" viewBox="0 0 100 100">
+    <g filter="url(#dd-b)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 22 L85 20 L86 79 L16 78 Z" fill="#FFFFFF" stroke-width="8"/>
+      <path d="M67 35 a7 7 0 1 0 .1 0 Z" fill="#F6C453" stroke-width="6"/>
+      <path d="M23 69 L40 46 L53 62 L64 51 L79 69" stroke-width="7"/>
+    </g>
+  </symbol>
+
+  <!-- ◀ 뒤로 가기 -->
+  <symbol id="i-back" viewBox="0 0 100 100">
+    <g filter="url(#dd-c)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M62 17 L27 50 L62 83" stroke-width="11"/>
+    </g>
+  </symbol>
+
+  <!-- 🪣 물통 (부어서 채우기) -->
+  <symbol id="i-bucket" viewBox="0 0 100 100">
+    <g filter="url(#dd-a)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M25 38 C28 15 62 15 65 38" stroke-width="7"/>
+      <path d="M19 37 L28 80 L62 80 L71 37 Z" fill="#BFE6F5" stroke-width="8"/>
+      <path d="M86 50 C78 62 78 74 86 76 C94 74 94 62 86 50 Z" fill="#E8483F" stroke-width="6"/>
+    </g>
+  </symbol>
+
+  <!-- 🖍️ 크레용 -->
+  <symbol id="i-crayon" viewBox="0 0 100 100">
+    <g filter="url(#dd-b)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M30 66 L59 23 L71 30 L42 72 Z" fill="#FFD23D" stroke-width="8"/>
+      <path d="M30 66 L26 85 L42 72 Z" fill="#E8483F" stroke-width="7"/>
+      <path d="M38 55 L50 62" stroke-width="6"/>
+    </g>
+  </symbol>
+
+  <!-- 🧽 지우개 (문질러 지우기) -->
+  <symbol id="i-eraser" viewBox="0 0 100 100">
+    <g filter="url(#dd-c)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 36 L73 25 L83 49 L28 60 Z" fill="#F5D9EA" stroke-width="8"/>
+      <path d="M23 48 L78 37" stroke-width="6"/>
+      <path d="M22 76 C34 68 44 84 56 76 C67 69 77 84 87 77" stroke-width="6"/>
+    </g>
+  </symbol>
+
+  <!-- ↩️ 되돌리기 -->
+  <symbol id="i-undo" viewBox="0 0 100 100">
+    <g filter="url(#dd-a)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M27 41 C47 21 75 26 83 48 C89 67 76 83 57 85" stroke-width="9"/>
+      <path d="M42 21 L24 41 L44 53" stroke-width="9"/>
+    </g>
+  </symbol>
+
+  <!-- 🗑️ 전부 지우기 -->
+  <symbol id="i-trash" viewBox="0 0 100 100">
+    <g filter="url(#dd-b)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M27 33 L33 85 L67 85 L73 33 Z" fill="#FFFFFF" stroke-width="8"/>
+      <path d="M16 30 L84 29" stroke-width="9"/>
+      <path d="M39 30 L40 19 L60 19 L61 30" stroke-width="7"/>
+      <path d="M43 45 L45 74 M57 45 L55 74" stroke-width="6"/>
+    </g>
+  </symbol>
+
+  <!-- 💾 보관하기 (상자에 쏙) -->
+  <symbol id="i-save" viewBox="0 0 100 100">
+    <g filter="url(#dd-c)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 13 L50 47" stroke-width="9"/>
+      <path d="M34 33 L50 50 L66 33" stroke-width="9"/>
+      <path d="M18 55 L21 85 L79 84 L82 55 Z" fill="#9ADCA6" stroke-width="8"/>
+    </g>
+  </symbol>
+
+  <!-- 🗣️ 목소리 설정 (말풍선) -->
+  <symbol id="i-voice" viewBox="0 0 100 100">
+    <g filter="url(#dd-a)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 24 L83 22 L84 63 L47 64 L29 80 L31 64 L18 64 Z" fill="#FFFFFF" stroke-width="8"/>
+      <path d="M33 38 L67 37 M33 51 L57 50" stroke-width="7"/>
+    </g>
+  </symbol>
+
+  <!-- 🎨 물감 팔레트 (제목) -->
+  <symbol id="i-palette" viewBox="0 0 100 100">
+    <g filter="url(#dd-b)" fill="none" stroke="#2E2A24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 13 C24 13 11 32 13 51 C15 70 34 86 54 86 C63 86 65 77 61 71 C57 65 61 58 69 58 C85 58 91 47 89 35 C86 21 72 13 50 13 Z"
+            fill="#FFFFFF" stroke-width="8"/>
+      <g stroke="none">
+        <path d="M28 40 a7 7 0 1 0 .1 0 Z" fill="#E8483F"/>
+        <path d="M48 27 a7 7 0 1 0 .1 0 Z" fill="#3DB6E8"/>
+        <path d="M69 39 a7 7 0 1 0 .1 0 Z" fill="#7BC043"/>
+        <path d="M32 62 a7 7 0 1 0 .1 0 Z" fill="#FFD23D"/>
+      </g>
+    </g>
+  </symbol>
+</svg>
+
 <!-- 홈: 그림 고르기 -->
 <section class="screen on" id="scr-home">
   <header class="home-head">
-    <h1>🎨 색칠공부</h1>
+    <h1><svg class="ic ic-h1" aria-hidden="true"><use href="#i-palette"/></svg> 색칠공부</h1>
     <div class="stats">
-      <span class="stat">⭐ <b id="home-stars">0</b></span>
-      <button type="button" id="btn-gallery" class="vs-btn" aria-label="갤러리">🖼️<b id="gallery-badge" class="mini-badge">0</b></button>
+      <span class="stat"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> <b id="home-stars">0</b></span>
+      <button type="button" id="btn-gallery" class="vs-btn" aria-label="갤러리"><svg class="ic" aria-hidden="true"><use href="#i-gallery"/></svg><b id="gallery-badge" class="mini-badge">0</b></button>
       <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
       <span id="pet-slot"></span>
-      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정"><svg class="ic" aria-hidden="true"><use href="#i-voice"/></svg></button>
     </div>
   </header>
   <div class="cat-chips" id="cat-chips"></div>
@@ -35,7 +159,7 @@
 <!-- 색칠하기 -->
 <section class="screen" id="scr-paint">
   <header class="bar">
-    <button type="button" class="back" id="btn-paint-back">◀</button>
+    <button type="button" class="back" id="btn-paint-back" aria-label="뒤로 가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button>
     <h2 id="paint-title">🎨 색칠하기</h2>
   </header>
   <div class="paint-stage">
@@ -45,15 +169,15 @@
     <div class="paint-tools">
       <div class="palette" id="palette"></div>
       <div class="tool-row">
-        <button type="button" class="tool-btn" data-tool="fill" aria-label="물통 채우기">🪣</button>
-        <button type="button" class="tool-btn" data-tool="crayon" aria-label="크레용">🖍️</button>
-        <button type="button" class="tool-btn" data-tool="erase" aria-label="지우개">🧽</button>
+        <button type="button" class="tool-btn" data-tool="fill" aria-label="물통 채우기"><svg class="ic" aria-hidden="true"><use href="#i-bucket"/></svg></button>
+        <button type="button" class="tool-btn" data-tool="crayon" aria-label="크레용"><svg class="ic" aria-hidden="true"><use href="#i-crayon"/></svg></button>
+        <button type="button" class="tool-btn" data-tool="erase" aria-label="지우개"><svg class="ic" aria-hidden="true"><use href="#i-eraser"/></svg></button>
       </div>
       <div class="size-row" id="size-row" aria-label="크레용 굵기"></div>
       <div class="act-row">
-        <button type="button" class="act-btn" id="btn-undo" aria-label="되돌리기">↩️</button>
-        <button type="button" class="act-btn" id="btn-clear" aria-label="전체 지우기">🗑️</button>
-        <button type="button" class="act-btn save" id="btn-save" aria-label="보관하기">💾</button>
+        <button type="button" class="act-btn" id="btn-undo" aria-label="되돌리기"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+        <button type="button" class="act-btn" id="btn-clear" aria-label="전체 지우기"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+        <button type="button" class="act-btn save" id="btn-save" aria-label="보관하기"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></button>
       </div>
     </div>
   </div>
@@ -62,8 +186,8 @@
 <!-- 갤러리 -->
 <section class="screen" id="scr-gallery">
   <header class="bar">
-    <button type="button" class="back" id="btn-gallery-back">◀</button>
-    <h2>🖼️ 내 갤러리</h2>
+    <button type="button" class="back" id="btn-gallery-back" aria-label="뒤로 가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button>
+    <h2><svg class="ic ic-h1" aria-hidden="true"><use href="#i-gallery"/></svg> 내 갤러리</h2>
     <span class="page-count" id="gallery-count">0장</span>
   </header>
   <div class="gallery-grid" id="gallery-grid"></div>
@@ -75,7 +199,7 @@
 <!-- 보상 오버레이 -->
 <div class="reward" id="reward">
   <div class="reward-card">
-    <div class="reward-stars">⭐</div>
+    <div class="reward-stars"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg></div>
     <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
     <div class="reward-btns">
       <button type="button" class="bigbtn" id="reward-close" hidden>그만할래</button>

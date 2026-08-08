@@ -1293,3 +1293,187 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .mem-inner, .habitat-zone { transition: none; }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 낙서장 층 — 부모님이 고르신 「시안 3 · 낙서장」의 찾기 놀이터 몫
+ *
+ * 공용 crayon.css 가 종이 바탕과 카드 재질을 바꿔 놓았다면, 여기서는
+ * 이 앱만의 두 가지를 마저 한다.
+ *   1) 첫 화면의 '고르는 칸'을 자로 잰 격자에서 풀어 준다 —
+ *      칸마다 기울기·크기·자리를 조금씩 달리해 손으로 붙인 것처럼.
+ *   2) 남아 있던 두툼한 색 단면(chunk)과 광택 그라데이션을 걷어내고
+ *      얇고 삐뚤한 손그림 윤곽만 남긴다.
+ *
+ * 놀잇감(씬·스티커·글자 방울·짝꿍 카드·동물의 집 판)은 건드리지 않는다.
+ * 기울이면 끌어 놓기 좌표가 틀어지기도 하고, 아이가 찾는 그림은 그대로여야 한다.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── 손그림 아이콘 (js/doodle-icons.js) ─── */
+.di {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  line-height: 0;
+  vertical-align: -0.2em;
+  flex: 0 0 auto;
+}
+.di svg { width: 100%; height: 100%; display: block; }
+.round-btn .di { width: 1.3em; height: 1.3em; vertical-align: 0; }
+.close-btn .di { width: 1.5em; height: 1.5em; vertical-align: 0; }
+.big-btn .di { width: 1.2em; height: 1.2em; vertical-align: -0.18em; }
+
+/* 오른쪽 위 공용 집 단추(shared/home-button.js) 자리를 비워 준다.
+   가로·세로 모두 비워야 한다 — 안 그러면 집 단추가 아래 배너를 덮는다.
+   앱 안에 있던 작은 🏠 는 둘이면 헷갈리니 감춘다. */
+.home-header, .game-header {
+  padding-right: calc(clamp(60px, 8.6vw, 80px) + 22px);
+  min-height: calc(clamp(60px, 8.6vw, 80px) + 18px);
+}
+.round-btn.home-dup { display: none; }
+
+/* 펫 단추도 다른 머리글 단추와 같은 손가락 크기로 (기본 42px 은 5세에게 작다) */
+#pet-slot .pet-btn {
+  width: clamp(48px, 8vmin, 64px);
+  height: clamp(48px, 8vmin, 64px);
+}
+
+/* ─── 종이 위의 단추 — 단면과 광택을 걷고 손으로 그은 윤곽만 ─── */
+.round-btn {
+  background: rgba(255, 255, 255, .82);
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+  box-shadow: none;
+}
+.round-btn:active {
+  transform: translate(2px, 3px) scale(.97);
+  box-shadow: none;
+}
+.hint-btn { background: rgba(255, 243, 184, .9); }
+
+.game-title {
+  background: rgba(255, 255, 255, .72);
+  border: 3px solid rgba(46, 42, 36, .8);
+  border-radius: 22px 17px 24px 19px;
+  box-shadow: none;
+  rotate: -.6deg;
+}
+
+.close-btn {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  display: grid;
+  place-items: center;
+}
+
+/* ─── 크기 위계 ①: 맨 먼저 눈에 들어와야 할 글자 찾기 ─── */
+.letters-banner {
+  margin: clamp(6px, 1.4vmin, 12px) clamp(12px, 2.2vmin, 26px) 0;
+  padding: clamp(14px, 2.9vmin, 24px);
+  font-size: clamp(21px, 4.4vmin, 34px);
+  background: rgba(233, 224, 250, .62);
+  border: 3.5px solid rgba(46, 42, 36, .85);
+  border-radius: 26px 20px 27px 21px;
+  box-shadow: none;
+  rotate: -1.1deg;
+}
+.letters-banner:active {
+  transform: translate(2px, 3px) scale(.99);
+  rotate: 0deg;
+  box-shadow: none;
+}
+
+/* ─── 크기 위계 ②: 그다음 두 놀이 — 서로 크기도 기울기도 다르게 ─── */
+.mode-banners {
+  gap: clamp(12px, 2.2vmin, 20px);
+  margin: clamp(12px, 2.2vmin, 20px) clamp(12px, 2.2vmin, 26px) 0;
+  align-items: flex-start;
+}
+.mode-banner {
+  font-size: clamp(16px, 3.1vmin, 25px);
+  border: 3px solid rgba(46, 42, 36, .82);
+  border-radius: 23px 18px 25px 19px;
+  box-shadow: none;
+}
+.mb-memory  { flex: 1.08; background: rgba(255, 211, 230, .6); rotate: 1.5deg;  scale: .99; }
+.mb-habitat { flex: .94;  background: rgba(201, 240, 255, .6); rotate: -1.8deg; scale: .96; }
+.mb-memory:active, .mb-habitat:active {
+  transform: translate(2px, 3px);
+  rotate: 0deg;
+  box-shadow: none;
+}
+
+/* ─── 크기 위계 ③ + 낙서장 배치: 테마 카드를 종이 위에 흩뿌린다 ───
+ * 자리를 사람이 하나하나 정하지 않고 순서(nth-child)로 준다 —
+ * 테마가 늘거나 줄어도 무너지지 않게. 여덟 개까지 정하고 그 뒤로는 되풀이.
+ * transform 이 아니라 translate/rotate/scale 낱개 속성을 쓴다.
+ * 그래야 원래 있던 등장 애니메이션(card-in)의 transform 과 겹쳐 쓸 수 있다.
+ */
+.theme-grid {
+  gap: clamp(22px, 3.6vmin, 34px);
+  padding: clamp(14px, 2.4vmin, 26px);
+}
+.theme-grid .theme-card:nth-child(8n+1) { rotate: -1.9deg; scale: 1.03; translate: -1%  .8%; }
+.theme-grid .theme-card:nth-child(8n+2) { rotate:  1.5deg; scale:  .98; translate:  1% -.8%; }
+.theme-grid .theme-card:nth-child(8n+3) { rotate:  2deg;   scale: 1.01; translate: -.6% -1.2%; }
+.theme-grid .theme-card:nth-child(8n+4) { rotate: -1.2deg; scale:  .99; translate:  1.2%  .6%; }
+.theme-grid .theme-card:nth-child(8n+5) { rotate:  1deg;   scale: 1.02; translate: -1.2%  0; }
+.theme-grid .theme-card:nth-child(8n+6) { rotate: -2deg;   scale:  .98; translate:  .6%  1.2%; }
+.theme-grid .theme-card:nth-child(8n+7) { rotate:  1.7deg; scale: 1.01; translate:  1%  -.6%; }
+.theme-grid .theme-card:nth-child(8n+8) { rotate: -1deg;   scale:  .99; translate: -1%   .8%; }
+/* 누르면 기울기가 잠깐 펴지며 종이에 눌린다 */
+.theme-grid .theme-card:active {
+  rotate: 0deg;
+  scale: .98;
+  translate: 0 3px;
+}
+
+/* 스티커북으로 가는 띠도 같은 손으로 */
+.stickerplay-cta {
+  background: rgba(255, 217, 61, .55);
+  border: 3px solid rgba(46, 42, 36, .82);
+  border-radius: 22px 17px 24px 18px;
+  box-shadow: none;
+  rotate: -.8deg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.stickerplay-cta:active { transform: translate(2px, 3px); rotate: 0deg; box-shadow: none; }
+
+/* ─── 고르기 오버레이 ─── */
+.mode-card {
+  background: rgba(252, 251, 244, .97);
+  border: 3.5px solid rgba(46, 42, 36, .85);
+  border-radius: 30px 24px 32px 26px;
+  box-shadow: 0 14px 34px rgba(60, 45, 20, .22);
+}
+.mode-section {
+  background: rgba(255, 255, 255, .6);
+  border: 2.5px dashed rgba(46, 42, 36, .7);
+  border-radius: 22px 18px 24px 19px;
+  box-shadow: none;
+}
+.level-btn {
+  border: 3px solid rgba(46, 42, 36, .8);
+  border-radius: 19px 15px 20px 16px;
+  box-shadow: none;
+}
+.level-btn.level-1 { background: rgba(168, 226, 138, .6); }
+.level-btn.level-2 { background: rgba(255, 217, 61, .6); }
+.level-btn.level-3 { background: rgba(255, 154, 92, .55); }
+.level-btn:active { transform: translate(2px, 3px); box-shadow: none; }
+.level-btn:nth-child(1) { rotate: -1.4deg; }
+.level-btn:nth-child(2) { rotate:  .9deg; }
+.level-btn:nth-child(3) { rotate: -.7deg; }
+
+/* 모션 줄이기 설정 존중 — 기울기·흩뿌림까지 모두 편다 */
+@media (prefers-reduced-motion: reduce) {
+  .theme-grid .theme-card, .letters-banner, .mode-banner,
+  .stickerplay-cta, .game-title, .level-btn {
+    rotate: 0deg !important;
+    scale: 1 !important;
+    translate: 0 0 !important;
+  }
+}

@@ -81,10 +81,13 @@ window.App = (() => {
 
   /* ─────────── 두 놀이 ─────────── */
   const MODES = [
-    { id: 'spoon', game: 'spoon', icon: '🥄', name: '요리조리 숟가락', desc: '본보기 보고 방향 맞추기', cls: 'c-spoon', list: () => D.spoons },
-    { id: 'straw', game: 'straw', icon: '🎚️', name: '요리조리 빨대', desc: '슬라이더 높이 맞추기', cls: 'c-straw', list: () => D.straws },
-    { id: 'square', game: 'square', icon: '🟧', name: '네모 조각 맞추기', desc: '톡 눌러 조각 돌리기', cls: 'c-square', list: () => D.squares },
+    { id: 'spoon', game: 'spoon', icon: '🥄', sym: 'bg-spoon', name: '요리조리 숟가락', desc: '본보기 보고 방향 맞추기', cls: 'c-spoon', list: () => D.spoons },
+    { id: 'straw', game: 'straw', icon: '🎚️', sym: 'bg-straw', name: '요리조리 빨대', desc: '슬라이더 높이 맞추기', cls: 'c-straw', list: () => D.straws },
+    { id: 'square', game: 'square', icon: '🟧', sym: 'bg-square', name: '네모 조각 맞추기', desc: '톡 눌러 조각 돌리기', cls: 'c-square', list: () => D.squares },
   ];
+
+  /* 손그림 아이콘 한 조각 — index.html 의 <symbol id="bg-…"> 을 가져다 쓴다 */
+  function doodle(sym) { return '<svg class="di" aria-hidden="true"><use href="#' + sym + '"></use></svg>'; }
 
   function renderHome() {
     $('home-stars').textContent = P.stars();
@@ -97,10 +100,10 @@ window.App = (() => {
       b.type = 'button';
       b.className = 'menu-card ' + m.cls;
       b.innerHTML =
-        '<span class="mc-icon">' + m.icon + '</span>' +
+        '<span class="mc-icon">' + doodle(m.sym) + '</span>' +
         '<span class="mc-name">' + m.name + '</span>' +
         '<span class="mc-desc">' + m.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? doodle('bg-star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(m); });
       menu.appendChild(b);
     });
@@ -111,10 +114,10 @@ window.App = (() => {
       bl.type = 'button';
       bl.className = 'menu-card c-balloon';
       bl.innerHTML =
-        '<span class="mc-icon">' + D.balloons.icon + '</span>' +
+        '<span class="mc-icon">' + doodle('bg-balloon') + '</span>' +
         '<span class="mc-name">' + D.balloons.name + '</span>' +
         '<span class="mc-desc">' + D.balloons.desc + '</span>' +
-        '<span class="mc-prog">' + (done >= total ? '🏅 완성!' : (done ? '⭐ ' + done + ' / ' + total : '처음이야!')) + '</span>';
+        '<span class="mc-prog">' + (done >= total ? '🏅 완성!' : (done ? doodle('bg-star') + ' ' + done + ' / ' + total : '처음이야!')) + '</span>';
       bl.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openBalloonLevels(); });
       menu.appendChild(bl);
     }
@@ -541,7 +544,7 @@ window.App = (() => {
     setTimeout(() => {
       const ids = m.list();
       const next = ids.find(q => q.id !== pz.id && !P.isDone(m.id, q.id)) || ids.find(q => q.id !== pz.id);
-      showReward(praise, next ? '다음 ' + next.emoji + ' ▶' : '목록으로', () => {
+      showReward(praise, next ? '다음 ' + next.emoji + ' ' + doodle('bg-next') : '목록으로', () => {
         if (next) openPuzzle(m, next); else openList(m);
       }, () => openList(m));
     }, 900);
@@ -570,7 +573,7 @@ window.App = (() => {
   let rewardNextFn = null, rewardCloseFn = null;
   function showReward(praise, nextLabel, onNext, onClose) {
     $('reward-praise').textContent = praise;
-    $('reward-next').textContent = nextLabel;
+    $('reward-next').innerHTML = nextLabel;
     rewardNextFn = onNext; rewardCloseFn = onClose || null;
     $('reward-close').hidden = !onClose;
     $('reward').classList.add('on');
@@ -658,7 +661,7 @@ window.App = (() => {
         '<span class="it-emoji">' + lv.e + '</span>' +
         '<span class="it-texts"><span class="it-name">' + lv.name + '</span>' +
         '<span class="it-kind">' + lv.kind + '</span></span>' +
-        '<span class="it-prog">' + (done >= total ? '🏅' : '⭐ ' + done + ' / ' + total) + '</span>';
+        '<span class="it-prog">' + (done >= total ? '🏅' : doodle('bg-star') + ' ' + done + ' / ' + total) + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openBalloon(lv, balloonFirstTodo(lv)); });
       list.appendChild(b);
     });
@@ -745,7 +748,7 @@ window.App = (() => {
     finishBalloonPage.t = setTimeout(() => {
       fly.classList.remove('fly');
       fly.hidden = true;
-      showReward(praise, last ? '단계 목록으로' : '다음 🎈 ▶',
+      showReward(praise, last ? '단계 목록으로' : '다음 🎈 ' + doodle('bg-next'),
         () => { if (last) openBalloonLevels(); else openBalloonPage(idx + 1); },
         () => openBalloonLevels());
     }, 950);

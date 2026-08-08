@@ -9,6 +9,11 @@ window.App = (() => {
   const P = window.Progress;
   const $ = id => document.getElementById(id);
 
+  /* 손그림 아이콘 — index.html 의 <symbol id="mx-…"> 를 불러 쓴다.
+     이모지 대신 쓰는 UI 그림이며, 놀잇감(조각·화살표 헤더·색 스와치)에는 쓰지 않는다. */
+  const ic = id => '<svg class="ic" aria-hidden="true"><use href="#' + id + '"/></svg>';
+  const levelIc = level => ic('mx-lv' + level);   /* 🟢 🔵 🟣 자리 */
+
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
   function showScreen(id) {
@@ -33,7 +38,7 @@ window.App = (() => {
         '<span class="mc-icon">' + miniGrid(lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? ic('mx-star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPuzzles(lv); });
       menu.appendChild(b);
     });
@@ -58,7 +63,7 @@ window.App = (() => {
   let curLevel = null;
   function openPuzzles(lv) {
     curLevel = lv;
-    $('puzzles-title').textContent = lv.icon + ' ' + lv.name;
+    $('puzzles-title').innerHTML = levelIc(lv.id) + ' ' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('puzzles-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('puzzles-list');
@@ -72,7 +77,7 @@ window.App = (() => {
       b.innerHTML =
         '<span class="ps-no">' + (i + 1) + '</span>' +
         gridPreview(pz, 'pc' + pz.id) +
-        '<span class="ps-badge">' + (done ? '⭐' : '🧩') + '</span>';
+        '<span class="ps-badge">' + (done ? ic('mx-star') : ic('mx-puzzle')) + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });
@@ -84,7 +89,7 @@ window.App = (() => {
 
   function openPlay(pz) {
     cur = { pz, cells: D.answerPieces(pz), placed: [], locked: false };
-    $('play-title').textContent = D.levelDef(pz.level).icon + ' ' + D.levelDef(pz.level).name;
+    $('play-title').innerHTML = levelIc(pz.level) + ' ' + D.levelDef(pz.level).name;
     renderBoard();
     renderTray();
     showScreen('scr-play');
@@ -103,7 +108,7 @@ window.App = (() => {
     board.className = 'board n' + pz.colors.length;
     board.style.gridTemplateColumns = 'var(--head) repeat(' + cols + ', var(--cell))';
     board.style.gridTemplateRows = 'var(--head) repeat(' + rows + ', var(--cell))';
-    let html = '<span class="bd-corner">🧭</span>';
+    let html = '<span class="bd-corner">' + ic('mx-compass') + '</span>';
     // 방향 헤더(맨 윗줄)
     pz.dirs.forEach((dId, c) => {
       html += '<span class="bd-head bd-dir">' + D.drawArrow('hd' + c, D.dirDef(dId)) + '</span>';

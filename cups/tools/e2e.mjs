@@ -80,7 +80,7 @@ await check('카드대로 쌓기 → 완성 → 종·별·펫 간식', async () 
   expect(d.stars === 3, '별(3컵=3): ' + d.stars);
   expect(d.done === true, '퍼즐 완료 저장');
   expect(await page.locator('#pyr-play .pyr-cell.full').count() === 3, '채워진 슬롯 수');
-  expect((await page.locator('#reward-bell').textContent()).includes('🔔'), '종 아이콘');
+  expect(await page.locator('#reward-bell svg').count() === 1, '종 아이콘(손그림 SVG)');
   const petAfter = await page.evaluate(() => window.Pet ? Pet.state().snacks : 0);
   expect(petAfter === petBefore + 1, '펫 간식: ' + petBefore + '→' + petAfter);
 });
@@ -165,6 +165,106 @@ await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침 검사)',
     expect(m.trayBottom <= m.ih + 2, s.name + ': 트레이가 화면 아래로 잘림 ' + m.trayBottom + ' > ' + m.ih);
     expect(m.pyrTop >= -2, s.name + ': 피라미드가 위로 잘림 ' + m.pyrTop);
     expect(m.sampleTop >= -2, s.name + ': 본보기 카드가 위로 잘림 ' + m.sampleTop);
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
+});
+
+await check('손그림 아이콘: 화면 틀에 이모지가 남아 있지 않다', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const emoji = /[⭐🔔🔊🗣️🥤◀]/u;
+  const homeText = await page.locator('#scr-home').textContent();
+  expect(!emoji.test(homeText), '홈에 이모지 남음: ' + homeText);
+  // 아이콘이 실제로 그려졌는지 (별·컵·말하기)
+  expect(await page.locator('#scr-home .stat svg').count() === 1, '별 아이콘 없음');
+  expect(await page.locator('#btn-voice svg').count() === 1, '목소리 아이콘 없음');
+  expect(await page.locator('.home-head h1 svg').count() === 1, '제목 컵 아이콘 없음');
+  // 떨림 필터가 문서에 하나 있다
+  expect(await page.locator('#cups-kd').count() === 1, '손그림 떨림 필터 없음');
+  await page.click('.menu-card.c-l1');
+  await page.waitForSelector('#scr-puzzles.on');
+  const listText = await page.locator('#scr-puzzles').textContent();
+  expect(!emoji.test(listText), '목록에 이모지 남음: ' + listText);
+  expect(await page.locator('#puzzles-list .pz-badge svg').count() === 10, '배지 아이콘 수');
+  await page.click('#puzzles-list .puzzle-card');
+  await page.waitForSelector('#scr-play.on');
+  const playText = await page.locator('#scr-play').textContent();
+  expect(!emoji.test(playText), '놀이 화면에 이모지 남음: ' + playText);
+  expect(await page.locator('#btn-listen svg').count() === 1, '듣기 아이콘 없음');
+  expect(await page.locator('.sample-cap svg').count() === 1, '본보기 종 아이콘 없음');
+});
+
+await check('놀이판 무변형: 피라미드·컵에는 회전·확대가 없다', async () => {
+  const bad = await page.evaluate(() => {
+    const els = [document.querySelector('#pyr-play'), document.querySelector('#pyr-col'),
+                 ...document.querySelectorAll('#pyr-play .pyr-cell'),
+                 ...document.querySelectorAll('#tray .ti-cup')];
+    return els.filter(el => {
+      const t = getComputedStyle(el).transform;
+      return t && t !== 'none' && t !== 'matrix(1, 0, 0, 1, 0, 0)';
+    }).length;
+  });
+  expect(bad === 0, '변형이 걸린 놀이판 요소 ' + bad + '개');
+});
+
+await check('첫 화면 낙서장: 칸마다 다른 기울기·크기, 겹침·이탈 없음', async () => {
+  for (const s of [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드 가로' }]) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    await page.waitForTimeout(120);
+    const m = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('#menu .menu-card')];
+      return {
+        rects: cards.map(c => { const r = c.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width }; }),
+        tf: cards.map(c => getComputedStyle(c).transform),
+        horiz: document.documentElement.scrollWidth - window.innerWidth,
+        vw: window.innerWidth,
+      };
+    });
+    // 크기 위계 — 먼저 할 단계가 가장 크다
+    expect(m.rects[0].w > m.rects[1].w && m.rects[1].w > m.rects[2].w,
+      s.name + ': 크기 위계 어긋남 ' + m.rects.map(r => Math.round(r.w)).join('/'));
+    // 기울기가 셋 다 다르다
+    expect(new Set(m.tf).size === 3, s.name + ': 기울기가 겹침');
+    m.tf.forEach((t, i) => expect(t !== 'none' && t !== 'matrix(1, 0, 0, 1, 0, 0)', s.name + ': ' + (i + 1) + '번 칸이 안 기울었다'));
+    // 서로 겹치지 않는다
+    for (let i = 0; i < m.rects.length; i++) for (let j = i + 1; j < m.rects.length; j++) {
+      const a = m.rects[i], b = m.rects[j];
+      const over = a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+      expect(!over, s.name + ': 칸 ' + (i + 1) + '·' + (j + 1) + ' 겹침');
+    }
+    // 화면 밖으로 삐져나가지 않는다
+    m.rects.forEach((r, i) => {
+      expect(r.l >= -1 && r.r <= m.vw + 1, s.name + ': 칸 ' + (i + 1) + ' 화면 이탈 ' + Math.round(r.l) + '~' + Math.round(r.r));
+    });
+    expect(m.horiz <= 1, s.name + ': 가로 스크롤 ' + m.horiz + 'px');
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
+});
+
+await check('머리 줄 겹침 없음: 듣기·제목 ↔ 남은 시간 쪽지·집 단추', async () => {
+  for (const s of [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드 가로' }]) {
+    await page.setViewportSize({ width: s.w, height: s.h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    await page.click('.menu-card.c-l3');
+    await page.waitForSelector('#scr-puzzles.on');
+    await page.click('#puzzles-list .puzzle-card');
+    await page.waitForSelector('#scr-play.on');
+    await page.waitForTimeout(160);
+    const hits = await page.evaluate(() => {
+      const rect = sel => { const el = document.querySelector(sel); return el ? el.getBoundingClientRect() : null; };
+      const mine = [['듣기', rect('#btn-listen')], ['제목', rect('#play-title')], ['뒤로', rect('#btn-play-back')]];
+      const theirs = [['집 단추', rect('.enjoy-home-btn')], ['남은 시간', rect('.tl-bar-tag')]];
+      const bad = [];
+      mine.forEach(([an, a]) => theirs.forEach(([bn, b]) => {
+        if (!a || !b) return;
+        if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) bad.push(an + '↔' + bn);
+      }));
+      return bad;
+    });
+    expect(hits.length === 0, s.name + ': ' + hits.join(', '));
   }
   await page.setViewportSize({ width: 1180, height: 820 });
 });

@@ -338,3 +338,107 @@ h1 {
   }
   * { transition: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 낙서장 층 — 부모님이 고르신 「시안 3 · 낙서장」을 이 앱에 맞춘 부분.
+ * 공용(shared/crayon.css · shared/doodle-menu.css)이 재질과 흩뿌림을 깔아 주고,
+ * 여기서는 시험관 구슬에만 필요한 세 가지를 얹는다.
+ *   1) 손그림 아이콘(js/doodle.js) 크기 맞추기
+ *   2) 고르는 칸 흩뿌리기 + 크기 위계 — 먼저 할 것이 가장 크다
+ *   3) 흩뿌려도 **시험관은 늘 똑바로 서 있게** 되돌려 놓기
+ *
+ * ⚠️ 놀이 화면(#scr-play)의 시험관·구슬에는 어떤 변형도 주지 않는다.
+ *    관은 아래→위 순서로 읽어야 하고, 기울면 아이가 순서를 잘못 본다.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── 손그림 아이콘 ─── */
+.dd-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ico { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -.2em; line-height: 0; }
+.ico svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+h1 .ico { width: 1.1em; height: 1.1em; }
+.stat .ico, .mc-prog .ico { width: 1.05em; height: 1.05em; vertical-align: -.18em; }
+.bar h2 .ico { width: 1.15em; height: 1.15em; }
+.pz-badge .ico { width: 1.5em; height: 1.5em; vertical-align: -.3em; }
+.card-cap .ico { width: 1.5em; height: 1.5em; vertical-align: -.36em; }
+.reward-icon .ico { width: 1em; height: 1em; vertical-align: middle; }
+/* 동그란 단추 안에서는 가운데로 */
+.back { display: inline-flex; align-items: center; justify-content: center; }
+.back .ico { width: 1.5em; height: 1.5em; vertical-align: 0; }
+.vs-btn .ico { width: 1.2em; height: 1.2em; vertical-align: 0; }
+#btn-listen .ico { width: 1.25em; height: 1.25em; vertical-align: -.24em; margin-right: 2px; }
+/* 공용 voice-settings.css 가 42px 로 잡아 놓은 것을 손가락 하한(44px)까지 올린다 */
+.stats .vs-btn { width: clamp(44px, 8vmin, 54px); height: clamp(44px, 8vmin, 54px); }
+
+/* ─── 첫 화면: 손으로 붙인 듯 흩뿌리고, 먼저 할 것을 크게 ─── */
+#menu {
+  align-items: flex-start;
+  gap: clamp(20px, 3vmin, 36px) !important;   /* 기울여도 안 겹치게 넉넉히 */
+}
+/* 쉬운 관이 가장 크다 → 보통 → 어려운 관 (칸 크기 = 하는 순서) */
+#menu .menu-card:nth-child(1) {
+  width: clamp(200px, 38vmin, 300px); padding: clamp(18px, 3.6vmin, 28px);
+  transform: translate(-2%, 2%) rotate(-2.2deg);
+}
+#menu .menu-card:nth-child(2) {
+  width: clamp(165px, 30vmin, 235px);
+  transform: translate(2%, -3%) rotate(1.7deg);
+}
+#menu .menu-card:nth-child(3) {
+  width: clamp(145px, 25vmin, 195px); padding: clamp(12px, 2.4vmin, 18px);
+  transform: translate(1.5%, 4%) rotate(2.4deg);
+}
+#menu .menu-card:nth-child(1) .mc-name { font-size: clamp(21px, 4.4vmin, 32px); }
+#menu .menu-card:nth-child(3) .mc-name { font-size: clamp(16px, 3.1vmin, 22px); }
+/* 칸은 삐뚤어도 시험관은 똑바로 서 있어야 한다 — 기울인 만큼 되돌린다 */
+#menu .menu-card:nth-child(1) .mini-tubes { transform: rotate(2.2deg); }
+#menu .menu-card:nth-child(2) .mini-tubes { transform: rotate(-1.7deg); }
+#menu .menu-card:nth-child(3) .mini-tubes { transform: rotate(-2.4deg); }
+#menu .menu-card:active .mini-tubes { transform: none; }
+
+/* ─── 퍼즐 고르기: 같은 손버릇으로 흩뿌리고, 아직 안 한 첫 퍼즐을 크게 ─── */
+#list { gap: clamp(14px, 2.6vmin, 26px); }
+#list .puzzle-card:nth-child(4n+1) { transform: translate(-1.5%, 1.5%) rotate(-1.8deg); }
+#list .puzzle-card:nth-child(4n+2) { transform: translate( 1.5%, -1%)  rotate( 1.5deg); }
+#list .puzzle-card:nth-child(4n+3) { transform: translate( 1%,   2%)   rotate( 2deg); }
+#list .puzzle-card:nth-child(4n+4) { transform: translate(-1%,  -1.5%) rotate(-1.2deg); }
+#list .puzzle-card:nth-child(4n+1) .mini-tubes { transform: rotate(1.8deg); }
+#list .puzzle-card:nth-child(4n+2) .mini-tubes { transform: rotate(-1.5deg); }
+#list .puzzle-card:nth-child(4n+3) .mini-tubes { transform: rotate(-2deg); }
+#list .puzzle-card:nth-child(4n+4) .mini-tubes { transform: rotate(1.2deg); }
+/* 지금 할 퍼즐 — 두 칸을 다 쓰고 똑바로 놓는다(가장 크고 가장 반듯한 칸) */
+#list .puzzle-card.next {
+  grid-column: 1 / -1;
+  padding: clamp(16px, 3vmin, 26px) 8px;
+  transform: rotate(-.6deg);
+}
+#list .puzzle-card.next .mini-tubes { transform: rotate(.6deg); gap: 8px; }
+/* 넓어진 칸이 허전하지 않게 미리보기도 함께 키운다.
+   (키우는 것은 목록의 '그림'일 뿐, 놀이판 시험관은 손대지 않는다) */
+#list .puzzle-card.next .tube.mini { width: clamp(32px, 8.5vmin, 48px); }
+#list .puzzle-card.next .pz-badge { font-size: clamp(20px, 4vmin, 30px); }
+#list .puzzle-card:active { transform: translateY(3px) rotate(0); }
+#list .puzzle-card:active .mini-tubes { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  #menu .menu-card, #list .puzzle-card,
+  #menu .mini-tubes, #list .mini-tubes { transform: none !important; }
+}
+
+/* ─── 놀이 화면의 바탕도 같은 종이·같은 손 ───
+ * 색과 배치는 그대로 두고 '재질'만 바꾼다. 반질반질한 그라데이션과
+ * 두툼한 색 단면을 걷고 얇은 손그림 윤곽만 남긴다.
+ * (공용 crayon.css 가 카드류를 이미 이렇게 바꿨는데, 이 앱의 본보기 카드·팔레트는
+ *  이름이 달라 빠져 있었다. 시험관·구슬 자체는 손대지 않는다.) */
+.card, .palette {
+  background: rgba(255, 255, 255, .74);
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 26px 21px 27px 22px;
+  box-shadow: none;
+}
+.pal-bead {
+  background: rgba(255, 255, 255, .82);
+  border: 3px solid rgba(46, 42, 36, .8);
+  box-shadow: none;
+}
+.pal-bead:active { transform: translate(1px, 2px); }

@@ -50,7 +50,7 @@
     <div class="complete-title">참 잘했어요!</div>
     <div id="memory-stars" class="complete-stars"></div>
     <div class="complete-btns">
-      <button id="memory-done-home" class="big-btn btn-soft">🏠</button>
+      <button id="memory-done-home" class="big-btn btn-soft"><span class="di" data-di="house"></span></button>
       <button id="memory-done-next" class="big-btn btn-primary">다음 단계 ▶</button>
     </div>
   </div>

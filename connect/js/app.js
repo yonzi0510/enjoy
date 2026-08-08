@@ -8,6 +8,8 @@ window.App = (() => {
   const P = window.Progress;
   const $ = id => document.getElementById(id);
   const SVGNS = 'http://www.w3.org/2000/svg';
+  // 손그림 아이콘 — 그림 자체는 index.html 의 <symbol> 에 있고 여기서는 갖다 쓰기만 한다
+  const ICO = n => '<svg class="ico" aria-hidden="true"><use href="#ic-' + n + '"/></svg>';
 
   // 판 좌표계(0~100)에 여백을 둬 가장자리 점(점8)도 잘리지 않게 한다.
   const VB = { min: -8, size: 116 };
@@ -38,7 +40,7 @@ window.App = (() => {
         '<span class="mc-icon">' + miniBoard(lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? ICO('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(lv); });
       menu.appendChild(b);
     });
@@ -54,7 +56,7 @@ window.App = (() => {
   let curLevel = null;
   function openList(lv) {
     curLevel = lv;
-    $('list-title').textContent = '✏️ ' + lv.name;
+    $('list-title').innerHTML = ICO('pencil') + ' ' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('list-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('list');
@@ -68,7 +70,7 @@ window.App = (() => {
       b.innerHTML =
         '<span class="pz-no">' + (i + 1) + '</span>' +
         '<span class="pz-thumb">' + boardSVG(pz, done ? pz.order.length : 0, 'thumb') + '</span>' +
-        '<span class="pz-badge">' + (done ? '⭐' : '✏️') + '</span>';
+        '<span class="pz-badge">' + (done ? ICO('star') : ICO('pencil')) + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });
@@ -143,7 +145,7 @@ window.App = (() => {
 
   function openPlay(pz) {
     cur = { pz, placed: [], locked: false };
-    $('play-title').textContent = '✏️ ' + D.levelDef(pz.level).name;
+    $('play-title').innerHTML = ICO('pencil') + ' ' + D.levelDef(pz.level).name;
     renderGuide(pz);
     drawBoard();
     showScreen('scr-play');

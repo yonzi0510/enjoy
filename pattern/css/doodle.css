@@ -1,0 +1,166 @@
+/* ═══════════ 패턴 놀이터 — 낙서장 층 ═══════════
+ * 부모님이 고르신 「시안 3 · 낙서장」을 패턴 놀이터에 입힌다.
+ * 공용 층(shared/crayon.css 끝)이 모눈 공책 바탕과 얇은 손그림 윤곽을 이미 깔아 주고,
+ * 여기서는 이 놀이에만 해당하는 것 세 가지를 한다.
+ *
+ *   1) 첫 화면(단계 고르기) 칸을 종이 위에 흩뿌린다
+ *   2) 크기 위계 — 가장 먼저 할 1단계를 제일 크게
+ *   3) 손그림 아이콘(js/icons.js)이 들어갈 자리를 잡는다
+ *
+ * ⚠️ 이 놀이의 핵심은 **반복되는 타일 줄에서 규칙을 읽는 것**이다.
+ *    타일이나 타일 줄에 제각각 기울기·크기를 주면 규칙 자체가 안 보인다.
+ *    그래서 회전·확대는 오직 '고르는 칸'에만 준다. 아래 세 곳은 절대 안 돌린다:
+ *      · .strip 과 그 안의 .cell (놀이판 패턴 줄)
+ *      · .tile-item (트레이의 조각) — 게다가 돌리면 끌어 놓기 좌표가 틀어진다
+ *      · .mini-row (카드 안 패턴 미리보기) — 카드가 기울어도 줄은 수평을 지키도록
+ *        아래에서 되돌려 세운다
+ *
+ * 공용 shared/doodle-menu.css 를 쓰지 않는 이유:
+ *   그 파일은 칸이 여럿일 때(8n 되풀이) 골고루 흩뿌리는 규칙이라 크기가 다 비슷하다.
+ *   여기 첫 화면은 칸이 딱 3개고 "1단계부터 하렴"이라는 크기 위계가 필요해서
+ *   같은 nth-child 방식을 이 앱 자기 CSS 안에 손으로 잡아 둔다.
+ *
+ * 불러오는 위치: index.html 스타일시트 중 **가장 마지막**(crayon.css 보다 뒤).
+ */
+
+:root {
+  --paper-btn: #FFFDF6;   /* 종이빛 단추 바탕 */
+  --ink-soft: rgba(46, 42, 36, .32);
+}
+
+/* ─────────── 종이 위에는 유리 광택이 없다 ─────────── */
+body {
+  color: var(--ink);
+}
+h1, .bar h2 {
+  color: var(--ink);
+  text-shadow: none;
+}
+.page-count, .mc-prog {
+  background: var(--paper-btn);
+  box-shadow: inset 0 0 0 2px var(--ink-soft);
+  color: var(--ink);
+}
+
+/* ─────────── 손그림 아이콘 자리 ───────────
+   크기는 글자 크기(em)를 따라간다 — 어디에 놓아도 옆 글자와 키가 맞는다. */
+.ic, .ic-svg {
+  display: inline-block;
+  width: 1em; height: 1em;
+  vertical-align: -.14em;
+  pointer-events: none;
+}
+.ic svg { display: block; width: 100%; height: 100%; }
+
+/* 글자와 나란히 놓이는 아이콘 (제목·듣기·다음) */
+h1, .bar h2, .bigbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: .34em;
+}
+h1 { display: flex; }
+.bar h2 { display: flex; }
+.bigbtn .ic { width: 1.15em; height: 1.15em; }
+
+/* 동그란 단추 안에서는 아이콘이 홀로 가운데 — 손가락 닿는 범위는 그대로 둔다 */
+.back {
+  display: grid; place-items: center;
+  padding: 0;
+}
+.back .ic { width: 1.5em; height: 1.5em; }
+.vs-btn .ic { width: 1.35em; height: 1.35em; }
+.stat .ic { width: 1.15em; height: 1.15em; }
+
+/* ─────────── 1. 첫 화면 — 종이 위에 흩뿌린 세 칸 ─────────── */
+/* 흩뿌리려면 칸 사이가 넉넉해야 한다. 겹치면 누를 자리가 헷갈린다. */
+.menu {
+  gap: clamp(22px, 3.4vmin, 38px);
+  padding: clamp(8px, 1.6vh, 20px) clamp(6px, 1.4vw, 18px);
+  align-items: flex-start;   /* 키를 억지로 맞추지 않는다 — 밑줄이 들쭉날쭉해야 낙서장 */
+}
+
+/* 칸마다 다른 손버릇 — 자리도 기울기도 다 다르게 */
+.menu > .menu-card:nth-child(1) { transform: translate(-2%,  3%) rotate(-2.4deg); }
+.menu > .menu-card:nth-child(2) { transform: translate( 3%, -4%) rotate( 1.8deg); }
+.menu > .menu-card:nth-child(3) { transform: translate(-1%,  5%) rotate( 2.6deg); }
+/* 칸이 늘어나도 무너지지 않게 4번째부터는 되풀이 */
+.menu > .menu-card:nth-child(3n+4) { transform: translate( 2%, -2%) rotate(-1.5deg); }
+
+/* 카드 안 패턴 미리보기는 되돌려 세운다 — 규칙은 수평으로 읽혀야 한다 */
+.menu > .menu-card:nth-child(1) .mini-row { transform: rotate( 2.4deg); }
+.menu > .menu-card:nth-child(2) .mini-row { transform: rotate(-1.8deg); }
+.menu > .menu-card:nth-child(3) .mini-row { transform: rotate(-2.6deg); }
+.menu > .menu-card:nth-child(3n+4) .mini-row { transform: rotate( 1.5deg); }
+
+/* 누르면 제자리로 눌린다 — 기울기는 잠깐 펴진다 */
+.menu > .menu-card:active { transform: translateY(3px) rotate(0) !important; }
+.menu > .menu-card:active .mini-row { transform: rotate(0) !important; }
+
+/* ─────────── 2. 크기 위계 — 먼저 할 것을 크게 ───────────
+   1단계가 가장 크고 3단계로 갈수록 작아진다. 글을 못 읽는 다섯 살이
+   "제일 큰 것부터"라는 것만으로 순서를 안다.
+   scale 로 키우지 않고 실제 폭을 바꾼다 — 글자가 뭉개지지 않고 손가락 닿는 범위도 진짜로 커진다. */
+.menu > .menu-card:nth-child(1) { width: clamp(196px, 36vmin, 292px); }
+.menu > .menu-card:nth-child(2) { width: clamp(166px, 29vmin, 238px); }
+.menu > .menu-card:nth-child(3) { width: clamp(148px, 25vmin, 202px); }
+
+.menu > .menu-card:nth-child(1) .mc-name { font-size: clamp(21px, 4.4vmin, 31px); }
+.menu > .menu-card:nth-child(1) .mc-desc { font-size: clamp(13px, 2.6vmin, 17px); }
+.menu > .menu-card:nth-child(1) .mini-cell { width: clamp(32px, 7.6vmin, 52px); }
+.menu > .menu-card:nth-child(3) .mc-name { font-size: clamp(16px, 3.2vmin, 23px); }
+
+/* ─────────── 놀이판 — 재질만 종이로, 자리와 크기는 그대로 ───────────
+   여기서는 회전·확대를 절대 쓰지 않는다(위 머리말 참고). */
+.strip {
+  background: rgba(255, 255, 255, .72);
+  border: 3px solid rgba(46, 42, 36, .8);
+  border-radius: 28px 22px 29px 23px;
+  box-shadow: none;
+}
+.cell.shown {
+  background: var(--paper-btn);
+  border: 2px solid var(--ink-soft);
+  border-radius: 14px 11px 15px 12px;
+  box-shadow: none;
+}
+.cell.blank {
+  border: 3px dashed rgba(46, 42, 36, .5);
+  border-radius: 14px 11px 15px 12px;
+  background: rgba(255, 255, 255, .45);
+}
+/* 지금 차례인 빈칸은 여전히 또렷하게 — 다섯 살이 어디에 놓을지 아는 유일한 단서다 */
+.cell.blank.active {
+  border-color: #1F9E93;
+  background: #EAFBF7;
+}
+/* 빈칸의 물음표도 손그림으로 (색은 글자색을 따라가 활성/비활성이 그대로 구분된다) */
+.cell .q { display: block; width: 52%; line-height: 0; }
+.cell .q svg { display: block; width: 100%; height: auto; }
+
+.tile-item {
+  background: var(--paper-btn);
+  border: 3px solid rgba(46, 42, 36, .8);
+  border-radius: 20px 16px 21px 17px;
+  box-shadow: none;
+}
+.tile-item:active { transform: translate(2px, 3px); }
+
+/* 목록 카드 안 미리보기의 빈칸 구멍도 같은 손으로 */
+.mini-cell.hole {
+  border: 2.5px dashed rgba(46, 42, 36, .45);
+  border-radius: 10px 8px 11px 9px;
+  background: rgba(255, 255, 255, .5);
+}
+.pz-no {
+  box-shadow: none;
+  border: 2px solid rgba(46, 42, 36, .55);
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+  width: 28px; height: 28px;
+}
+/* 목록 카드는 안에 패턴 미리보기를 담고 있어 기울이지 않는다 */
+.puzzle-card { transform: none; }
+
+/* ─────────── 모션 줄이기 존중 ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  .menu > .menu-card,
+  .menu > .menu-card .mini-row { transform: none !important; }
+}

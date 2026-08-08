@@ -59,12 +59,91 @@ await check('카테고리 필터: 과일·음식 → 8장', async () => {
   expect(await page.locator('#pic-grid .pic-card').count() === 30, '전체 복귀');
 });
 
+await check('낙서장 배치: 칸마다 다른 기울기 + 겹침 없음', async () => {
+  const r = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('.pic-card')];
+    const forms = new Set(cards.slice(0, 8).map(c => getComputedStyle(c).transform));
+    const rects = cards.map(c => c.getBoundingClientRect());
+    let overlaps = 0;
+    for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
+      const a = rects[i], b = rects[j];
+      const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (ox > 0.5 && oy > 0.5) overlaps++;
+    }
+    const off = rects.filter(a => a.left < -0.5 || a.right > window.innerWidth + 0.5).length;
+    return { forms: forms.size, straight: forms.has('none'), overlaps, off };
+  });
+  expect(r.forms >= 6, '앞 8칸의 기울기가 서로 달라야: ' + r.forms + '가지');
+  expect(!r.straight, '기울기 없이 반듯한 칸이 있으면 안 됨');
+  expect(r.overlaps === 0, '칸끼리 겹침: ' + r.overlaps + '쌍');
+  expect(r.off === 0, '화면 밖으로 나간 칸: ' + r.off);
+});
+
+await check('크기 위계: 아직 안 한 첫 그림이 크게 (두 칸 × 두 줄)', async () => {
+  const r = await page.evaluate(() => {
+    const big = [...document.querySelectorAll('.pic-card.next-up')];
+    const normal = document.querySelector('.pic-card:not(.next-up)');
+    return {
+      n: big.length,
+      id: big[0] && big[0].dataset.id,
+      bw: big[0] ? big[0].getBoundingClientRect().width : 0,
+      nw: normal ? normal.getBoundingClientRect().width : 0,
+    };
+  });
+  expect(r.n === 1, '크게 보이는 칸은 딱 하나여야: ' + r.n);
+  expect(r.id === 'dog', '아직 안 한 첫 그림이어야: ' + r.id);
+  expect(r.bw > r.nw * 1.6, '보통 칸보다 훨씬 커야: ' + r.nw.toFixed(0) + ' → ' + r.bw.toFixed(0));
+});
+
 await check('그림 진입: 강아지 색칠 화면', async () => {
   await page.locator('.pic-card[data-id="dog"]').click();
   await page.waitForSelector('#scr-paint.on');
   const d = await page.evaluate(() => App.debug());
   expect(d.picId === 'dog', '그림 id: ' + d.picId);
   expect(d.painted === 0, '처음엔 칠해진 픽셀 0: ' + d.painted);
+});
+
+await check('손그림 아이콘: 도구·조작 단추가 이모지 대신 <use> SVG', async () => {
+  const r = await page.evaluate(() => {
+    const btns = [...document.querySelectorAll('.tool-btn, .act-btn, .back, #btn-gallery, #btn-voice')];
+    const hrefs = [], noIcon = [], leftoverEmoji = [];
+    btns.forEach(b => {
+      const u = b.querySelector('use');
+      if (!u) { noIcon.push(b.getAttribute('aria-label')); return; }
+      hrefs.push(u.getAttribute('href'));
+      if (/\p{Extended_Pictographic}/u.test(b.textContent)) leftoverEmoji.push(b.getAttribute('aria-label'));
+    });
+    const missing = hrefs.filter(h => !h || !h.startsWith('#i-') || !document.querySelector(h));
+    // 삐뚤한 손그림을 만드는 필터가 실제로 걸려 있는지
+    const rough = [...document.querySelectorAll('.ico-sprite filter feDisplacementMap')].length;
+    const turb = [...document.querySelectorAll('.ico-sprite filter feTurbulence')].length;
+    return { n: btns.length, noIcon, leftoverEmoji, missing, rough, turb };
+  });
+  expect(r.n >= 8, '아이콘 단추 수: ' + r.n);
+  expect(r.noIcon.length === 0, '아직 이모지인 단추: ' + r.noIcon.join(','));
+  expect(r.leftoverEmoji.length === 0, '이모지가 남은 단추: ' + r.leftoverEmoji.join(','));
+  expect(r.missing.length === 0, '없는 심볼을 가리킴: ' + r.missing.join(','));
+  expect(r.turb > 0 && r.rough > 0, 'feTurbulence + feDisplacementMap 이 있어야: ' + r.turb + '/' + r.rough);
+});
+
+await check('색칠 좌표 안전: 캔버스에 변형·테두리가 없다 (물통이 새지 않게)', async () => {
+  const r = await page.evaluate(() => {
+    const c = document.querySelector('#paint-canvas');
+    const s = getComputedStyle(c);
+    const w = document.querySelector('.canvas-wrap');
+    return {
+      t: s.transform, ws: getComputedStyle(w).transform,
+      bl: parseFloat(s.borderLeftWidth), bt: parseFloat(s.borderTopWidth),
+      pl: parseFloat(s.paddingLeft), pt: parseFloat(s.paddingTop),
+      box: c.getBoundingClientRect().width, res: c.width,
+    };
+  });
+  expect(r.t === 'none', '캔버스에 transform 이 걸리면 좌표가 틀어진다: ' + r.t);
+  expect(r.ws === 'none', '캔버스 감싼 칸에도 transform 금지: ' + r.ws);
+  expect(r.bl === 0 && r.bt === 0, '테두리는 getBoundingClientRect 를 밀어 좌표를 어긋나게 한다: ' + r.bl + '/' + r.bt);
+  expect(r.pl === 0 && r.pt === 0, '캔버스 안쪽 여백 금지: ' + r.pl + '/' + r.pt);
+  expect(r.res === 500, '내부 래스터 한 변: ' + r.res);
 });
 
 await check('물통 채우기: 얼굴 영역이 색으로 차오른다 (픽셀 확인)', async () => {

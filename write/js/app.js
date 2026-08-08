@@ -122,10 +122,17 @@ window.App = (() => {
   }
 
   /* ─────────── 항목 목록 (동요·동화·글자 줄·낱말·받아쓰기) ─────────── */
+  /* 묶음 머리말 아이콘 — 이모지 대신 손그림(css/doodle-icons.css).
+     ㄱ·ㅏ·가 처럼 '배울 글자'가 아이콘인 묶음은 글자 그대로 둔다. */
+  const CH_DOODLE = { word: 'apple', song: 'note', tale: 'book', dict: 'head' };
   let curChapter = null;
   function openItems(ch) {
     curChapter = ch;
-    document.getElementById('items-title').textContent = ch.icon + ' ' + ch.name;
+    const title = document.getElementById('items-title');
+    title.innerHTML = CH_DOODLE[ch.id]
+      ? '<i class="di di-' + CH_DOODLE[ch.id] + '" aria-hidden="true"></i>'
+      : '';
+    title.appendChild(document.createTextNode(CH_DOODLE[ch.id] ? ch.name : ch.icon + ' ' + ch.name));
     const list = document.getElementById('items-list');
     list.innerHTML = '';
     visibleItems(ch).forEach(it => {
@@ -484,7 +491,6 @@ window.App = (() => {
   let drawTool = 'pen';      // 'pen' | 'erase' | 'sticker'
   let drawPen = 'mid';
   let drawSticker = STICKERS[0];
-  const PEN_EMOJI = { thin: '✏️', mid: '🖊️', thick: '🖍️', hl: '🖌️' };
   // 드롭판: 도구 단추를 누르면 펼쳐지는 선택판 (한 번에 하나만 열린다)
   const DROPS = { color: 'drop-color', pen: 'drop-pen', sticker: 'drop-sticker' };
   const DOCK_OF = { color: 'dock-color', pen: 'dock-pen', sticker: 'btn-draw-sticker' };
@@ -514,7 +520,9 @@ window.App = (() => {
     const chip = document.getElementById('dock-color-chip');
     chip.classList.toggle('rb', drawColor === 'rb');
     chip.style.background = drawColor === 'rb' ? '' : drawColor;
-    document.getElementById('dock-pen').textContent = PEN_EMOJI[drawPen];
+    // 지금 고른 펜을 손그림 아이콘으로 보여 준다
+    document.getElementById('dock-pen').innerHTML =
+      '<i class="di di-pen-' + drawPen + '" aria-hidden="true"></i>';
     document.getElementById('btn-draw-sticker').textContent = drawSticker;
   }
 
@@ -591,17 +599,17 @@ window.App = (() => {
       if (Date.now() < clearArmedUntil) {
         clearArmedUntil = 0;
         if (clearResetTimer) clearTimeout(clearResetTimer);
-        clearBtn.textContent = '🗑️';
+        clearBtn.classList.remove('armed'); // 손그림 통이 다시 회색으로
         A.sfx.pop();
         pad.clear();
         return;
       }
       clearArmedUntil = Date.now() + 2500;
-      clearBtn.textContent = '🗑️❗';
+      clearBtn.classList.add('armed');      // 빨간 통 + 느낌표 = 한 번 더 누르면 지워짐
       A.sfx.tap();
       A.speak('다 지울까요? 한 번 더 누르면 지워져요');
       if (clearResetTimer) clearTimeout(clearResetTimer);
-      clearResetTimer = setTimeout(() => { clearArmedUntil = 0; clearBtn.textContent = '🗑️'; }, 2500);
+      clearResetTimer = setTimeout(() => { clearArmedUntil = 0; clearBtn.classList.remove('armed'); }, 2500);
     });
     document.getElementById('btn-draw-save').addEventListener('click', ev => {
       ev.preventDefault();

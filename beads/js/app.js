@@ -9,6 +9,9 @@ window.App = (() => {
   const P = window.Progress;
   const $ = id => document.getElementById(id);
 
+  /* 손그림 아이콘 한 개 — index.html 맨 위 <symbol> 을 갖다 쓴다(이모지 대신) */
+  const ico = (id, cls) => '<svg class="ico ' + (cls || '') + '" aria-hidden="true"><use href="#' + id + '"/></svg>';
+
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
   function showScreen(id) {
@@ -51,7 +54,7 @@ window.App = (() => {
         '<span class="mc-icon">' + prev + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? ico('d-star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(lv); });
       menu.appendChild(b);
     });
@@ -61,7 +64,7 @@ window.App = (() => {
   let curLevel = null;
   function openList(lv) {
     curLevel = lv;
-    $('list-title').textContent = '🔵 ' + lv.name;
+    $('list-title').innerHTML = ico('d-bead') + ' ' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('list-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('list-box');
@@ -75,7 +78,9 @@ window.App = (() => {
       b.appendChild(mk('span', 'pz-no', String(i + 1)));
       const prev = buildGrid(pz.size, pz.cells, 'is-mini big');
       b.appendChild(prev);
-      b.appendChild(mk('span', 'pz-badge', done ? '⭐' : '🔵'));
+      const badge = mk('span', 'pz-badge');
+      badge.innerHTML = ico(done ? 'd-star' : 'd-bead');
+      b.appendChild(badge);
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });
@@ -89,7 +94,7 @@ window.App = (() => {
   function openPlay(pz) {
     const firstColor = D.colorsIn(pz)[0] || D.COLOR_IDS[0];
     cur = { pz, board: new Array(pz.size * pz.size).fill(null), selected: firstColor, locked: false };
-    $('play-title').textContent = '🔵 ' + D.levelDef(pz.level).name;
+    $('play-title').innerHTML = ico('d-bead') + ' ' + D.levelDef(pz.level).name;
     renderSample();
     renderBoard();
     renderPalette();

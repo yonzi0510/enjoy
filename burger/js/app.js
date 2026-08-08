@@ -4,11 +4,10 @@
  * 다 쌓으면 색종이 축하 + TTS + 별 + 펫 간식. 진행도는 완성한 미션 id로 저장한다. */
 window.App = (() => {
   const D = window.BurgerData;
+  const DD = window.Doodle;
   const A = window.Audio2;
   const P = window.Progress;
   const $ = id => document.getElementById(id);
-
-  const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
 
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
@@ -34,7 +33,7 @@ window.App = (() => {
         '<span class="mc-icon">' + miniBurger(lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? DD.icon('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openMissions(lv); });
       menu.appendChild(b);
     });
@@ -53,16 +52,19 @@ window.App = (() => {
   let curLevel = null;
   function openMissions(lv) {
     curLevel = lv;
-    $('missions-title').textContent = '🍔 ' + lv.name;
+    $('missions-title').innerHTML = DD.icon('burger') + ' ' + lv.name;
     const list = D.missionsOf(lv.id);
     $('missions-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('missions-list');
     box.innerHTML = '';
+    let markedNext = false; // 아직 안 만든 첫 미션 = 이번에 할 것 (크게 보여 준다)
     list.forEach((ms, i) => {
       const done = P.isDone(ms.id);
+      const isNext = !done && !markedNext;
+      if (isNext) markedNext = true;
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'mission-card' + (done ? ' done' : '');
+      b.className = 'mission-card' + (done ? ' done' : '') + (isNext ? ' next' : '');
       b.dataset.id = ms.id;
       b.innerHTML =
         '<span class="ms-no">' + (i + 1) + '</span>' +
@@ -71,7 +73,7 @@ window.App = (() => {
             '<span class="mini-layer ml-' + D.meta(id).role + '">' + D.ING[id].draw('mc' + ms.id + id) + '</span>'
           ).join('') +
         '</span>' +
-        '<span class="ms-badge">' + (done ? '⭐' : '🍽️') + '</span>';
+        '<span class="ms-badge">' + DD.icon(done ? 'star' : 'plate') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(ms); });
       box.appendChild(b);
     });
@@ -83,7 +85,7 @@ window.App = (() => {
 
   function openPlay(ms) {
     cur = { ms, placed: [], locked: false };
-    $('play-title').textContent = '🍔 ' + D.levelDef(ms.level).name;
+    $('play-title').innerHTML = DD.icon('burger') + ' ' + D.levelDef(ms.level).name;
     renderRecipe();
     renderTray();
     resetPeg();
@@ -105,9 +107,9 @@ window.App = (() => {
       row.className = 'rc-row' + (i < cur.placed.length ? ' placed' : '') + (i === cur.placed.length ? ' next' : '');
       row.dataset.step = i;
       row.innerHTML =
-        '<span class="rc-num">' + CIRC[i] + '</span>' +
+        '<span class="rc-num">' + DD.num(i + 1) + '</span>' +
         '<span class="rc-ing ml-' + D.meta(id).role + '">' + D.ING[id].draw('rc' + id + i) + '</span>' +
-        '<span class="rc-mark">' + (i < cur.placed.length ? '✅' : (i === cur.placed.length ? '👉' : '')) + '</span>';
+        '<span class="rc-mark">' + (i < cur.placed.length ? DD.icon('check') : (i === cur.placed.length ? DD.icon('point') : '')) + '</span>';
       box.appendChild(row);
     }
   }

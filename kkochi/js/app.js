@@ -7,9 +7,8 @@ window.App = (() => {
   const D = window.KkochiData;
   const A = window.Audio2;
   const P = window.Progress;
+  const I = window.KkochiIcons;   // 화면 틀의 손그림 아이콘(재료 그림과는 별개)
   const $ = id => document.getElementById(id);
-
-  const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
 
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
@@ -35,7 +34,7 @@ window.App = (() => {
         '<span class="mc-icon">' + miniSkewer(D.missionsOf(lv.id)[0], 'mn' + lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? I.get('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openMissions(lv); });
       menu.appendChild(b);
     });
@@ -53,21 +52,23 @@ window.App = (() => {
   let curLevel = null;
   function openMissions(lv) {
     curLevel = lv;
-    $('missions-title').textContent = '🍢 ' + lv.name;
+    $('missions-title').innerHTML = I.get('skewer') + ' ' + lv.name;
     const list = D.missionsOf(lv.id);
     $('missions-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('missions-list');
     box.innerHTML = '';
+    // 아직 안 한 것 중 첫 번째 = 다음에 할 미션. 그 칸 하나만 크게 그린다(크기 위계).
+    const nextIdx = list.findIndex(x => !P.isDone(x.id));
     list.forEach((ms, i) => {
       const done = P.isDone(ms.id);
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'mission-card' + (done ? ' done' : '');
+      b.className = 'mission-card' + (done ? ' done' : '') + (i === nextIdx ? ' next' : '');
       b.dataset.id = ms.id;
       b.innerHTML =
         '<span class="ms-no">' + (i + 1) + '</span>' +
         miniSkewer(ms, 'mc') +
-        '<span class="ms-badge">' + (done ? '⭐' : '🍢') + '</span>';
+        '<span class="ms-badge">' + I.get(done ? 'star' : 'skewer') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(ms); });
       box.appendChild(b);
     });
@@ -79,7 +80,7 @@ window.App = (() => {
 
   function openPlay(ms) {
     cur = { ms, placed: [], locked: false };
-    $('play-title').textContent = '🍢 ' + D.levelDef(ms.level).name;
+    $('play-title').innerHTML = I.get('skewer') + ' ' + D.levelDef(ms.level).name;
     renderRecipe();
     renderTray();
     resetPeg();
@@ -100,9 +101,9 @@ window.App = (() => {
       row.className = 'rc-row' + (i < cur.placed.length ? ' placed' : '') + (i === cur.placed.length ? ' next' : '');
       row.dataset.step = i;
       row.innerHTML =
-        '<span class="rc-num">' + CIRC[i] + '</span>' +
+        '<span class="rc-num"><i>' + (i + 1) + '</i></span>' +
         '<span class="rc-ing">' + D.ING[id].draw('rc' + cur.ms.id + id + i) + '</span>' +
-        '<span class="rc-mark">' + (i < cur.placed.length ? '✅' : (i === cur.placed.length ? '👉' : '')) + '</span>';
+        '<span class="rc-mark">' + (i < cur.placed.length ? I.get('check') : (i === cur.placed.length ? I.get('arrow') : '')) + '</span>';
       box.appendChild(row);
     }
   }

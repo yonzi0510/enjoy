@@ -15,6 +15,8 @@ window.App = (() => {
   const SIZES = [{ w: 14, n: '가늘게' }, { w: 26, n: '보통' }, { w: 42, n: '굵게' }];
 
   const $ = id => document.getElementById(id);
+  // index.html 맨 위 손그림 <symbol> 을 불러 쓰는 조각 (이모지 대신)
+  const ICON = id => '<svg class="ic" aria-hidden="true"><use href="#' + id + '"/></svg>';
 
   let painter = null;
   let cur = { pic: null, dirty: false };
@@ -54,15 +56,19 @@ window.App = (() => {
     // 썸네일 그리드
     const grid = $('pic-grid');
     grid.innerHTML = '';
-    PIC.PICTURES.filter(p => filterCat === 'all' || p.cat === filterCat).forEach(p => {
+    const list = PIC.PICTURES.filter(p => filterCat === 'all' || p.cat === filterCat);
+    // 크기 위계 — 아직 색칠 안 한 첫 그림 한 장만 크게 (다 했으면 맨 앞 그림)
+    let nextIdx = list.findIndex(p => !P.isDone(p.id));
+    if (nextIdx < 0) nextIdx = 0;
+    list.forEach((p, i) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'pic-card';
+      b.className = 'pic-card' + (i === nextIdx ? ' next-up' : '');
       b.dataset.id = p.id;
       b.innerHTML =
         '<span class="pc-thumb">' + PIC.svg(p) + '</span>' +
         '<span class="pc-name">' + p.emoji + ' ' + p.name + '</span>' +
-        (P.isDone(p.id) ? '<span class="pc-done">⭐</span>' : '');
+        (P.isDone(p.id) ? '<span class="pc-done">' + ICON('i-star') + '</span>' : '');
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPaint(p); });
       grid.appendChild(b);
     });
@@ -109,7 +115,7 @@ window.App = (() => {
   function updateClearBtn() {
     const b = $('btn-clear');
     b.classList.toggle('armed', clearArmed);
-    b.textContent = clearArmed ? '정말?' : '🗑️';
+    b.innerHTML = clearArmed ? '정말?' : ICON('i-trash');
   }
 
   function doUndo() {
@@ -135,7 +141,7 @@ window.App = (() => {
     cur.dirty = false;
     if (window.Pet) Pet.awardSnack(1);
     confetti();
-    showReward(cur.pic.name + ' 완성! 참 잘했어요!', '갤러리 보기 🖼️', () => showScreen('scr-gallery'),
+    showReward(cur.pic.name + ' 완성! 참 잘했어요!', '갤러리 보기 ' + ICON('i-gallery'), () => showScreen('scr-gallery'),
       () => showScreen('scr-home'));
     A.speak(cur.pic.name + ' 색칠 완성! 정말 멋져요!');
     return first;
@@ -148,7 +154,8 @@ window.App = (() => {
     const grid = $('gallery-grid');
     grid.innerHTML = '';
     if (!arts.length) {
-      grid.innerHTML = '<p class="gallery-empty">아직 완성한 그림이 없어요.<br>그림을 골라 색칠하고 💾 로 보관해요! 🎨</p>';
+      grid.innerHTML = '<p class="gallery-empty">아직 완성한 그림이 없어요.<br>그림을 골라 색칠하고 ' +
+        ICON('i-save') + ' 로 보관해요! ' + ICON('i-palette') + '</p>';
       return;
     }
     arts.forEach(a => {
@@ -172,7 +179,7 @@ window.App = (() => {
   let rewardNextFn = null, rewardCloseFn = null;
   function showReward(praise, nextLabel, onNext, onClose) {
     $('reward-praise').textContent = praise;
-    $('reward-next').textContent = nextLabel;
+    $('reward-next').innerHTML = nextLabel;   // 손그림 아이콘 조각이 들어온다 (앱 안에서 만든 문구만 넘어옴)
     rewardNextFn = onNext;
     rewardCloseFn = onClose || null;
     $('reward-close').hidden = !onClose;

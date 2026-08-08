@@ -51,13 +51,14 @@ window.CupsData = (() => {
       </svg>`;
   }
 
-  /* 빈 슬롯 — 점선 컵 실루엣 (색·글씨 없음) */
+  /* 빈 슬롯 — 연필로 그려 둔 점선 컵 자리 (색·글씨 없음).
+     낙서장 시안에 맞춰 선 색만 연필심으로 바꿨다 — 모양·좌표는 그대로라 자리 판정에 영향이 없다. */
   function slotSVG() {
     return `
       <svg viewBox="0 0 100 96" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
         <path d="M12,16 L88,16 L76,84 Q75,90 69,90 L31,90 Q25,90 24,84 Z"
-          fill="rgba(255,255,255,.4)" stroke="#CE93BE" stroke-width="2.6" stroke-dasharray="5 5" stroke-linejoin="round"/>
-        <ellipse cx="50" cy="16" rx="38" ry="7.4" fill="none" stroke="#CE93BE" stroke-width="2.6" stroke-dasharray="5 5"/>
+          fill="rgba(255,255,255,.45)" stroke="rgba(46,42,36,.62)" stroke-width="2.8" stroke-dasharray="5 5" stroke-linejoin="round"/>
+        <ellipse cx="50" cy="16" rx="38" ry="7.4" fill="none" stroke="rgba(46,42,36,.62)" stroke-width="2.8" stroke-dasharray="5 5"/>
       </svg>`;
   }
 

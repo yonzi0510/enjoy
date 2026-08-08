@@ -8,6 +8,8 @@ window.App = (() => {
   const A = window.Audio2;
   const P = window.Progress;
   const $ = id => document.getElementById(id);
+  /* 화면 틀에 쓰는 손그림 아이콘 (js/icons.js). 컵 색과는 무관한 표시용이다. */
+  const ic = (name, cls) => (window.CupsIcons ? CupsIcons.html(name, cls) : '');
 
   /* ─────────── 화면 전환 ─────────── */
   let screenId = 'scr-home';
@@ -33,7 +35,7 @@ window.App = (() => {
         '<span class="mc-icon">' + miniPyramid(D.puzzlesOf(lv.id)[0], 'mn' + lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? '<span class="ic">' + ic('star') + '</span> ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPuzzles(lv); });
       menu.appendChild(b);
     });
@@ -57,7 +59,7 @@ window.App = (() => {
   let curLevel = null;
   function openPuzzles(lv) {
     curLevel = lv;
-    $('puzzles-title').textContent = '🥤 ' + lv.name;
+    $('puzzles-title').innerHTML = '<span class="ic">' + ic('cup') + '</span>' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('puzzles-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('puzzles-list');
@@ -71,7 +73,7 @@ window.App = (() => {
       b.innerHTML =
         '<span class="pz-no">' + (i + 1) + '</span>' +
         miniPyramid(pz, 'pc', 'big') +
-        '<span class="pz-badge">' + (done ? '⭐' : '🥤') + '</span>';
+        '<span class="pz-badge">' + ic(done ? 'star' : 'cup') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });
@@ -83,7 +85,7 @@ window.App = (() => {
 
   function openPlay(pz) {
     cur = { pz, flat: D.flat(pz), placed: [], slotEls: [], locked: false };
-    $('play-title').textContent = '🥤 ' + D.levelDef(pz.level).name;
+    $('play-title').innerHTML = '<span class="ic">' + ic('cup') + '</span>' + D.levelDef(pz.level).name;
     renderSample();
     renderTray();
     buildPyramid();

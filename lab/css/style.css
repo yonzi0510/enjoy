@@ -69,20 +69,54 @@ h1 {
     0 3px 0 var(--chunk-soft),
     0 8px 14px rgba(var(--accent), .14);
 }
-.menu {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: clamp(12px, 2.5vmin, 24px);
-  max-width: 960px;
+/* ─────────── 홈 메뉴 — 낙서장 배치 ───────────
+ * 고를 것이 셋뿐이라 flex 로 흘려 놓으면 셋이 나란히 줄을 맞춰 버린다.
+ * 격자에 이름표를 붙여 자리와 크기를 못 박는다:
+ *   · 크기 두 층 — **미션 실험**(가장 먼저 할 것)이 크고, 자유 실험·색깔 도감은 작다.
+ *     크기가 다르면 격자가 격자처럼 안 보인다(낙서장의 핵심은 줄 안 맞추기).
+ *   · 기울기·흩뿌림은 shared/doodle-menu.css 가 nth-child 로 얹는다.
+ * 선택자를 #menu 로 쓰는 곳은 shared/doodle-menu.css 의 !important 를 덮기 위함이다.
+ * 폭을 92vw 로 조인 이유 — 흩뿌림이 카드를 최대 5% 키우고 3% 옆으로 민다.
+ * 폭을 꽉 채우면 그만큼 화면 밖으로 삐져나가 가로 스크롤이 생긴다. */
+#menu {
+  display: grid;
+  width: 100%;
+  /* 남는 세로를 위아래로 나눠 가져 종이 한가운데 흩어져 있게 한다 */
+  margin-block: auto;
+  max-width: min(88vw, 620px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "mission mission"
+    "free    book";
+  /* 줄 사이가 유난히 넓은 까닭 — 흩뿌림이 칸을 최대 5% 키우고 5%까지 위아래로 민다.
+     좁게 두면 위 칸 아래끝과 아래 칸 위끝이 실제로 겹쳐 누를 자리가 헷갈린다. */
+  row-gap: clamp(34px, 6.4vmin, 60px) !important;
+  column-gap: clamp(16px, 2.8vmin, 28px) !important;
+  padding: clamp(6px, 1.4vh, 16px) clamp(10px, 3vw, 26px) !important;
+}
+#menu .c-mission {
+  grid-area: mission;
+  min-height: clamp(148px, 26vh, 270px);
+  --ic: clamp(66px, 15.5vmin, 126px);
+  --nm: clamp(21px, 4.5vmin, 33px);
+}
+#menu .c-free { grid-area: free; }
+#menu .c-book { grid-area: book; }
+#menu .c-free, #menu .c-book {
+  min-height: clamp(110px, 18vh, 196px);
+  --ic: clamp(38px, 9.2vmin, 74px);
+  --nm: clamp(15px, 3.2vmin, 23px);
 }
 .menu-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  width: clamp(150px, 28vmin, 220px);
-  padding: clamp(16px, 3.4vmin, 28px);
+  justify-content: center;
+  gap: clamp(3px, 1vmin, 8px);
+  width: auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: clamp(10px, 2.4vmin, 22px) clamp(6px, 1.8vmin, 16px);
   border: none;
   border-radius: 28px;
   background: linear-gradient(180deg, #FFFFFF 0%, var(--tint) 100%);
@@ -107,11 +141,20 @@ h1 {
 .menu .menu-card:nth-child(1) { animation-delay: .05s; }
 .menu .menu-card:nth-child(2) { animation-delay: .10s; }
 .menu .menu-card:nth-child(3) { animation-delay: .15s; }
-.mc-icon { font-size: clamp(38px, 8.4vmin, 62px); line-height: 1.15; }
-.mc-name { font-size: clamp(17px, 3.4vmin, 25px); font-weight: 900; color: #2F401B; }
-.mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #71855A; }
+.mc-icon { display: block; line-height: 0; flex: none; }
+.mc-icon svg { display: block; width: var(--ic, 44px); height: var(--ic, 44px); }
+.mc-name {
+  font-size: var(--nm, 17px);
+  font-weight: 900; color: #2F401B;
+  line-height: 1.15; text-align: center; word-break: keep-all;
+}
+.mc-desc {
+  font-size: calc(var(--nm, 17px) * .64);
+  font-weight: 700; color: #71855A;
+  line-height: 1.2; text-align: center; word-break: keep-all;
+}
 .mc-prog {
-  font-size: clamp(12px, 2.4vmin, 16px);
+  font-size: calc(var(--nm, 17px) * .64);
   font-weight: 800;
   color: #5B7434;
   background: rgba(255,255,255,.75);
@@ -585,4 +628,71 @@ h1 {
   .home-head, .menu-card, .mission-card, .book-cell { animation: none; }
   .menu-card, .mission-card, .back, .mini-btn, .bigbtn, .drop, .jar-wrap { transition: none; }
   .wiggle, .jar-wrap.glow, .jar-sparkle, .butterfly.fly, .butterfly .bf-wings { animation: none; }
+}
+
+/* ═══════════ 낙서장 — 손그림 아이콘 ═══════════
+ * 이모지를 걷어내고 index.html 의 <symbol id="li-…"> 를 <use> 로 불러 쓴다.
+ * 그림 자체는 SVG 안에 있고, 여기서는 **크기와 자리만** 잡는다.
+ * (물감·혼색·도감의 색은 놀이 내용이라 여기서도 손대지 않는다 — 틀만 바꾼다.) */
+.art-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* 글줄 안에 섞이는 아이콘 — 글자 크기를 따라 커진다 */
+.hd-icon {
+  width: 1.15em; height: 1.15em;
+  vertical-align: -.24em;
+  margin-right: .3em;
+  flex: none;
+}
+.hd-icon.hd-big { width: 1.3em; height: 1.3em; vertical-align: -.3em; }
+.stat-icon {
+  width: 1.4em; height: 1.4em;
+  vertical-align: -.36em;
+  margin-right: .28em;
+}
+
+/* 동그란 단추 속 아이콘 — 단추 지름의 60%쯤이 손가락에 가장 잘 보인다 */
+.back, .mini-btn, .vs-btn { display: inline-grid !important; place-items: center; }
+.btn-icon { width: 60%; height: 60%; display: block; }
+/* 목소리 단추가 폰에서 42px 이라 손가락 최소 크기(44px)에 못 미쳤다 — 여기서만 키운다 */
+#btn-voice, #pet-slot .pet-btn { width: clamp(48px, 7.5vmin, 56px); height: clamp(48px, 7.5vmin, 56px); }
+
+/* 미션 완성 표시 — 크레용으로 그은 체크 */
+.mi-check { width: 1.1em; height: 1.1em; vertical-align: -.22em; margin-right: .22em; }
+
+/* 도감 칸 속 플라스크·물음표 (병 색은 그대로, 그림만 손그림) */
+.bk-jar svg { width: 62%; height: 62%; display: block; }
+
+/* 성공 반짝 — 이모지 대신 손그림 별. 크기는 예전 font-size 감각을 그대로 잇는다 */
+.jar-sparkle svg { width: clamp(60px, 13vmin, 108px); height: clamp(60px, 13vmin, 108px); }
+
+/* 큰 동작 단추 안에서는 아이콘과 글씨가 한 줄로 나란히 */
+.bigbtn { display: inline-flex; align-items: center; justify-content: center; }
+
+/* ═══════════ 낙서장 — 가로 화면 메뉴 ═══════════
+ * 세로에서는 '미션 실험'이 위에 넓게 눕고, 가로에서는 왼쪽에 크게 선다.
+ * 어느 쪽이든 가장 먼저 할 것이 가장 크다. */
+@media (orientation: landscape) {
+  #menu {
+    max-width: min(86vw, 860px);
+    grid-template-columns: minmax(0, 1.28fr) minmax(0, 1fr);
+    grid-template-areas:
+      "mission free"
+      "mission book";
+  }
+  #menu .c-mission { min-height: clamp(176px, 44vh, 360px); }
+  #menu .c-free, #menu .c-book { min-height: clamp(84px, 20vh, 170px); }
+}
+
+/* 폰 가로처럼 세로가 짧은 화면 — 머리·칸을 한 번 더 조여 스크롤을 없앤다.
+   높이가 기준이라 vmin 이 아니라 vh 로 잰다. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .home-head { margin-top: 0; gap: 4px; }
+  h1 { font-size: clamp(21px, 5.4vh, 34px); }
+  #menu {
+    row-gap: clamp(16px, 4vh, 34px) !important;
+    padding: 2px clamp(10px, 3vw, 26px) !important;
+  }
+  #menu .c-mission { min-height: 0; --ic: clamp(42px, 11vh, 76px); --nm: clamp(17px, 4.6vh, 26px); }
+  #menu .c-free, #menu .c-book { min-height: 0; --ic: clamp(24px, 6.6vh, 42px); --nm: clamp(13px, 3.5vh, 19px); }
+  .menu-card { padding: clamp(5px, 1.5vh, 14px) clamp(6px, 1.6vmin, 14px); gap: clamp(2px, .8vh, 6px); }
 }

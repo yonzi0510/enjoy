@@ -22,27 +22,27 @@
 <!-- ═══════════ 홈 화면 ═══════════ -->
 <div id="screen-home" class="screen active">
   <header class="home-header">
-    <h1 class="app-title"><span class="title-emoji">🔍</span> 찾기 놀이터</h1>
+    <h1 class="app-title"><span class="title-emoji di" data-di="find"></span> 찾기 놀이터</h1>
     <div class="header-btns">
-      <a href="../" class="round-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+      <a href="../" class="round-btn home-dup" style="text-decoration:none" aria-label="메인 놀이터로"><span class="di" data-di="house"></span></a>
       <span id="pet-slot"></span>
-      <button id="btn-voice" class="round-btn" aria-label="목소리 설정">🗣️</button>
-      <button id="btn-stickers" class="round-btn" aria-label="스티커북">🏅</button>
-      <button id="btn-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
+      <button id="btn-voice" class="round-btn" aria-label="목소리 설정"><span class="di" data-di="voice"></span></button>
+      <button id="btn-stickers" class="round-btn" aria-label="스티커북"><span class="di" data-di="medal"></span></button>
+      <button id="btn-mute" class="round-btn" aria-label="소리 켜기/끄기"><span class="di" data-di="sound-on"></span></button>
     </div>
   </header>
   <button id="btn-letters" class="letters-banner">
-    <span class="letters-banner-emoji">🔤</span>
+    <span class="letters-banner-emoji di" data-di="letters"></span>
     <span class="letters-banner-text">가나다 글자 찾기</span>
-    <span class="letters-banner-emoji">✏️</span>
+    <span class="letters-banner-emoji di" data-di="pencil"></span>
   </button>
   <div class="mode-banners">
     <button id="btn-memory" class="mode-banner mb-memory">
-      <span class="mode-banner-emoji">🃏</span>
+      <span class="mode-banner-emoji di" data-di="cards"></span>
       <span class="mode-banner-text">짝꿍 카드</span>
     </button>
     <button id="btn-habitat" class="mode-banner mb-habitat">
-      <span class="mode-banner-emoji">🏠</span>
+      <span class="mode-banner-emoji di" data-di="house"></span>
       <span class="mode-banner-text">동물의 집 찾기</span>
     </button>
   </div>
@@ -52,8 +52,8 @@
 <!-- ═══════════ 짝꿍 카드: 단계 선택 오버레이 ═══════════ -->
 <div id="memory-overlay" class="overlay hidden">
   <div class="mode-card">
-    <button class="close-btn" id="memory-close" aria-label="닫기">✕</button>
-    <div class="mode-theme-name">🃏 짝꿍 카드</div>
+    <button class="close-btn" id="memory-close" aria-label="닫기"><span class="di" data-di="close"></span></button>
+    <div class="mode-theme-name"><span class="di" data-di="cards"></span> 짝꿍 카드</div>
     <div class="letters-level-btns memory-level-btns">
       <button class="letters-level-btn llv-1" data-mlevel="1"><b>1단계</b><span>카드 8장<br>4쌍 찾기</span><span class="level-btn-stars"></span></button>
       <button class="letters-level-btn llv-2" data-mlevel="2"><b>2단계</b><span>카드 16장<br>8쌍 찾기</span><span class="level-btn-stars"></span></button>
@@ -66,7 +66,7 @@
 <!-- ═══════════ 짝꿍 카드 게임 화면 ═══════════ -->
 <div id="screen-memory" class="screen">
   <header class="game-header">
-    <button id="memory-back" class="round-btn" aria-label="처음으로">🏠</button>
+    <button id="memory-back" class="round-btn" aria-label="처음으로"><span class="di" data-di="house"></span></button>
     <div id="memory-title" class="game-title">🃏 짝꿍 카드</div>
     <div class="header-btns"><div style="width:clamp(48px, 8vmin, 64px)"></div></div>
   </header>
@@ -79,8 +79,8 @@
 <!-- ═══════════ 동물의 집 찾기: 주제 선택 오버레이 ═══════════ -->
 <div id="habitat-overlay" class="overlay hidden">
   <div class="mode-card">
-    <button class="close-btn" id="habitat-close" aria-label="닫기">✕</button>
-    <div class="mode-theme-name">🏠 어디로 데려다줄까?</div>
+    <button class="close-btn" id="habitat-close" aria-label="닫기"><span class="di" data-di="close"></span></button>
+    <div class="mode-theme-name"><span class="di" data-di="house"></span> 어디로 데려다줄까?</div>
     <div class="habitat-topic-btns">
       <button class="habitat-topic-btn ht-animals" data-topic="animals"><span class="ht-emoji">🐾</span><b>동물의 집</b><span>🌊 바다 · 🌳 숲 · ☁️ 하늘</span><span class="level-btn-stars"></span></button>
       <button class="habitat-topic-btn ht-vehicles" data-topic="vehicles"><span class="ht-emoji">🚗</span><b>탈것의 길</b><span>🛣️ 도로 · 🌊 바다 · ☁️ 하늘</span><span class="level-btn-stars"></span></button>
@@ -92,10 +92,10 @@
 <!-- ═══════════ 동물의 집 찾기 게임 화면 ═══════════ -->
 <div id="screen-habitat" class="screen">
   <header class="game-header">
-    <button id="habitat-back" class="round-btn" aria-label="처음으로">🏠</button>
+    <button id="habitat-back" class="round-btn" aria-label="처음으로"><span class="di" data-di="house"></span></button>
     <div id="habitat-title" class="game-title">🏠 동물의 집 찾기</div>
     <div class="header-btns">
-      <button id="habitat-say" class="round-btn hint-btn" aria-label="다시 듣기">🔁</button>
+      <button id="habitat-say" class="round-btn hint-btn" aria-label="다시 듣기"><span class="di" data-di="replay"></span></button>
     </div>
   </header>
   <div class="habitat-body">
@@ -113,8 +113,8 @@
 <!-- ═══════════ 글자 찾기: 단계 선택 오버레이 ═══════════ -->
 <div id="letters-overlay" class="overlay hidden">
   <div class="mode-card">
-    <button class="close-btn" id="letters-close" aria-label="닫기">✕</button>
-    <div class="mode-theme-name">🔤 글자 찾기</div>
+    <button class="close-btn" id="letters-close" aria-label="닫기"><span class="di" data-di="close"></span></button>
+    <div class="mode-theme-name"><span class="di" data-di="letters"></span> 글자 찾기</div>
     <div class="letters-level-btns">
       <button class="letters-level-btn llv-1" data-llevel="1"><b>1단계</b><span>ㄱㄴㄷ · ㅏㅗ<br>자음·모음</span><span class="level-btn-stars"></span></button>
       <button class="letters-level-btn llv-2" data-llevel="2"><b>2단계</b><span>가 나 다 라<br>글자</span><span class="level-btn-stars"></span></button>
@@ -127,10 +127,10 @@
 <!-- ═══════════ 글자 찾기 게임 화면 ═══════════ -->
 <div id="screen-letters" class="screen">
   <header class="game-header">
-    <button id="letters-back" class="round-btn" aria-label="처음으로">🏠</button>
+    <button id="letters-back" class="round-btn" aria-label="처음으로"><span class="di" data-di="house"></span></button>
     <div class="game-title">🔤 글자 찾기</div>
     <div class="header-btns">
-      <button id="letters-hint" class="round-btn hint-btn" aria-label="힌트">💡</button>
+      <button id="letters-hint" class="round-btn hint-btn" aria-label="힌트"><span class="di" data-di="hint"></span></button>
     </div>
   </header>
   <div class="letters-body">
@@ -147,11 +147,11 @@
 <!-- ═══════════ 스티커 놀이 화면 ═══════════ -->
 <div id="screen-stickerplay" class="screen">
   <header class="home-header">
-    <button id="stickerplay-back" class="round-btn" aria-label="뒤로">◀</button>
-    <h1 class="app-title"><span class="title-emoji">🎨</span> 스티커 놀이</h1>
+    <button id="stickerplay-back" class="round-btn" aria-label="뒤로"><span class="di" data-di="back"></span></button>
+    <h1 class="app-title"><span class="title-emoji di" data-di="palette"></span> 스티커 놀이</h1>
     <div class="header-btns">
-      <button id="stickerplay-bg" class="round-btn" aria-label="배경 바꾸기">🌈</button>
-      <button id="stickerplay-clear" class="round-btn" aria-label="모두 지우기">🗑️</button>
+      <button id="stickerplay-bg" class="round-btn" aria-label="배경 바꾸기"><span class="di" data-di="rainbow"></span></button>
+      <button id="stickerplay-clear" class="round-btn" aria-label="모두 지우기"><span class="di" data-di="trash"></span></button>
     </div>
   </header>
   <div id="sticker-board" class="sticker-board"></div>
@@ -161,23 +161,23 @@
 <!-- ═══════════ 게임 모드 선택 오버레이 ═══════════ -->
 <div id="mode-overlay" class="overlay hidden">
   <div class="mode-card">
-    <button class="close-btn" id="mode-close" aria-label="닫기">✕</button>
+    <button class="close-btn" id="mode-close" aria-label="닫기"><span class="di" data-di="close"></span></button>
     <div id="mode-theme-name" class="mode-theme-name"></div>
     <div class="mode-sections">
       <div class="mode-section">
-        <div class="mode-section-title"><span class="mode-icon">🔍</span> 숨은그림찾기</div>
+        <div class="mode-section-title"><span class="mode-icon di" data-di="find"></span> 숨은그림찾기</div>
         <div class="level-btns">
-          <button class="level-btn level-1" data-mode="hidden" data-level="1">🌱 쉬움<span class="level-btn-stars"></span></button>
-          <button class="level-btn level-2" data-mode="hidden" data-level="2">🌟 보통<span class="level-btn-stars"></span></button>
-          <button class="level-btn level-3" data-mode="hidden" data-level="3">🔥 어려움<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-1" data-mode="hidden" data-level="1"><span class="di" data-di="sprout"></span> 쉬움<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-2" data-mode="hidden" data-level="2"><span class="di" data-di="star"></span> 보통<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-3" data-mode="hidden" data-level="3"><span class="di" data-di="fire"></span> 어려움<span class="level-btn-stars"></span></button>
         </div>
       </div>
       <div class="mode-section">
-        <div class="mode-section-title"><span class="mode-icon">👀</span> 다른그림찾기</div>
+        <div class="mode-section-title"><span class="mode-icon di" data-di="eyes"></span> 다른그림찾기</div>
         <div class="level-btns">
-          <button class="level-btn level-1" data-mode="diff" data-level="1">🌱 쉬움<span class="level-btn-stars"></span></button>
-          <button class="level-btn level-2" data-mode="diff" data-level="2">🌟 보통<span class="level-btn-stars"></span></button>
-          <button class="level-btn level-3" data-mode="diff" data-level="3">🔥 어려움<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-1" data-mode="diff" data-level="1"><span class="di" data-di="sprout"></span> 쉬움<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-2" data-mode="diff" data-level="2"><span class="di" data-di="star"></span> 보통<span class="level-btn-stars"></span></button>
+          <button class="level-btn level-3" data-mode="diff" data-level="3"><span class="di" data-di="fire"></span> 어려움<span class="level-btn-stars"></span></button>
         </div>
       </div>
     </div>
@@ -187,11 +187,11 @@
 <!-- ═══════════ 게임 화면 ═══════════ -->
 <div id="screen-game" class="screen">
   <header class="game-header">
-    <button id="game-back" class="round-btn" aria-label="뒤로가기">🏠</button>
+    <button id="game-back" class="round-btn" aria-label="뒤로가기"><span class="di" data-di="house"></span></button>
     <div id="game-title" class="game-title"></div>
     <div class="header-btns">
-      <button id="game-hint" class="round-btn hint-btn" aria-label="힌트">💡</button>
-      <button id="game-mute" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
+      <button id="game-hint" class="round-btn hint-btn" aria-label="힌트"><span class="di" data-di="hint"></span></button>
+      <button id="game-mute" class="round-btn" aria-label="소리 켜기/끄기"><span class="di" data-di="sound-on"></span></button>
     </div>
   </header>
 
@@ -223,7 +223,7 @@
       <div id="sticker-reveal-name" class="sticker-name"></div>
     </div>
     <div class="complete-btns">
-      <button id="complete-home" class="big-btn btn-soft">🏠</button>
+      <button id="complete-home" class="big-btn btn-soft"><span class="di" data-di="house"></span></button>
       <button id="complete-next" class="big-btn btn-primary">다음 놀이 ▶</button>
     </div>
   </div>
@@ -232,16 +232,17 @@
 <!-- ═══════════ 스티커북 화면 ═══════════ -->
 <div id="screen-stickers" class="screen">
   <header class="home-header">
-    <button id="stickers-back" class="round-btn" aria-label="뒤로가기">🏠</button>
-    <h1 class="app-title"><span class="title-emoji">🏅</span> 내 스티커북</h1>
+    <button id="stickers-back" class="round-btn" aria-label="뒤로가기"><span class="di" data-di="house"></span></button>
+    <h1 class="app-title"><span class="title-emoji di" data-di="medal"></span> 내 스티커북</h1>
     <div style="width:56px"></div>
   </header>
-  <button id="btn-stickerplay" class="stickerplay-cta">🎨 스티커로 꾸미기 놀이 하러 가기 ▶</button>
+  <button id="btn-stickerplay" class="stickerplay-cta"><span class="di" data-di="palette"></span> 스티커로 꾸미기 놀이 하러 가기 ▶</button>
   <div id="sticker-grid" class="sticker-grid"></div>
 </div>
 
 <script src="../shared/profile.js"></script>
 <script src="../shared/parent-settings.js"></script>
+<script src="js/doodle-icons.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/scenes/farm.js"></script>

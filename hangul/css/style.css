@@ -101,9 +101,67 @@ h1 {
 .menu .menu-card:nth-child(3) { animation-delay: .15s; }
 .menu .menu-card:nth-child(4) { animation-delay: .20s; }
 .menu .menu-card:nth-child(5) { animation-delay: .25s; }
-.mc-emoji { font-size: clamp(38px, 8vmin, 64px); }
-.mc-name { font-size: clamp(18px, 3.6vmin, 26px); font-weight: 900; color: #4A3F22; }
-.mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #8A7A4E; }
+.mc-emoji { font-size: clamp(38px, 8vmin, 64px); line-height: 1; }
+/* keep-all — 줄이 넘칠 때 낱말 한가운데("쓰\n기")가 아니라 낱말 사이에서 끊기게 */
+.mc-name { font-size: clamp(18px, 3.6vmin, 26px); font-weight: 900; color: #4A3F22; word-break: keep-all; }
+.mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #8A7A4E; word-break: keep-all; }
+
+/* ─────────── 낙서장 첫 화면 (홈) ───────────
+   1) 크기 위계 — 「글자 배우기」가 가장 크고 뒤로 갈수록 조금씩 작아진다.
+      아이는 글을 못 읽으니 "무엇부터 할지"를 글이 아니라 크기로 말한다.
+   2) 손그림 화살표 — 제목에서 첫 놀이로 점선이 이어진다.
+   3) 아이콘 — 이모지 대신 index.html 에 직접 그린 손그림 SVG.
+   놀이 메뉴(#scr-games)는 둘 다 대등한 놀이라 위계를 주지 않는다. */
+
+/* 손그림 아이콘: 글자 크기(.mc-emoji font-size)가 그대로 그림 크기가 된다.
+   overflow:visible 라야 크레용이 윤곽 밖으로 삐져나온 부분이 안 잘린다. */
+.kid-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.mc-emoji .ki { width: 1em; height: 1em; display: block; overflow: visible; }
+
+/* 칸마다 다른 크기 — 배우기 > 따라쓰기 > 놀이 > 노래 > 카드책.
+   최솟값은 「좁은 폰에서도 뒤의 네 칸이 둘씩 짝지어 들어가되,
+   배우기만은 절대 짝을 못 이뤄 혼자 한 줄을 차지하도록」 잡은 값이다. */
+#scr-home .m-learn { width: clamp(218px, 56vmin, 330px); }
+#scr-home .m-trace { width: clamp(130px, 37vmin, 220px); }
+#scr-home .m-play  { width: clamp(124px, 35vmin, 206px); }
+#scr-home .m-song  { width: clamp(116px, 33vmin, 192px); }
+#scr-home .m-cards { width: clamp(110px, 31vmin, 178px); }
+
+/* 칸이 흩어져(doodle-menu.css 가 최대 5%씩 밀어낸다) 서로 물리지 않게 사이를 더 벌린다 */
+#scr-home .menu { gap: clamp(26px, 3.4vw, 40px) !important; }
+
+/* 가장 큰 칸만은 아래위로 밀지 않고 키우지도 않는다 — 덩치가 커서 5%만 밀려도
+   아랫줄과 물린다. 기울기는 남겨 손으로 붙인 느낌은 그대로. (누를 때·모션 끄기 때는
+   doodle-menu.css 의 !important 규칙이 그대로 이긴다) */
+#scr-home .m-learn { transform: translateX(-3%) rotate(-1.8deg); }
+
+/* 글씨·그림도 칸을 따라 커지고 작아진다 (칸만 커지면 속이 비어 보인다) */
+#scr-home .m-learn .mc-emoji { font-size: clamp(72px, 15vmin, 118px); }
+#scr-home .m-learn .mc-name  { font-size: clamp(23px, 4.6vmin, 34px); }
+#scr-home .m-learn .mc-desc  { font-size: clamp(13px, 2.6vmin, 18px); }
+#scr-home .m-trace .mc-emoji { font-size: clamp(50px, 10.4vmin, 78px); }
+#scr-home .m-play  .mc-emoji { font-size: clamp(46px, 9.6vmin, 71px); }
+#scr-home .m-song  .mc-emoji { font-size: clamp(42px, 8.8vmin, 65px); }
+#scr-home .m-cards .mc-emoji { font-size: clamp(39px, 8.2vmin, 60px); }
+#scr-home .m-song  .mc-name,
+#scr-home .m-cards .mc-name  { font-size: clamp(16px, 3.2vmin, 23px); }
+
+/* 칸 높이는 속을 따라간다 — 늘려 맞추면 작은 칸이 안 작아 보여서 위계가 흐려진다 */
+#scr-home .menu { align-items: flex-start; }
+
+/* 화살표 자리 — 칸 왼쪽 위에 붙어 칸을 따라 기울어진다.
+   흐름에서 빠져 있으므로(absolute) 위쪽에 자리를 따로 비워 준다. */
+#scr-home .menu { margin-top: clamp(32px, 6.5vmin, 76px); }
+#scr-home .m-learn { position: relative; }
+.mc-arrow {
+  position: absolute;
+  left: -9%;
+  bottom: calc(100% - 4px);
+  width: 62%;
+  height: auto;
+  overflow: visible;
+  pointer-events: none;
+}
 /* 메뉴 카드는 카드마다 자기 파스텔색 — chunk도 같은 색을 짙게 만든 단면으로 */
 .m-learn  { background: #FFF3C4; --chunk: #E8B62A; --accent: 245,179,1; }
 .m-trace  { background: #FFE0EC; --chunk: #EC6F9F; --accent: 255,143,176; }
@@ -610,4 +668,27 @@ h1 {
   .home-head { margin-top: 0; }
   .bubble-area { min-height: 0; }
   .first-stage { gap: clamp(8px, 2vmin, 14px); }
+  /* 세로가 짧으면 다섯 칸을 한 줄로 눕혀 스크롤을 없앤다.
+     위계는 그대로 — 가로로 나란히 있어도 배우기가 가장 크다. */
+  #scr-home .menu { margin-top: 0; gap: clamp(18px, 2.4vw, 30px) !important; }
+  #scr-home .m-learn { width: clamp(160px, 19vw, 210px); }
+  #scr-home .m-trace { width: clamp(120px, 14.5vw, 155px); }
+  #scr-home .m-play  { width: clamp(114px, 13.5vw, 145px); }
+  #scr-home .m-song  { width: clamp(108px, 12.5vw, 135px); }
+  #scr-home .m-cards { width: clamp(102px, 11.5vw, 126px); }
+  #scr-home .m-learn .mc-emoji { font-size: clamp(44px, 9vmin, 66px); }
+  .mc-arrow { width: 42%; }
+}
+
+/* 위쪽 줄 정리 — 오른쪽 위는 남은 시간표(⏳)와 집 단추의 자리다.
+   제목이 그 밑을 파고들지 않게 아래로 내리고, 폭이 좁으면 점수 칸이 접히게 한다.
+   (width:100% 가 없으면 집 단추가 밀어 넣은 오른쪽 여백 때문에 머리줄이 화면보다
+    넓어져서, 좁은 폰에서 ⭐ 칸이 왼쪽으로 잘려 나간다) */
+#scr-home .home-head { width: 100%; margin-top: clamp(26px, 5vmin, 34px); }
+#scr-home .stats { flex-wrap: wrap; justify-content: center; row-gap: 8px; }
+
+/* 좁은 폰: 제목이 오른쪽 위 집 단추 밑으로 파고들지 않게 한 치수 줄인다
+   (집 단추가 오른쪽 104px 를 차지한다 — shared/home-button.js) */
+@media (max-width: 460px) {
+  #scr-home h1 { font-size: clamp(21px, 5.4vmin, 30px); }
 }

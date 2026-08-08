@@ -35,7 +35,9 @@ pixel/
   manifest.webmanifest  # PWA 설치
   icon-192.png / icon-512.png   # 픽셀 토끼 아이콘
   css/style.css
+  css/doodle.css        # 「낙서장」 층 — 도안 카드 흩뿌리기·종이 단추 (style.css·shared/crayon.css 뒤에 불러온다)
   js/
+    icons.js            # 손그림 UI 아이콘 (이모지 대신 떨리는 획의 인라인 SVG)
     progress.js         # localStorage (칸 상태·부스터·완성 기록)
     audio.js            # WebAudio 효과음 + 한국어 음성
     engine.js           # canvas 렌더러·줌/팬·드래그 채색·부스터·완성 연출

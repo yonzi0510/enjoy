@@ -54,7 +54,7 @@ window.App = (() => {
         '<span class="mc-icon">' + miniTubes(lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
-        '<span class="mc-prog">' + (done ? '⭐ ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
+        '<span class="mc-prog">' + (done ? Doodle.icon('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openList(lv); });
       menu.appendChild(b);
     });
@@ -73,23 +73,25 @@ window.App = (() => {
   let curLevel = null;
   function openList(lv) {
     curLevel = lv;
-    $('list-title').textContent = lv.icon + ' ' + lv.name;
+    $('list-title').innerHTML = Doodle.icon('tube' + lv.id) + ' ' + lv.name;
     const list = D.puzzlesOf(lv.id);
     $('list-count').textContent = P.doneCount(list.map(x => x.id)) + ' / ' + list.length;
     const box = $('list');
     box.innerHTML = '';
+    // 아직 안 한 첫 퍼즐을 크게 — 무엇부터 할지 눈으로 바로 알게 한다
+    const nextIdx = list.findIndex(x => !P.isDone(x.id));
     list.forEach((pz, i) => {
       const done = P.isDone(pz.id);
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'puzzle-card' + (done ? ' done' : '');
+      b.className = 'puzzle-card' + (done ? ' done' : '') + (i === nextIdx ? ' next' : '');
       b.dataset.id = pz.id;
       b.innerHTML =
         '<span class="pz-no">' + (i + 1) + '</span>' +
         '<span class="mini-tubes big">' +
           pz.tubes.map((t, k) => tubeHTML(t, lv.len, k, { mini: true })).join('') +
         '</span>' +
-        '<span class="pz-badge">' + (done ? '⭐' : '🧪') + '</span>';
+        '<span class="pz-badge">' + (done ? Doodle.icon('star') : Doodle.icon('tube' + lv.id)) + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
     });
@@ -102,7 +104,7 @@ window.App = (() => {
   function openPlay(pz) {
     const lv = D.levelDef(pz.level);
     cur = { pz, len: lv.len, filled: pz.tubes.map(() => []), locked: false };
-    $('play-title').textContent = lv.icon + ' ' + lv.name;
+    $('play-title').innerHTML = Doodle.icon('tube' + lv.id) + ' ' + lv.name;
     renderCard();
     renderTubes();
     renderPalette();

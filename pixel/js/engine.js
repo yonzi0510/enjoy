@@ -55,10 +55,15 @@
   }
 
   /* ─────────── 소리 버튼 ─────────── */
+  /* 소리 아이콘은 손그림 SVG(js/icons.js)로 갈아 끼운다.
+     혹시 못 불러왔으면 예전처럼 이모지로 되돌린다 */
   function updateMuteIcons() {
-    const icon = Sound.isMuted() ? '🔇' : '🔊';
-    $('btn-mute').textContent = icon;
-    $('paint-mute').textContent = icon;
+    const muted = Sound.isMuted();
+    ['btn-mute', 'paint-mute'].forEach(id => {
+      const slot = $(id).querySelector('.ic');
+      if (window.PixelIcons && slot) PixelIcons.set(slot, muted ? 'mute' : 'sound');
+      else $(id).textContent = muted ? '🔇' : '🔊';
+    });
   }
   function toggleMute() { Sound.toggleMute(); updateMuteIcons(); }
   $('btn-mute').addEventListener('click', toggleMute);

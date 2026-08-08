@@ -1,0 +1,271 @@
+/* ═══════════ 픽셀 놀이터 — 낙서장 층 ═══════════
+ * 부모님이 고르신 「시안 3 · 낙서장」을 픽셀 놀이터에 입힌다.
+ *
+ * 공용 층(shared/crayon.css 끝)이 모눈 공책 바탕과 얇은 손그림 윤곽을 이미 깔아 준다.
+ * 그런데 픽셀은 첫 화면에 `.menu` 컨테이너가 없어서 공용 흩뿌리기 규칙
+ * (shared/doodle-menu.css)이 걸리지 않는다 — 그래서 같은 방식(nth-child 손버릇)을
+ * 여기 픽셀 자기 CSS 안에서 `.pic-grid > .pic-card` 에 준다.
+ *
+ * 절대 건드리지 않는 것
+ *   · 도안 미리보기 그림(.pic-thumb canvas) — 아이가 완성한 그림 그 자체다.
+ *     담는 틀(테두리·그림자·기울기)만 바꾼다.
+ *   · 팔레트 동그라미(.pal-btn) — 놀잇감의 색이라 그대로 둔다.
+ *   · 채색 격자(canvas) 안쪽 — 놀이 규칙 영역.
+ *
+ * 불러오는 위치: index.html 스타일시트 중 **가장 마지막**(crayon.css 보다 뒤).
+ */
+
+:root {
+  --doodle-gap: clamp(24px, 3.4vmin, 38px); /* 흩뿌리려면 칸 사이가 넉넉해야 한다 */
+  --paper-btn: #FFFDF6;
+}
+
+/* ─────────── 머리줄: 위쪽에 떠 있는 것들 자리 비우기 ───────────
+   shared/home-button.js 가 오른쪽 위에 큰 집 단추를, shared/time-limit.css 가
+   그 왼쪽에 남은 시간 쪽지(⏳ 30분)를 띄운다. 공용 CSS 는 `.bar`·`.home-head` 만
+   밀어 주는데 픽셀의 머리줄은 이름이 달라서 단추들이 그 밑에 깔려 있었다. */
+.home-header, .game-header {
+  padding-top: 32px;   /* 남은 시간 쪽지 아래로 */
+  padding-right: calc(104px + env(safe-area-inset-right, 0px)); /* 집 단추 왼쪽으로 */
+  gap: 8px;
+}
+/* 앱 안에 있던 작은 🏠 는 감춘다 — 집 단추가 둘이면 아이가 헷갈린다 */
+.home-header a.round-btn[href="../"] { display: none !important; }
+.header-btns { gap: 8px; }
+/* 좁은 폰에서는 집 단추(60px + 손가락 여유)만큼만 비운다 — 그림 이름이 잘리지 않게 */
+@media (max-width: 520px) {
+  .home-header, .game-header { padding-right: calc(92px + env(safe-area-inset-right, 0px)); }
+}
+
+.app-title {
+  color: var(--ink);
+  text-shadow: none;
+  word-break: keep-all;  /* 좁은 폰에서 '픽셀 / 놀이터' 로만 접히게 (낱글자로 쪼개지 않는다) */
+  line-height: 1.15;
+  /* 집 단추·시간 쪽지에 자리를 내준 만큼 폰에서는 한 호흡 작게 — 두 줄에 담긴다 */
+  font-size: clamp(18px, 4.5vmin, 34px);
+}
+
+/* ─────────── 손그림 아이콘 자리 ─────────── */
+.ic {
+  display: block;
+  width: 64%;
+  height: 64%;
+  pointer-events: none;
+}
+.ic svg { display: block; width: 100%; height: 100%; }
+/* 글자와 나란히 놓이는 아이콘(다시 색칠하기·내 작품·다음 그림) */
+.big-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .38em;
+}
+.big-btn .ic { width: 1.3em; height: 1.3em; flex: 0 0 auto; }
+
+/* ─────────── 종이 단추 ─────────── */
+.round-btn {
+  background: var(--paper-btn);
+  border: 3px solid var(--ink);
+  /* 손으로 그린 동그라미 — 네 귀퉁이가 조금씩 다르다 */
+  border-radius: 53% 47% 51% 49% / 48% 52% 48% 52%;
+  box-shadow: none;
+}
+.round-btn:active {
+  transform: translate(2px, 3px);
+  box-shadow: none;
+}
+
+.game-title {
+  background: var(--paper-btn);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 22px 17px 23px 18px;
+  box-shadow: none;
+  transform: rotate(-.7deg);
+  padding: 6px 12px;   /* 집 단추 자리를 비운 만큼 이름 칸을 아낀다 */
+}
+/* 폰에서는 집 단추에 자리를 내주느라 이름 칸이 좁다. 말줄임(…)으로 잘라 버리면
+   글을 못 읽는 아이가 무슨 그림인지 알 수 없으니, 작게 줄이고 두 줄로 접는다. */
+@media (max-width: 520px) {
+  .game-title {
+    padding: 5px 9px;
+    font-size: 14px;
+    white-space: normal;
+    word-break: keep-all;      /* 낱글자로 쪼개지 않고 띄어쓰기에서만 접는다 */
+    overflow-wrap: break-word; /* 그래도 안 되면(붙여 쓴 긴 이름) 접어서라도 다 보여 준다 */
+    line-height: 1.2;
+    text-align: center;
+  }
+}
+
+/* ─────────── 카테고리 칩 ─────────── */
+.cat-chips {
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+.cat-chip {
+  display: flex;
+  align-items: center;
+  min-height: 44px; /* 5세 손가락 하한 */
+  background: var(--paper-btn);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: none;
+}
+.cat-chip.sel {
+  /* 고른 칸은 크레용으로 쓱 칠한 느낌 — 앱 대표색(민트)은 그대로 */
+  background: #7FE0B0;
+  color: var(--ink);
+  border-color: var(--ink);
+  box-shadow: none;
+}
+.cat-chip:nth-child(odd)  { transform: rotate(-1.6deg); }
+.cat-chip:nth-child(even) { transform: rotate(1.4deg); }
+.cat-chip:active, .cat-chip.sel:active {
+  transform: translate(1px, 2px) rotate(0);
+  box-shadow: none;
+}
+
+/* ─────────── 난이도 머리글 — 공책에 그은 칸막이 ─────────── */
+.level-head {
+  color: var(--ink);
+  text-shadow: none;
+  transform: rotate(-.5deg);
+  border-bottom: 2.5px dashed rgba(46, 42, 36, .28);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+}
+
+/* ─────────── 도안 카드 흩뿌리기 ───────────
+   자리는 사람이 하나하나 정하지 않고 순서(nth-child)로 준다 — 도안이 늘거나
+   줄어도 무너지지 않는다. 8n+1 ~ 8n+8 은 모든 순번을 빠짐없이 덮는다.
+   (난이도 머리글도 같은 부모의 자식이라 순번이 밀리지만, 어차피 여덟 가지
+    손버릇을 돌려 쓰는 것이라 결과는 똑같이 들쭉날쭉하다.) */
+.pic-grid {
+  gap: var(--doodle-gap);
+  padding: clamp(14px, 2.4vmin, 26px) clamp(14px, 2vmin, 26px) 44px;
+  overflow-x: hidden; /* 기울어진 카드가 가로 스크롤을 만들지 않게 */
+}
+.pic-grid .pic-card { width: calc(25% - var(--doodle-gap) * .75 - 2px); }
+@media (orientation: portrait) {
+  .pic-grid .pic-card { width: calc(50% - var(--doodle-gap) * .5 - 2px); }
+}
+
+/* 등장 애니메이션은 살리되 자리 이동은 뺀다 — 아래 손버릇 transform 과 부딪힌다 */
+@keyframes pic-card-fade { from { opacity: 0; } to { opacity: 1; } }
+.pic-grid .pic-card { animation-name: pic-card-fade; }
+
+.pic-card {
+  box-shadow: none !important;
+  transition: transform .12s ease;
+}
+/* 칸마다 다른 손버릇 — 손으로 하나씩 붙인 것처럼 */
+.pic-grid .pic-card:nth-child(8n+1) { transform: translate(-1.2%,  1.6%) rotate(-1.7deg) scale(1.02); border-radius: 26px 19px 24px 21px !important; }
+.pic-grid .pic-card:nth-child(8n+2) { transform: translate( 1.0%, -1.4%) rotate( 1.3deg) scale(.98);  border-radius: 20px 26px 19px 25px !important; }
+.pic-grid .pic-card:nth-child(8n+3) { transform: translate(-0.6%, -2.0%) rotate( 1.9deg) scale(1.01); border-radius: 24px 21px 27px 18px !important; }
+.pic-grid .pic-card:nth-child(8n+4) { transform: translate( 1.4%,  1.2%) rotate(-1.1deg) scale(.99);  border-radius: 19px 25px 21px 26px !important; }
+.pic-grid .pic-card:nth-child(8n+5) { transform: translate(-1.4%, -0.8%) rotate( 0.9deg) scale(1.02); border-radius: 27px 18px 25px 20px !important; }
+.pic-grid .pic-card:nth-child(8n+6) { transform: translate( 0.6%,  2.0%) rotate(-2.0deg) scale(.98);  border-radius: 21px 27px 18px 24px !important; }
+.pic-grid .pic-card:nth-child(8n+7) { transform: translate( 1.2%, -1.6%) rotate( 1.5deg) scale(1.01); border-radius: 25px 20px 26px 19px !important; }
+.pic-grid .pic-card:nth-child(8n+8) { transform: translate(-1.0%,  0.8%) rotate(-0.9deg) scale(.99);  border-radius: 18px 24px 20px 27px !important; }
+/* 누르면 기울기가 잠깐 펴지며 종이가 눌린다 */
+.pic-grid .pic-card:active { transform: translateY(3px) rotate(0) scale(.99) !important; }
+
+/* 그림과 이름 사이 — 공책에서 오려 붙인 자리처럼 점선 한 줄 */
+.pic-thumb {
+  background: #fff;
+  border-bottom: 2.5px dashed rgba(46, 42, 36, .22);
+}
+.pic-card-label { color: var(--ink); }
+.pic-card-size, .works-date, .progress-label, .works-empty { color: var(--ink-2, #7A6E60); }
+
+.pic-card-badge {
+  background: var(--paper-btn);
+  color: var(--ink);
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: none;
+  transform: rotate(3deg);
+}
+.pic-card-badge.done-badge {
+  background: #FFD166;
+  color: var(--ink);
+  box-shadow: none;
+}
+
+/* ─────────── 채색 화면: 놀이판 틀 ───────────
+   격자 안쪽(canvas)은 놀이 그 자체라 손대지 않고, 담는 종이만 바꾼다. */
+.canvas-wrap {
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 24px 19px 26px 21px;
+  box-shadow: none;
+}
+.bomb-hint {
+  background: var(--paper-btn);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+}
+
+.booster-btn {
+  background: #FFF6DF;
+  border: 3px solid var(--ink);
+  border-radius: 21px 16px 22px 17px;
+  box-shadow: none;
+}
+.booster-btn:active {
+  transform: translate(2px, 3px);
+  box-shadow: none;
+}
+.booster-btn.armed {
+  background: #FFE08A;
+  box-shadow: none;
+  border-width: 5px;
+}
+.booster-count {
+  border: 2.5px solid var(--ink);
+  box-shadow: none;
+}
+
+/* ─────────── 오버레이 ─────────── */
+.overlay { background: rgba(46, 42, 36, .45); }
+.complete-card, .confirm-card {
+  background: var(--paper-btn);
+  border: 3px solid var(--ink);
+  border-radius: 30px 24px 32px 26px;
+  box-shadow: none;
+}
+.complete-title { color: var(--ink); text-shadow: none; }
+.complete-name, .confirm-text { color: var(--ink); }
+.complete-thumb {
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 20px 16px 21px 17px;
+  box-shadow: none;
+}
+
+.big-btn { box-shadow: none !important; }
+.btn-primary {
+  background: #7FE0B0;
+  color: var(--ink);
+  border: 3px solid var(--ink) !important;
+}
+.btn-soft {
+  background: var(--paper-btn);
+  color: var(--ink);
+  border: 3px solid var(--ink) !important;
+}
+.big-btn:active { transform: translate(2px, 3px); }
+
+/* ─────────── 모션 줄이기 설정 존중 ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  .pic-grid .pic-card,
+  .cat-chip:nth-child(odd),
+  .cat-chip:nth-child(even),
+  .game-title,
+  .level-head,
+  .pic-card-badge { transform: none !important; }
+}
