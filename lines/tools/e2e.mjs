@@ -94,7 +94,8 @@ await check('낙서장 배치: 단계 카드마다 다른 기울기 + 시작 화
       const v = n[1].split(',').map(Number);
       return Math.round(Math.atan2(v[1], v[0]) * 180 / Math.PI * 10) / 10;
     };
-    const w = s => Math.round(document.querySelector(s).getBoundingClientRect().width);
+    // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다
+    const w = s => document.querySelector(s).offsetWidth;
     return {
       rots: ['.c-s1', '.c-s2', '.c-s3'].map(s => rot(document.querySelector(s))),
       widths: ['.c-s1', '.c-s2', '.c-s3'].map(w),
@@ -119,8 +120,11 @@ await check('낙서장 배치: 단계 카드마다 다른 기울기 + 시작 화
   expect(m.arrow.old === 0, '앱이 따로 그리던 옛 화살표가 남아 있음');
   expect(m.rots.every(r => r !== null && Math.abs(r) > 0.4), '카드가 반듯하게 놓여 있음(기울기 없음): ' + m.rots);
   expect(new Set(m.rots).size === 3, '카드 기울기가 서로 같음: ' + m.rots);
-  // 크기 위계 — 먼저 할 것이 가장 크다
-  expect(m.widths[0] > m.widths[1] && m.widths[1] > m.widths[2], '크기 위계가 깨짐: ' + m.widths);
+  // 크기 위계 — 새 규격은 「1단계만 1.15배, 2·3단계는 같게」다 (DESIGN.md 「첫 화면 규격」)
+  expect(m.widths[0] >= Math.max(m.widths[1], m.widths[2]) * 1.05,
+    '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + m.widths.join(' / '));
+  expect(Math.max(m.widths[1], m.widths[2]) <= Math.min(m.widths[1], m.widths[2]) * 1.15,
+    '2·3단계 칸 크기가 서로 다르다: ' + m.widths.join(' / '));
 });
 
 await check('손그림 아이콘: 화면 틀에 이모지가 남아 있지 않다', async () => {

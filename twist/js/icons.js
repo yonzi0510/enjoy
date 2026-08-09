@@ -77,15 +77,6 @@ window.TwistIcons = (() => {
     next: `<path d="M37,17 L71,50 L37,83" stroke="currentColor" stroke-width="11"/>`,
   };
 
-  /* 제목에서 첫 놀이로 내려꽂는 점선 화살표 — 흩뿌린 칸 중 어디부터 할지 알려 준다.
-     비율이 달라서(가로로 긴 그림) 위 아이콘들과 viewBox 가 다르다. */
-  const START_ARROW =
-    `<svg class="first-arrow" viewBox="0 0 160 80" aria-hidden="true">` +
-    `<g filter="url(#twist-kd)" fill="none" stroke="${INK}" stroke-linecap="round" stroke-linejoin="round">` +
-    `<path d="M152 13 C121 5, 75 12, 46 32 C30 43, 22 56, 18 71" stroke-width="6" stroke-dasharray="2 13"/>` +
-    `<path d="M5 54 L18 73 L33 58" stroke-width="6.4"/>` +
-    `</g></svg>`;
-
   /* 아이콘 하나를 SVG 문자열로 */
   function html(name, cls) {
     const inner = PARTS[name];
@@ -120,5 +111,5 @@ window.TwistIcons = (() => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 
-  return { html, span, fill, startArrow: () => START_ARROW };
+  return { html, span, fill };
 })();

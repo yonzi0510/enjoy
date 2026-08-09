@@ -77,17 +77,13 @@ window.TangramIcons = (() => {
 
     /* 제목 쪽에서 첫 단계 칸으로 내려꽂는 점선 화살표 — "여기부터 놀아 보자"
        viewBox 는 세로로 길다(0 0 100 120) */
-    startArrow:
-      `<path d="M12,9 C2,44 12,76 54,98" stroke="#E0577B" stroke-width="7.5"
-         stroke-dasharray="10 12"/>
-       <path d="M30,82 L58,100 L34,113" stroke="#E0577B" stroke-width="7.5"/>`,
   };
 
   /* 아이콘 하나를 SVG 문자열로 */
   function html(name, cls) {
     const inner = PARTS[name];
     if (!inner) return '';
-    const vb = name === 'startArrow' ? '0 0 100 120' : '0 0 100 100';
+    const vb = '0 0 100 100';
     return '<svg class="kd' + (cls ? ' ' + cls : '') + '" viewBox="' + vb + '" aria-hidden="true">' +
       '<g filter="url(#tg-kd)" fill="none" stroke-linecap="round" stroke-linejoin="round">' +
       inner + '</g></svg>';

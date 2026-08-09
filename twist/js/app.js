@@ -34,7 +34,6 @@ window.App = (() => {
       b.className = 'menu-card ' + lv.cls;
       b.innerHTML =
         // 첫 칸에만 "여기부터 해요" 점선 화살표 — 글을 못 읽는 아이에게 순서를 알려 준다
-        (li === 0 ? I.startArrow() : '') +
         '<span class="mc-cyl">' + miniCyl(lv.id) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +

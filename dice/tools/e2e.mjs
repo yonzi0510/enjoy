@@ -174,10 +174,12 @@ await check('낙서장 첫 화면: 손그림 아이콘 · 시작 화살표 · �
   const txt = (await page.locator('.home-head h1').innerText()) + (await page.locator('#menu').innerText());
   const emo = txt.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || [];
   expect(emo.length === 0, '첫 화면에 이모지가 남음: ' + emo.join(' '));
-  // 크기 위계 — 가장 먼저 할 「쉬운 주사위」가 제일 크다
-  const w = async s => (await page.locator(s).boundingBox()).width;
-  const w1 = await w('.menu-card.c-l1'), w2 = await w('.menu-card.c-l2'), w3 = await w('.menu-card.c-l3');
-  expect(w1 > w2 && w2 > w3, '크기 위계가 아님: ' + [w1, w2, w3].join(' / '));
+  // 크기 위계 — 새 규격은 「1단계만 1.15배, 2·3단계는 같게」다 (DESIGN.md 「첫 화면 규격」).
+  // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다.
+  const [w1, w2, w3] = await page.evaluate(() =>
+    ['.menu-card.c-l1', '.menu-card.c-l2', '.menu-card.c-l3'].map(s => document.querySelector(s).offsetWidth));
+  expect(w1 >= Math.max(w2, w3) * 1.05, '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + [w1, w2, w3].join(' / '));
+  expect(Math.max(w2, w3) <= Math.min(w2, w3) * 1.15, '2·3단계 칸 크기가 서로 다르다: ' + [w1, w2, w3].join(' / '));
 });
 
 await check('첫 화면 낙서장 배치: 폰·패드에서 겹침·이탈 없음', async () => {

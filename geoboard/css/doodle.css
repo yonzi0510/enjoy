@@ -61,6 +61,13 @@
 
 /* (앱마다 그리던 손그림 화살표는 걷어냈다 — shared/screen.css 가 첫 칸 안쪽에 공용 화살표를 얹는다) */
 
+/* 폰 가로처럼 세로가 짧은 화면에서는 위 여백을 줄여 되찾는다 —
+   옛 화살표가 쓰던 44px 자리를 그대로 두면 칸 아래가 화면 밖으로 밀려(428 > 390)
+   다섯 살이 세 칸짜리 첫 화면을 굴려야 한다. */
+@media (orientation: landscape) and (max-height: 480px) {
+  #scr-home .menu { padding-top: clamp(6px, 2.4vh, 20px) !important; }
+}
+
 /* 폰 세로처럼 좁은 화면에서는 첫 칸이 한 줄을 통째로 써서 더 크게 —
    아래 줄에 나머지 둘이 나란히 붙어, 무엇부터 할지가 한눈에 보인다. */
 @media (max-width: 560px) {
