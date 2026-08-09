@@ -78,9 +78,31 @@ for (const [label, width, height] of CASES) {
   ok('가로 스크롤 없음', !info.overflowX);
   ok('한 화면에 대체로 들어옴 (1.3쪽 이하)', info.screens <= 1.3, `${info.screens}쪽`);
 
+  /* 언어 토끼 — 홈에 늘 앉아 있고, 아무것도 가리지 않아야 한다.
+     떠 있는 단추가 아니라 **글 흐름 안**(누가 노나 줄과 놀이 묶음 사이)에 두었기 때문에
+     여기서 겹침 0 이 나온다. 누군가 fixed 로 바꾸면 이 검사가 걸린다. */
+  const bunny = await page.evaluate(() => {
+    const btn = document.getElementById('lb-btn');
+    if (!btn) return null;
+    const r = btn.getBoundingClientRect();
+    const hit = [...document.querySelectorAll('.bar, .game, .who button, .parent-link, .pet-btn')]
+      .filter(el => el.offsetParent !== null)
+      .filter(el => {
+        const o = el.getBoundingClientRect();
+        return !(o.right <= r.left + 1 || o.left >= r.right - 1 ||
+                 o.bottom <= r.top + 1 || o.top >= r.bottom - 1);
+      })
+      .map(el => el.getAttribute('aria-label') || el.textContent.trim().slice(0, 12));
+    return { h: Math.round(r.height), w: Math.round(r.width), shown: r.width > 0 && r.height > 0, hit };
+  });
+  ok('언어 토끼가 홈에 보임', !!bunny && bunny.shown);
+  ok('언어 토끼 터치 46px 이상', !!bunny && bunny.h >= 46, bunny ? bunny.h + 'px' : '없음');
+  ok('언어 토끼가 아무것도 안 가림 (겹침 0)', !!bunny && bunny.hit.length === 0,
+     bunny ? bunny.hit.join(', ') : '');
+
   /* 한 번에 한 묶음만 열리므로(아코디언) 하나씩 열어 가며 잰다 */
   const keys = await page.$$eval('.group', gs => gs.map(g => g.dataset.key));
-  const small = [], wrapped = [], noIcon = [];
+  const small = [], wrapped = [], noIcon = [], bunnyHit = [];
   let shownTotal = 0;
   for (const k of keys) {
     await page.click(`.group[data-key="${k}"] .bar`);
@@ -102,10 +124,22 @@ for (const [label, width, height] of CASES) {
           const id = u && u.getAttribute('href').slice(1);
           return !id || !document.getElementById(id);
         }).map(a => a.dataset.id),
+        // 묶음을 펼친 뒤에도 언어 토끼가 놀이를 덮지 않는지
+        bunnyHit: (() => {
+          const btn = document.getElementById('lb-btn');
+          if (!btn) return ['토끼 없음'];
+          const r = btn.getBoundingClientRect();
+          return games.filter(el => {
+            const o = el.getBoundingClientRect();
+            return !(o.right <= r.left + 1 || o.left >= r.right - 1 ||
+                     o.bottom <= r.top + 1 || o.top >= r.bottom - 1);
+          }).map(el => el.dataset.id);
+        })(),
       };
     });
     shownTotal += r.shown;
     small.push(...r.small); wrapped.push(...r.wrapped); noIcon.push(...r.noIcon);
+    bunnyHit.push(...r.bunnyHit);
   }
   /* 마지막으로 연 묶음은 닫아 둔다 */
   await page.click(`.group[data-key="${keys[keys.length - 1]}"] .bar`);
@@ -130,6 +164,7 @@ for (const [label, width, height] of CASES) {
   ok('이름이 두 줄로 안 넘어감',
      wrapped.length === 0 && opened.barWrapped.length === 0,
      [...wrapped, ...opened.barWrapped].join(', '));
+  ok('묶음을 펼쳐도 언어 토끼가 놀이를 안 가림', bunnyHit.length === 0, bunnyHit.join(', '));
 
   await page.close();
 }
@@ -155,6 +190,135 @@ console.log('\n[아코디언]');
   await pg.click('.group[data-key="find"] .bar');
   await pg.waitForTimeout(120);
   ok('같은 것을 다시 누르면 접힘', (await openCount()) === 0);
+  await pg.close();
+}
+
+/* ── 언어 토끼 ────────────────────────────────────────────────
+ * 아이가 홈에서 아무 때나 묻는다 — 한글도 영어도 일본어도.
+ * 여기서 재는 것은 ① 사전을 첫 화면에 얹지 않는가 ② 세 갈래를 제대로 가르는가
+ * ③ **발화 언어가 새지 않는가**(영어가 한국어 목소리로 나오면 발음이 망가진다)
+ * ④ 못 알아들어도 혼내지 않는가 ⑤ 마이크를 껐을 때 다른 길이 있는가.
+ */
+console.log('\n[언어 토끼]');
+{
+  const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errs = [];
+  pg.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+  pg.on('pageerror', e => errs.push(String(e)));
+  const reqs = [];
+  pg.on('request', r => reqs.push(r.url()));
+  // 음성 엔진이 없는 환경이라 발화가 끝났다고 알려 준다 (없으면 워치독으로 1.2초씩 기다린다)
+  await pg.addInitScript(() => {
+    const orig = speechSynthesis.speak.bind(speechSynthesis);
+    speechSynthesis.speak = u => { setTimeout(() => { if (u.onend) u.onend(); }, 5); };
+    void orig;
+  });
+  await pg.goto(BASE, { waitUntil: 'networkidle' });
+  await pg.waitForTimeout(300);
+
+  ok('낱말 사전은 첫 화면에서 안 받는다 (토끼를 눌러야 온다)',
+     !reqs.some(u => /dict\/|dict-ja\//.test(u)),
+     reqs.filter(u => /dict/.test(u))[0] || '');
+
+  const say = async (text, wait = 1500) => {
+    await pg.evaluate(() => LanguageBunny._clearSpoken());
+    const r = await pg.evaluate(t => LanguageBunny.ask(t), text);
+    await pg.waitForTimeout(wait);
+    const spoken = await pg.evaluate(() => LanguageBunny._spoken());
+    const stage = await pg.$eval('#lb-stage', e => e.textContent);
+    return { r, spoken, stage };
+  };
+
+  /* ① "코끼리가 영어로 뭐야" → elephant, 영어 목소리로 */
+  {
+    const { r, spoken, stage } = await say('코끼리가 영어로 뭐야');
+    ok('「코끼리가 영어로 뭐야」 → elephant',
+       r.intent === 'en' && r.word && r.word.en && r.word.en.en === 'elephant',
+       JSON.stringify(r.word && r.word.en));
+    ok('영어 낱말은 en-US 로 읽는다',
+       spoken.some(s => s.lang === 'en-US' && s.text === 'elephant'), JSON.stringify(spoken));
+    ok('영어 낱말이 한국어 목소리로 새지 않는다',
+       !spoken.some(s => s.lang !== 'en-US' && /elephant/i.test(s.text)), JSON.stringify(spoken));
+    ok('영어 답 카드에 한글 발음이 보인다', stage.includes('엘리펀트'), stage.slice(0, 60));
+  }
+
+  /* ② "코끼리가 일본어로 뭐야" → ぞう, 일본어 목소리로 */
+  {
+    const { r, spoken, stage } = await say('코끼리가 일본어로 뭐야');
+    ok('「코끼리가 일본어로 뭐야」 → ぞう',
+       r.intent === 'ja' && r.word && r.word.ja && r.word.ja.ja === 'ぞう',
+       JSON.stringify(r.word && r.word.ja));
+    ok('일본어 낱말은 ja-JP 로 읽는다',
+       spoken.some(s => s.lang === 'ja-JP' && s.text === 'ぞう'), JSON.stringify(spoken));
+    ok('일본어 낱말이 한국어 목소리로 새지 않는다',
+       !spoken.some(s => s.lang !== 'ja-JP' && /ぞう/.test(s.text)), JSON.stringify(spoken));
+    ok('일본어 답 카드에 한글 발음이 보인다', stage.includes('조우'), stage.slice(0, 60));
+  }
+
+  /* ③ "토끼는 어떻게 써" → 낱말 카드 (한글 낱글자 + 영어·일본어 함께) */
+  {
+    const { r, stage, spoken } = await say('토끼는 어떻게 써', 2500);
+    ok('「토끼는 어떻게 써」 → 낱말 카드', r.intent === 'word' && r.word && r.word.ko === '토끼',
+       JSON.stringify(r.word && r.word.ko));
+    const chips = await pg.$$eval('.lb-chips span', els => els.map(e => e.textContent).join(''));
+    ok('낱말 카드에 한글 낱글자가 보인다', chips === '토끼', chips);
+    ok('낱말 카드에 영어·일본어가 함께 나온다',
+       /RABBIT/.test(stage) && /うさぎ/.test(stage), stage.slice(0, 80));
+    ok('낱말 카드도 언어를 가려 읽는다',
+       spoken.some(s => s.lang === 'ko-KR' && s.text.includes('토끼')) &&
+       spoken.some(s => s.lang === 'en-US' && s.text === 'rabbit'), JSON.stringify(spoken));
+  }
+
+  /* 갈래를 가르는 말이 낱말을 잘라먹지 않는지 — '일어나기' 가 '일어'(로) 에 잘렸던 자리 */
+  {
+    const got = await pg.evaluate(() => [
+      ['일어나기 영어로 뭐야', 'en', '일어나기'],
+      ['일본이 일본어로 뭐야', 'ja', '일본'],
+      ['고양이가 영어로 뭐라고 해요', 'en', '고양이'],
+      ['별 어떻게 써', 'word', '별']
+    ].map(([t, i, k]) => {
+      const w = LanguageBunny.findWord(t);
+      return LanguageBunny.intentOf(t) === i && w && w.ko === k ? null : t;
+    }).filter(Boolean));
+    ok('갈래를 가르는 말이 낱말을 잘라먹지 않는다', got.length === 0, got.join(', '));
+  }
+
+  /* ④ 모르는 말 — 혼내지 않는다 */
+  {
+    const { r, stage } = await say('삐뽀삐뽀 랄랄라 뭐야');
+    ok('모르는 말은 낱말 없음으로 처리', !r.word, JSON.stringify(r.word && r.word.ko));
+    ok('모르는 말에 혼내는 문구가 없다',
+       !/틀렸|안 돼|안돼|아니야|잘못|왜 그래|다시 해/.test(stage), stage.slice(0, 60));
+    ok('모르는 말에 부드럽게 다시 권한다', /다시 한번 말해 줄래/.test(stage), stage.slice(0, 60));
+    const misses = await pg.evaluate(() => LanguageBunny.misses().length);
+    ok('못 알아들은 말은 부모 확인용으로 남는다 (새 저장 키 없이)', misses >= 1, String(misses));
+  }
+
+  ok('언어 토끼에서 콘솔 오류 0', errs.length === 0, errs[0]);
+  await pg.close();
+}
+
+/* 마이크를 부모님이 꺼 두었을 때 — 글자·그림으로 고르는 길이 있어야 한다 */
+{
+  const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await pg.addInitScript(() => {
+    localStorage.setItem('enjoy-parent-v1', JSON.stringify({ stt: false }));
+    speechSynthesis.speak = u => { setTimeout(() => { if (u.onend) u.onend(); }, 5); };
+  });
+  await pg.goto(BASE, { waitUntil: 'networkidle' });
+  await pg.click('#lb-btn');
+  await pg.waitForTimeout(1200);
+  const picks = await pg.$$eval('.lb-pick', els => els.length);
+  ok('마이크가 꺼져 있으면 골라서 물어보는 길이 나온다', picks > 0, `${picks}개`);
+  const tall = await pg.$$eval('.lb-pick', els =>
+    els.filter(e => e.getBoundingClientRect().height < 46).length);
+  ok('고르는 칸도 46px 이상', tall === 0, `${tall}개 작음`);
+  await pg.click('.lb-pick');
+  await pg.waitForTimeout(200);
+  await pg.click('.lb-pick');
+  await pg.waitForTimeout(400);
+  const stage = await pg.$eval('#lb-stage', e => e.textContent);
+  ok('그림을 고르면 낱말 카드가 나온다', /🔊/.test(stage), stage.slice(0, 60));
   await pg.close();
 }
 

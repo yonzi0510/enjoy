@@ -7,10 +7,15 @@
   const WORDS = window.WORDS || [];
   const CATS = window.CATS || [];
 
+  const ABC = window.AlphabetData;
+
   const state = {
     word: null,        // 현재 답변 단어
     listening: false,
-    quiz: null         // { rounds:[{answer, choices[]}], idx, score, firstTry, awaiting }
+    quiz: null,        // { rounds:[{answer, choices[]}], idx, score, firstTry, awaiting }
+    abcCase: 'upper',  // 알파벳 격자 탭 — 'upper' | 'lower'
+    abcPurpose: 'learn', // 격자에서 글자를 누르면 무엇을 하는가 — 'learn'(글자 상세) | 'trace'(바로 따라쓰기)
+    letter: null       // 지금 보고 있는 알파벳 { ch, name, sound, strokes, words }
   };
 
   function showScreen(id) {
@@ -23,6 +28,8 @@
 
   function renderView(v) {
     Speech.stopSpeak();
+    // 따라쓰기 화면을 떠나면 캔버스 이벤트를 반드시 끊는다 (다른 화면에서 살아 있으면 안 된다)
+    if (window.Trace && v.s !== 'trace') Trace.stop();
     switch (v.s) {
       case 'cats': renderCats(); showScreen('screen-cats'); break;
       case 'words': renderWords(v.cat); showScreen('screen-words'); break;
@@ -30,6 +37,10 @@
       case 'answer': renderAnswer(v.word); showScreen('screen-answer'); break;
       case 'unknown': renderUnknown(v); showScreen('screen-unknown'); break;
       case 'quiz': showScreen('screen-quiz'); break; // 진행 중 상태 그대로 복귀
+      case 'abc': state.abcPurpose = v.purpose || 'learn'; renderAbc(); showScreen('screen-abc'); break;
+      case 'letter': renderLetter(v.ch); showScreen('screen-letter'); break;
+      // 화면을 먼저 띄워야 캔버스 크기를 잴 수 있다 (감춰진 요소는 크기가 0)
+      case 'trace': showScreen('screen-trace'); startTrace(v.ch); break;
       default: renderHome(); showScreen('screen-home');
     }
   }
@@ -54,6 +65,7 @@
     state.listening = false;
     $('listen-overlay').classList.add('hidden');
     $('quiz-done-overlay').classList.add('hidden');
+    $('reward-overlay').classList.add('hidden');
     if (navStack.length > 1) navStack.pop();
     renderView(navStack[navStack.length - 1]);
   });
@@ -61,6 +73,7 @@
   /* ─────────── 홈 ─────────── */
   function renderHome() {
     $('learned-count').textContent = Progress.count();
+    $('traced-count').textContent = Progress.tracedCount();
   }
 
   // 첫 터치: 오디오 잠금 해제 + 토끼의 인사 (토끼 버튼을 바로 누른 경우엔 마이크가 우선)
@@ -232,6 +245,25 @@
         list.appendChild(row);
       });
     }
+    // 따라쓰기로 모은 낱말 카드 (없으면 줄 자체를 안 만든다)
+    const cards = Progress.cards();
+    if (cards.length) {
+      const head = document.createElement('div');
+      head.className = 'miss-head';
+      head.textContent = '🃏 따라쓰기로 모은 낱말 카드 ' + cards.length + '장';
+      list.appendChild(head);
+      cards.forEach(c => {
+        const row = document.createElement('button');
+        row.className = 'learned-row card-row';
+        row.innerHTML = '<span class="learned-emoji">' + c.e + '</span>' +
+          '<span class="learned-word"><b>' + c.en.toUpperCase() + '</b><small>' + (c.k || '') + '</small></span>' +
+          '<span class="learned-times">🔊</span>';
+        row.addEventListener('click', () => {
+          Speech.speakSeq([{ lang: 'en', text: c.en }, { lang: 'ko', text: c.k || '' }].filter(it => it.text));
+        });
+        list.appendChild(row);
+      });
+    }
     // 못 알아들은 말 (부모 확인용)
     const misses = Progress.listMisses();
     if (misses.length) {
@@ -249,6 +281,185 @@
   }
   $('btn-learned').addEventListener('click', () => navigate({ s: 'learned' }));
   $('learned-home').addEventListener('click', goHome);
+
+  /* ═══════════ 알파벳 배우기 · 따라쓰기 ═══════════
+   * 한 화면에서 한국어 안내와 영어 발음이 계속 번갈아 나온다.
+   * 그래서 **항목마다 lang 을 갈라** Speech.speakSeq 에 넘긴다 —
+   *   영어 글자·낱말 → { lang:'en' } (en-US, 공용 목소리 설정을 타지 않는다)
+   *   한국어 안내     → { lang:'ko' } (VoiceSettings 파이프라인)
+   * 한 항목 안에 두 언어를 섞으면 어느 쪽이든 발음이 망가진다.
+   */
+
+  function letterList() { return state.abcCase === 'lower' ? ABC.LOWER : ABC.UPPER; }
+
+  /* ─────────── 글자 격자 ─────────── */
+  function renderAbc() {
+    $('abc-title').textContent = state.abcPurpose === 'trace' ? '✏️ 따라쓰기' : '🔤 알파벳 배우기';
+    document.querySelectorAll('#screen-abc .tab').forEach(t => {
+      t.classList.toggle('on', t.dataset.case === state.abcCase);
+    });
+    const grid = $('abc-grid');
+    grid.innerHTML = '';
+    letterList().forEach(l => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'abc-cell' + (Progress.hasTraced(l.ch) ? ' traced' : '');
+      b.dataset.ch = l.ch;
+      b.innerHTML = '<span class="ac-ch">' + l.ch + '</span><span class="ac-name">' + l.name + '</span>' +
+        (Progress.hasTraced(l.ch) ? '<span class="ac-star">⭐</span>' : '');
+      b.addEventListener('click', () => {
+        Speech.tap();
+        if (state.abcPurpose === 'trace') navigate({ s: 'trace', ch: l.ch });
+        else navigate({ s: 'letter', ch: l.ch });
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  /* ─────────── 글자 상세 — 이름과 소리를 둘 다 알려 준다 ─────────── */
+  function renderLetter(ch) {
+    const l = ABC.find(ch);
+    if (!l) return;
+    state.letter = l;
+    $('letter-title').textContent = l.ch + ' ' + l.name;
+    $('letter-big').textContent = l.ch;
+    $('letter-name').textContent = l.name;
+    $('letter-sound').textContent = l.sound;
+    const box = $('letter-words');
+    box.innerHTML = '';
+    l.words.forEach(w => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'wordbtn';
+      b.dataset.en = w.w;
+      b.innerHTML = '<span class="wb-emoji">' + w.e + '</span>' +
+        '<span class="wb-en">' + w.w + '</span><span class="wb-ko">' + w.k + '</span>';
+      // 낱말을 누르면 영어 발음 — 두 번(제 빠르기 + 천천히) 들려주고 뜻을 한국어로
+      b.addEventListener('click', () => {
+        Speech.tap();
+        Speech.speakSeq([
+          { lang: 'en', text: w.w },
+          { lang: 'en', text: w.w, rate: 0.6 },
+          { lang: 'ko', text: w.k },
+        ]);
+      });
+      box.appendChild(b);
+    });
+    Speech.ding();
+    setTimeout(() => sayLetter(l), 300);
+  }
+
+  // "에이! 소리는 애. 애—애플!" — 이름(영어 발음) → 이름·소리(한국어) → 낱말(영어) → 뜻(한국어)
+  function sayLetter(l) {
+    const w = l.words[0];
+    Speech.speakSeq([
+      { lang: 'en', text: l.ch },
+      { lang: 'ko', text: '이름은 ' + l.name + '. 소리는 ' + l.sound + '.' },
+      { lang: 'en', text: w.w },
+      { lang: 'ko', text: w.k + '!' },
+    ]);
+  }
+
+  /* ─────────── 따라쓰기 ─────────── */
+  function startTrace(ch) {
+    const l = ABC.find(ch);
+    if (!l) return;
+    state.letter = l;
+    $('trace-ch').textContent = l.ch;
+    $('trace-name').textContent = l.name;
+    const cv = $('trace-canvas');
+    const holder = $('trace-holder');
+    // 화면 크기에 맞춘 정사각형 캔버스.
+    // 폰 가로(390px 높이)에서는 세로가 빠듯하다 — 아래 그림자(8px) 자리까지 빼야
+    // 판의 밑동이 화면 밖으로 잘리지 않는다. 하한도 그만큼 낮춘다.
+    const size = Math.max(220, Math.min(holder.clientWidth - 12, holder.clientHeight - 22, 560));
+    cv.width = cv.height = size * (window.devicePixelRatio > 1 ? 2 : 1);
+    cv.style.width = cv.style.height = size + 'px';
+    updateStrokeDots(l.strokes.length, 0);
+    Speech.speakSeq([
+      { lang: 'en', text: l.ch },
+      { lang: 'ko', text: '반짝이는 점부터 따라 써 볼까요?' },
+    ]);
+    Trace.start(cv, l, {
+      onStroke(doneN, total) {
+        Speech.stroke();
+        updateStrokeDots(total, doneN);
+      },
+      onDone() { finishTrace(l); },
+    });
+  }
+
+  function updateStrokeDots(total, doneN) {
+    const el = $('trace-dots');
+    el.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const d = document.createElement('span');
+      d.className = 'dot' + (i < doneN ? ' on' : '');
+      el.appendChild(d);
+    }
+  }
+
+  function finishTrace(l) {
+    updateStrokeDots(l.strokes.length, l.strokes.length);
+    Progress.recordTrace(l.ch);
+    const w = l.words[Math.floor(Math.random() * l.words.length)];
+    const isNew = Progress.addCard(w.w, w.e, w.k);
+    if (window.Pet) Pet.awardSnack(1); // 따라쓰기 완주 = 펫 간식
+    Speech.fanfare();
+    Speech.speakSeq([
+      { lang: 'ko', text: '다 썼어요!' },
+      { lang: 'en', text: l.ch },
+      { lang: 'ko', text: (isNew ? '낱말 카드 선물! ' : '') + w.k },
+      { lang: 'en', text: w.w },
+    ]);
+    // 알파벳 순서로 다음 글자 (대문자 안에서, 소문자 안에서)
+    const list = ABC.isUpper(l.ch) ? ABC.UPPER : ABC.LOWER;
+    const nxt = list[list.indexOf(l) + 1] || null;
+    setTimeout(() => showReward(w, nxt), 600);
+  }
+
+  /* ─────────── 보상: 낱말 카드 ─────────── */
+  let rewardNext = null;
+  function showReward(w, nxt) {
+    rewardNext = nxt;
+    $('reward-emoji').textContent = w.e;
+    $('reward-word').textContent = w.w;
+    $('reward-ko').textContent = w.k;
+    $('reward-next').lastElementChild.textContent = nxt ? '다음 ' + nxt.ch : '글자 고르기';
+    $('reward-overlay').classList.remove('hidden');
+    launchConfetti();
+  }
+  function closeReward(which) {
+    $('reward-overlay').classList.add('hidden');
+    const nxt = rewardNext;
+    rewardNext = null;
+    if (which === 'next' && nxt) navigate({ s: 'trace', ch: nxt.ch });
+    else navigate({ s: 'abc', purpose: state.abcPurpose });
+  }
+
+  /* ─────────── 알파벳 화면의 단추들 ─────────── */
+  $('btn-abc').addEventListener('click', () => { Speech.tap(); navigate({ s: 'abc', purpose: 'learn' }); });
+  $('btn-trace').addEventListener('click', () => { Speech.tap(); navigate({ s: 'abc', purpose: 'trace' }); });
+  document.querySelectorAll('#screen-abc .tab').forEach(t => {
+    t.addEventListener('click', () => {
+      Speech.tap();
+      state.abcCase = t.dataset.case;
+      renderAbc();
+    });
+  });
+  $('abc-back').addEventListener('click', goBack);
+  $('letter-back').addEventListener('click', goBack);
+  $('letter-home').addEventListener('click', goHome);
+  $('letter-listen').addEventListener('click', () => { if (state.letter) sayLetter(state.letter); });
+  $('letter-trace').addEventListener('click', () => {
+    Speech.tap();
+    if (state.letter) navigate({ s: 'trace', ch: state.letter.ch });
+  });
+  // 따라쓰기의 ◀ 는 히스토리를 되짚지 않고 곧장 글자 격자로 간다 —
+  // 「다음 글자」로 A→B→C 이어 쓴 뒤 ◀ 를 누르면 방금 쓴 글자들을 거꾸로 훑게 된다.
+  $('trace-back').addEventListener('click', () => navigate({ s: 'abc', purpose: state.abcPurpose }));
+  $('reward-next').addEventListener('click', () => { Speech.tap(); closeReward('next'); });
+  $('reward-list').addEventListener('click', () => { Speech.tap(); closeReward('list'); });
 
   /* ─────────── 퀴즈 ─────────── */
   function pickQuizPool() {
@@ -374,6 +585,16 @@
   /* ─────────── 공통 ─────────── */
   $('btn-mic').addEventListener('click', startAsk);
   $('listen-cancel').addEventListener('click', cancelListen);
+
+  /* ─────────── 테스트 훅 ─────────── */
+  window.__englishTest = {
+    tracePath: () => Trace.tracePath(),
+    traceState: () => Trace.state(),
+    curScreen: () => {
+      const s = document.querySelector('.screen.active');
+      return s ? s.id : null;
+    },
+  };
 
   /* ─────────── 시작 ─────────── */
   try { history.replaceState({ n: 1 }, ''); } catch (e) {}

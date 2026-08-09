@@ -8,8 +8,9 @@
  *   1) 첫 화면 고르는 칸을 종이 위에 손으로 붙인 것처럼 흩뿌린다
  *      — shared/doodle-menu.css 의 nth-child 방식을 이 앱 폭에 맞춰 옮겨 적었다.
  *        (칸 폭이 저마다 달라 흔들림 폭을 공용보다 작게 잡아야 안 겹친다)
- *   2) 크기 위계 — 가장 먼저 할 「자음 쓰기」가 제일 크고, 뒤로 갈수록 작아진다.
+ *   2) 크기 위계 — 가장 먼저 할 「가나다라」가 제일 크고, 뒤로 갈수록 작아진다.
  *      낙서장·물어보기·내 글씨는 곁다리라 가장 작다.
+ *      (자음·모음 쓰기는 한글 놀이터로 옮겨 이 앱에서 걷어냈다 — js/data.js 머리 주석)
  *   3) UI 이모지를 손그림 SVG(css/doodle-icons.css)로 갈아끼운다.
  *
  * ⚠️ 줄노트(.note)와 필사 판(canvas)은 건드리지 않는다 — 획 채점 좌표가 틀어진다.
@@ -52,10 +53,10 @@
 
 /* ─────────── 2. 크기 위계 — 먼저 할 것이 크다 ─────────── */
 /* --mci = 그 칸 아이콘 크기. 칸 폭과 함께 줄여 위계를 또렷하게 만든다. */
-.c-jaum    { width: clamp(180px, 46vmin, 320px); --mci: clamp(54px, 11vmin,  88px); }
-.c-moum    { width: clamp(150px, 38vmin, 246px); --mci: clamp(46px, 9.4vmin, 72px); }
-.c-rows    { width: clamp(144px, 36vmin, 228px); --mci: clamp(43px, 8.6vmin, 64px); }
-.c-word    { width: clamp(138px, 34vmin, 214px); --mci: clamp(41px, 8.2vmin, 60px); }
+/* 자음·모음 칸이 빠지면서 「가나다라」가 첫 칸이 됐다 — 한 단계씩 위로 올린다.
+   (더 위 단계(옛 자음 칸)까지 올리면 첫 칸이 커지며 폰 세로에서 줄이 늘어난다) */
+.c-rows    { width: clamp(150px, 38vmin, 246px); --mci: clamp(46px, 9.4vmin, 72px); }
+.c-word    { width: clamp(144px, 36vmin, 228px); --mci: clamp(43px, 8.6vmin, 64px); }
 .c-song,
 .c-tale,
 .c-dict    { width: clamp(132px, 32vmin, 196px); --mci: clamp(37px, 7.4vmin, 54px); }
@@ -65,8 +66,7 @@
 
 /* 이름 글씨도 같이 작아진다 — 위계가 두 배로 또렷해지고,
    좁아진 칸에서 놀이 이름이 두 줄로 꺾이지 않는다 */
-.c-jaum .mc-name { font-size: clamp(21px, 4.4vmin, 31px); }
-.c-moum .mc-name { font-size: clamp(19px, 3.9vmin, 28px); }
+.c-rows .mc-name { font-size: clamp(19px, 3.9vmin, 28px); }
 .c-song .mc-name,
 .c-tale .mc-name,
 .c-dict .mc-name { font-size: clamp(16px, 3.1vmin, 22px); }
@@ -79,13 +79,11 @@
 .c-gallery .mc-desc { font-size: clamp(11px, 2vmin, 13px); }
 
 /* 가로 화면(패드 가로가 기본 사용 환경)은 세로 여유가 적다.
- * 위계는 지키되 한 뼘씩 줄여 **두 줄 안에** 열 칸이 다 들어오게 맞춘다
+ * 위계는 지키되 한 뼘씩 줄여 **두 줄 안에** 여덟 칸이 다 들어오게 맞춘다
  * (세 줄이 되면 홈에서 스크롤이 생겨 아이가 아래 놀이를 못 찾는다). */
 @media (orientation: landscape) {
-  .c-jaum    { width: clamp(180px, 34vmin, 282px); --mci: clamp(48px,   9vmin, 70px); }
-  .c-moum    { width: clamp(148px, 27vmin, 221px); --mci: clamp(42px, 7.6vmin, 58px); }
-  .c-rows    { width: clamp(142px, 25vmin, 205px); --mci: clamp(39px,   7vmin, 52px); }
-  .c-word    { width: clamp(136px, 23.5vmin, 192px); --mci: clamp(37px, 6.6vmin, 48px); }
+  .c-rows    { width: clamp(148px, 27vmin, 221px); --mci: clamp(42px, 7.6vmin, 58px); }
+  .c-word    { width: clamp(142px, 25vmin, 205px); --mci: clamp(39px,   7vmin, 52px); }
   .c-song,
   .c-tale,
   .c-dict    { width: clamp(128px, 21.5vmin, 176px); --mci: clamp(34px, 6vmin, 44px); }
@@ -93,8 +91,7 @@
   .c-ask,
   .c-gallery { width: clamp(120px, 20vmin, 164px); --mci: clamp(31px, 5.4vmin, 40px); }
   #menu.menu { gap: clamp(16px, 1.8vw, 26px); }
-  .c-jaum .mc-name { font-size: clamp(20px, 3.4vmin, 27px); }
-  .c-moum .mc-name { font-size: clamp(18px, 3.1vmin, 25px); }
+  .c-rows .mc-name { font-size: clamp(18px, 3.1vmin, 25px); }
 }
 
 /* ─────────── 3. 손그림 아이콘 ─────────── */
@@ -134,18 +131,14 @@ h1 .di, .bar h2 .di { margin-right: .22em; }
 .c-ask     .mc-icon { --di: var(--di-mic); }
 .c-gallery .mc-icon { --di: var(--di-frame); }
 
-/* ㄱ·ㅏ·가 는 이모지가 아니라 '배울 글자'다 — 그림으로 바꾸지 않고
+/* '가' 는 이모지가 아니라 '배울 글자'다 — 그림으로 바꾸지 않고
    크레용으로 눌러 쓴 글씨처럼 보이게만 한다 */
-.c-jaum .mc-icon,
-.c-moum .mc-icon,
 .c-rows .mc-icon {
   font-size: var(--mci);
   line-height: 1.06;
   color: #2E2A24;
-  transform: rotate(-3deg);
+  transform: rotate(-1.5deg);
 }
-.c-moum .mc-icon { transform: rotate(2.5deg); }
-.c-rows .mc-icon { transform: rotate(-1.5deg); }
 
 /* 목록 화면 머리말 아이콘 (js/app.js 가 넣는다) */
 #items-title .di { width: 1.05em; height: 1.05em; }
