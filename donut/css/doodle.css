@@ -34,7 +34,12 @@ h1 .ic { width: 1.18em; height: 1.18em; }
 /* 머리줄의 작은 단추·알약 */
 .vs-btn { display: inline-flex; align-items: center; justify-content: center; }
 #btn-voice .ic { width: 62%; height: 62%; vertical-align: 0; }
-#btn-listen { display: inline-flex; align-items: center; gap: .3em; color: #2E2A24; }
+/* 폰 세로에서 정확히 44.0px 이라 「터치 44px 이상」 검사가 돌릴 때마다 통과·실패를 오갔다.
+   공용 하한(shared/crayon.css)이 46px 이니 여기서도 그 값을 못 박는다. */
+#btn-listen {
+  display: inline-flex; align-items: center; gap: .3em; color: #2E2A24;
+  min-height: 46px; padding-block: 6px;
+}
 #btn-listen .ic { width: 1.2em; height: 1.2em; }
 .stat { display: inline-flex; align-items: center; gap: .25em; color: #2E2A24 !important; }
 .stat .ic { width: 1.15em; height: 1.15em; }

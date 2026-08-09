@@ -1,99 +1,73 @@
 #!/usr/bin/env node
-/* 앱 아이콘 바탕색 정하기 — node tools/recolor-app-icons.mjs
+/* 앱 아이콘 바탕색 — node tools/recolor-app-icons.mjs (표만 찍는다)
  *
- * 왜 —  런처에 깔리는 48px 크기에서는 분홍 토끼가 화면을 다 차지해서
- * 29개 앱이 전부 똑같아 보였다. 토끼와 소품은 그대로 두고 **바탕색만** 홈의
- * 묶음 색으로 칠해, 한눈에 어느 묶음의 놀이인지 알아보게 한다.
- * 같은 묶음 안에서는 밝기를 조금씩 달리해 서로도 구분된다.
+ * 왜 —  런처에 깔리는 48px 크기에서 29개를 나란히 놓으면 서로 구별이 돼야 한다.
+ * 바탕은 홈 화면의 **묶음 색(hue)** 을 그대로 쓰고, 같은 묶음 안에서는 **밝기만** 벌린다.
  *
- * 아이콘 생성기가 두 갈래라(옛 앱 14개는 tools/make-mascot-icons.mjs,
- * 나중 앱 15개는 각자 <앱>/tools/make-icon.mjs) 이 스크립트가 양쪽의
- * 바탕색 값만 고쳐 놓는다. 그 뒤 생성기를 돌리면 PNG가 새로 만들어진다.
+ * 예전 식은 `deep = 0.26 + (i % 4) * 0.06` 이었다. 두 가지가 문제였다.
+ *   ① 폭이 18%p 뿐이라 이웃끼리 12%p 차 — 48px 에서는 같은 색으로 보였다.
+ *   ② `% 4` 로 되감겨서 5개 이상인 묶음은 색이 **겹쳤다**
+ *      (색 맞추기 묶음의 lab 과 slide 가 완전히 같은 보라였다).
+ * 지금은 묶음 안에서 0.08 → 0.52 로 **44%p** 를 고르게 벌린다(되감김 없음).
+ * 0.52 를 넘기면 48px 에서 흰 바탕처럼 보여 묶음 색이 사라지고,
+ * 0.08 보다 진하면 소품의 연필선이 바탕에 묻힌다 — 둘 다 실사로 확인했다.
+ *
+ * 이 파일은 **색만** 정한다. 그림(소품 29개)과 렌더링은 tools/make-app-icons.mjs 에 있고
+ * 그쪽이 이 모듈을 불러 쓴다. 색을 바꾸려면 여기만 고치면 29개가 같이 바뀐다.
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-
-/* 홈 화면 묶음 색 (index.html 의 GROUPS 와 같은 값) */
-const GROUPS = {
+/* 홈 화면 묶음 색 (index.html 의 GROUPS 와 같은 값).
+ * apps 배열의 **순서 = 바탕 밝기 순서**(앞이 진하고 뒤가 옅다). 홈의 나열 순서와 달라도 된다.
+ * 48px 에서 헷갈리기 쉬운 짝(시험관·구슬↔슬라이드, 햄버거↔꼬치, 도형↔탱그램, 주사위↔돌림블록)은
+ * 일부러 배열의 양 끝에 두어 밝기까지 벌어지게 했다. */
+export const GROUPS = {
   learn: { c: '#E0A21B', apps: ['hangul', 'english', 'japanese', 'math', 'market', 'pixel', 'practika'] },
   draw:  { c: '#3E86BE', apps: ['write', 'lines', 'coloring'] },
-  shape: { c: '#4E9B48', apps: ['shape', 'tangram', 'geoboard', 'cups'] },
-  color: { c: '#7E57B5', apps: ['lab', 'beads', 'rings', 'tubes', 'slide'] },
-  order: { c: '#DD8329', apps: ['burger', 'kkochi', 'pattern', 'connect'] },
-  find:  { c: '#CE5C55', apps: ['play', 'dice', 'donut', 'twist', 'matrix', 'bag'] },
+  shape: { c: '#4E9B48', apps: ['shape', 'geoboard', 'cups', 'tangram'] },
+  color: { c: '#7E57B5', apps: ['tubes', 'beads', 'lab', 'rings', 'slide'] },
+  order: { c: '#DD8329', apps: ['burger', 'pattern', 'connect', 'kkochi'] },
+  find:  { c: '#CE5C55', apps: ['play', 'dice', 'donut', 'matrix', 'bag', 'twist'] },
 };
 
+/* 밝기를 벌리는 폭 — 묶음 안 첫 앱과 마지막 앱의 차 */
+export const LIGHT_MIN = 0.08;
+export const LIGHT_MAX = 0.52;
+/* 가운데 하이라이트는 이만큼 더 옅게 (radial-gradient 안쪽 색) */
+const HILIGHT = 0.10;
+
 /* 흰색과 섞어 파스텔로 만든다 (t=0 이면 원색, t=1 이면 흰색) */
-function tint(hex, t) {
+export function tint(hex, t) {
   const n = parseInt(hex.slice(1), 16);
   const mix = v => Math.round(v + (255 - v) * t);
   const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
   return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
-/* 앱마다 [진한색, 옅은색] 두 개. 같은 묶음 안에서는 밝기를 조금씩 달리한다. */
-const COLORS = {};
-for (const { c, apps } of Object.values(GROUPS)) {
+/* 앱마다 [진한색(가장자리), 옅은색(가운데)] 두 개 */
+export const BG = {};
+/* 앱 → 묶음 이름 (검증·문서용) */
+export const GROUP_OF = {};
+for (const [name, { c, apps }] of Object.entries(GROUPS)) {
   apps.forEach((app, i) => {
-    /* 48px 런처 크기에서 색이 보이려면 이만큼은 진해야 한다 */
-    const deep = 0.26 + (i % 4) * 0.06;
-    /* 두 색을 가깝게 둔다 — 가운데가 너무 밝으면 작은 크기에서 색이 안 보인다 */
-    COLORS[app] = [tint(c, deep), tint(c, deep + 0.12)];
+    const t = apps.length > 1
+      ? LIGHT_MIN + (i / (apps.length - 1)) * (LIGHT_MAX - LIGHT_MIN)
+      : (LIGHT_MIN + LIGHT_MAX) / 2;
+    BG[app] = [tint(c, t), tint(c, t + HILIGHT)];
+    GROUP_OF[app] = name;
   });
 }
 
-const HEX = /#[0-9A-Fa-f]{6}/g;
-let changed = 0;
+/* 루트(홈) 아이콘은 묶음이 없다 — 무지개 파스텔 그대로 */
+BG['.'] = ['#FFE7F1', '#EAF6FF'];
 
-/* ① 옛 앱 14개 — tools/make-mascot-icons.mjs 안의 bg: ['진한','옅은'] */
-{
-  const p = join(ROOT, 'tools', 'make-mascot-icons.mjs');
-  let s = readFileSync(p, 'utf8');
-  s = s.replace(/dir: '([a-z.]+)', bg: \[[^\]]+\]/g, (m, dir) => {
-    const c = COLORS[dir];
-    if (!c) return m;                       // 루트('.') 아이콘은 그대로 둔다
-    changed++;
-    return `dir: '${dir}', bg: ['${c[0]}', '${c[1]}']`;
-  });
-  writeFileSync(p, s);
-}
-
-/* ② 나중 앱 15개 — 각자 <앱>/tools/make-icon.mjs 의 background 선언 한 줄.
-      두 갈래 서식이 있는데 둘 다 '옅은색 → 진한색' 순서로 적혀 있다. */
-for (const app of Object.keys(COLORS)) {
-  /* 파일 이름이 make-icon.mjs 인 곳도 있고 make-icons.mjs 인 곳도 있다 */
-  const p = ['make-icon.mjs', 'make-icons.mjs']
-    .map(f => join(ROOT, app, 'tools', f)).find(existsSync);
-  if (!p) continue;
-  const [deep, light] = COLORS[app];
-  let s = readFileSync(p, 'utf8');
-
-  if (/bg: \[/.test(s)) {
-    s = s.replace(/bg: \[[^\]]+\]/, `bg: ['${deep}', '${light}']`);
-  } else if (/^const BG = \[/m.test(s)) {
-    /* 색을 파일 위쪽 상수로 뽑아 둔 서식 — const BG = ['진한', '옅은'] */
-    s = s.replace(/^const BG = \[[^\]]+\]/m, `const BG = ['${deep}', '${light}']`);
-  } else if (/\[c0, c1\] = \[/.test(s)) {
-    /* 색을 그 자리에서 바로 적어 둔 서식 — const [c0, c1] = ['진한', '옅은'] */
-    s = s.replace(/\[c0, c1\] = \[[^\]]+\]/, `[c0, c1] = ['${deep}', '${light}']`);
-  } else {
-    s = s.replace(/(background:(?:radial|linear)-gradient\([^)]*?)((?:#[0-9A-Fa-f]{6}[^)]*?){2})\)/,
-      (m, head, tail) => {
-        let n = 0;
-        return head + tail.replace(HEX, () => (n++ === 0 ? light : deep)) + ')';
-      });
+/* 직접 실행하면 배정표를 찍는다 */
+if (import.meta.url === `file://${process.argv[1]}`) {
+  for (const [name, { c, apps }] of Object.entries(GROUPS)) {
+    console.log(`\n[${name}] ${c}`);
+    apps.forEach((app, i) => {
+      const t = LIGHT_MIN + (i / (apps.length - 1)) * (LIGHT_MAX - LIGHT_MIN);
+      console.log(`  ${String(i).padStart(2)} ${app.padEnd(10)} 밝기 ${(t * 100).toFixed(0).padStart(2)}%  ${BG[app][0]} → ${BG[app][1]}`);
+    });
   }
-  writeFileSync(p, s);
-  changed++;
+  console.log('\n그림까지 다시 뽑으려면: node tools/make-app-icons.mjs');
 }
-
-console.log(`바탕색 ${changed}곳 정리 완료.`);
-console.log('이제 생성기를 돌린다 — 순서가 중요하다:');
-console.log('  for f in */tools/make-icon.mjs */tools/make-icons.mjs; do node $f; done');
-console.log('  node tools/make-mascot-icons.mjs      # 반드시 마지막');
-console.log('');
-console.log('앱 8개(write·math·shape·market·lab·bag·coloring·practika)는 생성기가 둘 다 있다.');
-console.log('나중에 돌린 쪽이 이긴다 — 배포된 그림은 make-mascot-icons.mjs 쪽이라 이걸 마지막에 돌린다.');
