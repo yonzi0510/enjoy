@@ -398,6 +398,83 @@ await check('새로고침 후 별·집찾기 기록·펫 먹이 유지', async (
   expect(/⭐ [1-9]/.test(label), '홈 카드 별 표기: ' + label);
 });
 
+/* ── 19. 첫 화면 규격 ── */
+const SPEC_HOME = '#screen-home.active';
+const SPEC_BOXES = 'h1, .header-btns, #btn-letters, .mode-banners > *, #theme-grid > *';
+const SPEC_GRID = '#theme-grid';
+/* ═══════════ 첫 화면 규격 (DESIGN.md 「첫 화면 규격 (놀이 고르는 화면)」) ═══════════
+ * 지난 라운드에 29개 앱의 첫 화면이 제각각 갈린 진짜 까닭은 **규격을 지킬 검사가
+ * 없었기 때문**이다. 그래서 숫자를 여기에 못 박는다 — 세 화면(패드 가로·폰 가로·
+ * 폰 세로)에서 제목 크기·가운데·칸 간격·겹침·터치 하한을 잰다.
+ * (콘솔 오류 0 은 이 세 번의 이동까지 포함해 맨 아래 검사가 함께 본다) */
+const SPEC_VIEWS = [
+  { w: 1180, h: 820, name: '패드 가로' },
+  { w: 844, h: 390, name: '폰 가로' },
+  { w: 390, h: 844, name: '폰 세로' },
+];
+// CSS clamp(min, 비율×vw, max) 를 그대로 계산한다
+const clampVw = (min, ratio, max, vw) => Math.min(Math.max(min, ratio * vw), max);
+
+for (const v of SPEC_VIEWS) {
+  await check(`첫 화면 규격 · ${v.name} — 제목·배지 줄·칸 간격·겹침·터치 46px`, async () => {
+    await page.setViewportSize({ width: v.w, height: v.h });
+    await page.goto(BASE);
+    await page.waitForSelector(SPEC_HOME);
+    await page.waitForTimeout(250);
+    const m = await page.evaluate(([boxSel, gridSel]) => {
+      const scr = document.querySelector('.screen.on, .screen.active');
+      const h1 = scr.querySelector('h1');
+      const r = h1.getBoundingClientRect();
+      // 오른쪽 위 공용 집 단추(shared/home-button.js)가 머리줄을 그만큼 왼쪽으로 민다.
+      // 29개 앱이 다 같이 밀려 있으므로 그 절반까지는 '가운데'로 친다.
+      const hb = document.querySelector('.enjoy-home-btn');
+      const reserve = hb ? hb.getBoundingClientRect().width + 22 : 0;
+      const g = getComputedStyle(document.querySelector(gridSel));
+      const boxes = [...scr.querySelectorAll(boxSel)].filter(e => {
+        const b = e.getBoundingClientRect();
+        return b.width > 0 && b.height > 0;
+      });
+      const over = [];
+      for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i].getBoundingClientRect(), b = boxes[j].getBoundingClientRect();
+        const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (ox > 1 && oy > 1) {
+          over.push((boxes[i].className || boxes[i].tagName) + '×' + (boxes[j].className || boxes[j].tagName));
+        }
+      }
+      const small = [...scr.querySelectorAll('button, a[href], [role="button"]')]
+        .map(e => [e, e.getBoundingClientRect()])
+        .filter(([, b]) => b.width > 0 && b.height > 0 && (b.width < 45.5 || b.height < 45.5))
+        .map(([e, b]) => (e.className || e.tagName) + ' ' + Math.round(b.width) + '×' + Math.round(b.height));
+      return {
+        fs: parseFloat(getComputedStyle(h1).fontSize),
+        cx: r.left + r.width / 2, mid: window.innerWidth / 2, reserve,
+        rowGap: parseFloat(g.rowGap) || 0, colGap: parseFloat(g.columnGap) || 0,
+        over: over.slice(0, 3), small: small.slice(0, 3),
+      };
+    }, [SPEC_BOXES, SPEC_GRID]);
+
+    // ① DESIGN.md 「첫 화면 규격」 — 제목 clamp(26px, 3.4vw, 36px)
+    const wantFs = clampVw(26, 0.034, 36, v.w);
+    expect(m.fs >= 26 && m.fs <= 36, `제목 크기가 규격 범위(26~36px) 밖: ${m.fs}px`);
+    expect(Math.abs(m.fs - wantFs) <= 1, `제목 크기 ${m.fs}px — 규격은 ${wantFs.toFixed(1)}px`);
+    // ② 제목은 가운데 (집 단추가 차지한 자리의 절반 + 손그림 여유까지만 봐준다)
+    const slack = m.reserve / 2 + 26;
+    expect(Math.abs(m.cx - m.mid) <= slack,
+      `제목이 가운데에서 ${Math.round(Math.abs(m.cx - m.mid))}px 벗어남 (허용 ${Math.round(slack)}px)`);
+    // ③ DESIGN.md 「첫 화면 규격」 — 칸 사이 간격 clamp(18px, 2.4vw, 32px)
+    const wantGap = clampVw(18, 0.024, 32, v.w);
+    expect(Math.abs(m.rowGap - wantGap) <= 1 && Math.abs(m.colGap - wantGap) <= 1,
+      `칸 간격 ${m.rowGap}/${m.colGap}px — 규격은 ${wantGap.toFixed(1)}px`);
+    // ④ 첫 화면 요소끼리 겹치지 않는다 (기울인 칸이 이웃을 파고들면 여기서 잡힌다)
+    expect(m.over.length === 0, '겹침: ' + m.over.join(' | '));
+    // ⑤ DESIGN.md 「첫 화면 규격」 — 터치 하한 46px
+    expect(m.small.length === 0, '46px 미만 터치 대상: ' + m.small.join(' | '));
+  });
+}
+await page.setViewportSize({ width: 1024, height: 768 });
+
 /* ── 18. 콘솔 오류 0 ── */
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.slice(0, 5).join(' | '));

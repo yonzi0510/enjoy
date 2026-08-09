@@ -158,6 +158,74 @@
   background-color: #FFF6E0;
 }
 
+/* ── ⑤-2 시작 화살표 — 첫 칸을 가리키는 손그림 점선 화살표 (29개 공용) ──
+ *
+ * 왜 공용인가 — 실사해 보니 색·모양이 제각각이었다. 초록 점선(생각·주사위·선따라)·
+ * 분홍(한글·일본어·슬라이드·고무줄)·주황 실선(시장)·보라(지오보드)·검정 점선(돌림블록),
+ * 그리고 **11개 앱에는 아예 없었다.** 처음 온 아이가 어디를 눌러야 하는지 알려면
+ * 어느 놀이에 들어가든 같은 화살표가 같은 자리에 있어야 한다.
+ *
+ * 왜 칸 '안쪽' 인가 — 바깥(칸 위)에 띄우는 것이 그림으로는 낫지만, 29개를 실측해 보니
+ * 첫 칸 위에 남는 자리가 8px(산수·찾기·픽셀) ~ 190px(탱그램)로 갈렸다. 폰 가로에서는
+ * 대부분 20~40px 뿐이라 바깥에 두면 제목·머리줄을 덮거나 화면 밖으로 나간다.
+ * 게다가 산수·실험실·찾기의 첫 칸은 `overflow:hidden` 이라 바깥으로 나간 꼬리가 잘린다.
+ * 그래서 **첫 칸 왼쪽 위 모서리 안쪽**에 붙이고, 화살촉이 칸 한가운데(그림·이름)를
+ * 향하게 그렸다. 어떤 화면에서도 잘리지 않고 화면 밖으로 나가지 않는다.
+ *
+ * 그림 — 점선 곡선 + 화살촉, 크레용 주황(#E0632C) 한 가지 색. 외부 파일을 못 쓰므로
+ * 인라인 SVG 를 data URI 로 넣는다(기술 원칙: 외부 이미지 금지).
+ * 글자를 가리지 않게 이름표(.mc-name)가 있는 아래쪽은 비우고, 누르는 것을 막지 않게
+ * `pointer-events:none` 을 준다. */
+:root {
+  --start-arrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23E0632C' stroke-width='9' stroke-linecap='round' stroke-linejoin='round'><path d='M12 13 C34 15 46 29 54 43 C61 55 66 65 71 76' stroke-dasharray='11 13'/><path d='M77 57 L74 80 L54 70'/></svg>");
+}
+
+/* 붙는 자리 — 첫 화면에서 아이가 맨 먼저 눌러야 할 칸.
+   놀이 고르는 칸(.menu)이 있는 24개는 첫 칸, 나머지는 그 앱에서 그에 해당하는 것:
+   찾기=테마 카드, 픽셀·색칠=도안 카드, 프랙티카=코스 카드, 영어=말 거는 토끼.
+   (테마·도안·코스 카드는 앱이 이미 position:relative 라 기준이 필요 없다) */
+.menu > .menu-card:first-of-type,
+.menu > .theme-card:first-of-type {
+  position: relative;   /* 화살표를 칸에 붙여 두기 위한 기준 (배치는 바뀌지 않는다) */
+}
+.menu > .menu-card:first-of-type::before,
+.menu > .theme-card:first-of-type::before,
+.theme-grid > .theme-card:first-of-type::before,
+.pic-grid > .pic-card::before,
+.track-list > .track-card:first-of-type::before,
+.mic-btn::before {
+  content: '';
+  position: absolute;
+  left: clamp(2px, .7vmin, 8px);
+  top: clamp(2px, .7vmin, 8px);
+  width: clamp(34px, 6.6vmin, 74px);
+  height: clamp(34px, 6.6vmin, 74px);
+  background: var(--start-arrow) center / contain no-repeat;
+  pointer-events: none;   /* 카드를 누르는 것을 막지 않는다 */
+  z-index: 2;
+}
+/* 도안 카드는 앞의 것이 <div class="level-head"> 라 :first-of-type 이 빗나간다
+   (픽셀 놀이터). 그래서 도안 카드 전부에 붙인 뒤 **둘째부터 지운다** —
+   앞에 도안 카드가 하나라도 있으면 그 칸은 첫 칸이 아니다. */
+.pic-grid > .pic-card ~ .pic-card::before { content: none; }
+
+/* 프랙티카 코스 칸만 가로로 눕는 줄(왼쪽에 그림칸, 오른쪽에 글) 모양이라
+   칸 안에 빈 모서리가 없다 — 어느 모서리에 둬도 그림이나 글을 덮는다.
+   대신 이 앱은 첫 칸 위에 200px 넘게 비어 있으니(다른 앱은 8~40px 뿐이라 못 한다)
+   거기만 화살표를 칸 바로 위 바깥에 두고, 화살촉이 칸을 내리 가리키게 한다. */
+.track-list > .track-card:first-of-type::before {
+  left: clamp(6px, 2vmin, 20px);
+  top: calc(-1 * clamp(34px, 6.6vmin, 74px) - 4px);
+}
+
+/* 앱마다 따로 만들어 붙였던 옛 화살표는 감춘다 — 두 개가 겹쳐 보이면 안 된다.
+   (마크업 자체는 각 앱이 자기 라운드에서 걷어낸다. 그 전까지는 여기서 한 번에 끈다) */
+.start-arrow,
+.first-arrow,
+.mc-arrow {
+  display: none !important;
+}
+
 /* ── ⑥ 제목 줄 ───────────────────────────────────────────
  * 지금 27~48px. 「아이콘 + 이름」 가운데 정렬로 크기를 모은다. */
 .home-head h1,

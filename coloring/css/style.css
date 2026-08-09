@@ -320,25 +320,19 @@ h1 {
 /* 물통·크레용을 고른 상태에서도 손그림이 잘 보이게 (흰 종이 위 그림이라 반전 대신 테두리로 표시) */
 .tool-btn.on .ic { filter: drop-shadow(0 0 2px rgba(255,255,255,.95)); }
 
-/* ── 고르는 칸 흩뿌리기 ───────────────────────────────────────────
-   자로 잰 듯 줄 맞춘 격자를 깬다. 자리는 사람이 하나하나 정하지 않고
-   순서(nth-child)로 주어, 카테고리를 바꿔 칸 수가 달라져도 무너지지 않는다.
-   기울기·자리 이동이 이웃을 덮지 않도록 칸 사이(gap)와 바깥 여백을 함께 넓혔다. */
+/* ── 칸 사이 간격 ─────────────────────────────────────────────────
+   DESIGN.md 「첫 화면 규격」 — 칸 사이 간격 clamp(18px, 2.4vw, 32px).
+   29개 앱이 12~52px 로 갈렸던 값을 한 식으로 모은다. */
 .pic-grid, .gallery-grid {
-  gap: clamp(16px, 2.8vmin, 24px);
+  gap: clamp(18px, 2.4vw, 32px);
   padding: clamp(6px, 1.4vmin, 14px) clamp(8px, 1.6vmin, 16px) 18px;
 }
-/* 위아래 이동은 2% 까지만. 기울기가 만드는 여유(폭 × sin θ ≈ 3.5px)와 합쳐도
-   칸 사이(gap 16px 이상) 안에 들어와야 폰 가로에서 윗줄·아랫줄이 겹치지 않는다. */
+/* ── 썸네일 격자는 반듯하게 ───────────────────────────────────────
+   DESIGN.md 「첫 화면 규격」 — 흩뿌리기는 기울기만, 그마저도 **빽빽한 썸네일
+   격자에는 넣지 않는다**. 밑그림이 30장이라 칸이 작고 촘촘해서, 기울기가
+   만드는 여유(폭 × sin θ)만으로도 옆 칸을 파고든다(CLAUDE.md 「놀이 화면」).
+   손으로 붙인 느낌은 칸마다 다른 모서리 반경(crayon.css)이 대신 낸다. */
 .pic-card, .art-card { transition: transform .12s ease; }
-.pic-card:nth-child(8n+1), .art-card:nth-child(8n+1) { transform: translate(-1.5%,  1.5%) rotate(-3deg);   }
-.pic-card:nth-child(8n+2), .art-card:nth-child(8n+2) { transform: translate( 1.5%, -1.5%) rotate( 2.2deg); }
-.pic-card:nth-child(8n+3), .art-card:nth-child(8n+3) { transform: translate(-1%,   -2%)   rotate( 3.2deg); }
-.pic-card:nth-child(8n+4), .art-card:nth-child(8n+4) { transform: translate( 1.5%,  2%)   rotate(-1.8deg); }
-.pic-card:nth-child(8n+5), .art-card:nth-child(8n+5) { transform: translate(-1.5%, -1%)   rotate( 1.4deg); }
-.pic-card:nth-child(8n+6), .art-card:nth-child(8n+6) { transform: translate( 1%,    2%)   rotate(-3.2deg); }
-.pic-card:nth-child(8n+7), .art-card:nth-child(8n+7) { transform: translate( 1.5%, -1.5%) rotate( 2.6deg); }
-.pic-card:nth-child(8n+8), .art-card:nth-child(8n+8) { transform: translate(-1%,    1%)   rotate(-1.6deg); }
 
 /* 갤러리 작품 칸은 썸네일보다 두세 배 커서, 같은 각도라도 이웃을 훨씬 많이 침범한다.
    그래서 비율(%) 대신 고정 px 로 옮기고 기울기도 절반만 준다. */
@@ -363,7 +357,6 @@ h1 {
 .pic-card.next-up {
   grid-column: span 2;
   grid-row: span 2;
-  transform: rotate(-1.2deg);      /* 큰 칸은 덜 기울인다 — 이웃을 덮지 않게 */
   z-index: 2;
 }
 .pic-card.next-up .pc-name { font-size: clamp(16px, 3.4vmin, 24px); }
