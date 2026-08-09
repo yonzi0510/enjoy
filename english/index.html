@@ -66,6 +66,49 @@
          획을 feTurbulence+feDisplacementMap 으로 실제로 떨리게 하고,
          칠은 윤곽선보다 살짝 밀어서 색이 밖으로 삐져나오게 그린다. -->
     <div class="home-nav">
+      <button id="btn-abc" class="nav-card nav-abc">
+        <svg class="nav-ico" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><filter id="ico-abc" x="-18%" y="-18%" width="136%" height="136%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="11"/>
+            <feDisplacementMap in="SourceGraphic" scale="3"/>
+          </filter></defs>
+          <!-- 글자 블록 두 개 — 칠은 윤곽에서 왼쪽 아래로 밀어 색이 선 밖으로 나가게 -->
+          <g transform="translate(-5 6) rotate(-4 50 52)">
+            <rect x="10" y="16" width="46" height="46" rx="10" fill="#FFD9E6"/>
+            <rect x="44" y="44" width="46" height="46" rx="10" fill="#CDEBFF"/>
+          </g>
+          <g filter="url(#ico-abc)" fill="none" stroke="#2E2A24" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="11" y="17" width="45" height="45" rx="10"/>
+            <rect x="45" y="45" width="45" height="45" rx="10"/>
+            <!-- 대문자 A -->
+            <path d="M25 51L33.5 28L42 51M28.5 43H38.5"/>
+            <!-- 소문자 b -->
+            <path d="M58 54L58 80M58 72q5.5-8 11-3.5t0 12.5q-5.5 4-11-3.5"/>
+          </g>
+        </svg>
+        <span>알파벳 배우기</span>
+      </button>
+      <button id="btn-trace" class="nav-card nav-trace">
+        <svg class="nav-ico" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><filter id="ico-pencil" x="-18%" y="-18%" width="136%" height="136%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.036" numOctaves="2" seed="9"/>
+            <feDisplacementMap in="SourceGraphic" scale="3.2"/>
+          </filter></defs>
+          <g transform="translate(-5 5) rotate(-3 50 52)">
+            <path d="M28 62L62 20L76 32L42 74Z" fill="#FFE08A"/>
+            <path d="M62 20L69 12L83 24L76 32Z" fill="#FFB3CC"/>
+            <path d="M26 80L28 62L42 74Z" fill="#F3E6C8"/>
+          </g>
+          <g filter="url(#ico-pencil)" fill="none" stroke="#2E2A24" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M26 80L28 62L62 20L76 32L42 74Z"/>
+            <path d="M62 20L69 12L83 24L76 32"/>
+            <path d="M28 62L42 74"/>
+            <!-- 점선 안내선 — 연필이 지나간 자리 -->
+            <path d="M14 88H24M32 88H42M50 88H60" stroke-width="4.5"/>
+          </g>
+        </svg>
+        <span>따라쓰기 <b id="traced-count">0</b></span>
+      </button>
       <button id="btn-dict" class="nav-card nav-dict">
         <svg class="nav-ico" viewBox="0 0 100 100" aria-hidden="true">
           <defs><filter id="ico-book" x="-18%" y="-18%" width="136%" height="136%">
@@ -229,6 +272,72 @@
   <div id="learned-list" class="learned-list"></div>
 </div>
 
+<!-- ═══════════ 알파벳: 글자 격자 (배우기·따라쓰기 공용) ═══════════
+     탭은 「ABC / abc」 — 아이는 글을 못 읽으니 낱말 대신 글자 모양으로 보여 준다. -->
+<div id="screen-abc" class="screen">
+  <header class="top-bar">
+    <button id="abc-back" class="round-btn" aria-label="처음으로">◀</button>
+    <div class="top-title" id="abc-title">🔤 알파벳 배우기</div>
+    <div style="width:56px"></div>
+  </header>
+  <!-- 탭은 머리줄이 아니라 그 아래 한 줄로 둔다 — 오른쪽 위는 공용 집 단추와
+       ⏳ 남은시간 쪽지가 이미 쓰고 있어서 겹친다. 가운데 있어야 손도 잘 닿는다. -->
+  <div class="tabs" id="abc-tabs">
+    <button type="button" class="tab on" data-case="upper" aria-label="대문자">ABC</button>
+    <button type="button" class="tab" data-case="lower" aria-label="소문자">abc</button>
+  </div>
+  <div id="abc-grid" class="abc-grid"></div>
+</div>
+
+<!-- ═══════════ 알파벳: 글자 하나 ═══════════ -->
+<div id="screen-letter" class="screen">
+  <header class="top-bar">
+    <button id="letter-back" class="round-btn" aria-label="뒤로">◀</button>
+    <div class="top-title" id="letter-title">A</div>
+    <button id="letter-home" class="round-btn" aria-label="처음으로">🏠</button>
+  </header>
+  <div class="letter-body">
+    <div class="letter-hero">
+      <div id="letter-big" class="letter-big">A</div>
+      <div class="letter-say">
+        <div class="letter-name">이름 <b id="letter-name">에이</b></div>
+        <div class="letter-sound">소리 <b id="letter-sound">애</b></div>
+      </div>
+    </div>
+    <div id="letter-words" class="letter-words"></div>
+    <div class="answer-btns">
+      <button id="letter-listen" class="answer-btn"><span>🔊</span><span>다시 듣기</span></button>
+      <button id="letter-trace" class="answer-btn answer-btn-mic"><span>✏️</span><span>따라쓰기</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 알파벳: 따라쓰기 ═══════════ -->
+<div id="screen-trace" class="screen">
+  <header class="top-bar">
+    <button id="trace-back" class="round-btn" aria-label="뒤로">◀</button>
+    <div class="top-title"><span id="trace-ch">A</span> <small id="trace-name">에이</small></div>
+    <div class="dots" id="trace-dots"></div>
+  </header>
+  <div class="trace-holder" id="trace-holder">
+    <canvas id="trace-canvas" width="560" height="560"></canvas>
+  </div>
+</div>
+
+<!-- ═══════════ 따라쓰기 보상: 낱말 카드 ═══════════ -->
+<div id="reward-overlay" class="overlay hidden">
+  <div class="done-card">
+    <div class="done-title">🎉 낱말 카드!</div>
+    <div id="reward-emoji" class="reward-emoji">🍎</div>
+    <div id="reward-word" class="reward-word">apple</div>
+    <div id="reward-ko" class="reward-ko">사과</div>
+    <div class="answer-btns">
+      <button id="reward-list" class="answer-btn"><span>🔤</span><span>글자 고르기</span></button>
+      <button id="reward-next" class="answer-btn answer-btn-mic"><span>✏️</span><span>다음 글자</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ 퀴즈 ═══════════ -->
 <div id="screen-quiz" class="screen">
   <header class="top-bar">
@@ -259,6 +368,8 @@
 <script src="../shared/profile.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/speech.js"></script>
+<script src="js/alphabet.js"></script>
+<script src="js/trace.js"></script>
 <script src="js/dict/animals.js"></script>
 <script src="js/dict/food.js"></script>
 <script src="js/dict/colors-numbers.js"></script>

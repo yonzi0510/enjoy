@@ -1,5 +1,13 @@
-/* 배운 단어 기록 — localStorage (서버·로그인 없음)
- * { learned: { elephant: { count: 3, last: 1730000000000 } } }
+/* 배운 단어·알파벳 기록 — localStorage (서버·로그인 없음)
+ * {
+ *   learned: { elephant: { count: 3, last: 1730000000000 } },  // 배운 단어
+ *   misses:  { '뽀로로': { count: 1, last: … } },              // 못 알아들은 말(부모 확인용)
+ *   traced:  { 'A': 2, 'a': 1 },                               // 따라 쓴 알파벳 (횟수)
+ *   cards:   { apple: { e:'🍎', k:'사과', at: … } }             // 따라쓰기로 받은 낱말 카드
+ * }
+ * 알파벳을 더하면서 **키를 새로 만들지 않고 필드만 더했다** —
+ * 새 키를 만들면 parent/index.html 의 백업 목록에서 빠지고, 이미 배운 단어 기록과
+ * 갈라져 버린다. 옛 데이터에는 traced·cards 가 없으므로 load() 에서 빈 값으로 채운다.
  */
 window.Progress = (() => {
   const KEY = window.Profile ? Profile.key('english-playground-v1') : 'english-playground-v1'; // 아이 프로필별 저장
@@ -7,9 +15,16 @@ window.Progress = (() => {
   function load() {
     try {
       const raw = JSON.parse(localStorage.getItem(KEY));
-      if (raw && typeof raw === 'object') return { learned: raw.learned || {}, misses: raw.misses || {} };
+      if (raw && typeof raw === 'object') {
+        return {
+          learned: raw.learned || {},
+          misses: raw.misses || {},
+          traced: raw.traced || {},   // 옛 저장본에는 없다 — 그대로 이어 쓴다
+          cards: raw.cards || {},
+        };
+      }
     } catch (e) { /* 손상 데이터 초기화 */ }
-    return { learned: {}, misses: {} };
+    return { learned: {}, misses: {}, traced: {}, cards: {} };
   }
 
   let state = load();
@@ -55,6 +70,28 @@ window.Progress = (() => {
       return Object.entries(state.misses)
         .map(([text, v]) => ({ text, count: v.count, last: v.last }))
         .sort((a, b) => b.last - a.last);
-    }
+    },
+
+    /* ─────────── 알파벳 따라쓰기 ─────────── */
+    recordTrace(ch) {
+      state.traced[ch] = (state.traced[ch] || 0) + 1;
+      save();
+    },
+    hasTraced(ch) { return !!state.traced[ch]; },
+    tracedCount() { return Object.keys(state.traced).length; },
+
+    // 낱말 카드 지급. 처음 받는 카드면 true
+    addCard(en, emoji, ko) {
+      const isNew = !state.cards[en];
+      state.cards[en] = { e: emoji, k: ko, at: Date.now() };
+      save();
+      return isNew;
+    },
+    cards() {
+      return Object.entries(state.cards)
+        .map(([en, v]) => ({ en, e: v.e, k: v.k, at: v.at }))
+        .sort((a, b) => b.at - a.at);
+    },
+    cardCount() { return Object.keys(state.cards).length; },
   };
 })();

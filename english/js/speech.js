@@ -41,21 +41,32 @@ window.Speech = (() => {
   }
   if (window.speechSynthesis) speechSynthesis.onvoiceschanged = pickVoices;
 
-  // 순차 재생: items = [{lang:'en'|'ko', text, rate?}], onDone?
+  /* 순차 재생: items = [{lang:'en'|'ko', text, rate?}], onDone?
+   * 한 줄 안에서 한국어 안내와 영어 발음이 번갈아 나온다 — 항목마다 lang 을 갈라 준다.
+   * 알파벳 따라쓰기는 「발화 → 그리기 → 발화」가 이어지므로 발화가 한 번 끊기면
+   * 흐름 자체가 멈춘다. 그래서 hangul/js/audio.js 와 같은 두 가지 보강을 둔다:
+   *  - 워치독: 음성 엔진이 없거나(헤드리스·소리 끔) onend 를 안 주는 기기에서도 다음으로 넘어간다
+   *  - seqId: 새 재생이 시작되면 이전 순서의 콜백을 무효화한다 (두 줄이 겹쳐 읽히지 않게)
+   */
+  let seqId = 0;
   function speakSeq(items, onDone) {
-    if (!window.speechSynthesis) { if (onDone) onDone(); return; }
+    const my = ++seqId;
+    if (!window.speechSynthesis) { if (onDone) setTimeout(onDone, 200); return; }
     speechSynthesis.cancel();
     pickVoices();
     let i = 0;
     const startWait = window.VoiceSettings ? VoiceSettings.startDelay() : 0;
     function next() {
+      if (my !== seqId) return;               // 새 발화가 시작됨 — 이 순서는 버린다
       if (i >= items.length) { if (onDone) onDone(); return; }
       const it = items[i++];
       try {
         const VS = window.VoiceSettings;
         // 한국어 안내만 다듬는다 — 영어 낱말은 발음이 달라지면 안 되니 손대지 않는다
         const ko = it.lang !== 'en';
-        const u = new SpeechSynthesisUtterance(ko && VS ? VS.say(it.text) : it.text);
+        // say() 가 빈 글을 낼 수 있다(순수 이모지) — 그때는 원래 글로 되돌린다
+        const text = (ko && VS) ? (VS.say(it.text) || it.text) : it.text;
+        const u = new SpeechSynthesisUtterance(text);
         if (it.lang === 'en') {
           u.lang = 'en-US';
           if (enVoice) u.voice = enVoice;
@@ -68,8 +79,11 @@ window.Speech = (() => {
           u.rate = (it.rate || 0.92) * (VS ? VS.rateFactor() : 1); // 0.95 → 0.92, 조금 더 느긋하게
           u.pitch = VS ? VS.pitchOf(1.1) : 1.1;            // 높낮이는 1.0 쪽이 제 소리
         }
-        u.onend = next;
-        u.onerror = next;
+        let advanced = false;
+        const step = () => { if (!advanced) { advanced = true; clearTimeout(wd); next(); } };
+        const wd = setTimeout(step, 1000 + String(text).length * 450);
+        u.onend = step;
+        u.onerror = step;
         speechSynthesis.speak(u);
       } catch (e) { next(); }
     }
@@ -205,9 +219,14 @@ window.Speech = (() => {
     },
     speakEn(text, rate, onDone) { speakSeq([{ lang: 'en', text, rate }], onDone); },
     stopSpeak() { if (window.speechSynthesis) speechSynthesis.cancel(); },
-    // 효과음
+    // 효과음 — 전부 Web Audio 합성이다 (외부 오디오 파일을 받지 않는다)
     ding() { tone(784, 0, 0.18, 0.25, 'triangle'); tone(1175, 0.09, 0.3, 0.25, 'triangle'); },
     pop() { tone(330, 0, 0.12, 0.12, 'sine'); },
+    tap() { tone(660, 0, 0.09, 0.22, 'triangle'); },
+    // 획 하나를 다 그었을 때 — 짧고 밝게 두 음(hangul/js/audio.js 와 같은 소리)
+    stroke() { tone(740, 0, 0.1, 0.2, 'triangle'); tone(988, 0.08, 0.15, 0.2, 'triangle'); },
+    // 글자를 다 썼을 때 — 올라가는 팡파르
+    fanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.12, 0.25, 0.3)); tone(1319, 0.5, 0.45, 0.3); },
     listenStart() { tone(660, 0, 0.1, 0.18, 'sine'); tone(880, 0.1, 0.14, 0.18, 'sine'); },
     tada() {
       tone(523, 0, 0.16, 0.22, 'triangle'); tone(659, 0.12, 0.16, 0.22, 'triangle');
