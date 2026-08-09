@@ -1,0 +1,203 @@
+/* ═══════════ 첫 화면 규격 (놀이 고르는 화면) ═══════════
+ *
+ * 왜 만들었나 — 낙서장 라운드를 29개 팀에 동시에 맡기면서 기준을 shared/crayon.css
+ * 한 장으로만 주고 나머지는 팀 재량으로 뒀다. 그래서 갈렸다. 실사해 보니:
+ *
+ *   세로 채움   54% (시장) ~ 99% (찾기)   ← 어떤 앱은 아래 절반이 텅 빈다
+ *   칸 간격     12px (산수) ~ 52px (실험실)
+ *   카드 크기   273 ~ 560px
+ *
+ * 텅 비는 까닭은 카드 폭이 `clamp(150px, 27vmin, 220px)` 로 **220px 에서 잘리기**
+ * 때문이다. 패드 가로에서 vmin 은 높이(820)라 27vmin=221px → 화면이 아무리 넓어도
+ * 카드가 안 커진다. 14개 앱이 이 식을 그대로 쓰고 있었다.
+ *
+ * 그래서 이 파일이 **첫 화면의 뼈대 수치**를 한 곳에서 정한다.
+ * DESIGN.md 「첫 화면 규격」 절이 원본이고, 여기는 그 구현이다.
+ *
+ * 불러오는 법 — 앱 index.html 의 스타일시트 중 **가장 마지막**:
+ *   <link rel="stylesheet" href="../shared/crayon.css">
+ *   <link rel="stylesheet" href="../shared/doodle-menu.css">
+ *   <link rel="stylesheet" href="../shared/screen.css">   ← 맨 뒤
+ * doodle-menu.css 의 흩뿌림 규칙과 무게가 같아(0,2,0) **뒤에 와야** 이긴다.
+ *
+ * 주의 — **놀이판 안쪽에는 절대 걸지 않는다.** 조각·격자·캔버스·못판에 크기나
+ * 회전을 걸면 끌어 놓기 좌표와 채점이 틀어진다. 이 파일의 선택자는 전부
+ * `.menu` 계열(놀이 고르는 칸)에만 닿는다.
+ */
+
+/* ── ① 첫 화면이 세로를 채운다 ──────────────────────────────
+ * .screen 은 대부분 `position:fixed; inset:0; flex-direction:column` 이다.
+ * 메뉴에 flex:1 을 줘서 남은 높이를 차지하게 하고, 줄을 가운데로 모은다.
+ * 그러면 카드가 위쪽에 몰려 아래가 텅 비는 일이 없어진다. */
+.screen.on > .menu,
+.screen.active > .menu,
+.screen.on > .menu-wrap,
+.screen.active > .menu-wrap {
+  flex: 1 1 auto;
+  align-content: center;
+  align-items: center;
+  width: 100%;
+  margin-inline: auto;
+}
+/* 앱들이 .menu 에 max-width:900px 안팎을 걸어 둔 곳이 있다. 카드가 커진 지금은
+   그 폭에 걸려 세 칸이 두 줄로 접히고, 접히면 화면을 넘는다(슬라이드·도형에서 확인). */
+.menu { max-width: min(1120px, 96vw) !important; }
+
+/* ── ② 칸 사이 간격 — 한 식으로 ──────────────────────────────
+ * 지금 12~52px 로 흩어져 있다. 흩뿌려도 옆 칸을 파고들지 않을 만큼만 준다. */
+.menu {
+  gap: clamp(18px, 2.4vw, 32px);
+}
+
+/* ── ③ 카드 크기 — 화면에 따라 자란다 ────────────────────────
+ * 폭은 vw(가로), 높이는 vh(세로)로 잡아야 가로·세로 모두에서 화면을 쓴다.
+ * vmin 하나로 묶으면 패드 가로에서 높이에 발이 묶인다(위 머리 주석 참고). */
+/* 높이는 칸 수에 따라 나눈다. 한 값으로 밀면 **칸이 많아 두 줄이 되는 앱이 넘친다**
+   (bag·japanese·math·write 에서 실제로 세로 스크롤이 생기는 것을 확인했다).
+   그리고 50vh 까지 키우면 「세로 채움 85%」라는 숫자는 맞지만 카드가 길쭉해져
+   아이콘·글자가 한가운데 뜨고 **카드 안쪽이 텅 빈다** — 바깥 여백을 안쪽 여백으로
+   옮긴 것일 뿐이라 더 나빠 보인다. 찍어서 견줘 보고 정한 값들이다. */
+.menu > .menu-card,
+.menu > .theme-card,
+.menu > button,
+.menu > a {
+  width: clamp(150px, 21vw, 300px);
+  min-height: clamp(150px, 24vh, 280px);   /* 기본 — 두 줄이 돼도 안 넘치는 값 */
+  justify-content: center;
+}
+
+/* 칸이 3개 이하면 한 줄이므로 크게 키운다.
+   세는 것은 **카드(button)** 뿐이다 — 안내 화살표가 .menu 안에 <svg> 로 들어가 있는 앱이
+   있어서(시장·주사위·선따라·고무줄) 그냥 세면 칸이 하나 더 있는 것으로 잘못 읽는다.
+   (:has 를 모르는 옛 브라우저는 위 기본값을 그대로 쓴다 — 덜 채워질 뿐 넘치지는 않는다) */
+.menu:not(:has(> .menu-card:nth-of-type(4))) > .menu-card,
+.menu:not(:has(> .menu-card:nth-of-type(4))) > .theme-card,
+.menu:not(:has(> .menu-card:nth-of-type(4))) > button,
+.menu:not(:has(> .menu-card:nth-of-type(4))) > a {
+  min-height: clamp(160px, 42vh, 400px);
+}
+
+/* 칸이 7개 넘으면 세 줄까지 간다 — 더 낮춘다 */
+.menu:has(> .menu-card:nth-of-type(7)) > .menu-card,
+.menu:has(> .menu-card:nth-of-type(7)) > .theme-card,
+.menu:has(> .menu-card:nth-of-type(7)) > button,
+.menu:has(> .menu-card:nth-of-type(7)) > a {
+  width: clamp(120px, 15vw, 215px);   /* 폭도 줄여야 줄 수가 안 늘어난다 */
+  min-height: clamp(120px, 17vh, 210px);
+}
+
+/* 폰 가로처럼 '넓지만 낮은' 화면은 높이가 390px 밖에 안 된다 — 따로 낮춘다 */
+@media (max-height: 560px) and (orientation: landscape) {
+  .menu > .menu-card,
+  .menu > .theme-card,
+  .menu > button,
+  .menu > a {
+    width: clamp(130px, 16vw, 220px);
+    min-height: clamp(110px, 26vh, 165px);
+  }
+  .menu:not(:has(> .menu-card:nth-of-type(4))) > .menu-card,
+  .menu:not(:has(> .menu-card:nth-of-type(4))) > .theme-card,
+  .menu:not(:has(> .menu-card:nth-of-type(4))) > button,
+  .menu:not(:has(> .menu-card:nth-of-type(4))) > a {
+    min-height: clamp(120px, 36vh, 185px);
+  }
+}
+
+/* 폰 세로는 가로가 좁아 vw 로 잡으면 카드가 너무 작아진다 — 그때만 폭 기준을 바꾼다 */
+@media (orientation: portrait) {
+  .menu > .menu-card,
+  .menu > .theme-card,
+  .menu > button,
+  .menu > a {
+    width: clamp(150px, 38vw, 300px);
+    min-height: clamp(140px, 18vh, 240px);
+  }
+  .menu:not(:has(> .menu-card:nth-of-type(4))) > .menu-card,
+  .menu:not(:has(> .menu-card:nth-of-type(4))) > .theme-card,
+  .menu:not(:has(> .menu-card:nth-of-type(4))) > button,
+  .menu:not(:has(> .menu-card:nth-of-type(4))) > a {
+    min-height: clamp(150px, 26vh, 300px);
+  }
+  /* 칸이 많은 앱(산수 11칸·글씨 10칸)은 폰 세로에서 두 칸씩 여섯 줄이 된다.
+     위 규칙이 폭을 38vw 로 되돌려 놓으면 기울인 카드끼리 모서리가 겹친다 —
+     여기서 다시 좁힌다. 미디어쿼리가 뒤에 오므로 이 안에서 잡아야 이긴다. */
+  .menu:has(> .menu-card:nth-of-type(7)) > .menu-card,
+  .menu:has(> .menu-card:nth-of-type(7)) > .theme-card,
+  .menu:has(> .menu-card:nth-of-type(7)) > button,
+  .menu:has(> .menu-card:nth-of-type(7)) > a,
+  .menu:has(> .menu-card:nth-of-type(7)) > .menu-card:nth-of-type(1) {
+    width: clamp(120px, 40vw, 165px);
+    min-height: clamp(110px, 13vh, 165px);
+  }
+}
+
+/* ── ④ 3단계 위계 — 1단계만 1.15배 ──────────────────────────
+ * 앱마다 기울기가 달랐다(컵 쌓기는 1.49 / 1.18 / 1.00 배로 너무 가팔랐다).
+ * 1단계만 조금 크고 2·3단계는 같게 — 그래야 '여기부터'가 읽히면서도 뒤가 안 초라하다.
+ * 강조 자체는 아래 ⑤ 노란 칠이 맡는다. */
+.menu > .menu-card:nth-of-type(1) { width: clamp(170px, 24vw, 340px); }
+.menu > .menu-card:nth-of-type(2),
+.menu > .menu-card:nth-of-type(3),
+.menu > .menu-card:nth-of-type(n+4) { width: clamp(150px, 21vw, 300px); }
+
+@media (orientation: portrait) {
+  .menu > .menu-card:nth-of-type(1) { width: clamp(170px, 44vw, 340px); }
+  .menu > .menu-card:nth-of-type(n+2) { width: clamp(150px, 38vw, 300px); }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .menu > .menu-card:nth-of-type(1) { width: clamp(145px, 18vw, 250px); }
+  .menu > .menu-card:nth-of-type(n+2) { width: clamp(130px, 16vw, 220px); }
+}
+/* 칸이 많으면 위계 없이 고르게 — 줄 수가 늘면 넘친다 */
+.menu:has(> .menu-card:nth-of-type(7)) > .menu-card:nth-of-type(1) { width: clamp(120px, 15vw, 215px); }
+
+/* ── ⑤ 첫 칸 강조 — 노란 칠 한 가지로 ────────────────────────
+ * 크기만 키우면 다섯 살은 "여기부터"를 못 알아본다. 색이 있어야 눈이 간다.
+ * 앱이 이미 칠해 뒀으면 그쪽이 이긴다(여기는 바닥). */
+.menu > *:first-child {
+  background-color: #FFF6E0;
+}
+
+/* ── ⑥ 제목 줄 ───────────────────────────────────────────
+ * 지금 27~48px. 「아이콘 + 이름」 가운데 정렬로 크기를 모은다. */
+.home-head h1,
+.screen.on > h1,
+.screen.active > h1 {
+  font-size: clamp(26px, 3.4vw, 36px);
+  text-align: center;
+}
+
+/* ── ⑦ 흩뿌리기는 기울기만 ───────────────────────────────
+ * shared/doodle-menu.css 는 자리 이동(translate)과 확대(scale)까지 준다.
+ * 카드가 커진 지금은 그 이동이 줄을 밀어내 **한 줄짜리 화면도 넘치게** 만든다
+ * (네 색 슬라이드가 칸 3개인데 세로 스크롤이 생긴 까닭이 이것이었다).
+ * 손으로 붙인 느낌은 기울기만으로 충분하다. */
+.menu > *:nth-child(8n+1) { translate: none; scale: none; rotate: -2.1deg; }
+.menu > *:nth-child(8n+2) { translate: none; scale: none; rotate:  1.6deg; }
+.menu > *:nth-child(8n+3) { translate: none; scale: none; rotate:  2.4deg; }
+.menu > *:nth-child(8n+4) { translate: none; scale: none; rotate: -1.4deg; }
+.menu > *:nth-child(8n+5) { translate: none; scale: none; rotate:  1.1deg; }
+.menu > *:nth-child(8n+6) { translate: none; scale: none; rotate: -2.6deg; }
+.menu > *:nth-child(8n+7) { translate: none; scale: none; rotate:  1.9deg; }
+.menu > *:nth-child(8n+8) { translate: none; scale: none; rotate: -1.2deg; }
+/* doodle-menu.css 의 transform 흩뿌림을 지운다 — 위 rotate 낱개 속성만 남긴다 */
+.menu > *:nth-child(n) { transform: none; }
+.menu > *:active { transform: translateY(3px) !important; rotate: 0deg; }
+
+/* 칸이 많으면 기울기조차 옆 칸을 파고든다 — 빽빽한 격자에서는 반듯하게 둔다.
+   (CLAUDE.md 「놀이 화면」 절이 경고하는 함정. 산수 11칸·글씨 10칸이 여기 걸렸다) */
+.menu:has(> .menu-card:nth-of-type(7)) > * { rotate: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu > * { rotate: none; }
+}
+
+/* ── ⑧ 놀잇감에는 닿지 않는다 (안전 고리) ────────────────────
+ * 혹시 위 선택자가 놀이판 안쪽까지 닿더라도 크기를 되돌린다.
+ * 각 앱 e2e 의 「놀이판 무변형」 검사가 이걸 지킨다. */
+.board .menu-card,
+.play-area .menu-card,
+canvas.menu-card {
+  width: auto;
+  min-height: 0;
+}
