@@ -127,7 +127,7 @@ window.App = (() => {
 
   /* ─────────── 항목 목록 (동요·동화·글자 줄·낱말·받아쓰기) ─────────── */
   /* 묶음 머리말 아이콘 — 이모지 대신 손그림(css/doodle-icons.css).
-     ㄱ·ㅏ·가 처럼 '배울 글자'가 아이콘인 묶음은 글자 그대로 둔다. */
+     '가' 처럼 '배울 글자'가 아이콘인 묶음은 글자 그대로 둔다. */
   const CH_DOODLE = { word: 'apple', song: 'note', tale: 'book', dict: 'head' };
   let curChapter = null;
   function openItems(ch) {

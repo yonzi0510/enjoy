@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /* 종단 테스트 — node write/tools/e2e.mjs
- * 실제 Chromium으로 홈 → 자음 필사(펜 스트로크 합성) → 손가락 리젝션 → 완료·별 →
+ * 실제 Chromium으로 홈 → 가나다라 필사(펜 스트로크 합성) → 손가락 리젝션 → 완료·별 →
  * 동요 필사 → 물어보고 쓰기(낱말 추출·직접 입력·인식 주입·초기화) → 부분 지우개 →
  * 받아쓰기(빈 칸 쓰기·정답 공개·스스로 확인) → 자유 낙서장(무지개 펜·스티커·보관·드롭판) →
  * 갤러리 → 새로고침 후 진행도 유지 → STT 스텁(iOS식 interim-only·침묵 stop) →
- * 펫 방(도감 친구·장식 배치·간식 조르기)까지 검증한다.
+ * 펫 방(도감 친구·장식 배치·간식 조르기) → 옛 자모 진행도 보존 → 첫 화면 규격(세 화면)
+ * 까지 검증한다.
  * 저장소 루트에서 정적 서버를 띄운 뒤 실행 (예: python3 -m http.server 8777)
  */
 import { createRequire } from 'node:module';
@@ -99,9 +100,15 @@ async function srEnd() {
 
 await page.goto(BASE);
 
-await check('홈: 챕터 7개 + 낙서장·물어보기·갤러리 카드', async () => {
+await check('홈: 챕터 5개 + 낙서장·물어보기·갤러리 카드', async () => {
   await page.waitForSelector('#scr-home.on');
-  expect(await page.locator('#menu .menu-card').count() === 10, '메뉴 카드 수');
+  expect(await page.locator('#menu .menu-card').count() === 8, '메뉴 카드 수');
+  // 자모 낱글자 쓰기는 한글 놀이터로 넘겼다 — 이 앱에 되살아나면 두 앱이 다시 겹친다
+  expect(await page.locator('.menu-card.c-jaum, .menu-card.c-moum').count() === 0,
+    '자음·모음 쓰기 칸이 남아 있음');
+  const names = await page.locator('#menu .mc-name').allTextContents();
+  expect(names.join(',') === '가나다라,낱말 쓰기,동요 필사,동화 필사,받아쓰기,자유 낙서장,물어보고 쓰기,내 글씨',
+    '첫 화면 칸: ' + names);
 });
 
 await check('가나다라: ㅏㅓㅗㅜㅡㅣ 여섯 줄 / 낱말: 묶음 여섯 개', async () => {
@@ -117,9 +124,13 @@ await check('가나다라: ㅏㅓㅗㅜㅡㅣ 여섯 줄 / 낱말: 묶음 여섯
   await page.waitForSelector('#scr-home.on');
 });
 
-await check('자음 쓰기 진입: 깍두기 두 줄 + 점 4개', async () => {
-  await page.click('.menu-card.c-jaum');
+await check('가나다라 필사 진입: 깍두기 두 줄 + 점 4개', async () => {
+  await page.click('.menu-card.c-rows');
+  await page.waitForSelector('#scr-items.on');
+  await page.locator('.item-main').first().click(); // ㅏ 글자 줄 (가나다라)
   await page.waitForSelector('#scr-write.on');
+  const d = await page.evaluate(() => App.debug());
+  expect(d.pageText === '가나다라', '첫 장 글: ' + d.pageText);
   expect(await page.locator('#write-dots .dot').count() === 4, '페이지 점 수');
   expect(await page.locator('.note-line canvas').count() === 2, '캔버스 수');
 });
@@ -167,10 +178,14 @@ await check('안 쓰고 ▶ → 판정 없이 그냥 다음 장(구경)', async 
 
 await check('홈으로: 별·진행도 반영', async () => {
   await page.click('#btn-write-back');
+  await page.waitForSelector('#scr-items.on');
+  const irow = await page.locator('.item-main .it-prog').first().textContent();
+  expect(irow.includes('1 / 4'), '항목 진행도: ' + irow);
+  await page.click('#scr-items .back');
   await page.waitForSelector('#scr-home.on');
   expect((await page.locator('#home-stars').textContent()) === '1', '별 수');
-  const prog = await page.locator('.menu-card.c-jaum .mc-prog').textContent();
-  expect(prog.includes('1 / 4'), '챕터 진행도: ' + prog);
+  const prog = await page.locator('.menu-card.c-rows .mc-prog').textContent();
+  expect(prog.includes('1 / 24'), '챕터 진행도: ' + prog); // 여섯 줄 × 네 장
 });
 
 await check('펫: 완료로 간식 획득 → 먹이면 자란다', async () => {
@@ -510,6 +525,74 @@ await check('새로고침 후 장식·배치·방 유지 (마이그레이션 겸
   expect(await page.locator('#pet-room .pet-deco-slot.filled').count() === 1, '자리 표시 유지');
   expect(await page.locator('#pet-room .pet-mini').count() === 1, '도감 친구 유지');
   await page.click('#pet-close');
+});
+
+/* 자음·모음 쓰기를 걷어낸 뒤에도, 이미 자모를 쓴 아이의 기록은 그대로 남아야 한다.
+ * 옛 저장본(jaum-*·moum-*)을 그대로 심고 — 형식은 예전 그대로 — 별·작품이 줄지 않는지 본다.
+ * 걷어낸 칸의 기록은 '읽지 않을 뿐' 지우지 않는 것이 이 앱의 진행도 보존 규칙이다. */
+await check('옛 자모 진행도 보존: 걷어낸 칸의 별·작품이 사라지지 않는다', async () => {
+  const before = await page.evaluate(() => ({ stars: Progress.stars(), gallery: Progress.galleryCount() }));
+  await page.evaluate(() => {
+    const key = window.Profile ? Profile.key('write-playground-v1') : 'write-playground-v1';
+    const raw = JSON.parse(localStorage.getItem(key));
+    const at = Date.now() - 100000;
+    ['jaum-0', 'jaum-1', 'jaum-2', 'jaum-3', 'moum-0', 'moum-1', 'moum-2'].forEach((id, i) => {
+      const t = i < 4 ? 'ㄱㄴㄷㄹ' : 'ㅏㅑㅓㅕ';
+      raw.done[id] = 1;
+      raw.stars += 1;
+      raw.gallery[id] = { t, e: '✏️', c2: t, at: at + i,
+        tr: [{ c: '#E8354D', p: [20, 30, 90, 120, 160, 60] }], fr: [] };
+    });
+    localStorage.setItem(key, JSON.stringify(raw));
+  });
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const now = await page.evaluate(() => ({ stars: Progress.stars(), gallery: Progress.galleryCount() }));
+  expect(now.stars === before.stars + 7, '옛 별이 줄면 안 됨: ' + before.stars + ' → ' + now.stars);
+  expect((await page.locator('#home-stars').textContent()) === String(now.stars), '홈 별 표시');
+  expect(now.gallery === before.gallery + 7, '옛 작품이 사라지면 안 됨: ' + before.gallery + ' → ' + now.gallery);
+  await page.click('.menu-card.c-gallery');
+  await page.waitForSelector('#scr-gallery.on');
+  expect(await page.locator('.art-card').count() === now.gallery, '갤러리 카드 수');
+  const caps = await page.locator('.art-cap').allTextContents();
+  expect(caps.some(t => t.indexOf('ㅏㅑㅓㅕ') >= 0), '옛 모음 작품이 갤러리에 보임: ' + caps.join('|'));
+  await page.click('#scr-gallery .back');
+  await page.waitForSelector('#scr-home.on');
+  // 옛 기록이 있어도 걷어낸 칸이 되살아나지는 않는다
+  expect(await page.locator('#menu .menu-card').count() === 8, '메뉴 카드 수');
+});
+
+/* 첫 화면 규격 — 칸이 줄어도(10 → 8) 배치가 어긋나지 않는지 세 화면에서 잰다.
+ * 넘침(px)은 자음·모음이 있던 시절의 실측값을 상한으로 둔다 — 칸이 줄었으니
+ * 그보다 커지면 어딘가 잘못 키운 것이다. */
+await check('첫 화면 규격: 세 화면에서 겹침 0 · 터치 46px · 넘침 안 늘어남', async () => {
+  const views = [['패드 가로', 1180, 820, 0], ['폰 가로', 844, 390, 51], ['폰 세로', 390, 844, 208]];
+  for (const [name, w, h, budget] of views) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto(BASE);
+    await page.waitForSelector('#scr-home.on');
+    await page.waitForTimeout(300);
+    const m = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('#menu .menu-card')];
+      const rs = cards.map(c => c.getBoundingClientRect());
+      let overlap = 0;
+      for (let i = 0; i < rs.length; i++) for (let j = i + 1; j < rs.length; j++) {
+        const a = rs[i], b = rs[j];
+        if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+            Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1) overlap++;
+      }
+      const minTouch = Math.min(...[...document.querySelectorAll('#scr-home button, #scr-home a')]
+        .filter(b => b.offsetParent !== null)
+        .map(b => { const r = b.getBoundingClientRect(); return Math.min(r.width, r.height); }));
+      const scr = document.getElementById('scr-home');
+      return { cards: cards.length, overlap, minTouch, over: scr.scrollHeight - scr.clientHeight };
+    });
+    expect(m.cards === 8, name + ' 칸 수: ' + m.cards);
+    expect(m.overlap === 0, name + ' 칸 겹침: ' + m.overlap);
+    expect(m.minTouch >= 45.5, name + ' 터치 하한: ' + m.minTouch);
+    expect(m.over <= budget, name + ' 세로 넘침 ' + m.over + 'px (상한 ' + budget + ')');
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
 });
 
 await check('콘솔 오류 0', async () => {

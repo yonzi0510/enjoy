@@ -126,8 +126,6 @@ h1 {
   padding: 3px 12px;
 }
 /* 카드색 → 틴트 표면 + 그 색을 짙게 만든 chunk (DESIGN.md 공식으로 계산) */
-.c-jaum    { --tint: #FFF3C4; --chunk: #D9A800; --accent: 255,217,61; }
-.c-moum    { --tint: #FFE0EC; --chunk: #E05C86; --accent: 255,143,176; }
 .c-rows    { --tint: #E0F4FF; --chunk: #2F8CC2; --accent: 92,184,232; }
 .c-word    { --tint: #E4FFE9; --chunk: #2E9E6B; --accent: 77,201,143; }
 .c-song    { --tint: #FFE9D6; --chunk: #DB6E1E; --accent: 255,154,77; }
