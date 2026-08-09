@@ -217,7 +217,9 @@ await check('UI 이모지 없음: 화면 틀은 전부 손그림 SVG', async () 
   const bad = await page.evaluate((src) => {
     const re = new RegExp(src, 'u');
     const out = [];
-    ['h1', '.stat', '#btn-voice', '#list-title', '#play-title', '#btn-listen',
+    // 목소리 단추(#btn-voice)는 놀이 화면에서 감췄다(shared/crayon.css) — 안 보이는 것을 훑으면
+    // 오탐이 나므로 목록에서 뺐다. 나머지 화면 틀은 그대로 훑는다.
+    ['h1', '.stat', '#list-title', '#play-title', '#btn-listen',
      '#scr-list .back', '#btn-play-back', '#reward-donut'].forEach(sel => {
       const el = document.querySelector(sel);
       if (el && re.test(el.textContent)) out.push(sel + ':' + el.textContent.trim());
@@ -226,7 +228,8 @@ await check('UI 이모지 없음: 화면 틀은 전부 손그림 SVG', async () 
   }, emoji.source);
   expect(bad.length === 0, '이모지가 남음 — ' + bad.join(', '));
   expect(await page.locator('h1 svg.dn-ico').count() === 1, '제목 손그림 아이콘');
-  expect(await page.locator('#btn-voice svg.dn-ico').count() === 1, '목소리 단추 손그림 아이콘');
+  // 손그림 아이콘이던 자리를 뒤집는다 — 목소리 설정은 부모용이라 놀이 화면에서 감췄다(shared/crayon.css)
+  expect(await page.locator('#btn-voice').isVisible() === false, '목소리 단추가 아직 보인다');
   expect(await page.locator('#reward-donut svg.dn-ico').count() === 1, '축하 도넛 손그림 아이콘');
 });
 

@@ -385,7 +385,7 @@ await check('머리 줄 겹침 없음: 듣기·제목·뒤로 ↔ 집 단추·�
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
-await check('터치 44px: 뒤로·듣기·목소리·집 단추·블록', async () => {
+await check('터치 44px: 뒤로·듣기·집 단추·블록', async () => {
   for (const s of [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드 가로' }]) {
     await page.setViewportSize({ width: s.w, height: s.h });
     await page.goto(BASE);
@@ -393,7 +393,8 @@ await check('터치 44px: 뒤로·듣기·목소리·집 단추·블록', async 
     const small = await page.evaluate(() => {
       const out = [];
       const chk = (name, el) => { if (!el) return; const r = el.getBoundingClientRect(); if (r.width < 44 || r.height < 44) out.push(name + ' ' + Math.round(r.width) + '×' + Math.round(r.height)); };
-      chk('목소리', document.querySelector('#btn-voice'));
+      // 목소리 단추는 놀이 화면에서 감췄다(shared/crayon.css) — 안 눌리는 것이니 손가락 크기를 잴 대상이 아니다.
+      // 나머지 단추(집·뒤로·듣기·블록)는 그대로 잰다.
       chk('집 단추', document.querySelector('.enjoy-home-btn'));
       return out;
     });

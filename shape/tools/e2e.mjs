@@ -136,21 +136,30 @@ await check('UI 그림이 손그림 SVG (이모지 아님)', async () => {
   const r = await page.evaluate(() => {
     const q = s => document.querySelectorAll(s).length;
     const emoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
+    // 목소리 단추(#btn-voice)는 놀이 화면에서 감췄다(shared/crayon.css) — 안 보이는 것을 훑으면
+    // 오탐이 나므로 이모지 목록에서 뺐다. 제목·별·놀이 그림·뒤로는 그대로 훑는다.
     const chrome = [...document.querySelectorAll(
-      '#scr-home h1, #scr-home .stat, #btn-voice, #menu .mc-icon, #scr-list .back')]
+      '#scr-home h1, #scr-home .stat, #menu .mc-icon, #scr-list .back')]
       .map(e => e.textContent).join('');
+    const vbtn = document.querySelector('#btn-voice');
+    const vr = vbtn ? vbtn.getBoundingClientRect() : null;
     return {
       icons: q('#menu .mc-icon svg.dood'),
       title: q('#scr-home h1 svg.dood'),
       star: q('#scr-home .stat svg.dood'),
-      voice: q('#btn-voice svg.dood'),
+      // 손그림 그림이 걸렸는지 재던 자리 — 이제 '안 보인다'를 잰다
+      // (첫 화면이 켜져 있을 때 재야 뜻이 있다. 화면이 꺼져 있으면 무엇이든 0×0 이라 헛돈다)
+      homeOn: !!document.querySelector('#scr-home.on'),
+      voiceHidden: !vbtn || (getComputedStyle(vbtn).display === 'none' && !vr.width && !vr.height),
       back: q('#scr-list .back svg.dood') + q('#btn-play-back svg.dood'),
       filter: q('filter#shape-dood-ink feDisplacementMap'),
       leftover: emoji.test(chrome) ? chrome : '',
     };
   });
   expect(r.icons === 3, '놀이 그림 3개가 손그림이 아니다: ' + r.icons);
-  expect(r.title === 1 && r.star === 1 && r.voice === 1, '제목·별·목소리 그림 없음: ' + JSON.stringify(r));
+  expect(r.title === 1 && r.star === 1, '제목·별 그림 없음: ' + JSON.stringify(r));
+  expect(r.homeOn, '첫 화면이 안 켜져 있어 목소리 단추 검사가 헛돈다');
+  expect(r.voiceHidden, '목소리 단추가 아직 놀이 화면에 보인다: ' + JSON.stringify(r));
   expect(r.back === 2, '뒤로 그림 2개가 아니다: ' + r.back);
   expect(r.filter === 1, '삐뚤한 획 필터(feDisplacementMap)가 없다');
   expect(!r.leftover, 'UI 에 이모지가 남았다: ' + r.leftover);

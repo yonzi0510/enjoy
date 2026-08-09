@@ -71,10 +71,23 @@ await check('낙서장 배치: 칸마다 다른 기울기·자리, 크기 위계
   expect(m.minTap >= 44, '칸 터치 하한 미달: ' + m.minTap.toFixed(0) + 'px');
 });
 
+await check('목소리 단추: 놀이 화면에 안 보인다 (부모님 페이지에서 바꾼다)', async () => {
+  const hidden = await page.evaluate(() => {
+    const b = document.getElementById('btn-voice');
+    if (!b) return true;
+    return getComputedStyle(b).display === 'none' && b.offsetParent === null
+      && b.getBoundingClientRect().width === 0;
+  });
+  expect(hidden, '목소리 단추가 놀이 화면에 보인다');
+});
+
 await check('손그림 아이콘: 이모지 대신 SVG, 손떨림 필터', async () => {
   const m = await page.evaluate(() => {
     const vis = e => { const c = getComputedStyle(e); return c.display !== 'none' && c.visibility !== 'hidden' && e.getBoundingClientRect().width > 0; };
-    const icos = [...document.querySelectorAll('#scr-home .ico')];
+    // 목소리 설정 단추는 부모용이라 놀이 화면에서 감췄다(shared/crayon.css) —
+    // 숨은 아이콘은 크기가 0이라 「그려졌는가」에서 걸린다. 보이는 것만 잰다.
+    const icos = [...document.querySelectorAll('#scr-home .ico')]
+      .filter(i => i.getBoundingClientRect().width > 0);
     return {
       n: icos.length,
       drawn: icos.every(i => i.getBoundingClientRect().width > 8),
@@ -87,7 +100,8 @@ await check('손그림 아이콘: 이모지 대신 SVG, 손떨림 필터', async
         /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{25A0}-\u{25FF}]/u.test(e.textContent)).map(e => e.textContent.trim()),
     };
   });
-  expect(m.n >= 3, '손그림 아이콘 수: ' + m.n);
+  // 셋 중 하나였던 목소리 단추를 감췄으므로 보이는 손그림 아이콘은 둘이다(별·뒤로)
+  expect(m.n >= 2, '손그림 아이콘 수: ' + m.n);
   expect(m.drawn, '아이콘이 그려지지 않음(크기 0)');
   expect(m.hasFilter && m.turb === 2, 'feTurbulence + feDisplacementMap 없음');
   expect(m.filtered, '아이콘에 손떨림 필터가 안 걸림');

@@ -299,7 +299,9 @@ await check('UI 이모지 없음: 머리줄·단추·배지가 모두 손그림 
   const r = await page.evaluate(() => {
     const EMO = /[⌚-➿⬀-⯿️\u{1F000}-\u{1FAFF}]/u;
     const out = { emoji: [], noSvg: [] };
-    const sels = ['h1', '.bar h2', '.stat', '#btn-voice', '.back', '.mc-prog', '.pz-badge', '#reward-next'];
+    // 목소리 단추(#btn-voice)는 놀이 화면에서 감췄다(shared/crayon.css) — 안 보이는 것을 훑으면
+    // 오탐이 나므로 목록에서 뺐다. 나머지 머리줄·단추·배지는 그대로 잰다.
+    const sels = ['h1', '.bar h2', '.stat', '.back', '.mc-prog', '.pz-badge', '#reward-next'];
     sels.forEach(sel => {
       document.querySelectorAll(sel).forEach(el => {
         if (EMO.test(el.textContent)) out.emoji.push(sel + ': ' + el.textContent.trim());
@@ -364,8 +366,10 @@ await check('터치 영역 44px 이상 (폰·패드 × 홈·목록·놀이)', as
       await page.waitForTimeout(150);
       const bad = await page.evaluate(() => {
         const out = [];
+        // 목소리 단추는 놀이 화면에서 감췄다(shared/crayon.css) — 안 눌리는 것이니 손가락 크기를
+        // 잴 대상이 아니라 목록에서 뺐다. 뒤로·놀이 칸·퍼즐 칸·집 단추는 그대로 잰다.
         document.querySelectorAll(
-          '.screen.on .back, .screen.on #btn-voice, .screen.on .menu-card,' +
+          '.screen.on .back, .screen.on .menu-card,' +
           '.screen.on .puzzle-card, .enjoy-home-btn'
         ).forEach(el => {
           const r = el.getBoundingClientRect();

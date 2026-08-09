@@ -115,9 +115,8 @@ await check('그림 진입: 강아지 색칠 화면', async () => {
 await check('손그림 아이콘: 도구·조작 단추가 이모지 대신 <use> SVG', async () => {
   const r = await page.evaluate(() => {
     // 목소리 설정(#btn-voice)은 부모용이라 놀이 화면에서 감췄다(shared/crayon.css) — 부모님 페이지에서 바꾼다.
-    // 보이지도 않는 단추의 아이콘 모양을 재면 오탐이 나므로, 보이는 단추만 훑는다.
-    const vis = el => !!el.offsetParent && getComputedStyle(el).visibility !== 'hidden';
-    const btns = [...document.querySelectorAll('.tool-btn, .act-btn, .back, #btn-gallery')].filter(vis);
+    // 안 보이는 단추의 아이콘 모양을 재면 오탐이 나므로 목록에서 뺐다. 나머지 단추는 그대로 잰다.
+    const btns = [...document.querySelectorAll('.tool-btn, .act-btn, .back, #btn-gallery')];
     const hrefs = [], noIcon = [], leftoverEmoji = [];
     btns.forEach(b => {
       const u = b.querySelector('use');

@@ -133,7 +133,9 @@ await check('손그림 아이콘: 화면 틀에 이모지가 남아 있지 않�
     const EMO = /[←-⇿■-➿⬀-⯿️\u{1F000}-\u{1FAFF}]/u;
     const bad = [];
     // 화면 틀(제목·알약·단추·카드 이름) — 캔버스 위 캐릭터 얼굴은 놀잇감이라 검사 대상이 아니다
-    ['h1', '.stat', '#btn-voice', '#btn-listen', '#btn-clear', '#scr-list .back',
+    // 목소리 단추(#btn-voice)는 놀이 화면에서 감췄다(shared/crayon.css) — 안 보이는 것을 훑으면
+    // 오탐이 나므로 목록에서 뺐다. 나머지 화면 틀은 그대로 훑는다.
+    ['h1', '.stat', '#btn-listen', '#btn-clear', '#scr-list .back',
       '#btn-play-back', '.mc-name', '.mc-prog', '#list-title',
       '#reward-next', '#reward-close', '.pz-badge'].forEach(s => {
       document.querySelectorAll(s).forEach(el => { if (EMO.test(el.textContent)) bad.push(s + ':' + el.textContent.trim()); });
@@ -372,6 +374,8 @@ await check('폰·패드: 겹침 없음 · 터치 44px · 캔버스 무변형', 
           if (b.width < 44 || b.height < 44) small.push((el.id || el.className) + ' ' + Math.round(b.width) + '×' + Math.round(b.height));
         });
         // 공용 집 단추·남은시간 쪽지가 화면 것들과 겹치는지
+        // (위 두 줄 모두 vis() 로 거르므로, 감춰진 목소리 단추(shared/crayon.css)는 저절로 빠진다 —
+        //  나중에 그 규칙을 걷어내 단추가 돌아오면 이 검사가 다시 알아서 잰다)
         const fixed = ['.enjoy-home-btn', '.tl-bar-tag'].map(s => document.querySelector(s)).filter(e => e && vis(e));
         const targets = [];
         document.querySelectorAll('h1, .bar h2, .stat, .page-count, #btn-voice, #btn-listen, #btn-clear, .back, .pet-btn, #play-canvas, .menu-card, .puzzle-card')

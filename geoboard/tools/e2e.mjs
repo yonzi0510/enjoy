@@ -273,7 +273,9 @@ await check('이모지 대신 손그림 아이콘', async () => {
   const m = await page.evaluate(() => {
     const EMOJI = /[\u{25A0}-\u{27BF}\u{1F300}-\u{1FAFF}]/u;
     const bad = [];
-    ['h1', '.stat', '#btn-voice', '.card-cap'].forEach(sel => {
+    // 목소리 단추(#btn-voice)는 놀이 화면에서 감췄다(shared/crayon.css) — 안 보이는 것을 훑으면
+    // 오탐이 나므로 목록에서 뺐다. 제목·별·카드 이름은 그대로 훑는다.
+    ['h1', '.stat', '.card-cap'].forEach(sel => {
       document.querySelectorAll(sel).forEach(el => {
         if (EMOJI.test(el.textContent)) bad.push(sel + ': ' + el.textContent.trim());
       });
