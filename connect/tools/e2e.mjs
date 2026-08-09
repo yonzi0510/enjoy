@@ -49,16 +49,22 @@ await check('낙서장 배치: 칸마다 다른 기울기·자리, 크기 위계
             Math.max(0, Math.min(rs[i].bottom, rs[j].bottom) - Math.max(rs[i].top, rs[j].top));
     }
     return {
-      tfs: cs.map(c => getComputedStyle(c).transform),
-      ws: rs.map(r => r.width),
+      // 새 규격: 흩뿌리기는 transform 이 아니라 낱개 속성 rotate 로 준다 — DESIGN.md 「첫 화면 규격」
+      rots: cs.map(c => getComputedStyle(c).rotate),
+      // 폭은 offsetWidth 로 잰다. 경계상자는 기울인 만큼 넓어져 2·3단계가 뒤집힌다
+      ws: cs.map(c => c.offsetWidth),
       minTap: Math.min(...rs.map(r => Math.min(r.width, r.height))),
       ov, off: rs.filter(r => r.left < -1 || r.right > window.innerWidth + 1).length,
       horiz: document.documentElement.scrollWidth - window.innerWidth,
     };
   });
-  expect(new Set(m.tfs).size === 3, '칸이 서로 같은 기울기: ' + JSON.stringify(m.tfs));
-  expect(m.tfs.every(t => t !== 'none'), '기울기가 아예 없음');
-  expect(m.ws[0] > m.ws[1] && m.ws[1] > m.ws[2], '크기 위계 아님: ' + m.ws.map(w => w.toFixed(0)).join(' > '));
+  expect(new Set(m.rots).size === 3, '칸이 서로 같은 기울기: ' + JSON.stringify(m.rots));
+  expect(m.rots.every(t => t && t !== 'none'), '기울기가 아예 없음: ' + JSON.stringify(m.rots));
+  // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
+  expect(m.ws[0] >= Math.max(m.ws[1], m.ws[2]) * 1.05,
+    '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + m.ws.map(w => w.toFixed(0)).join('/'));
+  expect(Math.max(m.ws[1], m.ws[2]) <= Math.min(m.ws[1], m.ws[2]) * 1.15,
+    '2·3단계 칸 크기가 서로 다르다: ' + m.ws.map(w => w.toFixed(0)).join('/'));
   expect(m.ov < 1, '칸끼리 겹침: ' + m.ov.toFixed(0) + 'px²');
   expect(m.off === 0, '칸이 화면 밖으로 나감');
   expect(m.horiz <= 1, '홈 가로 스크롤 ' + m.horiz + 'px');

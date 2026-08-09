@@ -153,9 +153,14 @@
 
 /* ── ⑤ 첫 칸 강조 — 노란 칠 한 가지로 ────────────────────────
  * 크기만 키우면 다섯 살은 "여기부터"를 못 알아본다. 색이 있어야 눈이 간다.
- * 앱이 이미 칠해 뒀으면 그쪽이 이긴다(여기는 바닥). */
-.menu > *:first-child {
-  background-color: #FFF6E0;
+ *
+ * !important 가 붙은 이유 — shared/crayon.css 의
+ *   .menu-card { background: var(--tint, #fff) !important }
+ * 가 이기고 있어서 이 규칙이 **한동안 아무 데도 안 먹고 있었다**(2조가 찾아냈다).
+ * 지오보드처럼 앱이 따로 칠해 둔 곳만 노랬다. */
+.menu > .menu-card:nth-of-type(1),
+.menu > .theme-card:nth-of-type(1) {
+  background: #FFF6E0 !important;
 }
 
 /* ── ⑤-2 시작 화살표 — 첫 칸을 가리키는 손그림 점선 화살표 (29개 공용) ──
@@ -261,6 +266,25 @@
 
 @media (prefers-reduced-motion: reduce) {
   .menu > * { rotate: none; }
+}
+
+/* ── ⑦-2 격자 메뉴 보호 (2조가 찾아낸 함정) ──────────────────
+ * 산수의 #menu 는 grid-template-areas 로 11칸 자리를 못 박은 격자다.
+ * 위 ③ 이 .menu > .menu-card 에 width 를 직접 걸면 카드가 **제 격자 칸을 넘쳐**
+ * 옆 칸 위로 올라탄다(폰 세로에서 칸 54.5px 인데 카드가 156px 로 강제됐다).
+ * 지금 격자인 곳은 산수와 실험실 둘이고 실험실은 칸이 넓어 우연히 살아 있을 뿐이다.
+ *
+ * 그래서 격자 메뉴에서는 폭 강제를 되돌린다. 새로 격자 메뉴를 만들 때도
+ * 이 두 줄만 있으면 안전하다 — 폭은 격자가 정한다.
+ */
+.menu[style*="grid"] > .menu-card,
+.menu.grid > .menu-card,
+#menu.grid-menu > .menu-card,
+.grid-menu > .menu-card {
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 /* ── ⑧ 놀잇감에는 닿지 않는다 (안전 고리) ────────────────────

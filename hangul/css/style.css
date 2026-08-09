@@ -133,7 +133,8 @@ h1 {
 /* 가장 큰 칸만은 아래위로 밀지 않고 키우지도 않는다 — 덩치가 커서 5%만 밀려도
    아랫줄과 물린다. 기울기는 남겨 손으로 붙인 느낌은 그대로. (누를 때·모션 끄기 때는
    doodle-menu.css 의 !important 규칙이 그대로 이긴다) */
-#scr-home .m-learn { transform: translateX(-3%) rotate(-1.8deg); }
+/* 흩뿌리기는 공용(shared/screen.css)이 기울기만으로 준다.
+   여기서 transform 으로 자리를 옮기면 카드가 커진 새 규격에서 옆 칸을 밀어낸다. */
 
 /* 글씨·그림도 칸을 따라 커지고 작아진다 (칸만 커지면 속이 비어 보인다) */
 #scr-home .m-learn .mc-emoji { font-size: clamp(72px, 15vmin, 118px); }
