@@ -54,8 +54,9 @@ await check('그림 단어장: 카테고리 10개 → 단어 목록', async () =
 });
 
 await check('단어 누르기 → 답변 화면(영어·읽는 법) + 배운 단어로 기록', async () => {
-  const en = await page.locator('#word-grid .word-card .word-en').first().textContent();
-  await page.locator('#word-grid .word-card').first().click();
+  // 첫 칸은 elephant — 아래 '마이크로 물어보기'가 코끼리를 쓰므로 겹치지 않게 둘째 칸을 누른다
+  const en = await page.locator('#word-grid .word-card .word-en').nth(1).textContent();
+  await page.locator('#word-grid .word-card').nth(1).click();
   await page.waitForSelector('#screen-answer.active');
   const shown = await page.locator('#answer-en').textContent();
   expect(shown === en.toUpperCase(), '답변 단어: ' + shown + ' / ' + en);
@@ -76,7 +77,8 @@ await check('마이크로 물어보기: 인식 결과를 넣으면 그 단어의
 await check('못 알아들은 말: 부드럽게 다시 묻고 부모 확인용으로 남는다', async () => {
   await page.locator('#answer-home').click();
   await page.waitForSelector('#screen-home.active');
-  await page.evaluate(() => App.handleSpeech(['우주정거장이 영어로 뭐야']));
+  // 사전에 없는 말 (있는 말을 고르면 답변 화면으로 가 버린다 — '우주정거장'은 space 로 잡힌다)
+  await page.evaluate(() => App.handleSpeech(['뽀로로가 영어로 뭐야']));
   await page.waitForSelector('#screen-unknown.active');
   const msg = await page.locator('#unknown-msg').textContent();
   expect(!/틀렸|잘못/.test(msg), '혼내는 말이 있으면 안 됨: ' + msg);

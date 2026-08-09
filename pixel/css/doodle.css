@@ -60,8 +60,9 @@
   font-size: clamp(26px, 3.4vw, 36px);
   text-align: center;
 }
-/* 게임 화면 머리줄은 예전 크기 그대로 (제목이 뒤로 단추와 한 줄에 들어가야 한다) */
-.game-header .app-title { font-size: clamp(18px, 4.5vmin, 34px); }
+/* 첫 화면이 아닌 머리줄(내 작품·채색)은 예전 크기 그대로 —
+   제목이 뒤로 단추와 한 줄에 들어가야 해서 폰에서는 한 호흡 작아야 한다 */
+.screen:not(#screen-home) .app-title { font-size: clamp(18px, 4.5vmin, 34px); }
 
 /* ─────────── 손그림 아이콘 자리 ─────────── */
 .ic {

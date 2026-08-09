@@ -51,6 +51,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   gap: 10px;
   flex: 0 0 auto;
 }
+/* 오른쪽 위는 공용 집 단추(shared/home-button.js)가 고정으로 차지한다.
+   공용 CSS 는 `.bar`·`.home-head` 만 밀어 주는데 이 앱의 바는 이름이 달라 안 걸려서,
+   답변·단어장 화면의 앱 🏠 가 큰 집 단추 **밑에 깔려** 눌리지 않았다. 여기서 비켜 준다. */
+.top-bar {
+  padding-right: calc(clamp(60px, 8.6vw, 80px) + 22px + env(safe-area-inset-right, 0px));
+}
 .app-title {
   font-size: clamp(20px, 4.2vmin, 32px);
   font-weight: 900;
