@@ -38,10 +38,11 @@ await check('홈: 단계 카드 3개 + 별 0', async () => {
 });
 
 await check('낙서장 첫 화면: 손그림 아이콘 + 시작 화살표 + 크기 위계 + 흩뿌리기', async () => {
-  // 이모지 대신 손그림 SVG (제목·별·목소리 단추)
+  // 이모지 대신 손그림 SVG (제목·별)
   expect(await page.locator('h1 svg use[href="#sl-title"]').count() === 1, '제목 손그림이 없음');
   expect(await page.locator('.stat svg use[href="#sl-star"]').count() === 1, '별 손그림이 없음');
-  expect(await page.locator('#btn-voice svg use[href="#sl-talk"]').count() === 1, '목소리 손그림이 없음');
+  // 목소리 단추는 부모용이라 놀이 화면에서 감췄다(shared/crayon.css) — 손그림 모양 대신 '안 보임'을 잰다
+  expect(await page.locator('#btn-voice').isVisible() === false, '목소리 단추가 아직 보인다');
   // 시작 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
   // 앱이 따로 그리던 옛 화살표(.start-arrow)는 걷어냈다 — 다시 생기면 두 개가 겹친다.
   const ar = await page.evaluate(() => {
@@ -234,6 +235,25 @@ await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침 검사)',
     expect(m.goalTop >= -2, s.name + ': 본보기 카드가 위로 잘림 ' + m.goalTop);
   }
   await page.setViewportSize({ width: 1180, height: 820 });
+});
+
+/* 목소리 설정 단추는 부모용이라 놀이 화면에서 감췄다(shared/crayon.css, 2026-08).
+ * 부모님이 아이패드에서 "저 메세지 아이콘은 뭐야"라고 물으셨고, 아이는 읽지 못하는 단추였다.
+ * 예전에 이 자리에서 재던 「손그림 아이콘이다」·「터치 46px 이다」를 방향만 뒤집는다 —
+ * 이제 지켜야 할 것은 "놀이 화면 어디에도 안 보인다"다. 바꾸는 곳은 부모님 페이지. */
+await check('목소리 단추: 놀이 화면에 안 보인다 (부모님 페이지에서 바꾼다)', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const m = await page.evaluate(() => {
+    const el = document.querySelector('#btn-voice');
+    if (!el) return { gone: true };
+    const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+    return { display: cs.display, visibility: cs.visibility, laidOut: el.offsetParent !== null,
+      w: Math.round(r.width), h: Math.round(r.height) };
+  });
+  expect(m.gone || (m.display === 'none' && !m.laidOut && !m.w && !m.h),
+    '목소리 단추가 아직 놀이 화면에 보인다: ' + JSON.stringify(m));
+  // 길게 눌러 여는 방식(shared/voice-settings.js)은 그대로 살려 뒀다 — CSS 규칙만 걷어내면 되돌아온다
 });
 
 await check('콘솔 오류 0', async () => {

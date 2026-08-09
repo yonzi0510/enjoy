@@ -254,3 +254,12 @@ body {
   box-shadow: none !important;
   background: rgba(255, 253, 246, .82) !important;
 }
+
+
+/* ③ 목소리 설정 단추는 놀이 화면에서 감춘다 (2026-08)
+ * 부모용 설정인데 아이 머리줄에 앉아 있었고, 모양도 앱마다 제각각이라
+ * (말풍선·🗣️·앱별 SVG) 부모님이 "저 메세지 아이콘은 뭐야"라고 물으셨다.
+ * 읽히지 않는 단추는 자리만 차지한다 — 부모님 페이지에서 바꾸도록 옮겼다.
+ * 길게 눌러 여는 방식(shared/voice-settings.js)은 그대로 살아 있으니,
+ * 이 규칙만 걷어내면 언제든 되돌릴 수 있다. */
+#btn-voice { display: none !important; }

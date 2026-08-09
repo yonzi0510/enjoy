@@ -197,6 +197,47 @@ for (const [tag, w, h] of SIZES) {
   ok('떠 있는 펫 단추 숨김', petBtn.startsWith('none'), petBtn);
 
   ok('기능 검증 중 콘솔 오류 0', conerr.length === 0, conerr.join(' | '));
+
+  /* ── 목소리 · 버전 · 새로 받기 (2026-08 추가) ─────────────────
+   * 목소리 설정은 놀이 화면에서 감췄으므로(shared/crayon.css) 여기가 유일한 입구다.
+   * 새로 받기는 받아 둔 파일만 지운다 — 아이 진행도는 절대 건드리면 안 된다. */
+  {
+    await page.evaluate(() => {
+      localStorage.setItem('hangul-playground-v1', JSON.stringify({ stars: 7 }));
+      localStorage.setItem('enjoy-pet-v1', JSON.stringify({ g: 12, collection: [{ sp: 'chick' }] }));
+    });
+    await page.reload({ waitUntil: 'networkidle' });
+    await unlock(page);
+
+    ok('목소리 고르기 단추가 있다', await page.isVisible('#open-voice'));
+    await page.click('#open-voice');
+    await page.waitForTimeout(500);
+    const vsOpen = await page.evaluate(() => {
+      const o = document.querySelector('.vs-overlay');
+      return !!o && !o.classList.contains('vs-hidden');
+    });
+    ok('목소리 설정 화면이 열린다', vsOpen);
+    await page.click('.vs-ok').catch(() => {});
+    await page.waitForTimeout(300);
+
+    const ver = (await page.textContent('#ver-now')) || '';
+    ok('버전이 보인다 (sw.js 캐시 이름에서 읽는다)', /\d{4}-\d{2}-\d{2}/.test(ver), '읽은 값: ' + ver);
+
+    const before = await page.evaluate(() => [
+      localStorage.getItem('hangul-playground-v1'),
+      localStorage.getItem('enjoy-pet-v1')]);
+    await page.click('#hard-refresh');
+    await page.waitForTimeout(2500);
+    const after = await page.evaluate(async () => ({
+      keep: [localStorage.getItem('hangul-playground-v1'), localStorage.getItem('enjoy-pet-v1')],
+      caches: (await caches.keys()).length,
+    }));
+    ok('새로 받기가 받아 둔 파일을 지운다', after.caches === 0, '캐시 ' + after.caches + '개 남음');
+    ok('새로 받기가 아이 진행도를 지우지 않는다',
+      after.keep[0] === before[0] && after.keep[1] === before[1],
+      '전 ' + JSON.stringify(before) + ' → 후 ' + JSON.stringify(after.keep));
+  }
+
   await ctx.close();
 }
 

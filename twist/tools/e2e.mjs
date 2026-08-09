@@ -209,7 +209,8 @@ await check('손그림 아이콘: 화면 틀에 이모지가 남아 있지 않�
   expect(!emoji.test(homeText), '홈에 이모지 남음: ' + homeText);
   expect(await page.locator('.home-head h1 svg').count() === 1, '제목 손그림 없음');
   expect(await page.locator('#scr-home .stat svg').count() === 1, '별 아이콘 없음');
-  expect(await page.locator('#btn-voice svg').count() === 1, '목소리 아이콘 없음');
+  // 목소리 단추는 부모용이라 놀이 화면에서 감췄다(shared/crayon.css) — 아이콘 모양 대신 '안 보임'을 잰다
+  expect(await page.locator('#btn-voice').isVisible() === false, '목소리 단추가 아직 보인다');
   // 떨림 필터가 문서에 딱 하나 있다
   expect(await page.locator('#twist-kd').count() === 1, '손그림 떨림 필터 없음');
   // 시작 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
@@ -360,8 +361,8 @@ await check('머리 줄 겹침 없음: 듣기·제목·뒤로 ↔ 집 단추·�
         const mine = [['제목', rect('#scr-home.on h1') || rect('.screen.on .bar h2')],
                       ['듣기', rect('#scr-play.on #btn-listen')],
                       ['뒤로', rect('.screen.on .back')],
-                      ['별', rect('#scr-home.on .stat')],
-                      ['목소리', rect('#scr-home.on #btn-voice')]];
+                      // 목소리 단추는 놀이 화면에서 감췄으니(shared/crayon.css) 겹칠 자리가 없다 — 목록에서 뺀다
+                      ['별', rect('#scr-home.on .stat')]];
         const theirs = [['집 단추', rect('.enjoy-home-btn')], ['남은시간', rect('.tl-bar-tag')]];
         const out = [];
         mine.forEach(([an, a]) => theirs.forEach(([bn, b]) => {
@@ -384,7 +385,7 @@ await check('머리 줄 겹침 없음: 듣기·제목·뒤로 ↔ 집 단추·�
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
-await check('터치 44px: 뒤로·듣기·목소리·집 단추·블록', async () => {
+await check('터치 44px: 뒤로·듣기·집 단추·블록', async () => {
   for (const s of [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드 가로' }]) {
     await page.setViewportSize({ width: s.w, height: s.h });
     await page.goto(BASE);
@@ -392,7 +393,8 @@ await check('터치 44px: 뒤로·듣기·목소리·집 단추·블록', async 
     const small = await page.evaluate(() => {
       const out = [];
       const chk = (name, el) => { if (!el) return; const r = el.getBoundingClientRect(); if (r.width < 44 || r.height < 44) out.push(name + ' ' + Math.round(r.width) + '×' + Math.round(r.height)); };
-      chk('목소리', document.querySelector('#btn-voice'));
+      // 목소리 단추는 놀이 화면에서 감췄다(shared/crayon.css) — 안 눌리는 것이니 손가락 크기를 잴 대상이 아니다.
+      // 나머지 단추(집·뒤로·듣기·블록)는 그대로 잰다.
       chk('집 단추', document.querySelector('.enjoy-home-btn'));
       return out;
     });
@@ -413,6 +415,25 @@ await check('터치 44px: 뒤로·듣기·목소리·집 단추·블록', async 
     expect(small2.length === 0, s.name + ': ' + small2.join(', '));
   }
   await page.setViewportSize({ width: 1180, height: 820 });
+});
+
+/* 목소리 설정 단추는 부모용이라 놀이 화면에서 감췄다(shared/crayon.css, 2026-08).
+ * 부모님이 아이패드에서 "저 메세지 아이콘은 뭐야"라고 물으셨고, 아이는 읽지 못하는 단추였다.
+ * 예전에 이 자리에서 재던 「손그림 아이콘이다」·「터치 46px 이다」를 방향만 뒤집는다 —
+ * 이제 지켜야 할 것은 "놀이 화면 어디에도 안 보인다"다. 바꾸는 곳은 부모님 페이지. */
+await check('목소리 단추: 놀이 화면에 안 보인다 (부모님 페이지에서 바꾼다)', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const m = await page.evaluate(() => {
+    const el = document.querySelector('#btn-voice');
+    if (!el) return { gone: true };
+    const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+    return { display: cs.display, visibility: cs.visibility, laidOut: el.offsetParent !== null,
+      w: Math.round(r.width), h: Math.round(r.height) };
+  });
+  expect(m.gone || (m.display === 'none' && !m.laidOut && !m.w && !m.h),
+    '목소리 단추가 아직 놀이 화면에 보인다: ' + JSON.stringify(m));
+  // 길게 눌러 여는 방식(shared/voice-settings.js)은 그대로 살려 뒀다 — CSS 규칙만 걷어내면 되돌아온다
 });
 
 await check('콘솔 오류 0', async () => {

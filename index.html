@@ -138,6 +138,15 @@ body::before{
 
 :focus-visible{outline:4px dashed rgba(214,157,19,.9);outline-offset:-4px;border-radius:18px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* 버전 쪽지 — 아이 눈에는 안 띄고, 부모님이 찾으면 보이는 정도로 */
+#ver-tag{
+  position:fixed; right:calc(8px + env(safe-area-inset-right,0px));
+  bottom:calc(6px + env(safe-area-inset-bottom,0px));
+  font-size:11px; letter-spacing:.5px; color:#B9AE95; opacity:.6;
+  pointer-events:none; z-index:5; font-variant-numeric:tabular-nums;
+}
+#ver-tag.stale{ color:#C2761B; opacity:.95; font-weight:800 }
 </style>
 </head>
 <body>
@@ -463,6 +472,20 @@ body::before{
 })();
 </script>
 
+<!-- 오른쪽 아래 구석에 아주 연하게 — 무슨 버전이 깔렸는지 PIN 없이도 보이게.
+     "고쳤는데 화면은 그대로"를 겪었을 때 캐시 탓인지 바로 가르려는 것이다. -->
+<div id="ver-tag" aria-hidden="true"></div>
+<script src="./shared/version.js"></script>
+<script>
+(async () => {
+  const el = document.getElementById('ver-tag');
+  if (!el || !window.EnjoyVersion) return;
+  const v = await EnjoyVersion.get();
+  if (!v.device && !v.server) return;
+  el.textContent = v.stale ? (v.device + ' → ' + v.server) : (v.device || v.server);
+  if (v.stale) el.classList.add('stale');   // 기기가 아직 옛 버전이면 눈에 띄게
+})();
+</script>
 <script src="./shared/sw-register.js"></script>
 <script src="./shared/pet-avatar.js"></script>
 <script src="./shared/pet.js"></script>

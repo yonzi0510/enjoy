@@ -86,6 +86,29 @@
   </div>
 
   <div class="card">
+    <h2>🗣️ 목소리</h2>
+    <p class="note">아이 화면에서는 이 단추를 감췄어요 — 부모용 설정인데 아이 머리줄에 있어서, 무엇인지도 알기 어려웠거든요. 여기서 바꾸시면 모든 놀이터에 함께 적용돼요.</p>
+    <div class="row">
+      <span class="lbl">목소리·말 빠르기<span class="sub">기기에 있는 한국어 목소리 중에서 고르고, 천천히·보통·빠르게를 정해요. 누르면 바로 들려요.</span></span>
+      <button type="button" class="reset-btn tall" id="open-voice">🗣️ 목소리 고르기</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔄 버전과 새로고침</h2>
+    <p class="note">놀이터를 고쳐도 기기에 저장된 옛 파일이 먼저 열려서, 아이 화면만 예전 그대로인 일이 있었어요. 지금은 인터넷이 되면 늘 새것을 받도록 고쳤지만, 확인하실 수 있게 여기 남겨 둡니다.</p>
+    <div class="row">
+      <span class="lbl">지금 버전<span class="sub" id="ver-note">확인하는 중…</span></span>
+      <b id="ver-now" style="font-size:18px;letter-spacing:1px">…</b>
+    </div>
+    <div class="row">
+      <span class="lbl">싹 지우고 새로 받기<span class="sub">기기에 저장된 놀이터 파일만 지우고 다시 받아요.
+        <b>아이 진행도·카드·펫은 그대로예요.</b> 화면이 예전 모습이면 눌러 주세요.</span></span>
+      <button type="button" class="reset-btn tall" id="hard-refresh">🔄 새로 받기</button>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>🎤 음성 인식(마이크)</h2>
     <div class="row">
       <span class="lbl">마이크로 말하기 사용<span class="sub">영어·글씨·프랙티카 놀이터가 씁니다.</span></span>
@@ -132,6 +155,8 @@
 <script src="../shared/profile.js"></script>
 <script src="../shared/pet-avatar.js"></script>
 <script src="../shared/pet.js"></script>
+<script src="../shared/voice-settings.js"></script>
+<script src="../shared/version.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -374,6 +399,52 @@
     renderSummary();
   }
 })();
+
+/* 아래 코드는 위 IIFE 바깥이라 그 안의 toast 를 못 쓴다.
+   같은 쪽지를 띄우는 작은 함수를 따로 둔다(마크업은 그대로 #toast 를 쓴다). */
+function verToast(msg) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+/* ── 목소리 설정 ─────────────────────────────────────────
+   놀이 화면에서 감췄으므로(shared/crayon.css) 여기가 유일한 입구다.
+   VoiceSettings.open() 이 자기 화면을 스스로 그린다. */
+document.getElementById('open-voice').addEventListener('click', () => {
+  if (window.VoiceSettings) VoiceSettings.open();
+  else verToast('목소리 설정을 아직 못 불러왔어요 — 잠시 뒤 다시 눌러 주세요.');
+});
+
+/* ── 버전 보이기 ─────────────────────────────────────────
+   버전은 따로 적어 두지 않는다 — sw.js 의 캐시 이름이 곧 버전이다(shared/version.js). */
+(async () => {
+  const now = document.getElementById('ver-now');
+  const note = document.getElementById('ver-note');
+  if (!now || !window.EnjoyVersion) return;
+  const v = await EnjoyVersion.get();
+  now.textContent = v.device || v.server || '알 수 없음';
+  if (v.stale) {
+    note.innerHTML = '<b>새 버전 ' + v.server + ' 가 나와 있어요.</b> 아래 「새로 받기」를 눌러 주세요.';
+  } else if (v.device || v.server) {
+    note.textContent = '최신이에요.';
+  } else {
+    note.textContent = '아직 확인할 수 없어요 (인터넷을 확인해 주세요).';
+  }
+})();
+
+/* ── 싹 지우고 새로 받기 ─────────────────────────────────
+   지우는 것은 받아 둔 파일뿐이다. localStorage(진행도)는 건드리지 않는다. */
+document.getElementById('hard-refresh').addEventListener('click', async () => {
+  const btn = document.getElementById('hard-refresh');
+  btn.disabled = true;
+  btn.textContent = '지우는 중…';
+  await EnjoyVersion.hardRefresh();
+  verToast('✅ 새로 받을게요');
+  setTimeout(() => location.reload(), 600);
+});
 </script>
 <script src="../shared/sw-register.js"></script>
 </body>

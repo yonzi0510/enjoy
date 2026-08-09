@@ -217,7 +217,9 @@ await check('UI 이모지 없음: 화면 틀은 전부 손그림 SVG', async () 
   const bad = await page.evaluate((src) => {
     const re = new RegExp(src, 'u');
     const out = [];
-    ['h1', '.stat', '#btn-voice', '#list-title', '#play-title', '#btn-listen',
+    // 목소리 단추(#btn-voice)는 놀이 화면에서 감췄다(shared/crayon.css) — 안 보이는 것을 훑으면
+    // 오탐이 나므로 목록에서 뺐다. 나머지 화면 틀은 그대로 훑는다.
+    ['h1', '.stat', '#list-title', '#play-title', '#btn-listen',
      '#scr-list .back', '#btn-play-back', '#reward-donut'].forEach(sel => {
       const el = document.querySelector(sel);
       if (el && re.test(el.textContent)) out.push(sel + ':' + el.textContent.trim());
@@ -226,7 +228,8 @@ await check('UI 이모지 없음: 화면 틀은 전부 손그림 SVG', async () 
   }, emoji.source);
   expect(bad.length === 0, '이모지가 남음 — ' + bad.join(', '));
   expect(await page.locator('h1 svg.dn-ico').count() === 1, '제목 손그림 아이콘');
-  expect(await page.locator('#btn-voice svg.dn-ico').count() === 1, '목소리 단추 손그림 아이콘');
+  // 손그림 아이콘이던 자리를 뒤집는다 — 목소리 설정은 부모용이라 놀이 화면에서 감췄다(shared/crayon.css)
+  expect(await page.locator('#btn-voice').isVisible() === false, '목소리 단추가 아직 보인다');
   expect(await page.locator('#reward-donut svg.dn-ico').count() === 1, '축하 도넛 손그림 아이콘');
 });
 
@@ -360,6 +363,25 @@ await check('터치 영역 44px 이상 (폰 세로·패드 가로)', async () =>
     expect(bad.length === 0, s.name + ': ' + bad.join(', '));
   }
   await page.setViewportSize({ width: 1180, height: 820 });
+});
+
+/* 목소리 설정 단추는 부모용이라 놀이 화면에서 감췄다(shared/crayon.css, 2026-08).
+ * 부모님이 아이패드에서 "저 메세지 아이콘은 뭐야"라고 물으셨고, 아이는 읽지 못하는 단추였다.
+ * 예전에 이 자리에서 재던 「손그림 아이콘이다」·「터치 46px 이다」를 방향만 뒤집는다 —
+ * 이제 지켜야 할 것은 "놀이 화면 어디에도 안 보인다"다. 바꾸는 곳은 부모님 페이지. */
+await check('목소리 단추: 놀이 화면에 안 보인다 (부모님 페이지에서 바꾼다)', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const m = await page.evaluate(() => {
+    const el = document.querySelector('#btn-voice');
+    if (!el) return { gone: true };
+    const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+    return { display: cs.display, visibility: cs.visibility, laidOut: el.offsetParent !== null,
+      w: Math.round(r.width), h: Math.round(r.height) };
+  });
+  expect(m.gone || (m.display === 'none' && !m.laidOut && !m.w && !m.h),
+    '목소리 단추가 아직 놀이 화면에 보인다: ' + JSON.stringify(m));
+  // 길게 눌러 여는 방식(shared/voice-settings.js)은 그대로 살려 뒀다 — CSS 규칙만 걷어내면 되돌아온다
 });
 
 await check('콘솔 오류 0', async () => {
