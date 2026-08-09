@@ -198,8 +198,8 @@
   position: absolute;
   left: clamp(2px, .7vmin, 8px);
   top: clamp(2px, .7vmin, 8px);
-  width: clamp(34px, 6.6vmin, 74px);
-  height: clamp(34px, 6.6vmin, 74px);
+  width: clamp(32px, 5.8vmin, 58px);
+  height: clamp(32px, 5.8vmin, 58px);
   background: var(--start-arrow) center / contain no-repeat;
   pointer-events: none;   /* 카드를 누르는 것을 막지 않는다 */
   z-index: 2;
@@ -215,7 +215,7 @@
    거기만 화살표를 칸 바로 위 바깥에 두고, 화살촉이 칸을 내리 가리키게 한다. */
 .track-list > .track-card:first-of-type::before {
   left: clamp(6px, 2vmin, 20px);
-  top: calc(-1 * clamp(34px, 6.6vmin, 74px) - 4px);
+  top: calc(-1 * clamp(32px, 5.8vmin, 58px) - 4px);
 }
 
 /* 앱마다 따로 만들어 붙였던 옛 화살표는 감춘다 — 두 개가 겹쳐 보이면 안 된다.

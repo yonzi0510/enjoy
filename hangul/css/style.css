@@ -149,22 +149,11 @@ h1 {
 /* 칸 높이는 속을 따라간다 — 늘려 맞추면 작은 칸이 안 작아 보여서 위계가 흐려진다 */
 #scr-home .menu { align-items: flex-start; }
 
-/* 화살표 자리 — 칸 왼쪽 위에 붙어 칸을 따라 기울어진다.
-   흐름에서 빠져 있으므로(absolute) 위쪽에 그만큼 자리를 비워 둔다.
-   비워 둘 높이와 화살표 높이를 같은 값(--arrow-h)에서 뽑아, 화면이 어떻든
-   화살표가 머리줄(제목·점수 칸)까지 올라가는 일이 없게 못 박는다. */
-#scr-home { --arrow-h: clamp(70px, 15vmin, 132px); }
-#scr-home .menu { margin-top: var(--arrow-h); }
+/* 시작 화살표는 이제 공용이다 — shared/screen.css 「⑤-2 시작 화살표」가
+   29개 앱 첫 칸에 같은 그림·같은 색으로 얹는다. 여기 있던 분홍 화살표와
+   그것을 위해 위쪽에 비워 두던 자리(--arrow-h)는 걷어냈다.
+   (공용 화살표는 칸 안쪽 모서리에 앉으므로 비워 둘 자리가 필요 없다) */
 #scr-home .m-learn { position: relative; }
-.mc-arrow {
-  position: absolute;
-  left: -9%;
-  bottom: calc(100% - 4px);
-  height: calc(var(--arrow-h) - 8px);
-  width: auto;
-  overflow: visible;
-  pointer-events: none;
-}
 /* 메뉴 카드는 카드마다 자기 파스텔색 — chunk도 같은 색을 짙게 만든 단면으로 */
 .m-learn  { background: #FFF3C4; --chunk: #E8B62A; --accent: 245,179,1; }
 .m-trace  { background: #FFE0EC; --chunk: #EC6F9F; --accent: 255,143,176; }
@@ -673,7 +662,6 @@ h1 {
   .first-stage { gap: clamp(8px, 2vmin, 14px); }
   /* 세로가 짧으면 다섯 칸을 한 줄로 눕혀 스크롤을 없앤다.
      위계는 그대로 — 가로로 나란히 있어도 배우기가 가장 크다. */
-  #scr-home { --arrow-h: clamp(40px, 10vmin, 54px); }
   #scr-home .menu { gap: clamp(18px, 2.4vw, 30px) !important; }
   #scr-home .m-learn { width: clamp(160px, 19vw, 210px); }
   #scr-home .m-trace { width: clamp(120px, 14.5vw, 155px); }
@@ -703,7 +691,6 @@ h1 {
 /* 세로가 짧은 폰(구형 4.7인치 등): 여백만 조여 스크롤 없이 다섯 칸이 다 보이게 한다.
    크기 위계는 그대로 둔다 — 줄일 것은 빈 곳이지 그림이 아니다. */
 @media (orientation: portrait) and (max-height: 700px) {
-  #scr-home { --arrow-h: clamp(54px, 11vmin, 72px); }
   #scr-home .home-head { margin-top: clamp(22px, 4vmin, 30px); }
   #scr-home .menu-card { padding: clamp(10px, 2.2vmin, 18px); }
   #scr-home .m-learn .mc-emoji { font-size: clamp(58px, 13vmin, 92px); }
