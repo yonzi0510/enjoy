@@ -98,11 +98,25 @@ await check('낙서장 배치: 단계 카드마다 다른 기울기 + 시작 화
     return {
       rots: ['.c-s1', '.c-s2', '.c-s3'].map(s => rot(document.querySelector(s))),
       widths: ['.c-s1', '.c-s2', '.c-s3'].map(w),
-      arrow: !!document.querySelector('#menu .start-arrow'),
-      arrowFirst: document.querySelector('#menu').firstElementChild.classList.contains('start-arrow'),
+      // 시작 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
+      // 앱이 따로 그리던 옛 화살표(.start-arrow)는 걷어냈다 — 다시 생기면 두 개가 겹친다.
+      arrow: (() => {
+        const has = c => {
+          const s = getComputedStyle(c, '::before');
+          return !!s.backgroundImage && s.backgroundImage !== 'none'
+            && s.backgroundImage.includes('svg') && parseFloat(s.width) > 20;
+        };
+        const cards = [...document.querySelectorAll('#menu > .menu-card')];
+        return { first: !!cards[0] && has(cards[0]), rest: cards.slice(1).filter(has).length,
+          firstIsS1: !!cards[0] && cards[0].classList.contains('c-s1'),
+          old: document.querySelectorAll('.start-arrow, .first-arrow, .mc-arrow').length };
+      })(),
     };
   });
-  expect(m.arrow && m.arrowFirst, '제목에서 첫 놀이로 향하는 점선 화살표가 첫 칸에 없음');
+  expect(m.arrow.firstIsS1, '첫 칸이 1단계(반짝반짝 선)가 아님');
+  expect(m.arrow.first, '공용 시작 화살표가 첫 칸에 없음');
+  expect(m.arrow.rest === 0, '첫 칸이 아닌 칸에도 화살표가 있음: ' + m.arrow.rest);
+  expect(m.arrow.old === 0, '앱이 따로 그리던 옛 화살표가 남아 있음');
   expect(m.rots.every(r => r !== null && Math.abs(r) > 0.4), '카드가 반듯하게 놓여 있음(기울기 없음): ' + m.rots);
   expect(new Set(m.rots).size === 3, '카드 기울기가 서로 같음: ' + m.rots);
   // 크기 위계 — 먼저 할 것이 가장 크다

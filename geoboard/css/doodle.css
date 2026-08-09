@@ -24,7 +24,7 @@
 #scr-home .menu {
   align-items: flex-start;              /* 카드 키가 달라도 윗선을 맞춘다 */
   max-width: 780px;
-  padding-top: clamp(44px, 8.5vmin, 86px) !important;   /* 화살표가 들어갈 자리 */
+  padding-top: clamp(44px, 8.5vmin, 86px) !important;   /* 제목과 첫 줄 사이 여백 */
   row-gap: clamp(18px, 3.6vh, 44px) !important;
 }
 .menu > .menu-card { position: relative; }
@@ -59,18 +59,7 @@
   border-width: 4px !important;
 }
 
-/* 손그림 점선 화살표 — 첫 칸 왼쪽 위 바깥에 걸쳐 카드 머리를 가리킨다.
-   카드 기준 절대배치라 화면이 어떻게 접히든 늘 첫 놀이를 가리킨다. */
-.first-arrow {
-  position: absolute;
-  left: 42%;
-  bottom: calc(100% - 2px);
-  width: clamp(86px, 17vmin, 150px);
-  height: calc(clamp(86px, 17vmin, 150px) / 2);
-  color: #8B6FD6;
-  pointer-events: none;
-  overflow: visible;
-}
+/* (앱마다 그리던 손그림 화살표는 걷어냈다 — shared/screen.css 가 첫 칸 안쪽에 공용 화살표를 얹는다) */
 
 /* 폰 세로처럼 좁은 화면에서는 첫 칸이 한 줄을 통째로 써서 더 크게 —
    아래 줄에 나머지 둘이 나란히 붙어, 무엇부터 할지가 한눈에 보인다. */

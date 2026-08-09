@@ -626,17 +626,9 @@ h1 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -.2em; }
 .heart { font-size: clamp(28px, 5.6vmin, 44px); }
 .bb-heart { color: #F0524B; } /* 말풍선 하트는 빨갛게 (글자색을 물려받지 않게) */
 
-/* ── 첫 화면: 크기 위계 + 시작 화살표 ── */
+/* ── 첫 화면: 크기 위계 ── */
+/* (시작 화살표는 shared/screen.css 가 첫 칸 안쪽에 얹는다 — 앱에서 그리지 않는다) */
 .menu { align-items: center; }
-.start-arrow { /* 제목 밑에서 첫 가게(1단계)로 향하는 손그림 점선 화살표 */
-  width: clamp(56px, 11vmin, 96px);
-  aspect-ratio: 110 / 130;
-  flex: none;
-  align-self: flex-start;
-  margin-top: clamp(-6px, -1vmin, 0px);
-  overflow: visible;
-  pointer-events: none;
-}
 .c-l1 { width: clamp(196px, 38vmin, 300px); }
 .c-l2 { width: clamp(164px, 30vmin, 240px); }
 .c-l3 { width: clamp(140px, 25vmin, 200px); }
