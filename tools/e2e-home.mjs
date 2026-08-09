@@ -12,7 +12,7 @@
  *   · 가로로 넘쳐 스크롤이 생기지 않는지
  * 를 확인한다.
  */
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -168,6 +168,71 @@ const missing = ids.filter(id => !existsSync(join(ROOT, id, 'index.html')));
 ok('모든 놀이 폴더가 있음', missing.length === 0, missing.join(', '));
 ok('중복 없음', new Set(ids).size === ids.length);
 await page.close();
+
+/* ── 서비스 워커 정책 (소스 검사) ────────────────────────────────
+ * 아래 동작 검사는 브라우저 타이밍을 타서 전체 e2e 안에서는 가끔 헐거웠다.
+ * 정책 자체는 소스에서 확실히 못 박는다 — 이게 다시 캐시 우선으로 돌아가면 여기서 걸린다. */
+{
+  const sw = readFileSync(join(ROOT, 'sw.js'), 'utf8');
+  const fetchBody = sw.slice(sw.indexOf("addEventListener('fetch'"));
+  const iFetch = fetchBody.indexOf('await fetch(');
+  const iMatch = fetchBody.indexOf('cache.match(');
+  ok('sw.js 가 네트워크 우선이다 (fetch 를 cache.match 보다 먼저 한다)',
+    iFetch > -1 && iMatch > -1 && iFetch < iMatch,
+    `fetch@${iFetch} vs cache.match@${iMatch}`);
+  ok('sw.js 에 오프라인 대비 캐시 폴백이 있다', /catch[\s\S]{0,200}cache\.match\(/.test(fetchBody));
+  ok('캐시 이름이 고정 v1 이 아니다 (배포 때 옛 캐시가 청소되게)',
+    !/enjoy-cache-v1['"]/.test(sw), sw.match(/const CACHE = [^;]+/)?.[0] || '');
+}
+
+/* ── 서비스 워커: 배포한 새 파일이 아이 기기에 실제로 닿는가 ──────────────
+ * 예전 sw.js 는 캐시를 먼저 주고 새 파일은 뒤에서 받았다(stale-while-revalidate).
+ * 그래서 배포해도 아이 화면은 늘 한 발 늦었고, 자주 안 여는 놀이는 몇 달 전 모습이
+ * 그대로 남았다(햄버거 가게가 낙서장 개편 이전으로 보여서 발견했다).
+ * 캐시에 일부러 옛 파일을 심고, 그래도 서버의 새것이 오는지 잰다. */
+{
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await page.goto(BASE + 'burger/', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(2000);
+
+  // 워커가 **페이지를 장악할 때까지** 기다린다. 이걸 안 기다리면 첫 방문은
+  // 워커를 거치지 않고 그냥 서버에서 받아 와, 아래 검사가 옛 워커에서도 통과해 버린다.
+  const swOn = await page.evaluate(async () => {
+    const r = await navigator.serviceWorker.ready;
+    if (navigator.serviceWorker.controller) return true;
+    return await new Promise(res => {
+      const t = setTimeout(() => res(!!navigator.serviceWorker.controller), 5000);
+      navigator.serviceWorker.addEventListener('controllerchange',
+        () => { clearTimeout(t); res(true); }, { once: true });
+    });
+  });
+  ok('서비스 워커가 페이지를 장악함', swOn);
+
+  // 캐시에 '옛 파일'을 심는다 — 첫 칸을 엉뚱한 색으로 칠하는 가짜 CSS
+  await page.evaluate(async () => {
+    const ks = await caches.keys();
+    const c = await caches.open(ks[0]);
+    await c.put(new Request(location.origin + '/shared/screen.css'),
+      new Response('.menu > .menu-card { background: rgb(1,2,3) !important }',
+        { status: 200, headers: { 'Content-Type': 'text/css' } }));
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(1500);
+  const bg = await page.evaluate(() => {
+    const c = document.querySelector('.menu > .menu-card');
+    return c ? getComputedStyle(c).backgroundColor : '';
+  });
+  ok('옛 캐시를 제치고 서버의 새 파일을 받는다', bg !== 'rgb(1, 2, 3)', '받은 색: ' + bg);
+
+  // 비행기 모드에서도 이미 가 본 놀이터는 열려야 한다
+  await ctx.setOffline(true);
+  await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+  await page.waitForTimeout(1000);
+  const offlineOk = await page.evaluate(() => !!document.querySelector('.menu'));
+  ok('비행기 모드에서도 놀이터가 열림', offlineOk);
+  await ctx.close();
+}
 
 await browser.close();
 console.log(`\n결과: ${pass} 통과, ${fail} 실패`);
