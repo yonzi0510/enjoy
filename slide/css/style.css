@@ -356,17 +356,14 @@ h1 .ic-title { width: 1.1em; height: 1.1em; vertical-align: -.16em; }
 }
 .menu-card { position: relative; }  /* 화살표를 카드에 매단다 */
 
-/* 크기 위계 — 쉬운 정리 > 보통 정리 > 어려운 정리 */
-#scr-home .c-l1 { width: clamp(176px, 38vmin, 290px); }
-#scr-home .c-l2 { width: clamp(150px, 30vmin, 226px); }
-#scr-home .c-l3 { width: clamp(132px, 25vmin, 190px); }
+/* 크기 위계 — 새 규격은 「1단계만 1.15배, 2·3단계는 같게」다 (DESIGN.md 「첫 화면 규격」).
+   칸 폭은 shared/screen.css 가 정한다 — 여기서 vmin 으로 다시 잡으면 넓은 화면에서 잘리고
+   (27vmin 문제) 2·3단계가 계속 작아져 뒤가 초라해진다. 안쪽 그림·글자 크기만 남긴다. */
 #scr-home .c-l1 .mini-goal { width: clamp(104px, 24vmin, 170px); }
-#scr-home .c-l2 .mini-goal { width: clamp(84px, 18vmin, 128px); }
-#scr-home .c-l3 .mini-goal { width: clamp(70px, 15vmin, 106px); }
+#scr-home .c-l2 .mini-goal,
+#scr-home .c-l3 .mini-goal { width: clamp(84px, 18vmin, 128px); }
 #scr-home .c-l1 .mc-name { font-size: clamp(21px, 4.4vmin, 31px); }
 #scr-home .c-l1 .mc-desc { font-size: clamp(13px, 2.5vmin, 17px); }
-#scr-home .c-l3 .mc-name { font-size: clamp(16px, 3.2vmin, 22px); }
-#scr-home .c-l3 .mc-desc { font-size: clamp(11px, 2.1vmin, 14px); }
 /* 첫 칸만 종이도 살짝 노랗고 테두리도 한 겹 더 두껍다 — 크기 말고도 눈에 띄게 */
 #scr-home .c-l1 { background: rgba(255, 250, 226, .9) !important; border-width: 4px !important; }
 /* 한국어는 어절 단위로만 줄바꿈 — 낱말이 쪼개지지 않게 */

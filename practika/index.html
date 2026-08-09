@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="../shared/time-limit.css">
 <link rel="stylesheet" href="../shared/pet.css">
 <link rel="stylesheet" href="../shared/crayon.css">
+<link rel="stylesheet" href="../shared/doodle-menu.css">
+<link rel="stylesheet" href="../shared/screen.css">
 </head>
 <body>
 
@@ -56,19 +58,24 @@
 <!-- ═══════════ 홈 ═══════════ -->
 <div id="screen-home" class="screen active">
   <!-- UI 그림은 이모지 대신 손그림 SVG — js/icons.js 가 data-ico 자리를 채운다 -->
+  <!-- 머리줄은 「제목 가운데 → 그 바로 아래 배지 줄」 두 층이다.
+       DESIGN.md 「첫 화면 규격」 — 29개 앱이 모두 같은 자리에 제목과 배지를 둔다.
+       (예전에는 제목이 마스코트 아래에 있어 이 앱만 자리가 달랐다) -->
   <header class="stat-bar">
-    <div class="stat"><span class="stat-emoji" data-ico="star"></span><b id="stat-xp">0</b></div>
-    <div class="stat"><span class="stat-emoji" data-ico="gem"></span><b id="stat-gems">0</b></div>
-    <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로"><span data-ico="house"></span></a>
-    <span id="pet-slot"></span>
-    <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정"><span data-ico="speak"></span></button>
+    <h1 class="app-title"><span data-ico="mic"></span> 프랙티카 놀이터</h1>
+    <div class="stat-row">
+      <div class="stat"><span class="stat-emoji" data-ico="star"></span><b id="stat-xp">0</b></div>
+      <div class="stat"><span class="stat-emoji" data-ico="gem"></span><b id="stat-gems">0</b></div>
+      <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로"><span data-ico="house"></span></a>
+      <span id="pet-slot"></span>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정"><span data-ico="speak"></span></button>
+    </div>
   </header>
   <div class="home-body">
     <div class="home-hero">
       <div class="avatar-slot" id="home-avatar"></div>
       <div class="hero-bubble" id="home-bubble">Hi! Let's practice English together!</div>
     </div>
-    <h1 class="app-title"><span data-ico="mic"></span> 프랙티카 놀이터</h1>
     <div id="lang-tabs" class="lang-tabs"></div>
     <div id="track-list" class="track-list"></div>
     <button id="btn-review" class="review-btn"><span data-ico="cards"></span> 어휘 복습 <b id="review-count">0</b></button>

@@ -212,6 +212,7 @@ PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
 | 어디에 | 무엇 |
 |---|---|
 | `shared/crayon.css` 끝 | 낙서장 층 — 모눈 바탕·카드 윤곽·단추 하한 46px·이름표 낮추기 |
+| `shared/screen.css` | **첫 화면 규격** — 카드 크기·간격·제목·첫 칸 노란 칠·시작 화살표·흩뿌리기. 수치의 원본은 `DESIGN.md` 「첫 화면 규격」. **스타일시트 맨 뒤에 온다** |
 | `shared/doodle-menu.css` | 첫 화면 `.menu` 자식을 nth-child 로 흩뿌림 |
 | `shared/home-button.js` | 오른쪽 위 집 단추 (모든 화면·모든 앱, 폰 60·패드 80px) |
 | `<앱>/css/doodle.css` 또는 앱 style.css | 그 앱만의 배치·크기 위계·아이콘 |
@@ -225,6 +226,12 @@ PW_MODULE=/opt/node22/lib/node_modules/playwright node pixel/tools/e2e.js
   `translate`/`rotate`/`scale` 낱개 속성으로 준다 (찾기 놀이터 방식).
 - 빽빽한 격자에서는 흩뿌림의 **이동·확대를 빼고 기울기만** 남긴다 — 안 그러면 옆 칸을 파고든다.
 - 각 앱 e2e 에 **「놀이판 무변형」 검사**가 들어 있다. 지우지 마라 — 누가 실수로 조각에 회전을 줘도 잡아낸다.
+- **첫 화면 규격도 e2e 가 지킨다.** 제목 크기·제목 가운데·칸 간격·크기 위계·겹침 0·터치 46px 를 잰다.
+  지난 라운드가 갈라진 이유가 "규격을 지킬 검사가 없어서"였다. 검사를 지우거나 약화하지 마라.
+- **격자(`display:grid`) 메뉴에는 폭을 강제하지 마라.** 카드가 제 격자 칸을 넘쳐 옆 칸 위로 올라탄다
+  (산수 `#menu` 가 그렇게 깨졌다). `shared/screen.css` ⑦-2 에 되돌리는 고리가 있다.
+- **ID 선택자로 흩뿌림·폭을 주지 마라.** 공용 규격을 이겨서 그 앱만 옛 모습으로 남는다
+  (한글 `#scr-home .m-learn`, 슬라이드 `#scr-home .c-l1` 이 그랬다).
 
 **앱 아이콘**(`<앱>/icon-192.png`·`icon-512.png`)은 생성기가 두 갈래다 —
 옛 앱 13개는 `tools/make-mascot-icons.mjs`, 나머지는 `<앱>/tools/make-icon(s).mjs`.

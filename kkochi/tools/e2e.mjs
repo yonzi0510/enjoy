@@ -222,7 +222,8 @@ await check('첫 화면: 낙서장 배치(칸마다 다른 기울기) + 크기 �
   await page.waitForTimeout(200);
   const d = await page.evaluate(() => {
     const cards = Array.from(document.querySelectorAll('#menu .menu-card'));
-    const tf = cards.map(c => getComputedStyle(c).transform);
+    // 새 규격: 흩뿌리기는 transform 이 아니라 낱개 속성 rotate 로 준다(이동·확대는 뺐다)
+    const rot = cards.map(c => getComputedStyle(c).rotate);
     const r = cards.map(c => c.getBoundingClientRect());
     let over = 0;
     for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) {
@@ -231,14 +232,18 @@ await check('첫 화면: 낙서장 배치(칸마다 다른 기울기) + 크기 �
       if (ox > 1 && oy > 1) over++;
     }
     return {
-      tf, over, w: r.map(x => Math.round(x.width)),
+      rot, over,
+      // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다
+      w: cards.map(c => c.offsetWidth),
       outside: r.filter(x => x.left < -1 || x.right > innerWidth + 1).length,
       hscroll: document.documentElement.scrollWidth - innerWidth,
     };
   });
-  expect(d.tf.every(t => t && t !== 'none'), '흩뿌리기(transform)가 없다: ' + d.tf.join(' | '));
-  expect(new Set(d.tf).size === d.tf.length, '칸마다 기울기가 달라야 한다');
-  expect(d.w[0] > d.w[1] && d.w[1] > d.w[2], '크기 위계(1단계가 가장 크게): ' + d.w.join('>'));
+  expect(d.rot.every(r => r && r !== 'none'), '흩뿌리기(rotate)가 없다: ' + d.rot.join(' | '));
+  expect(new Set(d.rot).size === d.rot.length, '칸마다 기울기가 달라야 한다: ' + d.rot.join(' | '));
+  // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
+  expect(d.w[0] >= Math.max(d.w[1], d.w[2]) * 1.05, '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + d.w.join('/'));
+  expect(Math.max(d.w[1], d.w[2]) <= Math.min(d.w[1], d.w[2]) * 1.15, '2·3단계 칸 크기가 서로 다르다: ' + d.w.join('/'));
   expect(d.over === 0, '단계 카드가 서로 겹친다');
   expect(d.outside === 0 && d.hscroll <= 1, '단계 카드가 화면 밖으로 나감');
 });

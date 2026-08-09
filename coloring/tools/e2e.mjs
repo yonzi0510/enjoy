@@ -59,10 +59,19 @@ await check('카테고리 필터: 과일·음식 → 8장', async () => {
   expect(await page.locator('#pic-grid .pic-card').count() === 30, '전체 복귀');
 });
 
-await check('낙서장 배치: 칸마다 다른 기울기 + 겹침 없음', async () => {
+// DESIGN.md 「첫 화면 규격」 — 흩뿌리기는 기울기만, **빽빽한 썸네일 격자에는 그마저 안 넣는다**
+// (밑그림 30장이라 칸이 촘촘해 기울기·이동·확대가 그대로 옆 칸을 파고들었다).
+// 예전에는 이 자리에서 '칸마다 다른 기울기'를 요구했는데, 규격이 바뀌어 반대로 잰다.
+await check('썸네일 격자는 반듯하다 (기울기·이동·확대 없음) + 겹침 없음', async () => {
   const r = await page.evaluate(() => {
     const cards = [...document.querySelectorAll('.pic-card')];
-    const forms = new Set(cards.slice(0, 8).map(c => getComputedStyle(c).transform));
+    const skewed = cards.filter(c => {
+      const s = getComputedStyle(c);
+      return (s.transform !== 'none' && s.transform !== 'matrix(1, 0, 0, 1, 0, 0)') ||
+             (s.rotate !== 'none' && s.rotate !== '0deg') ||
+             (s.scale !== 'none' && s.scale !== '1') ||
+             (s.translate !== 'none' && s.translate !== '0px');
+    }).length;
     const rects = cards.map(c => c.getBoundingClientRect());
     let overlaps = 0;
     for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
@@ -72,10 +81,9 @@ await check('낙서장 배치: 칸마다 다른 기울기 + 겹침 없음', asyn
       if (ox > 0.5 && oy > 0.5) overlaps++;
     }
     const off = rects.filter(a => a.left < -0.5 || a.right > window.innerWidth + 0.5).length;
-    return { forms: forms.size, straight: forms.has('none'), overlaps, off };
+    return { skewed, overlaps, off };
   });
-  expect(r.forms >= 6, '앞 8칸의 기울기가 서로 달라야: ' + r.forms + '가지');
-  expect(!r.straight, '기울기 없이 반듯한 칸이 있으면 안 됨');
+  expect(r.skewed === 0, '썸네일 칸에 변형이 걸려 있음: ' + r.skewed + '칸');
   expect(r.overlaps === 0, '칸끼리 겹침: ' + r.overlaps + '쌍');
   expect(r.off === 0, '화면 밖으로 나간 칸: ' + r.off);
 });
@@ -261,6 +269,82 @@ await check('3해상도 잘림 없음 (가로 넘침·세로 넘침 검사)', as
   }
   await page.setViewportSize({ width: 1180, height: 820 });
 });
+
+const SPEC_HOME = '#scr-home.on';
+const SPEC_BOXES = 'h1, .stats, #cat-chips > *, #pic-grid > *';
+const SPEC_GRID = '#pic-grid';
+/* ═══════════ 첫 화면 규격 (DESIGN.md 「첫 화면 규격 (놀이 고르는 화면)」) ═══════════
+ * 지난 라운드에 29개 앱의 첫 화면이 제각각 갈린 진짜 까닭은 **규격을 지킬 검사가
+ * 없었기 때문**이다. 그래서 숫자를 여기에 못 박는다 — 세 화면(패드 가로·폰 가로·
+ * 폰 세로)에서 제목 크기·가운데·칸 간격·겹침·터치 하한을 잰다.
+ * (콘솔 오류 0 은 이 세 번의 이동까지 포함해 맨 아래 검사가 함께 본다) */
+const SPEC_VIEWS = [
+  { w: 1180, h: 820, name: '패드 가로' },
+  { w: 844, h: 390, name: '폰 가로' },
+  { w: 390, h: 844, name: '폰 세로' },
+];
+// CSS clamp(min, 비율×vw, max) 를 그대로 계산한다
+const clampVw = (min, ratio, max, vw) => Math.min(Math.max(min, ratio * vw), max);
+
+for (const v of SPEC_VIEWS) {
+  await check(`첫 화면 규격 · ${v.name} — 제목·배지 줄·칸 간격·겹침·터치 46px`, async () => {
+    await page.setViewportSize({ width: v.w, height: v.h });
+    await page.goto(BASE);
+    await page.waitForSelector(SPEC_HOME);
+    await page.waitForTimeout(250);
+    const m = await page.evaluate(([boxSel, gridSel]) => {
+      const scr = document.querySelector('.screen.on, .screen.active');
+      const h1 = scr.querySelector('h1');
+      const r = h1.getBoundingClientRect();
+      // 오른쪽 위 공용 집 단추(shared/home-button.js)가 머리줄을 그만큼 왼쪽으로 민다.
+      // 29개 앱이 다 같이 밀려 있으므로 그 절반까지는 '가운데'로 친다.
+      const hb = document.querySelector('.enjoy-home-btn');
+      const reserve = hb ? hb.getBoundingClientRect().width + 22 : 0;
+      const g = getComputedStyle(document.querySelector(gridSel));
+      const boxes = [...scr.querySelectorAll(boxSel)].filter(e => {
+        const b = e.getBoundingClientRect();
+        return b.width > 0 && b.height > 0;
+      });
+      const over = [];
+      for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i].getBoundingClientRect(), b = boxes[j].getBoundingClientRect();
+        const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (ox > 1 && oy > 1) {
+          over.push((boxes[i].className || boxes[i].tagName) + '×' + (boxes[j].className || boxes[j].tagName));
+        }
+      }
+      const small = [...scr.querySelectorAll('button, a[href], [role="button"]')]
+        .map(e => [e, e.getBoundingClientRect()])
+        .filter(([, b]) => b.width > 0 && b.height > 0 && (b.width < 45.5 || b.height < 45.5))
+        .map(([e, b]) => (e.className || e.tagName) + ' ' + Math.round(b.width) + '×' + Math.round(b.height));
+      return {
+        fs: parseFloat(getComputedStyle(h1).fontSize),
+        cx: r.left + r.width / 2, mid: window.innerWidth / 2, reserve,
+        rowGap: parseFloat(g.rowGap) || 0, colGap: parseFloat(g.columnGap) || 0,
+        over: over.slice(0, 3), small: small.slice(0, 3),
+      };
+    }, [SPEC_BOXES, SPEC_GRID]);
+
+    // ① DESIGN.md 「첫 화면 규격」 — 제목 clamp(26px, 3.4vw, 36px)
+    const wantFs = clampVw(26, 0.034, 36, v.w);
+    expect(m.fs >= 26 && m.fs <= 36, `제목 크기가 규격 범위(26~36px) 밖: ${m.fs}px`);
+    expect(Math.abs(m.fs - wantFs) <= 1, `제목 크기 ${m.fs}px — 규격은 ${wantFs.toFixed(1)}px`);
+    // ② 제목은 가운데 (집 단추가 차지한 자리의 절반 + 손그림 여유까지만 봐준다)
+    const slack = m.reserve / 2 + 26;
+    expect(Math.abs(m.cx - m.mid) <= slack,
+      `제목이 가운데에서 ${Math.round(Math.abs(m.cx - m.mid))}px 벗어남 (허용 ${Math.round(slack)}px)`);
+    // ③ DESIGN.md 「첫 화면 규격」 — 칸 사이 간격 clamp(18px, 2.4vw, 32px)
+    const wantGap = clampVw(18, 0.024, 32, v.w);
+    expect(Math.abs(m.rowGap - wantGap) <= 1 && Math.abs(m.colGap - wantGap) <= 1,
+      `칸 간격 ${m.rowGap}/${m.colGap}px — 규격은 ${wantGap.toFixed(1)}px`);
+    // ④ 첫 화면 요소끼리 겹치지 않는다 (기울인 칸이 이웃을 파고들면 여기서 잡힌다)
+    expect(m.over.length === 0, '겹침: ' + m.over.join(' | '));
+    // ⑤ DESIGN.md 「첫 화면 규격」 — 터치 하한 46px
+    expect(m.small.length === 0, '46px 미만 터치 대상: ' + m.small.join(' | '));
+  });
+}
+await page.setViewportSize({ width: 1180, height: 820 });
 
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));

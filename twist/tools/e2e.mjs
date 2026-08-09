@@ -283,23 +283,31 @@ await check('첫 화면 낙서장: 칸마다 다른 기울기·크기, 겹침·�
       const cards = [...document.querySelectorAll('#menu .menu-card')];
       return {
         rects: cards.map(c => { const r = c.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height }; }),
-        tf: cards.map(c => getComputedStyle(c).transform),
+        // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다
+        ow: cards.map(c => c.offsetWidth),
+        rot: cards.map(c => getComputedStyle(c).rotate),
         // 놀이 이름은 한 줄로 — 줄 수와 칸 안에 들어가는지를 함께 잰다
         names: cards.map(c => {
           const n = c.querySelector('.mc-name');
           const nr = n.getBoundingClientRect(), cr = c.getBoundingClientRect();
-          return { t: n.textContent, lines: nr.height / parseFloat(getComputedStyle(n).fontSize) / 1.45, over: nr.left < cr.left - 1 || nr.right > cr.right + 1 };
+          // 줄 수는 글자가 실제로 만든 줄상자를 센다.
+          // (예전엔 높이 ÷ 글자크기 ÷ 1.45 로 어림했는데, 진짜 line-height 가 1.45 가 아니라
+          //  한 줄짜리 이름도 1.27 줄로 읽혔다 — 재는 시늉만 하던 셈이라 제대로 센다)
+          const rg = document.createRange(); rg.selectNodeContents(n);
+          return { t: n.textContent, lines: rg.getClientRects().length, over: nr.left < cr.left - 1 || nr.right > cr.right + 1 };
         }),
         horiz: document.documentElement.scrollWidth - window.innerWidth,
         vw: window.innerWidth,
       };
     });
-    // 크기 위계 — 먼저 할 단계가 가장 크다
-    expect(m.rects[0].w > m.rects[1].w && m.rects[1].w > m.rects[2].w,
-      s.name + ': 크기 위계 어긋남 ' + m.rects.map(r => Math.round(r.w)).join('/'));
-    // 기울기가 셋 다 다르다
-    expect(new Set(m.tf).size === 3, s.name + ': 기울기가 겹침');
-    m.tf.forEach((t, i) => expect(t !== 'none' && t !== 'matrix(1, 0, 0, 1, 0, 0)', s.name + ': ' + (i + 1) + '번 칸이 안 기울었다'));
+    // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
+    expect(m.ow[0] >= Math.max(m.ow[1], m.ow[2]) * 1.05,
+      s.name + ': 1단계 칸이 뒤 칸보다 확실히 크지 않다 ' + m.ow.join('/'));
+    expect(Math.max(m.ow[1], m.ow[2]) <= Math.min(m.ow[1], m.ow[2]) * 1.15,
+      s.name + ': 2·3단계 칸 크기가 서로 다르다 ' + m.ow.join('/'));
+    // 새 규격: 흩뿌리기는 transform 이 아니라 낱개 속성 rotate 로 준다(이동·확대는 뺐다)
+    m.rot.forEach((r, i) => expect(r && r !== 'none', s.name + ': ' + (i + 1) + '번 칸이 안 기울었다 ' + r));
+    expect(new Set(m.rot).size === 3, s.name + ': 기울기가 겹침 ' + m.rot.join('/'));
     // 서로 겹치지 않는다
     for (let i = 0; i < m.rects.length; i++) for (let j = i + 1; j < m.rects.length; j++) {
       const a = m.rects[i], b = m.rects[j];
@@ -311,7 +319,7 @@ await check('첫 화면 낙서장: 칸마다 다른 기울기·크기, 겹침·�
       expect(r.w >= 44 && r.h >= 44, s.name + ': 칸 ' + (i + 1) + ' 터치 영역 부족 ' + Math.round(r.w) + '×' + Math.round(r.h));
     });
     m.names.forEach(n => {
-      expect(n.lines <= 1.05, s.name + ': "' + n.t + '" 이름이 한 줄을 넘음');
+      expect(n.lines === 1, s.name + ': "' + n.t + '" 이름이 한 줄을 넘음 (' + n.lines + '줄)');
       expect(!n.over, s.name + ': "' + n.t + '" 이름이 칸 밖으로 삐져나감');
     });
     expect(m.horiz <= 1, s.name + ': 가로 스크롤 ' + m.horiz + 'px');

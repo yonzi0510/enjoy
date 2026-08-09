@@ -16,7 +16,8 @@
  */
 
 :root {
-  --doodle-gap: clamp(24px, 3.4vmin, 38px); /* 흩뿌리려면 칸 사이가 넉넉해야 한다 */
+  /* DESIGN.md 「첫 화면 규격」 — 칸 사이 간격 clamp(18px, 2.4vw, 32px) */
+  --doodle-gap: clamp(18px, 2.4vw, 32px);
   --paper-btn: #FFFDF6;
 }
 
@@ -42,9 +43,26 @@
   text-shadow: none;
   word-break: keep-all;  /* 좁은 폰에서 '픽셀 / 놀이터' 로만 접히게 (낱글자로 쪼개지 않는다) */
   line-height: 1.15;
-  /* 집 단추·시간 쪽지에 자리를 내준 만큼 폰에서는 한 호흡 작게 — 두 줄에 담긴다 */
-  font-size: clamp(18px, 4.5vmin, 34px);
 }
+
+/* ─────────── 첫 화면 머리줄 — 나머지 앱과 같은 자리 ───────────
+ * DESIGN.md 「첫 화면 규격」 — 「아이콘 + 이름」 가운데 정렬, 그 바로 아래 배지 줄.
+ * 픽셀은 머리줄이 한 줄(제목 왼쪽 · 단추 오른쪽)이라 29개 중 제목만 왼쪽에 붙어
+ * 있었다. 구조(칩 줄 + 썸네일 격자)는 그대로 두고 머리줄만 세로로 세운다.
+ * 감상 화면(.game-header)은 뒤로 단추가 있어야 하니 한 줄 그대로 둔다. */
+#screen-home .home-header {
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(6px, 1.2vmin, 12px);
+}
+#screen-home .app-title {
+  /* DESIGN.md 「첫 화면 규격」 — 제목 clamp(26px, 3.4vw, 36px) 가운데 */
+  font-size: clamp(26px, 3.4vw, 36px);
+  text-align: center;
+}
+/* 첫 화면이 아닌 머리줄(내 작품·채색)은 예전 크기 그대로 —
+   제목이 뒤로 단추와 한 줄에 들어가야 해서 폰에서는 한 호흡 작아야 한다 */
+.screen:not(#screen-home) .app-title { font-size: clamp(18px, 4.5vmin, 34px); }
 
 /* ─────────── 손그림 아이콘 자리 ─────────── */
 .ic {
@@ -65,6 +83,9 @@
 
 /* ─────────── 종이 단추 ─────────── */
 .round-btn {
+  /* DESIGN.md 「첫 화면 규격」 — 터치 하한 46px (44px 은 5세 손가락에 모자랐다) */
+  min-width: 46px;
+  min-height: 46px;
   background: var(--paper-btn);
   border: 3px solid var(--ink);
   /* 손으로 그린 동그라미 — 네 귀퉁이가 조금씩 다르다 */
@@ -107,7 +128,7 @@
 .cat-chip {
   display: flex;
   align-items: center;
-  min-height: 44px; /* 5세 손가락 하한 */
+  min-height: 46px; /* DESIGN.md 「첫 화면 규격」 — 터치 하한 46px */
   background: var(--paper-btn);
   color: var(--ink);
   border: 3px solid var(--ink);
@@ -161,15 +182,18 @@
   box-shadow: none !important;
   transition: transform .12s ease;
 }
-/* 칸마다 다른 손버릇 — 손으로 하나씩 붙인 것처럼 */
-.pic-grid .pic-card:nth-child(8n+1) { transform: translate(-1.2%,  1.6%) rotate(-1.7deg) scale(1.02); border-radius: 26px 19px 24px 21px !important; }
-.pic-grid .pic-card:nth-child(8n+2) { transform: translate( 1.0%, -1.4%) rotate( 1.3deg) scale(.98);  border-radius: 20px 26px 19px 25px !important; }
-.pic-grid .pic-card:nth-child(8n+3) { transform: translate(-0.6%, -2.0%) rotate( 1.9deg) scale(1.01); border-radius: 24px 21px 27px 18px !important; }
-.pic-grid .pic-card:nth-child(8n+4) { transform: translate( 1.4%,  1.2%) rotate(-1.1deg) scale(.99);  border-radius: 19px 25px 21px 26px !important; }
-.pic-grid .pic-card:nth-child(8n+5) { transform: translate(-1.4%, -0.8%) rotate( 0.9deg) scale(1.02); border-radius: 27px 18px 25px 20px !important; }
-.pic-grid .pic-card:nth-child(8n+6) { transform: translate( 0.6%,  2.0%) rotate(-2.0deg) scale(.98);  border-radius: 21px 27px 18px 24px !important; }
-.pic-grid .pic-card:nth-child(8n+7) { transform: translate( 1.2%, -1.6%) rotate( 1.5deg) scale(1.01); border-radius: 25px 20px 26px 19px !important; }
-.pic-grid .pic-card:nth-child(8n+8) { transform: translate(-1.0%,  0.8%) rotate(-0.9deg) scale(.99);  border-radius: 18px 24px 20px 27px !important; }
+/* 칸마다 다른 손버릇 — 손으로 하나씩 붙인 것처럼.
+   DESIGN.md 「첫 화면 규격」 — 흩뿌리기는 기울기만, 그마저도 **빽빽한 썸네일
+   격자에는 넣지 않는다**. 도안이 30장이 넘어 칸이 촘촘한 탓에 기울기·이동·확대가
+   그대로 옆 칸을 파고들었다. 그래서 손버릇은 모서리 반경으로만 남긴다. */
+.pic-grid .pic-card:nth-child(8n+1) { border-radius: 26px 19px 24px 21px !important; }
+.pic-grid .pic-card:nth-child(8n+2) { border-radius: 20px 26px 19px 25px !important; }
+.pic-grid .pic-card:nth-child(8n+3) { border-radius: 24px 21px 27px 18px !important; }
+.pic-grid .pic-card:nth-child(8n+4) { border-radius: 19px 25px 21px 26px !important; }
+.pic-grid .pic-card:nth-child(8n+5) { border-radius: 27px 18px 25px 20px !important; }
+.pic-grid .pic-card:nth-child(8n+6) { border-radius: 21px 27px 18px 24px !important; }
+.pic-grid .pic-card:nth-child(8n+7) { border-radius: 25px 20px 26px 19px !important; }
+.pic-grid .pic-card:nth-child(8n+8) { border-radius: 18px 24px 20px 27px !important; }
 /* 누르면 기울기가 잠깐 펴지며 종이가 눌린다 */
 .pic-grid .pic-card:active { transform: translateY(3px) rotate(0) scale(.99) !important; }
 

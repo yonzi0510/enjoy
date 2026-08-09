@@ -82,6 +82,9 @@ b { font-weight: 900; }
   font-size: clamp(19px, 4vmin, 30px); font-weight: 900; color: #4A3F8C;
   text-shadow: none; text-align: center; letter-spacing: -.03em;
 }
+/* DESIGN.md 「첫 화면 규격」 — 첫 화면 제목만 clamp(26px, 3.4vw, 36px) 가운데.
+   코스맵 제목(.top-bar 안)은 뒤로 단추와 한 줄에 들어가야 해서 예전 크기 그대로. */
+.stat-bar .app-title { font-size: clamp(26px, 3.4vw, 36px); }
 .app-title [data-ico] { font-size: 1.35em; }
 /* 손으로 그린 동그라미 단추 — 컴퍼스로 그린 원처럼 반듯하지 않게 */
 .round-btn {
@@ -96,10 +99,17 @@ b { font-weight: 900; }
 .round-btn [data-ico] { font-size: 1.35em; }
 .round-btn:active { transform: translate(2px, 3px); }
 
-/* ─────────── 게임화 스탯 바 ─────────── */
+/* ─────────── 게임화 스탯 바 ───────────
+ * DESIGN.md 「첫 화면 규격」 — 제목이 맨 위 가운데, 배지(별·젬·단추) 줄은 그 바로 아래.
+ * 예전에는 제목이 마스코트 아래에 있어 29개 중 이 앱만 자리가 달랐다.
+ * 마스코트·언어 탭·레슨 카드 구조는 이 놀이에 꼭 필요하니 그대로 둔다. */
 .stat-bar {
-  display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(5px, 1.1vmin, 10px);
   padding-bottom: 4px; padding-left: 16px; flex: 0 0 auto;
+}
+.stat-bar .stat-row {
+  display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
 }
 /* 공용 단추(목소리·펫)는 42px 이라 다섯 살 손가락에 작다 — 이 앱에서는 48px 이상으로 */
 .stat-bar .vs-btn, .stat-bar .pet-btn {
@@ -170,13 +180,17 @@ b { font-weight: 900; }
   transition: transform .12s;
   animation: card-fade .35s ease-out backwards;
 }
-.lang-tabs .lang-tab:nth-child(3n+1) { transform: rotate(-2.4deg) translateY(2px); }
-.lang-tabs .lang-tab:nth-child(3n+2) { transform: rotate(1.8deg) translateY(-2px); }
+/* DESIGN.md 「첫 화면 규격」 — 흩뿌리기는 기울기만 (자리 옮김·확대는 뺀다) */
+.lang-tabs .lang-tab:nth-child(3n+1) { transform: rotate(-2.4deg); }
+.lang-tabs .lang-tab:nth-child(3n+2) { transform: rotate(1.8deg); }
 .lang-tabs .lang-tab:nth-child(3n+3) { transform: rotate(-1.2deg); }
-/* 고른 언어만 반듯하게 서서 조금 커진다 — 지금 어디에 있는지가 한눈에 보이게 */
+/* 고른 언어만 반듯하게 서서 조금 도톰해진다 — 지금 어디에 있는지가 한눈에 보이게.
+   확대(scale) 대신 글자·테두리를 키운다: 규격이 확대를 빼기도 했고,
+   scale 은 이웃 칸을 파고들어 겹침 검사에 걸린다. */
 .lang-tabs .lang-tab.active {
   background: #C9BFF7; color: #2F2A5C;
-  border-width: 4px; transform: rotate(0) scale(1.08);
+  border-width: 4px; transform: rotate(0);
+  font-size: clamp(14px, 3.2vmin, 19px); padding: 8px 19px;
 }
 .lang-tabs .lang-tab:active { transform: translate(2px, 3px) rotate(0) scale(.99); }
 .lang-tab .flag { font-size: 1.5em; display: inline-flex; align-items: center; line-height: 0; }
@@ -204,7 +218,8 @@ b { font-weight: 900; }
 /* 트랙 고르기 — 첫 화면에서 가장 큰 결정. 칸 크기도 여기가 제일 크다 */
 .track-list {
   display: flex; flex-direction: column;
-  gap: clamp(13px, 2.4vmin, 24px);
+  /* DESIGN.md 「첫 화면 규격」 — 칸 사이 간격 clamp(18px, 2.4vw, 32px) */
+  gap: clamp(18px, 2.4vw, 32px);
   width: 100%;
   padding: 6px 10px 12px;   /* 기울인 칸의 모서리가 잘리지 않게 */
 }
@@ -225,11 +240,12 @@ b { font-weight: 900; }
 .track-list .track-card:nth-child(1)   { font-size: clamp(18px, 3.9vmin, 26px); width: 100%; }
 .track-list .track-card:nth-child(2)   { font-size: clamp(16px, 3.3vmin, 22px); width: 93%; margin-left: auto; }
 .track-list .track-card:nth-child(n+3) { font-size: clamp(14px, 2.9vmin, 19px); width: 88%; margin-right: auto; }
-/* 손으로 하나씩 붙인 것처럼 — 칸마다 다른 기울기 */
-.track-list .track-card:nth-child(4n+1) { transform: rotate(-1.9deg) translateY(2px); }
-.track-list .track-card:nth-child(4n+2) { transform: rotate(1.6deg) translateY(-2px); }
+/* 손으로 하나씩 붙인 것처럼 — 칸마다 다른 기울기.
+   DESIGN.md 「첫 화면 규격」 — 흩뿌리기는 **기울기만** (자리 옮김·확대는 뺀다). */
+.track-list .track-card:nth-child(4n+1) { transform: rotate(-1.9deg); }
+.track-list .track-card:nth-child(4n+2) { transform: rotate(1.6deg); }
 .track-list .track-card:nth-child(4n+3) { transform: rotate(-1.1deg); }
-.track-list .track-card:nth-child(4n+4) { transform: rotate(2.2deg) translateY(2px); }
+.track-list .track-card:nth-child(4n+4) { transform: rotate(2.2deg); }
 /* 누르면 기울기가 잠깐 펴지며 종이가 눌린다 */
 .track-list .track-card:active { transform: translate(2px, 3px) rotate(0) scale(.99); }
 /* 스태거 등장 — 형제 순서대로 0.05s 간격 */
@@ -507,7 +523,8 @@ b { font-weight: 900; }
   }
   .track-list {
     display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(13px, 2vmin, 22px); align-content: start;
+    /* 간격은 규격 값 그대로(DESIGN.md 「첫 화면 규격」) — 줄이는 것은 여백뿐 */
+    align-content: start;
     padding: 4px 10px 6px;   /* 가로 화면은 세로가 빠듯하다 — 위아래 여백을 줄인다 */
   }
 

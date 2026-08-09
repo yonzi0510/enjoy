@@ -15,16 +15,22 @@
 <link rel="stylesheet" href="../shared/time-limit.css">
 <link rel="stylesheet" href="../shared/pet.css">
 <link rel="stylesheet" href="../shared/crayon.css">
+<link rel="stylesheet" href="../shared/doodle-menu.css">
+<link rel="stylesheet" href="../shared/screen.css">
 </head>
 <body>
 
 <!-- ═══════════ 홈 화면 ═══════════ -->
 <div id="screen-home" class="screen active">
-  <header class="top-bar">
+  <!-- 머리줄은 「제목 가운데 → 그 바로 아래 배지 줄」 두 층이다.
+       DESIGN.md 「첫 화면 규격」 — 29개 앱이 모두 같은 자리에 제목과 배지를 둔다. -->
+  <header class="top-bar home-head">
     <h1 class="app-title"><span>🐰</span> 영어 놀이터</h1>
-    <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
-    <span id="pet-slot"></span>
-    <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+    <div class="stats">
+      <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+      <span id="pet-slot"></span>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">🗣️</button>
+    </div>
   </header>
   <div class="home-body">
     <div class="mic-guide" id="mic-guide">토끼를 누르고 물어보세요!<br><span class="mic-guide-sub">"코끼리가 영어로 뭐야?"</span></div>

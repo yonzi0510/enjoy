@@ -59,8 +59,19 @@ await check('첫 화면: 아이콘 5개가 손그림 SVG (이모지 아님)', as
     els => els.map(e => e.textContent.trim()).join(''));
   expect(left === '', '아이콘 자리에 이모지 글자가 남아 있음: ' + left);
 });
-await check('첫 화면: 제목에서 첫 놀이로 가는 화살표 하나', async () => {
-  expect(await page.locator('#scr-home .m-learn .mc-arrow').count() === 1, '화살표는 배우기 칸에 하나');
+await check('첫 화면: 공용 시작 화살표가 첫 칸에만 하나', async () => {
+  // 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
+  // 앱마다 그리던 옛 화살표(.mc-arrow)는 걷어냈다 — 다시 생기면 두 개가 겹친다.
+  const m = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('#scr-home .menu > .menu-card')];
+    const arrows = cards.map(c => getComputedStyle(c, '::before').backgroundImage)
+      .map(bg => bg && bg !== 'none' && bg.includes('svg'));
+    return { first: arrows[0], rest: arrows.slice(1).filter(Boolean).length,
+      old: document.querySelectorAll('#scr-home .mc-arrow').length };
+  });
+  expect(m.first, '첫 칸(배우기)에 공용 시작 화살표가 없다');
+  expect(m.rest === 0, '첫 칸이 아닌 칸에도 화살표가 있다: ' + m.rest);
+  expect(m.old === 0, '앱이 따로 그리던 옛 화살표가 남아 있다');
 });
 await check('첫 화면: 크기 위계 — 배우기가 가장 크고 차례로 작아진다', async () => {
   const ws = await page.$$eval('#scr-home .menu-card', els => els.map(e => e.offsetWidth));

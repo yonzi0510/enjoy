@@ -51,11 +51,40 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   gap: 10px;
   flex: 0 0 auto;
 }
+/* 오른쪽 위는 공용 집 단추(shared/home-button.js)가 고정으로 차지한다.
+   공용 CSS 는 `.bar`·`.home-head` 만 밀어 주는데 이 앱의 바는 이름이 달라 안 걸려서,
+   답변·단어장 화면의 앱 🏠 가 큰 집 단추 **밑에 깔려** 눌리지 않았다. 여기서 비켜 준다. */
+.top-bar {
+  padding-right: calc(clamp(60px, 8.6vw, 80px) + 22px + env(safe-area-inset-right, 0px));
+}
 .app-title {
   font-size: clamp(20px, 4.2vmin, 32px);
   font-weight: 900;
   color: #234D68; /* 한 톤 짙게 — 가독성 */
   text-shadow: 0 2px 0 rgba(255,255,255,.85);
+}
+
+/* ─────────── 첫 화면 머리줄 — 나머지 앱과 같은 자리 ───────────
+ * DESIGN.md 「첫 화면 규격」 — 「아이콘 + 이름」 가운데, 배지 줄은 그 바로 아래.
+ * 영어 놀이터는 이름만 왼쪽 위 구석에 작게 붙어 있어 29개 중 혼자 달랐다.
+ * 토끼 마스코트·말풍선·세로 단추 세 칸은 이 놀이에 꼭 필요하니 그대로 두고,
+ * 머리줄만 세로 두 층으로 세운다. (다른 화면의 .top-bar 는 뒤로 단추가 있어야
+ * 하므로 한 줄 그대로 — 그래서 #screen-home 안으로만 건다.) */
+#screen-home .top-bar {
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(5px, 1.1vmin, 10px);
+  padding-bottom: 2px;
+}
+#screen-home .app-title {
+  /* DESIGN.md 「첫 화면 규격」 — 제목 clamp(26px, 3.4vw, 36px) 가운데 */
+  font-size: clamp(26px, 3.4vw, 36px);
+  text-align: center;
+}
+#screen-home .top-bar .stats {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.6vmin, 14px);
 }
 .top-title {
   font-size: clamp(17px, 3.4vmin, 26px);
@@ -204,7 +233,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .home-nav {
   display: flex;
   align-items: flex-end;   /* 칸 높이를 맞추지 않는다 — 줄 맞으면 다시 앱처럼 보인다 */
-  gap: clamp(12px, 2.6vmin, 24px);
+  /* DESIGN.md 「첫 화면 규격」 — 칸 사이 간격 clamp(18px, 2.4vw, 32px) */
+  gap: clamp(18px, 2.4vw, 32px);
   width: min(680px, 96%);
   padding: 8px 4px 12px;   /* 기울인 칸의 모서리가 잘리지 않게 */
 }
@@ -232,10 +262,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .nav-learned { flex: .82;  font-size: clamp(13px, 2.3vmin, 18px); background: #FFF4CC; }
 .nav-quiz    { flex: 1.08; font-size: clamp(15px, 2.8vmin, 22px); background: #E6F7D8; }
 
-/* 손으로 하나씩 붙인 것처럼 — 칸마다 다른 자리·기울기 */
-.home-nav .nav-card:nth-child(1) { transform: translate(-1.5%,  4%)  rotate(-2.2deg); }
-.home-nav .nav-card:nth-child(2) { transform: translate( 1.5%, -3.5%) rotate( 2deg);  }
-.home-nav .nav-card:nth-child(3) { transform: translate(-1%,   2.5%) rotate(-1.2deg); }
+/* 손으로 하나씩 붙인 것처럼 — 칸마다 다른 기울기.
+   DESIGN.md 「첫 화면 규격」 — 흩뿌리기는 **기울기만** (자리 옮김은 줄을 밀어내
+   화면을 넘기고, 확대는 이웃을 파고든다). */
+.home-nav .nav-card:nth-child(1) { transform: rotate(-2.2deg); }
+.home-nav .nav-card:nth-child(2) { transform: rotate( 2deg);   }
+.home-nav .nav-card:nth-child(3) { transform: rotate(-1.2deg); }
 /* 누르면 기울기가 잠깐 펴지며 종이가 눌린다 */
 .home-nav .nav-card:active { transform: translate(2px, 3px) rotate(0) scale(.99) !important; }
 
@@ -803,12 +835,13 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
    위아래 칸의 모서리가 서로 닿는다. 그래서 열에서는 기울기를 반으로 줄이고
    위아래로는 밀지 않는다(좌우 흔들림만으로도 흩뿌린 느낌은 남는다). */
 @media (orientation: landscape) and (min-height: 481px) {
-  .home-nav { gap: clamp(16px, 3vmin, 28px); }
+  /* 간격은 규격 값 그대로 둔다(DESIGN.md 「첫 화면 규격」) */
   /* 가로로 긴 칸이니 그림과 글씨를 나란히 — 세로로 쌓으면 칸 가운데가 텅 빈다 */
   .home-nav .nav-card { flex-direction: row; justify-content: center; gap: .55em; padding: .55em .7em; }
-  .home-nav .nav-card:nth-child(1) { transform: translate(-2.5%, 0) rotate(-1.1deg); }
-  .home-nav .nav-card:nth-child(2) { transform: translate( 2.5%, 0) rotate( 1deg);   }
-  .home-nav .nav-card:nth-child(3) { transform: translate(-1.5%, 0) rotate(-.7deg);  }
+  /* 세로 열에서는 기울기를 반으로 (위아래 칸 모서리가 서로 닿지 않게) */
+  .home-nav .nav-card:nth-child(1) { transform: rotate(-1.1deg); }
+  .home-nav .nav-card:nth-child(2) { transform: rotate( 1deg);   }
+  .home-nav .nav-card:nth-child(3) { transform: rotate(-.7deg);  }
 }
 
 /* 모션 줄이기 설정 존중 — 등장·흔들림·장식 모션 전부 끈다 */
