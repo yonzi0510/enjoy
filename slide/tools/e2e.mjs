@@ -45,15 +45,17 @@ await check('낙서장 첫 화면: 손그림 아이콘 + 시작 화살표 + 크�
   // 제목에서 첫 놀이로 향하는 점선 화살표 — 첫 칸에만 하나
   expect(await page.locator('#menu .start-arrow').count() === 1, '시작 화살표가 없음');
   expect(await page.locator('.menu-card.c-l1 .start-arrow').count() === 1, '화살표가 첫 칸을 가리키지 않음');
-  // 크기 위계: 쉬운 > 보통 > 어려운 (가장 먼저 할 것이 가장 크다)
-  const w = async sel => (await page.locator(sel).boundingBox()).width;
-  const [w1, w2, w3] = [await w('.menu-card.c-l1'), await w('.menu-card.c-l2'), await w('.menu-card.c-l3')];
-  expect(w1 > w2 && w2 > w3, '단계 카드 크기 위계: ' + [w1, w2, w3].map(Math.round).join(' > '));
-  // 흩뿌리기: 칸마다 다른 기울기·자리 (줄 맞춰 있으면 앱처럼 보인다)
-  const tf = await page.evaluate(() =>
-    [...document.querySelectorAll('#menu .menu-card')].map(el => getComputedStyle(el).transform));
-  expect(tf.every(t => t && t !== 'none'), '칸이 흩뿌려지지 않음: ' + tf.join(' | '));
-  expect(new Set(tf).size === tf.length, '칸이 모두 같은 각도로 기울어짐');
+  // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
+  // (폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다)
+  const [w1, w2, w3] = await page.evaluate(() =>
+    ['.menu-card.c-l1', '.menu-card.c-l2', '.menu-card.c-l3'].map(s => document.querySelector(s).offsetWidth));
+  expect(w1 >= Math.max(w2, w3) * 1.05, '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + [w1, w2, w3].join(' / '));
+  expect(Math.max(w2, w3) <= Math.min(w2, w3) * 1.15, '2·3단계 칸 크기가 서로 다르다: ' + [w1, w2, w3].join(' / '));
+  // 새 규격: 흩뿌리기는 transform 이 아니라 낱개 속성 rotate 로 준다(이동·확대는 뺐다)
+  const rot = await page.evaluate(() =>
+    [...document.querySelectorAll('#menu .menu-card')].map(el => getComputedStyle(el).rotate));
+  expect(rot.every(t => t && t !== 'none'), '칸이 흩뿌려지지 않음: ' + rot.join(' | '));
+  expect(new Set(rot).size === rot.length, '칸이 모두 같은 각도로 기울어짐: ' + rot.join(' | '));
 });
 
 await check('공용 집 단추: 앱 안 작은 🏠 는 숨고, 머리줄과 겹치지 않는다', async () => {

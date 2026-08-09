@@ -371,13 +371,10 @@ h1 {
   gap: clamp(16px, 3vmin, 32px);
   padding: clamp(8px, 1.6vh, 20px) clamp(4px, 1.2vw, 16px);
 }
-/* 칸마다 다른 손버릇. 세 칸까지 정해 두고 그 뒤로는 되풀이된다.
-   기울기·자리만 준다 — 크기(scale)는 아래 위계가 width 로 따로 정한다.
-   (선택자를 `.menu > .menu-card:…` 로 잡는 이유: 공용 crayon.css 의
-    `.menu-card:nth-child(even)` 보다 구체적이어야 이 기울기가 이긴다) */
-.menu > .menu-card:nth-child(3n+1) { transform: translate(-2.5%,  3%) rotate(-2.2deg); }
-.menu > .menu-card:nth-child(3n+2) { transform: translate( 2.5%, -2%) rotate( 1.8deg); }
-.menu > .menu-card:nth-child(3n+3) { transform: translate(-1%,    4%) rotate( 2.6deg); }
+/* 칸마다 다른 손버릇은 이제 공용 shared/screen.css 가 낱개 속성 rotate 로 준다.
+   여기서 쓰던 `transform: translate(...) rotate(...)` 는 걷어냈다 —
+   칸이 커진 새 규격에서 그 자리 이동이 옆 칸을 밀어 경계상자가 겹쳤고(패드 가로에서 확인),
+   기울기도 공용 값 위에 겹쳐 얹혀 두 배로 기울었다. DESIGN.md 「첫 화면 규격」: 기울기만, 이동·확대 없음. */
 
 /* 들어올 때는 스르르 나타나기만 한다 — 원래의 card-in 은 transform 을 덮어써서
    기울기가 잠깐 펴졌다가 툭 하고 기우는 게 보였다. */
@@ -385,11 +382,12 @@ h1 {
 .menu-card { animation-name: menu-card-in; }
 
 /* 카드 안의 작은 격자 미리보기는 카드가 기운 만큼 되돌려 똑바로 세운다.
-   (조각 방향이 곧 정답이라, 미리보기가 기울면 아이가 잘못 배운다) */
+   (조각 방향이 곧 정답이라, 미리보기가 기울면 아이가 잘못 배운다)
+   되돌릴 각도는 공용 shared/screen.css 의 rotate 값(-2.1 / 1.6 / 2.4°)과 짝이다. */
 .mc-icon { display: block; line-height: 0; transform-origin: 50% 50%; }
-.menu > .menu-card:nth-child(3n+1) .mc-icon { transform: rotate( 2.2deg); }
-.menu > .menu-card:nth-child(3n+2) .mc-icon { transform: rotate(-1.8deg); }
-.menu > .menu-card:nth-child(3n+3) .mc-icon { transform: rotate(-2.6deg); }
+.menu > .menu-card:nth-child(1) .mc-icon { rotate:  2.1deg; }
+.menu > .menu-card:nth-child(2) .mc-icon { rotate: -1.6deg; }
+.menu > .menu-card:nth-child(3) .mc-icon { rotate: -2.4deg; }
 
 /* 누르면 제자리로 눌린다 — 기울기는 잠깐 펴진다 */
 .menu .menu-card:active { transform: translate(2px, 3px) rotate(0); }

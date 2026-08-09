@@ -184,7 +184,8 @@ await check('첫 화면 낙서장: 칸마다 다른 기울기 · 크기 위계(1
   await page.waitForSelector('#scr-home.on');
   await page.waitForTimeout(400);
   const m = await page.evaluate(() => {
-    const ang = el => { const t = getComputedStyle(el).transform; if (t === 'none') return 0; const n = new DOMMatrix(t); return +(Math.atan2(n.b, n.a) * 180 / Math.PI).toFixed(2); };
+    // 새 규격: 흩뿌리기는 transform 이 아니라 낱개 속성 rotate 로 준다 — 각도는 rotate 에서 읽는다
+    const ang = el => +parseFloat(getComputedStyle(el).rotate || '0').toFixed(2) || 0;
     const cards = [...document.querySelectorAll('#menu .menu-card')];
     const rs = cards.map(c => c.getBoundingClientRect());
     let overlap = 0;
@@ -193,7 +194,8 @@ await check('첫 화면 낙서장: 칸마다 다른 기울기 · 크기 위계(1
           rs[i].bottom > rs[j].top + 1 && rs[j].bottom > rs[i].top + 1) overlap++;
     return {
       angles: cards.map(ang),
-      widths: rs.map(r => Math.round(r.width)),
+      // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다
+      widths: cards.map(c => c.offsetWidth),
       overlap,
       offscreen: rs.filter(r => r.left < -1 || r.right > innerWidth + 1).length,
       scrollX: document.querySelector('#scr-home').scrollWidth - document.querySelector('#scr-home').clientWidth,
@@ -201,7 +203,9 @@ await check('첫 화면 낙서장: 칸마다 다른 기울기 · 크기 위계(1
   });
   expect(new Set(m.angles).size === 3, '칸이 같은 각도로 서 있다: ' + m.angles.join(','));
   expect(m.angles.every(a => Math.abs(a) > 0.5 && Math.abs(a) < 6), '기울기가 0이거나 과하다: ' + m.angles.join(','));
-  expect(m.widths[0] > m.widths[1] && m.widths[1] > m.widths[2], '크기 위계 어긋남: ' + m.widths.join('>'));
+  // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
+  expect(m.widths[0] >= Math.max(m.widths[1], m.widths[2]) * 1.05, '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + m.widths.join('/'));
+  expect(Math.max(m.widths[1], m.widths[2]) <= Math.min(m.widths[1], m.widths[2]) * 1.15, '2·3단계 칸 크기가 서로 다르다: ' + m.widths.join('/'));
   expect(m.overlap === 0, '칸끼리 겹침 ' + m.overlap + '건');
   expect(m.offscreen === 0 && m.scrollX <= 1, '칸이 화면 밖으로 나감');
 });
@@ -210,7 +214,15 @@ await check('첫 화면 낙서장: 칸마다 다른 기울기 · 크기 위계(1
    격자·조각에 회전이나 크기 변형이 붙으면 놀이가 망가진다. */
 await check('격자·조각에는 회전·크기 변형 없음 (첫 화면 미리보기 포함)', async () => {
   const home = await page.evaluate(() => {
-    const ang = el => { const t = getComputedStyle(el).transform; if (t === 'none') return 0; const n = new DOMMatrix(t); return Math.atan2(n.b, n.a) * 180 / Math.PI; };
+    // 기울기는 transform 과 낱개 속성 rotate 두 곳에서 온다 — 둘 다 더해야 진짜 각도가 나온다
+    // (새 규격의 흩뿌리기가 rotate 로 바뀌었으므로 transform 만 보면 이 검사가 껍데기가 된다)
+    const ang = el => {
+      const s = getComputedStyle(el);
+      let a = 0;
+      if (s.transform && s.transform !== 'none') { const n = new DOMMatrix(s.transform); a += Math.atan2(n.b, n.a) * 180 / Math.PI; }
+      if (s.rotate && s.rotate !== 'none') a += parseFloat(s.rotate) || 0;
+      return a;
+    };
     return [...document.querySelectorAll('#menu .mc-icon .mini-grid')].map(el => {
       let a = 0;
       for (let n = el; n && n.id !== 'menu'; n = n.parentElement) a += ang(n);

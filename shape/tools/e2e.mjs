@@ -86,13 +86,13 @@ async function menuLayout() {
   return page.evaluate(() => {
     const cs = [...document.querySelectorAll('#menu .menu-card')].map(e => {
       const r = e.getBoundingClientRect();
-      const t = getComputedStyle(e).transform;
-      // matrix(a,b,c,d,e,f) 의 b 로 기울기(도)를 되짚는다
-      const m = t.match(/matrix\(([^)]+)\)/);
-      const n = m ? m[1].split(',').map(Number) : null;
+      // 새 규격: 흩뿌리기는 transform 이 아니라 낱개 속성 rotate 로 준다 — 각도는 rotate 에서 읽는다
+      const rot = getComputedStyle(e).rotate;
       return {
         l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height,
-        deg: n ? +(Math.atan2(n[1], n[0]) * 180 / Math.PI).toFixed(2) : 0,
+        // 칸의 진짜 폭은 offsetWidth — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다
+        ow: e.offsetWidth,
+        deg: rot && rot !== 'none' ? +(parseFloat(rot) || 0).toFixed(2) : 0,
       };
     });
     let ov = 0;
@@ -117,10 +117,10 @@ for (const [w, h, tag] of [[1180, 820, '패드 1180×820'], [390, 844, '폰 390�
     // 흩뿌리기 — 칸마다 다른 기울기, 어느 것도 반듯하지 않다
     r.cs.forEach((c, i) => expect(Math.abs(c.deg) > 0.5, (i + 1) + '번 칸이 안 기울었다: ' + c.deg));
     expect(new Set(r.cs.map(c => c.deg)).size === 3, '기울기가 겹친다: ' + r.cs.map(c => c.deg));
-    // 크기 위계 — 먼저 할 것이 가장 크다
-    expect(r.cs[0].w > r.cs[1].w && r.cs[1].w > r.cs[2].w,
-      '크기 위계가 깨졌다: ' + r.cs.map(c => Math.round(c.w)));
-    expect(r.cs[0].w > r.cs[2].w * 1.25, '첫 칸이 충분히 크지 않다');
+    // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
+    const ow = r.cs.map(c => c.ow);
+    expect(ow[0] >= Math.max(ow[1], ow[2]) * 1.05, '첫 칸이 뒤 칸보다 확실히 크지 않다: ' + ow.join(' / '));
+    expect(Math.max(ow[1], ow[2]) <= Math.min(ow[1], ow[2]) * 1.15, '2·3단계 칸 크기가 서로 다르다: ' + ow.join(' / '));
     // 겹침·이탈 없음
     expect(r.ov === 0, '칸이 ' + r.ov + '쌍 겹친다');
     expect(r.out === 0, '칸 ' + r.out + '개가 화면 밖으로 나갔다');

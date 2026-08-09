@@ -173,14 +173,17 @@ await check('첫 화면 낙서장 배치: 칸마다 다른 기울기·자리·�
   await page.waitForSelector('#scr-home.on');
   await page.waitForTimeout(420);            // 등장 모션이 끝난 뒤 재야 자리 값이 확정된다
   const m = await page.evaluate(() => [...document.querySelectorAll('#menu .menu-card')].map(el => ({
-    t: getComputedStyle(el).transform,
-    w: Math.round(el.getBoundingClientRect().width),
+    // 새 규격: 흩뿌리기는 transform 이 아니라 낱개 속성 rotate 로 준다(이동·확대는 뺐다)
+    t: getComputedStyle(el).rotate,
+    // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다
+    w: el.offsetWidth,
   })));
   expect(m.length === 3, '단계 카드 수');
   expect(m.every(x => x.t && x.t !== 'none'), '흩뿌림이 안 걸린 칸: ' + JSON.stringify(m.map(x => x.t)));
   expect(new Set(m.map(x => x.t)).size === 3, '칸들이 같은 기울기다: ' + JSON.stringify(m.map(x => x.t)));
-  // 크기 위계 — 먼저 할 것이 가장 크다
-  expect(m[0].w > m[1].w && m[1].w > m[2].w, '크기 위계가 깨짐: ' + m.map(x => x.w).join(' > '));
+  // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
+  expect(m[0].w >= Math.max(m[1].w, m[2].w) * 1.05, '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + m.map(x => x.w).join(' / '));
+  expect(Math.max(m[1].w, m[2].w) <= Math.min(m[1].w, m[2].w) * 1.15, '2·3단계 칸 크기가 서로 다르다: ' + m.map(x => x.w).join(' / '));
 });
 
 await check('크기 위계: 아직 안 한 첫 퍼즐 하나만 .next 로 크게', async () => {

@@ -264,14 +264,17 @@ await check('첫 화면은 반대로 삐뚤게 흩뿌려져 있다 (칸마다 �
   const r = await page.evaluate(() => {
     const cards = [...document.querySelectorAll('#menu .menu-card')];
     return cards.map(el => ({
-      t: getComputedStyle(el).transform,
-      w: Math.round(el.getBoundingClientRect().width),
+      // 새 규격: 흩뿌리기는 transform 이 아니라 낱개 속성 rotate 로 준다(이동·확대는 뺐다)
+      t: getComputedStyle(el).rotate,
+      // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다
+      w: el.offsetWidth,
     }));
   });
-  expect(r.every(x => x.t !== 'none'), '기울지 않은 칸이 있다: ' + JSON.stringify(r));
+  expect(r.every(x => x.t && x.t !== 'none'), '기울지 않은 칸이 있다: ' + JSON.stringify(r));
   expect(new Set(r.map(x => x.t)).size === r.length, '칸들이 같은 각도로 기울었다');
-  // 크기 위계 — 먼저 할 것이 가장 크다
-  expect(r[0].w > r[1].w && r[1].w > r[2].w, '크기 위계가 깨짐: ' + r.map(x => x.w).join(' > '));
+  // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
+  expect(r[0].w >= Math.max(r[1].w, r[2].w) * 1.05, '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + r.map(x => x.w).join(' / '));
+  expect(Math.max(r[1].w, r[2].w) <= Math.min(r[1].w, r[2].w) * 1.15, '2·3단계 칸 크기가 서로 다르다: ' + r.map(x => x.w).join(' / '));
   expect(await page.locator('#menu .menu-card.c-l1 .start-arrow').count() === 1, '시작 화살표가 없다');
 });
 

@@ -238,15 +238,20 @@ await check('첫 화면 낙서장 배치 — 칸마다 다른 기울기, 먼저 
   const m = await page.evaluate(() => {
     const cards = [...document.querySelectorAll('#menu .menu-card')];
     return {
-      transforms: cards.map(c => getComputedStyle(c).transform),
-      widths: cards.map(c => c.getBoundingClientRect().width),
+      // 새 규격: 흩뿌리기는 transform 이 아니라 낱개 속성 rotate 로 준다(이동·확대는 뺐다)
+      rots: cards.map(c => getComputedStyle(c).rotate),
+      // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다
+      widths: cards.map(c => c.offsetWidth),
       arrow: document.querySelectorAll('#menu .menu-card:first-child .first-arrow').length,
     };
   });
-  expect(m.transforms.every(t => t && t !== 'none'), '기울지 않은 칸이 있다: ' + m.transforms.join(' | '));
-  expect(new Set(m.transforms).size === 3, '칸 세 개가 같은 기울기다');
-  expect(m.widths[0] > m.widths[1] && m.widths[1] > m.widths[2],
-    '크기 위계가 없다: ' + m.widths.map(w => Math.round(w)).join(' > '));
+  expect(m.rots.every(r => r && r !== 'none'), '기울지 않은 칸이 있다: ' + m.rots.join(' | '));
+  expect(new Set(m.rots).size === 3, '칸 세 개가 같은 기울기다: ' + m.rots.join(' | '));
+  // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
+  expect(m.widths[0] >= Math.max(m.widths[1], m.widths[2]) * 1.05,
+    '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + m.widths.join(' / '));
+  expect(Math.max(m.widths[1], m.widths[2]) <= Math.min(m.widths[1], m.widths[2]) * 1.15,
+    '2·3단계 칸 크기가 서로 다르다: ' + m.widths.join(' / '));
   expect(m.arrow === 1, '첫 놀이를 가리키는 점선 화살표가 없다');
 });
 
