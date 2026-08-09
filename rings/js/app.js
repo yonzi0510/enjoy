@@ -51,8 +51,8 @@ window.App = (() => {
   function renderHome() {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
-    // 제목 밑에서 첫 단계 칸으로 향하는 점선 화살표 — 글씨를 못 읽어도 "여기부터" 를 안다
-    menu.innerHTML = '<svg class="start-arrow" aria-hidden="true"><use href="#rg-arrow"/></svg>';
+    // "여기부터" 를 알려 주는 시작 화살표는 shared/screen.css 가 첫 칸 안쪽에 얹는다 — 여기서 그리지 않는다
+    menu.innerHTML = '';
     D.LEVELS.forEach(lv => {
       const ids = D.puzzlesOf(lv.id).map(x => x.id);
       const done = P.doneCount(ids);

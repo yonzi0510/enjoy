@@ -346,7 +346,7 @@ h1 .ic-title { width: 1.1em; height: 1.1em; vertical-align: -.16em; }
 .bigbtn { display: inline-flex; align-items: center; justify-content: center; gap: .34em; }
 .bigbtn .ic { width: 1.35em; height: 1.35em; vertical-align: middle; }
 
-/* ── 첫 화면: 화살표 자리 + 줄 사이 벌리기 ──
+/* ── 첫 화면: 제목과 첫 줄 사이 여백 + 줄 사이 벌리기 ──
    doodle-menu.css 가 칸을 위아래로 ±5% 흩뿌리므로 가로 간격만큼만 주면 줄끼리 물린다. */
 #scr-home .menu {
   align-items: flex-start;          /* 칸 키가 달라도 윗선을 맞춘다 */
@@ -354,7 +354,7 @@ h1 .ic-title { width: 1.1em; height: 1.1em; vertical-align: -.16em; }
   padding-top: clamp(56px, 11vmin, 96px) !important;
   row-gap: clamp(26px, 4.5vh, 52px) !important;
 }
-.menu-card { position: relative; }  /* 화살표를 카드에 매단다 */
+.menu-card { position: relative; }  /* 칸 안쪽에 얹히는 것들(공용 시작 화살표)의 기준 */
 
 /* 크기 위계 — 새 규격은 「1단계만 1.15배, 2·3단계는 같게」다 (DESIGN.md 「첫 화면 규격」).
    칸 폭은 shared/screen.css 가 정한다 — 여기서 vmin 으로 다시 잡으면 넓은 화면에서 잘리고
@@ -369,17 +369,7 @@ h1 .ic-title { width: 1.1em; height: 1.1em; vertical-align: -.16em; }
 /* 한국어는 어절 단위로만 줄바꿈 — 낱말이 쪼개지지 않게 */
 .mc-name, .mc-desc { word-break: keep-all; }
 
-/* 제목에서 첫 놀이로 휘어 들어가는 점선 화살표 — 첫 칸 위에 걸쳐 그 칸 머리를 가리킨다 */
-.start-arrow {
-  position: absolute;
-  left: 8%;
-  bottom: calc(100% - 4px);
-  width: clamp(84px, 17vmin, 140px);
-  height: calc(clamp(84px, 17vmin, 140px) * 70 / 120);
-  color: #C0503A;
-  overflow: visible;
-  pointer-events: none;
-}
+/* (앱마다 그리던 손그림 화살표는 걷어냈다 — shared/screen.css 가 첫 칸 안쪽에 공용 화살표를 얹는다) */
 
 /* ── 미니 본보기: 광택 판을 걷고 조각만 남긴다 ── */
 .mini-goal { background: none; box-shadow: none; }
@@ -450,13 +440,12 @@ h1 .ic-title { width: 1.1em; height: 1.1em; vertical-align: -.16em; }
   #scr-play .play-stage { padding-top: clamp(16px, 3.4vmin, 28px); }
 }
 
-/* ── 폰 가로(낮은 화면): 첫 화면은 한 줄에 담고 화살표 자리도 줄인다 ── */
+/* ── 폰 가로(낮은 화면): 첫 화면은 한 줄에 담고 위 여백도 줄인다 ── */
 @media (orientation: landscape) and (max-height: 480px) {
   #scr-home .menu {
     flex-wrap: nowrap; max-width: none;
     padding-top: clamp(38px, 9vh, 60px) !important;
   }
-  .start-arrow { width: clamp(64px, 15vh, 96px); height: calc(clamp(64px, 15vh, 96px) * 70 / 120); }
 }
 
 /* ─────────── 등장 모션 + 모션 줄이기 존중 ─────────── */

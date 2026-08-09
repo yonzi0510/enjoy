@@ -1,0 +1,316 @@
+/* parent/css/style.css — 🔑 부모님 페이지 (낙서장 결)
+ *
+ * 나머지 30개 화면(29개 놀이 + 홈)과 같은 결로 맞춘 판. 재질은 `shared/crayon.css`
+ * 가 내려 주므로(모눈 공책 바탕·얇은 손그림 윤곽·그림자 없음) 여기서는
+ * **부모용 화면에만 필요한 것**만 얹는다.
+ *
+ * 불러오는 차례 (index.html) — 다른 앱과 같다:
+ *   css/style.css → ../shared/time-limit.css → ../shared/pet.css → ../shared/crayon.css
+ *
+ * 부모용이라 아이용 화면과 다른 점:
+ *   · 글자를 키우거나 이모지로 바꾸지 않는다 — 또박또박 읽히는 것이 우선이다.
+ *   · 켜짐/꺼짐은 **색 칠(보라·초록)** 로 한눈에 보이게 한다. 윤곽선만으로는
+ *     "지금 뭐가 켜졌는지"를 부모님이 훑어볼 수 없다.
+ *   · PIN·하루 제한 숫자·백업 단추는 대비를 낮추지 않는다.
+ *
+ * crayon.css 가 `.back` 같은 선택자에 `!important` 를 걸어 두어서, 그와 부딪히는
+ * 몇 곳만 선택자를 한 단계 더 깊게(`.page .back`) 잡아 되돌린다.
+ */
+
+:root {
+  --paper:   #FCFBF4;   /* 스케치북 종이 (crayon.css 와 같은 값) */
+  --ink:     #2E2A24;   /* 연필심 — 윤곽선과 글자 */
+  --ink-2:   #6E665A;   /* 옅은 연필 — 보조 글자 */
+  --ink-line: rgba(46, 42, 36, .85);  /* 손으로 그은 윤곽 */
+  --ink-dash: rgba(46, 42, 36, .22);  /* 점선 구분줄 */
+  --sheet:   rgba(255, 255, 255, .82);/* 카드 바탕 (모눈이 살짝 비친다) */
+  --purple:  #9B59B6;   /* 크레용 보라 — 부모님 페이지 색, 「고름」 표시 */
+  --green:   #4CA64C;   /* 크레용 초록 — 「켜짐」 표시 */
+  --yellow:  #F2B705;   /* 크레용 노랑 — 주요 단추 */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body {
+  min-height: 100%;
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background: var(--paper);           /* 실제 모눈 바탕은 crayon.css 가 덮어쓴다 */
+  color: var(--ink);
+  padding: 20px 16px calc(28px + env(safe-area-inset-bottom));
+}
+.page { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+/* 절제된 등장 모션 — 판이 차례로 살며시 떠오른다 (놀잇감이 아니라 화면 틀이라 괜찮다) */
+.page > * { animation: card-in .3s ease-out backwards; }
+.page > *:nth-child(1) { animation-delay: .03s; }
+.page > *:nth-child(2) { animation-delay: .07s; }
+.page > *:nth-child(3) { animation-delay: .11s; }
+.page > *:nth-child(4) { animation-delay: .15s; }
+.page > *:nth-child(5) { animation-delay: .19s; }
+.page > *:nth-child(6) { animation-delay: .23s; }
+.page > *:nth-child(7) { animation-delay: .27s; }
+.page > *:nth-child(8) { animation-delay: .31s; }
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+  font-size: clamp(22px, 5vmin, 30px); font-weight: 900;
+  color: var(--ink);
+  letter-spacing: -.03em;
+}
+
+/* 「◀ 놀이터로」 — crayon.css 가 `.back` 을 동그란 단추로 만들려고 !important 를 건다.
+   여기는 글자가 붙은 가로로 긴 단추라, 한 단계 깊은 선택자로 모양만 되돌린다. */
+.page .back,
+#gate .back {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 4px; padding: 0 14px;
+  min-width: 46px; min-height: 46px;
+  border: 3px solid var(--ink-line) !important;
+  border-radius: 20px 15px 21px 16px !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+  text-decoration: none; font-weight: 800; font-size: 15px;
+  white-space: nowrap;
+}
+.page .back:active,
+#gate .back:active { transform: translate(1px, 2px); }
+
+/* ── 설정 판 — 두툼한 색 단면·광택을 걷고 얇은 손그림 윤곽만 ───────── */
+.card {
+  background: var(--sheet);
+  border: 3px solid var(--ink-line);
+  border-radius: 24px 19px 26px 21px;
+  box-shadow: none;
+  padding: 18px;
+}
+.card h2 { font-size: 17px; font-weight: 900; margin-bottom: 10px; color: var(--ink); letter-spacing: -.02em; }
+.card p.note { font-size: 13px; color: var(--ink-2); line-height: 1.6; margin-top: 8px; }
+.card p.note b { color: var(--ink); }
+
+.row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 0; border-bottom: 1.5px dashed var(--ink-dash);
+}
+.row:last-child { border-bottom: none; }
+.row .lbl { font-size: 15px; font-weight: 800; color: var(--ink); }
+.row .sub { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin-top: 3px; line-height: 1.5; }
+.row .sub b { color: var(--ink); }
+
+/* ── 여럿 중 하나 고르기 (하루 제한) ─────────────────────────────────
+   고른 것은 **보라로 칠한다.** 윤곽선 굵기만으로는 훑어볼 때 안 보인다. */
+.seg { display: flex; gap: 8px; flex-wrap: wrap; }
+.seg button {
+  cursor: pointer;
+  min-height: 46px; min-width: 46px;
+  padding: 8px 14px;
+  border: 3px solid var(--ink-line);
+  border-radius: 18px 14px 19px 15px;
+  background: #fff;
+  color: var(--ink); font-weight: 900; font-size: 15px;
+  box-shadow: none;
+  transition: transform .12s;
+}
+.seg button:active { transform: translate(1px, 2px); }
+.seg button.sel {
+  background: var(--purple);
+  color: #fff;
+}
+.seg button.sel::before { content: '✓ '; font-weight: 900; }
+
+/* ── 여러 갈래 중 하나 고르기 (펫 돌보기 세기) — 설명이 붙어 한 줄에 하나씩 ── */
+.row.stack { flex-direction: column; align-items: stretch; }
+.row.stack > .seg { margin-top: 8px; }
+.seg.opts { flex-direction: column; width: 100%; margin-top: 8px; }
+.seg.opts button {
+  width: 100%; min-height: 46px;
+  display: flex; flex-direction: column; gap: 3px;
+  text-align: left; padding: 10px 14px;
+  position: relative;
+}
+.seg.opts button.sel::before { content: none; }   /* 아래 ✓ 배지로 대신한다 */
+.seg.opts button.sel::after {
+  content: '✓';
+  position: absolute; top: 50%; right: 12px; transform: translateY(-50%);
+  font-size: 20px; font-weight: 900; line-height: 1;
+}
+.seg.opts button.sel .opt-t,
+.seg.opts button.sel .opt-d { padding-right: 24px; }
+.seg.opts .opt-t { font-size: 15px; font-weight: 900; }
+.seg.opts .opt-d { font-size: 12.5px; font-weight: 700; line-height: 1.5; color: var(--ink-2); }
+.seg.opts button.sel .opt-d { color: rgba(255, 255, 255, .92); }
+
+/* ── 작은 동작 단추 (초기화·다 낫게 하기) ──────────────────────────── */
+.reset-btn {
+  cursor: pointer; flex-shrink: 0;
+  min-height: 46px; padding: 9px 16px;
+  border: 3px solid var(--ink-line);
+  border-radius: 18px 14px 19px 15px;
+  background: #fff;
+  color: var(--ink); font-weight: 900; font-size: 14px; white-space: nowrap;
+  box-shadow: none;
+  transition: transform .12s;
+}
+.reset-btn:active { transform: translate(1px, 2px); }
+.reset-btn.tall { min-height: 46px; }
+
+/* 아이용으로 화면 구석에 떠 있는 펫 단추는 부모님 페이지에 어울리지 않아 숨긴다
+   (shared/pet.css·crayon.css는 건드리지 않고 여기서만 덮어쓴다) */
+.pet-btn { display: none !important; }
+
+/* ── 켜기·끄기 스위치 — 켜지면 초록으로 칠해 한눈에 ─────────────────
+   손가락 하한 46px 을 지키려고 트랙 자체를 46px 로 키웠다. */
+.switch {
+  cursor: pointer; flex-shrink: 0;
+  width: 90px; height: 46px;
+  border: 3px solid var(--ink-line);
+  border-radius: 26px 24px 26px 24px;
+  background: #fff;
+  position: relative; transition: background .15s;
+  box-shadow: none;
+}
+.switch::after {                       /* 손잡이 */
+  content: ''; position: absolute; top: 5px; left: 5px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: #fff; border: 2.5px solid var(--ink-line);
+  transition: left .15s, background .15s;
+}
+.switch::before {                      /* 켜짐/꺼짐 글자 — 색맹·흑백 인쇄에서도 구분되게 */
+  content: '꺼짐';
+  position: absolute; top: 50%; right: 9px; transform: translateY(-50%);
+  font-size: 11px; font-weight: 900; color: var(--ink-2); letter-spacing: -.04em;
+}
+.switch.on { background: var(--green); }
+.switch.on::after { left: 49px; }
+.switch.on::before { content: '켜짐'; right: auto; left: 9px; color: #fff; }
+
+.big-num { font-size: clamp(26px, 6vmin, 38px); font-weight: 900; color: var(--ink); }
+
+/* ── 큰 단추 (저장·백업) — 주요한 것은 크레용 노랑으로 칠한다 ───────── */
+.pill {
+  cursor: pointer;
+  min-height: 46px; padding: 12px 18px;
+  border: 3px solid var(--ink-line);
+  border-radius: 20px 16px 21px 17px;
+  background: var(--yellow);
+  color: var(--ink); font-weight: 900; font-size: 15px;
+  box-shadow: none;
+  transition: transform .12s;
+}
+.pill:active { transform: translate(1px, 2px); }
+.pill.soft { background: #fff; }
+
+/* ── 확인 번호 입력칸 — 정확해야 하는 곳이라 대비를 낮추지 않는다 ───── */
+input[type="password"], input[type="text"] {
+  width: 110px; min-height: 46px; padding: 10px;
+  border: 3px solid var(--ink-line);
+  border-radius: 16px 12px 17px 13px;
+  background: #fff; color: var(--ink);
+  font-size: 18px; font-weight: 900; text-align: center; letter-spacing: 5px;
+  font-family: inherit;
+}
+input[type="password"]::placeholder, input[type="text"]::placeholder { color: #B8B0A2; letter-spacing: 5px; }
+input[type="password"]:focus, input[type="text"]:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(155, 89, 182, .22);
+}
+
+/* ── 진행도 표 ──────────────────────────────────────────────────── */
+table.sum { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--ink); }
+table.sum td { padding: 7px 4px; border-bottom: 1.5px dashed var(--ink-dash); }
+table.sum td:last-child { text-align: right; font-weight: 800; }
+
+/* ── 확인 번호 게이트 — 종이 카드가 어두운 잉크 위에 놓인 모습 ───────── */
+#gate.tl-overlay { background: rgba(46, 42, 36, .70); }
+#gate .tl-card {
+  max-width: 340px;
+  background: var(--paper);
+  border: 3px solid var(--ink-line);
+  border-radius: 30px 24px 32px 26px;
+  box-shadow: 6px 7px 0 rgba(46, 42, 36, .35);
+}
+#gate .tl-title { color: var(--ink); letter-spacing: -.03em; }
+#gate .tl-sub { color: var(--ink-2); }
+#gate .tl-dots span {
+  background: #fff;
+  box-shadow: inset 0 0 0 2.5px var(--ink-line);
+}
+#gate .tl-dots span.tl-filled { background: var(--ink); }
+#gate .tl-key {
+  min-height: 46px;
+  border: 3px solid var(--ink-line);
+  border-radius: 16px 12px 17px 13px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: none;
+}
+#gate .tl-key:active { transform: translate(1px, 2px); box-shadow: none; }
+#gate .tl-key.tl-ok { background: var(--green); color: #fff; }
+#gate .tl-card > p { margin-top: 12px; }
+
+.hidden { display: none !important; }
+
+/* ── 알림 쪽지 ──────────────────────────────────────────────────── */
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  background: var(--ink); color: #fff; font-weight: 800; font-size: 14px;
+  padding: 11px 20px;
+  border: 3px solid var(--ink-line);
+  border-radius: 20px 16px 21px 17px;
+  opacity: 0; transition: opacity .2s;
+  box-shadow: none;
+  pointer-events: none;
+  z-index: 950;
+}
+.toast.show { opacity: 1; }
+
+/* 모션 줄이기 설정 존중 */
+@media (prefers-reduced-motion: reduce) {
+  .page > * { animation: none; }
+  .seg button, .pill, .reset-btn, .switch, .switch::after, #gate .tl-key { transition: none; }
+  .seg button:active, .pill:active, .reset-btn:active,
+  .page .back:active, #gate .back:active, #gate .tl-key:active { transform: none; }
+}
+
+/* ── 가로 모드 (태블릿 가로가 1차 기준 — DESIGN.md "가로모드 우선") ──
+   설정 판을 2단으로 펼쳐 좌우 빈 공간을 쓰고 스크롤을 줄인다.
+   게이트(확인 번호)는 기존처럼 화면 가운데 그대로. 세로모드는 무변경. */
+@media (orientation: landscape) and (min-width: 700px) {
+  .page {
+    max-width: 1020px;
+    display: block;   /* 세로 flex → 2단 배치 */
+    columns: 2;
+    column-gap: 16px;
+  }
+  .page > * { break-inside: avoid; margin-bottom: 16px; } /* 판이 열 사이에서 쪼개지지 않게 */
+  .page > div:first-child { column-span: all; }           /* 제목 줄은 두 열에 걸친다 */
+}
+
+/* 낮은 가로 화면(폰 가로) — 게이트 카드를 좌(안내)·우(숫자패드) 2단으로:
+   스크롤 없이 숫자패드까지 한눈에 보이게 한다 (선례: shared/pet.css 끝부분). */
+@media (orientation: landscape) and (max-height: 480px) {
+  #gate .tl-card {
+    max-width: none;
+    width: min(92vw, 640px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "emoji pad"
+      "title pad"
+      "sub   pad"
+      "dots  pad"
+      "back  pad";
+    align-content: center;
+    align-items: center;
+    column-gap: clamp(14px, 3vw, 28px);
+  }
+  #gate .tl-emoji { grid-area: emoji; }
+  #gate .tl-title { grid-area: title; }
+  #gate .tl-sub   { grid-area: sub; }
+  #gate .tl-dots  { grid-area: dots; }
+  #gate .tl-pad   { grid-area: pad; width: 100%; max-width: 260px; justify-self: center; }
+  #gate .tl-card > p { grid-area: back; }
+}

@@ -275,7 +275,24 @@ await check('첫 화면은 반대로 삐뚤게 흩뿌려져 있다 (칸마다 �
   // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
   expect(r[0].w >= Math.max(r[1].w, r[2].w) * 1.05, '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + r.map(x => x.w).join(' / '));
   expect(Math.max(r[1].w, r[2].w) <= Math.min(r[1].w, r[2].w) * 1.15, '2·3단계 칸 크기가 서로 다르다: ' + r.map(x => x.w).join(' / '));
-  expect(await page.locator('#menu .menu-card.c-l1 .start-arrow').count() === 1, '시작 화살표가 없다');
+  // 시작 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
+  // ::before 는 DOM 요소가 아니므로 getComputedStyle(el, '::before') 로 봐야 한다.
+  const ar = await page.evaluate(() => {
+    const has = c => {
+      const s = getComputedStyle(c, '::before');
+      return !!s.backgroundImage && s.backgroundImage !== 'none'
+        && s.backgroundImage.includes('svg') && parseFloat(s.width) > 20;
+    };
+    const cards = [...document.querySelectorAll('#menu > .menu-card')];
+    return { first: !!cards[0] && has(cards[0]), rest: cards.slice(1).filter(has).length,
+      // 앱마다 따로 그리던 옛 화살표가 되살아나면 두 개가 겹쳐 보인다 — 0 이어야 한다
+      old: document.querySelectorAll('.start-arrow, .first-arrow, .mc-arrow').length,
+      firstIsL1: !!cards[0] && cards[0].classList.contains('c-l1') };
+  });
+  expect(ar.firstIsL1, '첫 칸이 1단계가 아니다');
+  expect(ar.first, '첫 칸(1단계)에 공용 시작 화살표가 없다');
+  expect(ar.rest === 0, '첫 칸이 아닌 칸에도 화살표가 있다: ' + ar.rest);
+  expect(ar.old === 0, '앱이 따로 그리던 옛 화살표가 남아 있다: ' + ar.old + '개');
 });
 
 await check('UI 이모지 없음: 머리줄·단추·배지가 모두 손그림 SVG', async () => {

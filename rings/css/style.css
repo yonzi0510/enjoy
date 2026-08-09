@@ -363,23 +363,16 @@ h1 .ic-title { width: 1.75em; height: 1.24em; vertical-align: -.26em; }
 .mc-name, .mc-desc, .bar h2, .card-cap, .reward-praise { word-break: keep-all; text-wrap: balance; }
 .bar h2 { font-size: clamp(17px, 4vmin, 30px); line-height: 1.14; }
 
-/* ── 첫 화면: 크기 위계 + 시작 화살표 ── */
+/* ── 첫 화면: 크기 위계 ── */
+/* (시작 화살표는 shared/screen.css 가 첫 칸 안쪽에 얹는다 — 앱에서 그리지 않는다) */
 /* 남는 세로를 칸들이 나눠 갖고 가운데로 모인다 — 패드에서 아래가 텅 비어 보이지 않게 */
 .menu { align-items: center; flex: 1; align-content: center; min-height: 0; }
 /* 흩뿌리기 — shared/doodle-menu.css 의 순서별 손버릇을, 칸이 셋뿐인 이 앱에 맞춰
-   조금 더 세게 준다(화살표가 1번이라 단계 칸은 2·3·4번). 겹치지 않을 만큼만. */
-.menu > .menu-card:nth-child(2) { transform: translate(-1%,  1%) rotate(-2.2deg); }
-.menu > .menu-card:nth-child(3) { transform: translate( 2%, -2%) rotate( 2.8deg); }
-.menu > .menu-card:nth-child(4) { transform: translate(-1%,  4%) rotate(-2.6deg); }
+   조금 더 세게 준다. 겹치지 않을 만큼만. */
+.menu > .menu-card:nth-child(1) { transform: translate(-1%,  1%) rotate(-2.2deg); }
+.menu > .menu-card:nth-child(2) { transform: translate( 2%, -2%) rotate( 2.8deg); }
+.menu > .menu-card:nth-child(3) { transform: translate(-1%,  4%) rotate(-2.6deg); }
 /* 눌렸을 때 제자리로 펴지는 것과 모션 줄이기는 doodle-menu.css 가 !important 로 맡는다 */
-.start-arrow { /* 제목 밑에서 단계1 칸으로 향하는 손그림 점선 화살표 */
-  width: clamp(52px, 10vmin, 88px);
-  aspect-ratio: 110 / 130;
-  flex: none; align-self: flex-start;
-  margin-top: clamp(-6px, -1vmin, 0px);
-  color: #C05C86;
-  overflow: visible; pointer-events: none;
-}
 .c-l1 { width: clamp(172px, 32vmin, 262px); }
 .c-l2 { width: clamp(150px, 27vmin, 214px); }
 .c-l3 { width: clamp(132px, 23vmin, 180px); }

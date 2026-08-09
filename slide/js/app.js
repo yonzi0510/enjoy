@@ -54,9 +54,8 @@ window.App = (() => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'menu-card ' + lv.cls;
+      // "여기부터" 를 알려 주는 시작 화살표는 shared/screen.css 가 첫 칸 안쪽에 얹는다
       b.innerHTML =
-        // 첫 칸에만 — 제목 쪽에서 휘어 들어오는 손그림 점선 화살표("여기부터")
-        (lv.id === 1 ? '<svg class="start-arrow" aria-hidden="true"><use href="#sl-arrow"/></svg>' : '') +
         '<span class="mc-icon">' + miniGoal(sample.perm, 'mn' + lv.id, false) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +

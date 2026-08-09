@@ -212,9 +212,24 @@ await check('손그림 아이콘: 화면 틀에 이모지가 남아 있지 않�
   expect(await page.locator('#btn-voice svg').count() === 1, '목소리 아이콘 없음');
   // 떨림 필터가 문서에 딱 하나 있다
   expect(await page.locator('#twist-kd').count() === 1, '손그림 떨림 필터 없음');
-  // 제목에서 첫 놀이로 향하는 점선 화살표 — 첫 칸에만
-  expect(await page.locator('#menu .menu-card:nth-child(1) .first-arrow').count() === 1, '시작 화살표 없음');
-  expect(await page.locator('#menu .first-arrow').count() === 1, '시작 화살표가 여러 칸에 있음');
+  // 시작 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
+  // ::before 는 DOM 요소가 아니므로 getComputedStyle(el, '::before') 로 봐야 한다.
+  const ar = await page.evaluate(() => {
+    const has = c => {
+      const s = getComputedStyle(c, '::before');
+      return !!s.backgroundImage && s.backgroundImage !== 'none'
+        && s.backgroundImage.includes('svg') && parseFloat(s.width) > 20;
+    };
+    const cards = [...document.querySelectorAll('#menu > .menu-card')];
+    return { first: !!cards[0] && has(cards[0]), rest: cards.slice(1).filter(has).length,
+      // 앱마다 따로 그리던 옛 화살표가 되살아나면 두 개가 겹쳐 보인다 — 0 이어야 한다
+      old: document.querySelectorAll('.start-arrow, .first-arrow, .mc-arrow').length,
+      firstIsL1: !!cards[0] && cards[0].classList.contains('c-l1') };
+  });
+  expect(ar.firstIsL1, '첫 칸이 1단계가 아님');
+  expect(ar.first, '첫 칸에 공용 시작 화살표 없음');
+  expect(ar.rest === 0, '시작 화살표가 여러 칸에 있음: ' + ar.rest);
+  expect(ar.old === 0, '앱이 따로 그리던 옛 화살표가 남아 있다: ' + ar.old + '개');
 
   await page.click('.menu-card.c-l1');
   await page.waitForSelector('#scr-rounds.on');

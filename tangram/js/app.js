@@ -99,7 +99,6 @@ window.App = (() => {
       b.className = 'menu-card ' + lv.cls;
       b.innerHTML =
         // 첫 칸에는 "여기부터 놀아 보자" 손그림 점선 화살표를 붙인다 (칸 기준 절대배치)
-        (li === 0 ? ic('startArrow', 'start-arrow') : '') +
         '<span class="mc-icon">' + pictureSVG(rep) + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +

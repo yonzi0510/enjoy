@@ -35,15 +35,8 @@
     <feDisplacementMap in="SourceGraphic" scale="6.5"/>
   </filter>
 
-  <!-- 제목에서 첫 놀이로 가는 점선 화살표 (꼬리는 오른쪽 위, 머리는 왼쪽 아래) -->
-  <symbol id="ji-arrow" viewBox="0 0 160 80">
-    <g filter="url(#ji-hand)" fill="none" stroke="currentColor"
-       stroke-linecap="round" stroke-linejoin="round">
-      <path d="M152 12 C122 4, 76 11, 47 31 C31 42, 23 55, 19 70"
-            stroke-width="6" stroke-dasharray="2 13"/>
-      <path d="M6 53 L19 72 L34 57" stroke-width="6.4"/>
-    </g>
-  </symbol>
+  <!-- 시작 화살표는 앱마다 그리지 않는다 — shared/screen.css 가 29개 앱 첫 칸에
+       같은 그림·같은 색으로 얹는다(DESIGN.md 「시작 화살표」). 여기 있던 분홍 점선은 걷어냈다. -->
 
   <!-- 글자 배우기 — 펼친 책에 あ 를 끄적여 놓았다 -->
   <symbol id="ji-learn" viewBox="0 0 64 64">
@@ -246,11 +239,9 @@
     </div>
   </header>
   <!-- 놀이 칸은 크기로 순서를 알려준다 — 글자 배우기가 가장 크고, 뒤로 갈수록 조금씩 작다.
-       화살표는 '글자 배우기' 칸에 붙어 있어서(카드 기준 절대배치) 화면이 어떻게 접히든
-       늘 첫 놀이를 가리킨다. -->
+       "여기부터" 를 가리키는 시작 화살표는 shared/screen.css 가 첫 칸 안쪽에 얹는다. -->
   <div class="menu">
     <button type="button" class="menu-card m-learn" data-go="learn">
-      <svg class="first-arrow" aria-hidden="true"><use href="#ji-arrow"></use></svg>
       <svg class="mc-art" aria-hidden="true"><use href="#ji-learn"></use></svg>
       <span class="mc-name">글자 배우기</span>
       <span class="mc-desc">あいうえお 소리와 낱말</span>

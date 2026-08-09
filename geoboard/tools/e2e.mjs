@@ -242,7 +242,18 @@ await check('첫 화면 낙서장 배치 — 칸마다 다른 기울기, 먼저 
       rots: cards.map(c => getComputedStyle(c).rotate),
       // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다
       widths: cards.map(c => c.offsetWidth),
-      arrow: document.querySelectorAll('#menu .menu-card:first-child .first-arrow').length,
+      // 시작 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
+      // 앱이 따로 그리던 옛 화살표(.first-arrow)는 걷어냈다 — 다시 생기면 두 개가 겹친다.
+      arrow: (() => {
+        const has = c => {
+          const s = getComputedStyle(c, '::before');
+          return !!s.backgroundImage && s.backgroundImage !== 'none'
+            && s.backgroundImage.includes('svg') && parseFloat(s.width) > 20;
+        };
+        return { first: !!cards[0] && has(cards[0]), rest: cards.slice(1).filter(has).length,
+          firstIsL1: !!cards[0] && cards[0].classList.contains('c-l1'),
+          old: document.querySelectorAll('.start-arrow, .first-arrow, .mc-arrow').length };
+      })(),
     };
   });
   expect(m.rots.every(r => r && r !== 'none'), '기울지 않은 칸이 있다: ' + m.rots.join(' | '));
@@ -252,7 +263,10 @@ await check('첫 화면 낙서장 배치 — 칸마다 다른 기울기, 먼저 
     '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + m.widths.join(' / '));
   expect(Math.max(m.widths[1], m.widths[2]) <= Math.min(m.widths[1], m.widths[2]) * 1.15,
     '2·3단계 칸 크기가 서로 다르다: ' + m.widths.join(' / '));
-  expect(m.arrow === 1, '첫 놀이를 가리키는 점선 화살표가 없다');
+  expect(m.arrow.firstIsL1, '첫 칸이 1단계(쉬운 모양)가 아니다');
+  expect(m.arrow.first, '첫 놀이를 가리키는 공용 시작 화살표가 없다');
+  expect(m.arrow.rest === 0, '첫 칸이 아닌 칸에도 화살표가 있다: ' + m.arrow.rest);
+  expect(m.arrow.old === 0, '앱이 따로 그리던 옛 화살표가 남아 있다');
 });
 
 await check('이모지 대신 손그림 아이콘', async () => {

@@ -152,7 +152,21 @@ await check('낙서장 첫 화면: 손그림 아이콘 · 시작 화살표 · �
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(BASE);
   await page.waitForSelector('#scr-home.on');
-  expect(await page.locator('#menu .start-arrow').count() === 1, '제목에서 첫 놀이로 가는 화살표 없음');
+  // 시작 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
+  // 앱이 따로 그리던 옛 화살표(.start-arrow)는 걷어냈다 — 다시 생기면 두 개가 겹친다.
+  const ar = await page.evaluate(() => {
+    const has = c => {
+      const s = getComputedStyle(c, '::before');
+      return !!s.backgroundImage && s.backgroundImage !== 'none'
+        && s.backgroundImage.includes('svg') && parseFloat(s.width) > 20;
+    };
+    const cards = [...document.querySelectorAll('#menu > .menu-card')];
+    return { first: !!cards[0] && has(cards[0]), rest: cards.slice(1).filter(has).length,
+      old: document.querySelectorAll('.start-arrow, .first-arrow, .mc-arrow').length };
+  });
+  expect(ar.first, '첫 칸에 공용 시작 화살표가 없음');
+  expect(ar.rest === 0, '첫 칸이 아닌 칸에도 화살표가 있음: ' + ar.rest);
+  expect(ar.old === 0, '앱이 따로 그리던 옛 화살표가 남아 있음');
   expect(await page.locator('.home-head h1 svg.ic').count() === 1, '제목 손그림 없음');
   expect(await page.locator('.stat svg.ic').count() === 1, '별 손그림 없음');
   expect(await page.locator('#btn-voice svg.ic').count() === 1, '목소리 손그림 없음');
@@ -160,10 +174,12 @@ await check('낙서장 첫 화면: 손그림 아이콘 · 시작 화살표 · �
   const txt = (await page.locator('.home-head h1').innerText()) + (await page.locator('#menu').innerText());
   const emo = txt.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || [];
   expect(emo.length === 0, '첫 화면에 이모지가 남음: ' + emo.join(' '));
-  // 크기 위계 — 가장 먼저 할 「쉬운 주사위」가 제일 크다
-  const w = async s => (await page.locator(s).boundingBox()).width;
-  const w1 = await w('.menu-card.c-l1'), w2 = await w('.menu-card.c-l2'), w3 = await w('.menu-card.c-l3');
-  expect(w1 > w2 && w2 > w3, '크기 위계가 아님: ' + [w1, w2, w3].join(' / '));
+  // 크기 위계 — 새 규격은 「1단계만 1.15배, 2·3단계는 같게」다 (DESIGN.md 「첫 화면 규격」).
+  // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다.
+  const [w1, w2, w3] = await page.evaluate(() =>
+    ['.menu-card.c-l1', '.menu-card.c-l2', '.menu-card.c-l3'].map(s => document.querySelector(s).offsetWidth));
+  expect(w1 >= Math.max(w2, w3) * 1.05, '1단계 칸이 뒤 칸보다 확실히 크지 않다: ' + [w1, w2, w3].join(' / '));
+  expect(Math.max(w2, w3) <= Math.min(w2, w3) * 1.15, '2·3단계 칸 크기가 서로 다르다: ' + [w1, w2, w3].join(' / '));
 });
 
 await check('첫 화면 낙서장 배치: 폰·패드에서 겹침·이탈 없음', async () => {

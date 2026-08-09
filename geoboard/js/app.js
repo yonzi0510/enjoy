@@ -74,16 +74,15 @@ window.App = (() => {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
     menu.innerHTML = '';
-    D.LEVELS.forEach((lv, i) => {
+    D.LEVELS.forEach(lv => {
       const ids = D.puzzlesOf(lv.id).map(x => x.id);
       const done = P.doneCount(ids);
       const pz = D.puzzlesOf(lv.id)[0];
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'menu-card ' + lv.cls;
+      // 첫 칸을 가리키는 시작 화살표는 shared/screen.css 가 얹는다 — 앱에서 그리지 않는다
       b.innerHTML =
-        // 첫 칸에만 손그림 점선 화살표 — 카드 기준 절대배치라 화면이 어떻게 접혀도 여기를 가리킨다
-        (i === 0 ? '<svg class="first-arrow" aria-hidden="true"><use href="#gb-arrow"/></svg>' : '') +
         '<span class="mc-icon">' + boardSVG(pz, pz.segments.map(() => true), 'thumb') + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +

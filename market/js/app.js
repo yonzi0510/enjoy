@@ -53,8 +53,8 @@ window.App = (() => {
   function renderHome() {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
-    // 제목 밑에서 첫 가게로 향하는 손그림 점선 화살표 — 어디부터 놀면 되는지 알려 준다
-    menu.innerHTML = '<svg class="start-arrow" aria-hidden="true"><use href="#mk-arrow"/></svg>';
+    // 어디부터 놀면 되는지 알려 주는 시작 화살표는 shared/screen.css 가 첫 칸 안쪽에 얹는다
+    menu.innerHTML = '';
     D.LEVELS.forEach(lv => {
       const open = levelUnlocked(lv);
       const n = P.rounds('level-' + lv.id);

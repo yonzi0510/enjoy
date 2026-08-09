@@ -52,8 +52,8 @@ window.App = (() => {
   function renderHome() {
     $('home-stars').textContent = P.stars();
     const menu = $('menu');
-    // 첫 칸은 "여기부터" 를 가리키는 점선 화살표 — 단계 카드는 둘째부터다(css/doodle.css 가 그 자리를 잡는다)
-    menu.innerHTML = '<svg class="start-arrow" aria-hidden="true"><use href="#ln-arrow"/></svg>';
+    // "여기부터" 를 가리키는 시작 화살표는 shared/screen.css 가 첫 칸 안쪽에 얹는다 — 여기서 그리지 않는다
+    menu.innerHTML = '';
     D.STAGES.forEach(st => {
       const ids = D.puzzlesOf(st.id).map(x => x.id);
       const done = P.doneCount(ids);

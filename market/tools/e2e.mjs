@@ -82,12 +82,27 @@ await check('낙서장 첫 화면: 손그림 아이콘 + 시작 화살표 + 크�
   expect(await page.locator('h1 svg use[href="#mk-cart"]').count() === 1, '제목 손그림 수레가 없음');
   expect(await page.locator('.stat svg use[href="#mk-star"]').count() === 1, '별 손그림이 없음');
   expect(await page.locator('#menu .mc-icon svg').count() === 3, '단계 카드 그림이 손그림 SVG 가 아님');
-  // 제목에서 첫 가게로 향하는 점선 화살표
-  expect(await page.locator('#menu .start-arrow').count() === 1, '시작 화살표가 없음');
-  // 크기 위계: 1단계 > 2단계 > 3단계
-  const w = async sel => (await page.locator(sel).boundingBox()).width;
-  const [w1, w2, w3] = [await w('.menu-card.c-l1'), await w('.menu-card.c-l2'), await w('.menu-card.c-l3')];
-  expect(w1 > w2 && w2 > w3, '가게 카드 크기 위계: ' + [w1, w2, w3].join(' > '));
+  // 시작 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
+  // 앱이 따로 그리던 옛 화살표(.start-arrow)는 걷어냈다 — 다시 생기면 두 개가 겹친다.
+  const ar = await page.evaluate(() => {
+    const has = c => {
+      const s = getComputedStyle(c, '::before');
+      return !!s.backgroundImage && s.backgroundImage !== 'none'
+        && s.backgroundImage.includes('svg') && parseFloat(s.width) > 20;
+    };
+    const cards = [...document.querySelectorAll('#menu > .menu-card')];
+    return { first: !!cards[0] && has(cards[0]), rest: cards.slice(1).filter(has).length,
+      old: document.querySelectorAll('.start-arrow, .first-arrow, .mc-arrow').length };
+  });
+  expect(ar.first, '첫 칸(1단계 가게)에 공용 시작 화살표가 없음');
+  expect(ar.rest === 0, '첫 칸이 아닌 칸에도 화살표가 있음: ' + ar.rest);
+  expect(ar.old === 0, '앱이 따로 그리던 옛 화살표가 남아 있음');
+  // 크기 위계 — 새 규격은 「1단계만 1.15배, 2·3단계는 같게」다 (DESIGN.md 「첫 화면 규격」).
+  // 칸의 진짜 폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다.
+  const [w1, w2, w3] = await page.evaluate(() =>
+    ['.menu-card.c-l1', '.menu-card.c-l2', '.menu-card.c-l3'].map(s => document.querySelector(s).offsetWidth));
+  expect(w1 >= Math.max(w2, w3) * 1.05, '1단계 가게 칸이 뒤 칸보다 확실히 크지 않다: ' + [w1, w2, w3].join(' / '));
+  expect(Math.max(w2, w3) <= Math.min(w2, w3) * 1.15, '2·3단계 가게 칸 크기가 서로 다르다: ' + [w1, w2, w3].join(' / '));
 });
 
 await check('잠긴 가게는 열리지 않는다 (2·3단계 🔒)', async () => {

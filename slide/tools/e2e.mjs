@@ -42,9 +42,23 @@ await check('낙서장 첫 화면: 손그림 아이콘 + 시작 화살표 + 크�
   expect(await page.locator('h1 svg use[href="#sl-title"]').count() === 1, '제목 손그림이 없음');
   expect(await page.locator('.stat svg use[href="#sl-star"]').count() === 1, '별 손그림이 없음');
   expect(await page.locator('#btn-voice svg use[href="#sl-talk"]').count() === 1, '목소리 손그림이 없음');
-  // 제목에서 첫 놀이로 향하는 점선 화살표 — 첫 칸에만 하나
-  expect(await page.locator('#menu .start-arrow').count() === 1, '시작 화살표가 없음');
-  expect(await page.locator('.menu-card.c-l1 .start-arrow').count() === 1, '화살표가 첫 칸을 가리키지 않음');
+  // 시작 화살표는 shared/screen.css 가 첫 칸 ::before 로 얹는다(29개 앱 같은 그림·같은 색).
+  // 앱이 따로 그리던 옛 화살표(.start-arrow)는 걷어냈다 — 다시 생기면 두 개가 겹친다.
+  const ar = await page.evaluate(() => {
+    const has = c => {
+      const s = getComputedStyle(c, '::before');
+      return !!s.backgroundImage && s.backgroundImage !== 'none'
+        && s.backgroundImage.includes('svg') && parseFloat(s.width) > 20;
+    };
+    const cards = [...document.querySelectorAll('#menu > .menu-card')];
+    return { first: !!cards[0] && has(cards[0]), rest: cards.slice(1).filter(has).length,
+      firstIsL1: !!cards[0] && cards[0].classList.contains('c-l1'),
+      old: document.querySelectorAll('.start-arrow, .first-arrow, .mc-arrow').length };
+  });
+  expect(ar.firstIsL1, '첫 칸이 1단계가 아님');
+  expect(ar.first, '화살표가 첫 칸(1단계)을 가리키지 않음');
+  expect(ar.rest === 0, '첫 칸이 아닌 칸에도 화살표가 있음: ' + ar.rest);
+  expect(ar.old === 0, '앱이 따로 그리던 옛 화살표가 남아 있음');
   // 새 규격: 1단계만 1.15배 크고 2·3단계는 서로 같다 — DESIGN.md 「첫 화면 규격」
   // (폭은 offsetWidth 로 잰다 — 경계상자는 기울기만큼 넓어져 2·3단계가 엎치락뒤치락한다)
   const [w1, w2, w3] = await page.evaluate(() =>
