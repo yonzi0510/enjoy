@@ -1,0 +1,16 @@
+{
+  "name": "발굴 놀이터",
+  "short_name": "발굴놀이",
+  "description": "흙을 손가락으로 쓸어 걷어내고 드러난 그림을 맞히는 놀이 — 적게 파고 맞힐수록 별이 많다. 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F6EDE0",
+  "theme_color": "#A87C4C",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

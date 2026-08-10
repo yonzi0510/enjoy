@@ -280,6 +280,30 @@ body::before{
   <symbol id="i-dice" viewBox="0 0 48 48"><g filter="url(#kid-hand)"><g><rect x="8" y="8" width="32" height="32" rx="7" fill="#FFFDF3" stroke="#8A6A4F" stroke-width="4.6"/>
     <g fill="#D24B4B"><circle cx="17" cy="17" r="3.2"/><circle cx="31" cy="17" r="3.2"/><circle cx="24" cy="24" r="3.2"/>
     <circle cx="17" cy="31" r="3.2"/><circle cx="31" cy="31" r="3.2"/></g></g></g></symbol>
+  <symbol id="i-dig" viewBox="0 0 48 48"><g filter="url(#kid-hand)"><g>
+    <path d="M4 34 Q14 22 24 22 Q34 22 44 34 L44 42 L4 42 Z" fill="#D6A96E" stroke="#8A6A4F" stroke-width="4.2" stroke-linejoin="round"/>
+    <g transform="rotate(-18 20 24)"><rect x="17" y="8" width="6" height="14" rx="2" fill="#E8C98E" stroke="#8A6A4F" stroke-width="3.4"/>
+    <path d="M13 22 h14 l-2.5 11 a4.5 4.5 0 0 1 -9 0 Z" fill="#C9D2D8" stroke="#8A6A4F" stroke-width="3.6" stroke-linejoin="round"/></g>
+    <g transform="rotate(16 34 27)" stroke="#8A6A4F" stroke-width="3.2" fill="#FFFDF3">
+    <circle cx="29" cy="24" r="3.4"/><circle cx="29" cy="30" r="3.4"/><circle cx="40" cy="24" r="3.4"/><circle cx="40" cy="30" r="3.4"/>
+    <path d="M29 22.5 h11 M29 31.5 h11" stroke-linecap="round"/></g></g></g></symbol>
+  <symbol id="i-robot" viewBox="0 0 48 48"><g filter="url(#kid-hand)"><g>
+    <path d="M24 4 v4" stroke="#8A6A4F" stroke-width="3.2" stroke-linecap="round"/>
+    <circle cx="24" cy="4" r="3" fill="#D24B4B" stroke="#8A6A4F" stroke-width="2.8"/>
+    <rect x="9" y="9" width="30" height="21" rx="7" fill="#FFFDF3" stroke="#8A6A4F" stroke-width="4.2"/>
+    <circle cx="18" cy="18" r="4.2" fill="#5AA9E6" stroke="#8A6A4F" stroke-width="2.8"/>
+    <circle cx="30" cy="18" r="4.2" fill="#5AA9E6" stroke="#8A6A4F" stroke-width="2.8"/>
+    <path d="M19 25 h10" stroke="#8A6A4F" stroke-width="3.2" stroke-linecap="round"/>
+    <rect x="14" y="32" width="20" height="9" rx="4" fill="#C9D2D8" stroke="#8A6A4F" stroke-width="3.6"/>
+    <circle cx="12" cy="43" r="3.4" fill="#5C4A3A"/><circle cx="36" cy="43" r="3.4" fill="#5C4A3A"/></g></g></symbol>
+  <symbol id="i-heart" viewBox="0 0 48 48"><g filter="url(#kid-hand)"><g>
+    <circle cx="21" cy="25" r="16" fill="#FFFDF3" stroke="#8A6A4F" stroke-width="4.3"/>
+    <path d="M13 17 q3.5 -3 7 -1" fill="none" stroke="#8A6A4F" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="16" cy="24" r="2.6" fill="#5C4A3A"/><circle cx="27" cy="24" r="2.6" fill="#5C4A3A"/>
+    <path d="M15 32 q6 6 12 0" fill="none" stroke="#8A6A4F" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="9" cy="30" r="3.2" fill="#F0A0BC" opacity=".6"/><circle cx="33" cy="30" r="3.2" fill="#F0A0BC" opacity=".6"/>
+    <g transform="rotate(14 38 12)"><rect x="30" y="8" width="16" height="8" rx="4" fill="#FBD24E" stroke="#8A6A4F" stroke-width="3.2"/>
+    <path d="M34 13 q4 -3.5 8 -1" fill="none" stroke="#8A6A4F" stroke-width="3" stroke-linecap="round"/></g></g></g></symbol>
   <symbol id="i-donut" viewBox="0 0 48 48"><g filter="url(#kid-hand)"><g><circle cx="24" cy="24" r="16" fill="#F7C9A0" stroke="#B8791E" stroke-width="4.3"/>
     <circle cx="24" cy="24" r="5.5" fill="#FDFBF3" stroke="#B8791E" stroke-width="4.3"/>
     <g stroke="#D46A93" stroke-width="3.5" stroke-linecap="round"><path d="M18 12 l2 3"/><path d="M31 15 l-3 2"/><path d="M35 27 l-3 -1"/><path d="M15 32 l3 -2"/><path d="M25 37 l1 -3"/></g></g></g></symbol>
@@ -342,7 +366,7 @@ body::before{
     { key:'learn', name:'배우기', c:'#E0A21B', rabbit:'cat-learn', wide:true,
       games:[['한글 놀이터','hangul'],['영어 놀이터','english'],['일본어 놀이터','japanese'],
              ['산수 놀이터','math'],['시장 놀이터','market'],['픽셀 놀이터','pixel'],
-             ['프랙티카 놀이터','practika']] },
+             ['마음 놀이터','heart'],['프랙티카 놀이터','practika']] },
     { key:'draw', name:'그리기와 쓰기', c:'#3E86BE', rabbit:'cat-draw',
       games:[['글씨 놀이터','write'],['선 따라 그리기','lines'],['색칠공부','coloring']] },
     { key:'shape', name:'모양 만들기', c:'#4E9B48', rabbit:'cat-shape',
@@ -353,10 +377,11 @@ body::before{
              ['시험관 구슬','tubes'],['네 색 슬라이드','slide']] },
     { key:'order', name:'순서와 규칙', c:'#DD8329', rabbit:'cat-order',
       games:[['햄버거 가게','burger'],['꼬치 가게','kkochi'],['패턴 놀이터','pattern'],
-             ['점 잇기','connect']] },
+             ['점 잇기','connect'],['로봇 심부름','robot']] },
     { key:'find', name:'찾기와 짝맞추기', c:'#CE5C55', rabbit:'cat-find',
-      games:[['찾기 놀이터','play'],['동물 주사위','dice'],['도넛 짝맞추기','donut'],
-             ['돌림 블록','twist'],['방향·색 놀이터','matrix'],['생각 놀이터','bag']] },
+      games:[['찾기 놀이터','play'],['발굴 놀이터','dig'],['동물 주사위','dice'],
+             ['도넛 짝맞추기','donut'],['돌림 블록','twist'],['방향·색 놀이터','matrix'],
+             ['생각 놀이터','bag']] },
   ];
 
   function speak(text){

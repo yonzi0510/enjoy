@@ -157,7 +157,7 @@ for (const [label, width, height] of CASES) {
              practikaHidden: !!document.querySelector('.game[data-id="practika"]')?.hidden };
   });
 
-  ok('놀이 29개', opened.count === 29, `${opened.count}개`);
+  ok('놀이 32개', opened.count === 32, `${opened.count}개`);   // 신작 셋(발굴·로봇·마음) 추가
   ok('모든 놀이에 아이콘이 있음', noIcon.length === 0, noIcon.join(', '));
   ok(`펼친 뒤에도 ${TOUCH_MIN}px 이상`, small.length === 0, small.join(', '));
   ok('프랙티카는 부모님이 켜야 보임 (기본 숨김)', opened.practikaHidden);

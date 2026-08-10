@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#EAF1FA">
+<title>로봇 심부름</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../shared/voice-settings.css">
+<link rel="stylesheet" href="../shared/time-limit.css">
+<link rel="stylesheet" href="../shared/pet.css">
+<link rel="stylesheet" href="../shared/crayon.css">
+<link rel="stylesheet" href="../shared/doodle-menu.css">
+<link rel="stylesheet" href="../shared/screen.css">
+</head>
+<body>
+
+<!-- ═══════════ 아이가 그린 손그림 (인라인 SVG) ═══════════
+     이모지(🤖 ⬆️ 🔑 🚪 ⭐ ▶️) 대신 쓰는 그림들. 굵고 고른 획, 삐뚤한 선, 칠은 윤곽 밖으로 조금.
+     — 획 떨림은 feTurbulence + feDisplacementMap 두 벌(윤곽용·칠용)로 낸다.
+     — 화살표 넷은 **따로따로 그린다.** 하나를 CSS 로 돌려 쓰면 단추에 transform 이 붙어
+       「놀이판 무변형」 검사에 걸리고, 탭 자리도 흔들린다. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="rb-hand" x="-18%" y="-18%" width="136%" height="136%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="7"/>
+    <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+  </filter>
+  <filter id="rb-crayon" x="-30%" y="-30%" width="160%" height="160%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.027" numOctaves="2" seed="13"/>
+    <feDisplacementMap in="SourceGraphic" scale="4.6"/>
+  </filter>
+
+  <!-- 🤖 로봇 — 더듬이 하나, 네모 얼굴, 동그란 눈, 바퀴 두 개 -->
+  <symbol id="rb-robot" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.4,2)">
+      <path d="M11 14 H37 V34 H11 Z" fill="#BBD9F2"/>
+    </g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 4 V9"/><circle cx="24" cy="4" r="2.4" fill="#FFC63D"/>
+      <path d="M11 14 C19 12, 30 15, 37 13 C39 20, 36 28, 38 35 C29 37, 19 34, 10 36 C8 28, 11 21, 11 14 Z"/>
+      <path d="M7 20 V28 M41 20 V28"/>
+    </g>
+    <g filter="url(#rb-hand)" fill="#2E2A24">
+      <circle cx="18" cy="22" r="3.2"/><circle cx="30" cy="22" r="3.2"/>
+    </g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="3" stroke-linecap="round">
+      <path d="M18 29 Q24 33 30 29"/>
+      <path d="M16 37 V41 M32 37 V41"/>
+    </g>
+    <g filter="url(#rb-hand)" fill="#2E2A24"><circle cx="16" cy="43" r="3"/><circle cx="32" cy="43" r="3"/></g>
+  </symbol>
+
+  <!-- ⬆️⬇️⬅️➡️ 화살표 넷 — 넷 다 따로 그린다 -->
+  <symbol id="rb-arr-up" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.2,1.8)"><path d="M24 8 L38 24 H30 V40 H18 V24 H10 Z" fill="#9FD6A8"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 7 L38 24 H30 V40 H18 V24 H10 Z"/>
+    </g>
+  </symbol>
+  <symbol id="rb-arr-down" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.2,1.8)"><path d="M24 40 L10 24 H18 V8 H30 V24 H38 Z" fill="#F3C58A"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 41 L10 24 H18 V8 H30 V24 H38 Z"/>
+    </g>
+  </symbol>
+  <symbol id="rb-arr-left" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.2,1.8)"><path d="M8 24 L24 10 V18 H40 V30 H24 V38 Z" fill="#F2AEC2"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 24 L24 10 V18 H40 V30 H24 V38 Z"/>
+    </g>
+  </symbol>
+  <symbol id="rb-arr-right" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.2,1.8)"><path d="M40 24 L24 38 V30 H8 V18 H24 V10 Z" fill="#B9C4F0"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M41 24 L24 38 V30 H8 V18 H24 V10 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 🔑 열쇠 -->
+  <symbol id="rb-key" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.2,1.8)"><circle cx="16" cy="17" r="8.5" fill="#FFD34E"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 10.5 a9 9 0 1 1 -6.5 2"/>
+      <path d="M21 23 L36 38"/><path d="M31 33 L27 37"/><path d="M35 37 L31 41"/>
+    </g>
+  </symbol>
+
+  <!-- 🚪 문 — 잠긴 열쇠구멍 -->
+  <symbol id="rb-door" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.4,2)"><path d="M12 9 H36 V40 H12 Z" fill="#D7B58C"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 9 C20 7, 29 10, 36 8 C38 18, 35 30, 37 41 H11 C9 30, 12 19, 12 9 Z"/>
+      <circle cx="29" cy="25" r="2.4"/>
+    </g>
+    <g filter="url(#rb-hand)" fill="#2E2A24"><circle cx="19" cy="24" r="2.6"/><path d="M17.4 24 h3.2 l-.9 6 h-1.4 Z"/></g>
+  </symbol>
+
+  <!-- 🏠 집 — 단계1·2 의 목표 -->
+  <symbol id="rb-home" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.4,2)">
+      <path d="M24 8 L41 23 H7 Z" fill="#F2A9A0"/><path d="M12 23 H36 V40 H12 Z" fill="#FFE9A8"/>
+    </g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 7 L41 23 H7 Z"/>
+      <path d="M12 23 V40 H36 V23"/>
+      <path d="M20 40 V30 H28 V40"/>
+    </g>
+  </symbol>
+
+  <!-- 🧱 벽 — 벽돌 -->
+  <symbol id="rb-wall" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.2,1.8)"><path d="M7 12 H41 V37 H7 Z" fill="#D9A182"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 12 H41 V37 H7 Z"/>
+      <path d="M7 20.5 H41 M7 29 H41"/>
+      <path d="M20 12 V20.5 M31 20.5 V29 M15 29 V37 M28 12 V20.5 M33 29 V37"/>
+    </g>
+  </symbol>
+
+  <!-- 💧 웅덩이 -->
+  <symbol id="rb-puddle" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.2,1.8)"><ellipse cx="24" cy="28" rx="17" ry="10" fill="#9CD3EE"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 27 C10 19, 20 16, 26 18 C34 20, 42 24, 40 30 C38 37, 26 40, 18 38 C11 36, 5 33, 7 27 Z"/>
+      <path d="M15 26 q4 -3 8 -1" stroke-width="2.6"/>
+    </g>
+  </symbol>
+
+  <!-- ⭐ 별 -->
+  <symbol id="rb-star" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.6,2.2)">
+      <path d="M24 8 L28.1 19.3 L40.2 19.8 L30.7 27.2 L34 38.8 L24 32 L14 38.8 L17.3 27.2 L7.8 19.8 L19.9 19.3 Z" fill="#FFD34E"/>
+    </g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 8 L28.1 19.3 L40.2 19.8 L30.7 27.2 L34 38.8 L24 32 L14 38.8 L17.3 27.2 L7.8 19.8 L19.9 19.3 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 뒤로 가기 -->
+  <symbol id="rb-back" viewBox="0 0 48 48">
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M29 11 L15 24 L29 37"/><path d="M16 24 H35"/>
+    </g>
+  </symbol>
+
+  <!-- 목소리 설정(말풍선) -->
+  <symbol id="rb-talk" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.6,2.2)"><path d="M7 10 H41 V30 H21 L13 38 V30 H7 Z" fill="#C7E9CE"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 10 H41 V30 H21 L13 38 V30 H7 Z"/>
+      <path d="M16 20 h.6 M24 20 h.6 M32 20 h.6" stroke-width="4.6"/>
+    </g>
+  </symbol>
+
+  <!-- 소리 듣기(나팔) -->
+  <symbol id="rb-sound" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.4,2)"><path d="M8 19 H16 L26 11 V37 L16 29 H8 Z" fill="#FFD6A0"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 19 H16 L26 11 V37 L16 29 H8 Z"/>
+      <path d="M32 18 C36 22, 36 26, 32 30" stroke-width="3.4"/>
+      <path d="M38.5 13 C45 21, 45 27, 38.5 35" stroke-width="3.4"/>
+    </g>
+  </symbol>
+
+  <!-- ▶ 출발 -->
+  <symbol id="rb-play" viewBox="0 0 48 48">
+    <g filter="url(#rb-crayon)" transform="translate(1.4,2)"><path d="M14 9 L39 24 L14 39 Z" fill="#8BD79B"/></g>
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 9 L39 24 L14 39 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 뱅뱅 도는 별 — 부딪혔을 때 로봇 머리 위 -->
+  <symbol id="rb-dizzy" viewBox="0 0 48 48">
+    <g filter="url(#rb-hand)" fill="#FFC63D" stroke="#2E2A24" stroke-width="2.4" stroke-linejoin="round">
+      <path d="M12 8 L14.4 14 L20.6 14.3 L15.8 18 L17.4 24 L12 20.6 L6.6 24 L8.2 18 L3.4 14.3 L9.6 14 Z"/>
+      <path d="M35 20 L37.4 26 L43.6 26.3 L38.8 30 L40.4 36 L35 32.6 L29.6 36 L31.2 30 L26.4 26.3 L32.6 26 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 카드 빼기 표시(×) — 명령 줄 카드 모서리 -->
+  <symbol id="rb-x" viewBox="0 0 48 48">
+    <g filter="url(#rb-hand)" fill="none" stroke="#2E2A24" stroke-width="6" stroke-linecap="round">
+      <path d="M14 14 L34 34 M34 14 L14 34"/>
+    </g>
+  </symbol>
+</defs></svg>
+
+<!-- 홈 -->
+<section class="screen on" id="scr-home">
+  <header class="home-head">
+    <h1><svg class="ic ic-title" aria-hidden="true"><use href="#rb-robot"/></svg> 로봇 심부름</h1>
+    <div class="stats">
+      <span class="stat"><svg class="ic" aria-hidden="true"><use href="#rb-star"/></svg> <b id="home-stars">0</b></span>
+      <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+      <span id="pet-slot"></span>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">
+        <svg class="ic" aria-hidden="true"><use href="#rb-talk"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="menu" id="menu"></div>
+</section>
+
+<!-- 판 목록 -->
+<section class="screen" id="scr-list">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home" aria-label="처음으로">
+      <svg class="ic" aria-hidden="true"><use href="#rb-back"/></svg>
+    </button>
+    <h2 id="list-title">첫 심부름</h2>
+    <span class="page-count" id="list-count">0 / 10</span>
+  </header>
+  <div class="list" id="list"></div>
+</section>
+
+<!-- 놀이 -->
+<section class="screen" id="scr-play">
+  <header class="bar">
+    <button type="button" class="back" id="btn-play-back" aria-label="판 고르기로">
+      <svg class="ic" aria-hidden="true"><use href="#rb-back"/></svg>
+    </button>
+    <h2 id="play-title">첫 심부름</h2>
+    <button type="button" class="bigbtn small" id="btn-listen" aria-label="다시 듣기">
+      <svg class="ic" aria-hidden="true"><use href="#rb-sound"/></svg>
+    </button>
+  </header>
+
+  <div class="play-stage" id="play-stage">
+    <!-- 마당 -->
+    <div class="board-box" id="board-box">
+      <div class="board" id="board">
+        <div class="cells" id="cells"></div>
+        <!-- 로봇 — 자리 옮김은 left/top 으로만 한다 (transform 금지) -->
+        <div class="robot" id="robot">
+          <span class="rb-body"><svg class="ic-cell" aria-hidden="true"><use href="#rb-robot"/></svg></span>
+          <span class="rb-got" id="robot-key" aria-hidden="true"><svg class="ic-cell"><use href="#rb-key"/></svg></span>
+          <span class="rb-dizzy" id="robot-dizzy" aria-hidden="true"><svg class="ic-cell"><use href="#rb-dizzy"/></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 조작: 명령 줄 + 화살표판 -->
+    <div class="ctrl" id="ctrl">
+      <div class="strip" id="cmd-strip" aria-label="명령 줄">
+        <span class="strip-hint" id="strip-hint">
+          <svg class="ic-cell" aria-hidden="true"><use href="#rb-arr-right"/></svg>
+        </span>
+      </div>
+      <div class="pad-row">
+        <div class="pad" id="pad">
+          <button type="button" class="pad-btn" data-dir="up" aria-label="위로">
+            <svg class="ic-cell" aria-hidden="true"><use href="#rb-arr-up"/></svg>
+          </button>
+          <button type="button" class="pad-btn" data-dir="left" aria-label="왼쪽으로">
+            <svg class="ic-cell" aria-hidden="true"><use href="#rb-arr-left"/></svg>
+          </button>
+          <button type="button" class="pad-btn" data-dir="down" aria-label="아래로">
+            <svg class="ic-cell" aria-hidden="true"><use href="#rb-arr-down"/></svg>
+          </button>
+          <button type="button" class="pad-btn" data-dir="right" aria-label="오른쪽으로">
+            <svg class="ic-cell" aria-hidden="true"><use href="#rb-arr-right"/></svg>
+          </button>
+        </div>
+        <button type="button" class="bigbtn primary run" id="btn-run" aria-label="출발">
+          <svg class="ic" aria-hidden="true"><use href="#rb-play"/></svg> 출발
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 보상 오버레이 -->
+<div class="reward" id="reward">
+  <div class="reward-card">
+    <div class="reward-face" id="reward-face"><svg class="ic ic-reward" aria-hidden="true"><use href="#rb-robot"/></svg></div>
+    <div class="reward-praise" id="reward-praise">참 잘했어요!</div>
+    <div class="reward-btns">
+      <button type="button" class="bigbtn" id="reward-close">그만할래</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 <svg class="ic ic-next" aria-hidden="true"><use href="#rb-back"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<!-- 색종이 축하 -->
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<script src="../shared/profile.js"></script>
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/app.js"></script>
+<script src="../shared/parent-settings.js"></script>
+<script src="../shared/voice-settings.js"></script>
+<script src="../shared/pet-avatar.js"></script>
+<script src="../shared/pet.js"></script>
+<script src="../shared/time-limit.js"></script>
+<script src="../shared/sw-register.js"></script>
+<script src="../shared/home-button.js"></script>
+</body>
+</html>

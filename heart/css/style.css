@@ -1,0 +1,338 @@
+/* 마음 놀이터 — 5세용 큰 조작, 분홍·크림 파스텔 톤.
+ *
+ * 화면은 세 층이다:  장면(친구) · 아이가 만드는 얼굴 · 아래 띠(부품 → 도움 카드)
+ * 폰 세로가 기준이고, 가로에서는 셋을 옆으로 눕힌다.
+ *
+ * ⚠️ **놀잇감에는 transform 을 주지 않는다.** 얼굴판(.face-box)·부품(.part-item)·
+ *    도움 카드(.help-card)·장면 카드(.scene-card)는 끌어 놓기 좌표를
+ *    getBoundingClientRect 로 재기 때문에, 회전·확대가 붙으면 손끝과 그림이 어긋난다.
+ *    눌린 느낌은 배경색·윤곽 굵기로 낸다. e2e 「놀이판 무변형」 검사가 이걸 지킨다.
+ */
+:root {
+  --accent: 247,158,180;  /* 분홍 대표색 rgb 삼중값 */
+  --chunk: #E48CA6;
+  --chunk-soft: #F4CBD7;
+  --tint: #FFF0F3;
+}
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+html, body { height: 100%; }
+body {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background: linear-gradient(160deg, #FFF6F8 0%, #FFF0F3 55%, #FFF9EE 100%);
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+/* ─────────── 화면 ─────────── */
+.screen {
+  display: none; position: fixed; inset: 0;
+  flex-direction: column; align-items: center;
+  padding: clamp(8px, 2.2vmin, 22px);
+  gap: clamp(8px, 1.8vmin, 16px);
+  overflow-y: auto;
+}
+.screen.on { display: flex; }
+#scr-home { justify-content: safe center; }
+
+/* ─────────── 홈 머리줄 ─────────── */
+.home-head {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 2vmin;
+  animation: card-in .35s ease-out backwards;
+}
+h1 {
+  font-size: clamp(24px, 5.6vmin, 44px); font-weight: 900;
+  color: #B8536F; text-align: center; word-break: keep-all;
+}
+.stats { display: flex; gap: 12px; align-items: center; }
+.stat {
+  border-radius: 999px; padding: 6px 16px;
+  font-size: clamp(15px, 3vmin, 20px); font-weight: 800; color: #B8536F;
+  background: #fff;
+}
+.vs-btn {
+  width: clamp(46px, 8vmin, 52px); height: clamp(46px, 8vmin, 52px);
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 999px; cursor: pointer;
+  font-size: clamp(18px, 4vmin, 24px); background: #fff;
+}
+
+/* ─────────── 홈 메뉴 칸 ───────────
+ * 크기·간격·기울기·첫 칸 강조는 shared/screen.css 가 맡는다. 여기는 속 알맹이만. */
+.menu { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; }
+.menu-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: clamp(10px, 2.4vmin, 20px); border: none; border-radius: 26px;
+  cursor: pointer; font-family: inherit;
+  animation: card-in .35s ease-out backwards;
+}
+.menu .menu-card:nth-child(1) { animation-delay: .04s; }
+.menu .menu-card:nth-child(2) { animation-delay: .08s; }
+.menu .menu-card:nth-child(3) { animation-delay: .12s; }
+.menu .menu-card:nth-child(4) { animation-delay: .16s; }
+.menu .menu-card:nth-child(5) { animation-delay: .20s; }
+.mc-icon { line-height: 0; }
+.ic-menu { width: clamp(46px, 9vmin, 78px); height: clamp(46px, 9vmin, 78px); }
+.mc-name { font-size: clamp(17px, 3.4vmin, 26px); font-weight: 900; color: #7C4257; word-break: keep-all; }
+.mc-desc { font-size: clamp(11px, 2.1vmin, 15px); font-weight: 700; color: #A2778A; word-break: keep-all; }
+.mc-prog { font-size: clamp(12px, 2.3vmin, 16px); font-weight: 800; color: #B8536F; word-break: keep-all; }
+.c-l1 { --tint: #FFF3DF; }
+.c-l2 { --tint: #EAF6FB; }
+.c-l3 { --tint: #EFF8EA; }
+.c-free { --tint: #FDEFF6; }
+.c-book { --tint: #F3EFFB; }
+
+/* ─────────── 상단 바 ─────────── */
+/* 머리줄은 오른쪽 위 집 단추(60~80px)만큼 높이를 잡아 둔다 —
+   그러지 않으면 아래로 이어지는 목록·놀이판이 집 단추 밑으로 파고든다(폰 세로에서 확인). */
+.bar {
+  width: 100%; max-width: 1080px; min-height: clamp(60px, 8.6vw, 80px);
+  display: flex; align-items: center; gap: 10px; padding: 2px 4px;
+  animation: card-in .3s ease-out backwards; flex: none;
+}
+.bar h2 {
+  flex: 1; text-align: center; word-break: keep-all;
+  font-size: clamp(18px, 3.8vmin, 28px); font-weight: 900; color: #B8536F;
+}
+.back {
+  width: clamp(46px, 9vmin, 54px); height: clamp(46px, 9vmin, 54px); flex: none;
+  border: none; border-radius: 999px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: clamp(18px, 4vmin, 26px); color: #B8536F; background: #fff;
+}
+.page-count {
+  flex: none; font-size: clamp(13px, 2.5vmin, 18px); font-weight: 800;
+  color: var(--ink, #2E2A24); background: #fff;
+  border: 2.5px solid rgba(46, 42, 36, .8); border-radius: 20px 16px 21px 17px; padding: 5px 14px;
+}
+.bigbtn {
+  border: none; border-radius: 18px; cursor: pointer; font-family: inherit;
+  font-size: clamp(14px, 2.8vmin, 20px); font-weight: 900; color: var(--ink, #2E2A24);
+  padding: 10px 18px; min-height: 46px;
+  display: inline-flex; align-items: center; justify-content: center; gap: .35em;
+  background: rgba(255, 255, 255, .92);
+}
+.bigbtn.small { flex: none; padding: 8px 13px; font-size: clamp(13px, 2.5vmin, 17px); }
+.bigbtn.primary { background: #F9AFC3; }
+@media (max-width: 480px) {
+  .bar h2 { font-size: clamp(15px, 4.4vw, 20px); }
+  .bigbtn.small { padding: 8px 10px; }
+}
+/* 좁거나 낮은 화면에서는 남은시간 쪽지가 집 단추 '아래'로 내려온다(shared/home-button.js).
+   그 쪽지 높이만큼 머리줄을 더 잡아 둬야 목록·놀이판이 쪽지 밑으로 파고들지 않는다. */
+@media (max-width: 700px), (max-height: 560px) {
+  .bar { min-height: calc(clamp(60px, 8.6vw, 80px) + 34px); }
+}
+/* 넓은 화면에서 남은시간 쪽지가 「듣기」 단추와 같은 줄에 온다 — 자리를 내준다 */
+@media (min-width: 701px) {
+  #scr-play .bar, #scr-list .bar, #scr-free .bar, #scr-book .bar {
+    padding-right: calc(clamp(60px, 8.6vw, 80px) + 98px) !important;
+  }
+}
+
+/* ─────────── 장면 목록 ─────────── */
+.scene-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
+  gap: clamp(10px, 2vmin, 18px); width: 100%; max-width: 900px; padding-bottom: 14px;
+}
+.scene-card-btn {
+  position: relative; display: block; padding: 8px; cursor: pointer; font-family: inherit;
+  background: rgba(255, 255, 255, .8);
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 22px 18px 23px 19px;
+  animation: card-in .3s ease-out backwards; min-height: 96px;
+}
+.scene-card-btn.done { border-color: #4CA64C; }
+.sc-no {
+  position: absolute; left: 6px; top: 6px; z-index: 2;
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900; color: var(--ink, #2E2A24); background: #fff;
+  border: 2.5px solid rgba(46, 42, 36, .85);
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+}
+.sc-pic { display: block; line-height: 0; }
+.sc-pic svg { display: block; width: 100%; border-radius: 16px; }
+.sc-badge { position: absolute; right: 6px; bottom: 6px; line-height: 0; }
+.sc-badge .ic { width: 1.6em; height: 1.6em; }
+
+/* ─────────── 놀이 무대 ─────────── */
+.play-stage {
+  width: 100%; max-width: 1120px; flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(8px, 1.6vmin, 16px);
+}
+
+/* 장면 — 친구와 상황 한 줄 (도움 카드를 여기로 끌어다 준다) */
+.scene-card {
+  width: 100%; max-width: 520px; flex: none;
+  background: rgba(255, 255, 255, .78);
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 24px 19px 26px 21px;
+  padding: clamp(6px, 1.4vmin, 12px);
+  animation: card-in .35s ease-out backwards;
+}
+.scene-card.hover { border-color: #E4649A; background: #FFF2F6; }
+.scene-pic { line-height: 0; }
+.scene-pic svg { display: block; width: 100%; border-radius: 16px; }
+.scene-line {
+  margin-top: 6px; text-align: center; word-break: keep-all;
+  font-size: clamp(13px, 2.6vmin, 20px); font-weight: 800; color: #6B4A56;
+}
+
+/* 아이가 만드는 얼굴 */
+.face-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; }
+.face-box {
+  width: clamp(96px, 20vh, 172px); aspect-ratio: 1; line-height: 0;
+  border-radius: 50%; background: rgba(255, 255, 255, .6);
+  box-shadow: 0 0 0 3px rgba(46, 42, 36, .18);
+}
+.face-box.hover { box-shadow: 0 0 0 5px #E4649A; background: #FFF2F6; }
+.face-box svg { display: block; width: 100%; }
+.face-hint {
+  font-size: clamp(11px, 2.1vmin, 15px); font-weight: 800; color: #A2778A;
+  text-align: center; word-break: keep-all;
+}
+
+/* 아래 띠 */
+.tray-wrap { width: 100%; flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+/* [hidden] 은 display:none 을 '기본값'으로만 줘서 아래 display:flex 에 진다 —
+   그러면 감춘 부품 띠가 자리를 그대로 차지해 폰 가로에서 카드가 화면 밖으로 밀렸다. */
+.parts-tray[hidden], .help-cards[hidden] { display: none !important; }
+.parts-tray { display: flex; flex-direction: column; gap: clamp(4px, 1vmin, 10px); align-items: center; }
+.parts-row { display: flex; gap: clamp(5px, 1.2vmin, 12px); justify-content: center; }
+.part-item {
+  width: clamp(46px, min(13vw, 10vh), 84px); height: clamp(46px, min(13vw, 10vh), 84px);
+  min-width: 46px; min-height: 46px;
+  padding: 4px; cursor: pointer; font-family: inherit; line-height: 0;
+  background: rgba(255, 255, 255, .9);
+  border: 2.5px solid rgba(46, 42, 36, .55);
+  border-radius: 18px 14px 19px 15px;
+}
+.part-item.on { border-color: #E4649A; border-width: 4px; background: #FFF2F6; }
+.part-item.lift { opacity: .35; }
+.part-item svg { display: block; width: 100%; height: 100%; }
+
+/* 도움 카드 4장 — 얼굴이 다 만들어지면 펼쳐진다 */
+.help-cards { display: flex; gap: clamp(6px, 1.4vmin, 14px); justify-content: center; flex-wrap: nowrap; }
+.help-card {
+  width: clamp(70px, min(20vw, 15vh), 148px); min-width: 46px; min-height: 46px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  padding: clamp(5px, 1.2vmin, 11px); cursor: pointer; font-family: inherit;
+  background: rgba(255, 255, 255, .92);
+  border: 3px solid rgba(46, 42, 36, .85);
+  border-radius: 20px 16px 21px 17px;
+  animation: card-in .3s ease-out backwards;
+}
+.help-cards .help-card:nth-child(1) { animation-delay: .04s; }
+.help-cards .help-card:nth-child(2) { animation-delay: .10s; }
+.help-cards .help-card:nth-child(3) { animation-delay: .16s; }
+.help-cards .help-card:nth-child(4) { animation-delay: .22s; }
+.help-card.lift { opacity: .35; }
+.help-card.given { border-color: #E4649A; background: #FFF2F6; }
+.help-card:disabled { cursor: default; }
+.hc-pic { width: 62%; line-height: 0; }
+.hc-pic svg { display: block; width: 100%; }
+.hc-name {
+  font-size: clamp(10px, 2vmin, 15px); font-weight: 800; color: #6B4A56;
+  text-align: center; word-break: keep-all; line-height: 1.15;
+}
+
+/* ─────────── 가로 화면: 장면 · 얼굴 · 띠 를 옆으로 ─────────── */
+@media (orientation: landscape) {
+  .play-stage { flex-direction: row; align-items: center; justify-content: center; gap: clamp(10px, 2vw, 26px); }
+  .scene-card { flex: 0 0 clamp(240px, 34vw, 420px); max-width: none; }
+  .face-box { width: clamp(96px, 20vh, 150px); }
+  .tray-wrap { width: auto; }
+  .part-item { width: clamp(46px, min(11vw, 9vh), 72px); height: clamp(46px, min(11vw, 9vh), 72px); }
+  .help-cards { flex-wrap: wrap; max-width: clamp(200px, 34vw, 460px); }
+  .help-card { width: clamp(70px, min(15vw, 20vh), 130px); }
+}
+
+/* ─────────── 마음 도감 ─────────── */
+.book-wrap { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 16px; }
+.book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 108px), 1fr)); gap: clamp(8px, 1.6vmin, 14px); }
+.book-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 4px; cursor: pointer; font-family: inherit;
+  min-height: 96px; background: rgba(255, 255, 255, .7);
+  border: 3px solid rgba(46, 42, 36, .3); border-radius: 20px 16px 21px 17px;
+}
+.book-cell.got { border-color: rgba(46, 42, 36, .85); background: var(--mood, #FFF0F3); }
+.bc-face { width: 72%; line-height: 0; }
+.bc-face svg { display: block; width: 100%; }
+.bc-name { font-size: clamp(11px, 2.1vmin, 15px); font-weight: 900; color: #6B4A56; }
+.sticker-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  border-top: 2.5px dashed rgba(46, 42, 36, .3); padding-top: 10px;
+}
+.sr-cap { font-size: clamp(12px, 2.2vmin, 16px); font-weight: 800; color: #A2778A; display: inline-flex; align-items: center; gap: 4px; }
+.sticker { width: clamp(46px, 9vmin, 70px); line-height: 0; }
+.sticker svg { display: block; width: 100%; }
+
+/* ─────────── 끌고 다니는 조각 ─────────── */
+.drag-ghost {
+  position: fixed; z-index: 400; pointer-events: none;
+  margin-left: -34px; margin-top: -34px; width: 68px; line-height: 0;
+}
+.drag-ghost .ghost-part, .drag-ghost .ghost-card {
+  display: block; width: 68px; padding: 5px;
+  background: #fff; border: 3px solid #E4649A; border-radius: 18px 14px 19px 15px;
+}
+.drag-ghost svg { display: block; width: 100%; }
+.drag-ghost .hc-name { font-size: 11px; }
+
+/* ─────────── 보상 오버레이 ─────────── */
+.reward {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  align-items: center; justify-content: center;
+  background: rgba(90, 50, 65, .3); backdrop-filter: blur(2px);
+}
+.reward.on { display: flex; animation: fade-in .2s ease-out; }
+.reward-card {
+  background: #FFFDF8; border-radius: 28px;
+  padding: clamp(16px, 3.4vmin, 32px) clamp(20px, 4.4vmin, 42px);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  max-width: min(92vw, 460px); max-height: 92vh; overflow-y: auto;
+  animation: pop-in .4s cubic-bezier(.3,1.6,.5,1);
+}
+.reward-face { width: clamp(90px, 20vmin, 150px); line-height: 0; }
+.reward-face svg { display: block; width: 100%; }
+.reward-mood { font-size: clamp(14px, 2.8vmin, 20px); font-weight: 800; color: #6B4A56; text-align: center; }
+.rm-chip { border-radius: 999px; padding: 3px 12px; border: 2.5px solid rgba(46, 42, 36, .7); }
+.reward-praise {
+  font-size: clamp(15px, 3vmin, 23px); font-weight: 900; color: #B8536F;
+  text-align: center; word-break: keep-all;
+}
+.reward-btns { display: flex; gap: 12px; margin-top: 4px; }
+
+/* ─────────── 색종이 축하 ─────────── */
+.confetti { position: fixed; inset: 0; z-index: 95; pointer-events: none; overflow: hidden; }
+.cf { position: absolute; top: -20px; width: 12px; height: 16px; display: block; animation: cf-fall linear forwards; }
+@keyframes cf-fall {
+  0% { transform: translateY(-20px) translateX(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(102vh) translateX(var(--dx)) rotate(var(--rot)); opacity: .9; }
+}
+
+/* ─────────── 손그림 아이콘 ─────────── */
+.ic { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -.22em; flex: none; }
+h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -.2em; }
+.back .ic, .vs-btn .ic { width: 1.5em; height: 1.5em; vertical-align: middle; }
+.bigbtn .ic { width: 1.35em; height: 1.35em; }
+.ic-next { transform: scaleX(-1); }   /* 뒤로 화살표를 뒤집어 「다음」으로 (놀잇감이 아니다) */
+.mc-prog .ic { width: 1em; height: 1em; vertical-align: -.14em; }
+
+/* ─────────── 등장 모션 + 모션 줄이기 존중 ───────────
+ * 등장 모션은 **불투명도만** 쓴다 — transform 을 쓰면 흩뿌림 기울기를 지우고,
+ * 놀잇감에서는 드래그 좌표까지 흔든다. */
+@keyframes card-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .menu-card, .scene-card-btn, .scene-card, .bar, .home-head, .help-card, .reward.on, .reward-card, .cf {
+    animation: none !important;
+  }
+  * { transition: none !important; }
+}

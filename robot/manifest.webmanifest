@@ -1,0 +1,16 @@
+{
+  "name": "로봇 심부름",
+  "short_name": "로봇심부름",
+  "description": "화살표 카드로 명령을 짜고 ▶ 를 눌러 로봇을 목표까지 걸어가게 하는 순서·계획 놀이 — 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EAF1FA",
+  "theme_color": "#5B87C4",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
