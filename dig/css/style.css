@@ -1,0 +1,311 @@
+/* 🦴 발굴 놀이터 — 흙을 손가락으로 쓸어 걷어내고, 드러난 그림을 맞힌다.
+ * 색은 흙빛(갈색·모래빛). 놀잇감(흙판)은 반듯하게, 흩뿌리기는 고르는 칸에만.
+ *
+ * ⚠️ 캔버스에 border 를 주지 않는다 — getBoundingClientRect 가 밀려 파는 자리가 어긋난다.
+ *    흙판 테두리는 감싸는 상자(.dig-wrap)의 box-shadow 로 낸다.
+ * ⚠️ 흙판·보기 단추 줄에 transform 을 주지 않는다. 등장 모션은 불투명도와
+ *    낱개 속성(translate)만 쓴다 — 각 앱 e2e 의 「놀이판 무변형」 검사가 이것을 지킨다.
+ */
+:root {
+  --accent: 168,124,76;   /* 흙빛 대표색 rgb 삼중값 */
+  --chunk: #A87C4C;
+  --chunk-soft: #DEC6A6;
+  --tint: #F6EDE0;
+}
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+html, body { height: 100%; }
+body {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background: linear-gradient(160deg, #FBF3E6 0%, #F4E7D4 60%, #F7EFE0 100%);
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+/* ─────────── 화면 ─────────── */
+.screen {
+  display: none; position: fixed; inset: 0;
+  flex-direction: column; align-items: center;
+  padding: clamp(10px, 2.5vmin, 24px);
+  gap: clamp(8px, 1.8vmin, 16px);
+  overflow-y: auto;
+}
+.screen.on { display: flex; }
+#scr-home { justify-content: safe center; }
+
+/* ─────────── 머리 ─────────── */
+.home-head {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 2vmin;
+}
+h1 {
+  font-size: clamp(24px, 5.6vmin, 46px); font-weight: 900;
+  color: #6B4A28; text-align: center; word-break: keep-all;
+}
+.stats { display: flex; gap: 12px; align-items: center; }
+.stat {
+  border-radius: 999px; padding: 6px 16px;
+  font-size: clamp(15px, 3vmin, 20px); font-weight: 800; color: #6B4A28;
+  background: rgba(255,255,255,.8);
+}
+.vs-btn {
+  width: 46px; height: 46px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 999px; cursor: pointer;
+  background: rgba(255,255,255,.85);
+}
+
+/* ─────────── 홈: 단계 칸 ─────────── */
+.menu {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: clamp(12px, 2.5vmin, 24px); max-width: 1040px;
+}
+.menu-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: clamp(12px, 2.6vmin, 20px);
+  border: none; border-radius: 28px; cursor: pointer; font-family: inherit;
+  background: var(--tint);
+}
+.mc-pic { line-height: 0; width: 100%; display: flex; justify-content: center; }
+.mc-name { font-size: clamp(18px, 3.6vmin, 26px); font-weight: 900; color: #5A3C1E; word-break: keep-all; }
+.mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #8A6A44; word-break: keep-all; }
+.mc-prog { font-size: clamp(12px, 2.4vmin, 16px); font-weight: 800; color: #6B4A28; word-break: keep-all; padding: 2px 4px; }
+.c-l1 { --tint: #FBF0DC; }
+.c-l2 { --tint: #F4E6D2; }
+.c-l3 { --tint: #EDDCC4; }
+
+/* 흙더미에서 그림이 반쯤 드러난 모습 (단계 칸 그림) */
+.mound { position: relative; display: block; width: clamp(64px, 15vmin, 116px); aspect-ratio: 1; }
+.mound-pic { position: absolute; inset: 6% 6% 16% 6%; line-height: 0; }
+.mound-pic svg { width: 100%; height: 100%; display: block; }
+.mound-dirt { position: absolute; left: -4%; right: -4%; bottom: -4%; height: 62%; line-height: 0; }
+.mound-dirt .ic { width: 100%; height: 100%; }
+.c-l1 .mound { width: clamp(78px, 18vmin, 140px); }
+.c-l3 .mound { width: clamp(56px, 13vmin, 100px); }
+
+/* ─────────── 위 줄 ─────────── */
+.bar {
+  width: 100%; max-width: 1080px;
+  display: flex; align-items: center; gap: 10px; padding: 2px 4px;
+}
+.bar h2 {
+  flex: 1; text-align: center; word-break: keep-all;
+  font-size: clamp(17px, 3.8vmin, 28px); font-weight: 900; color: #6B4A28;
+}
+.back {
+  width: 46px; height: 46px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 999px; cursor: pointer;
+  background: rgba(255,255,255,.85);
+}
+.page-count {
+  flex: none; font-size: clamp(13px, 2.6vmin, 18px); font-weight: 800; color: #6B4A28;
+  background: #fff; border-radius: 20px 16px 21px 17px; padding: 5px 14px;
+}
+.bigbtn {
+  border: none; border-radius: 20px 16px 21px 17px; cursor: pointer; font-family: inherit;
+  font-size: clamp(15px, 3vmin, 21px); font-weight: 900; color: #4A3218;
+  padding: 10px 18px; min-height: 46px;
+  display: inline-flex; align-items: center; justify-content: center; gap: .35em;
+  background: rgba(255,255,255,.92);
+  border: 3px solid rgba(46,42,36,.8);
+}
+.bigbtn.small { flex: none; padding: 8px 14px; font-size: clamp(13px, 2.6vmin, 18px); }
+.bigbtn.primary { background: #E8C08A; }
+.bigbtn:disabled { opacity: .45; cursor: default; }
+@media (max-width: 480px) {
+  .bar h2 { font-size: clamp(14px, 4.4vw, 19px); }
+  .bigbtn.small { padding: 8px 10px; }
+}
+
+/* ─────────── 판 목록 ─────────── */
+.list {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: clamp(10px, 2vmin, 18px); width: 100%; max-width: 720px;
+  padding-bottom: 12px;
+}
+.puzzle-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: clamp(12px, 2.4vmin, 20px) 8px; border: none; border-radius: 24px; cursor: pointer;
+  font-family: inherit; background: var(--tint);
+  min-height: clamp(88px, 18vmin, 124px);
+}
+.puzzle-card.done { --tint: #F1E4CE; }
+.pz-no {
+  position: absolute; left: 8px; top: 8px;
+  width: 28px; height: 28px; background: #fff; color: #3A2E26;
+  border: 2.5px solid rgba(46,42,36,.85);
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900;
+}
+.pz-mound { line-height: 0; }
+.pz-mound .ic { width: clamp(42px, 9vmin, 68px); height: clamp(42px, 9vmin, 68px); }
+.pz-badge { line-height: 0; display: flex; gap: 1px; }
+.pz-badge .ic { width: clamp(16px, 3.2vmin, 24px); height: clamp(16px, 3.2vmin, 24px); }
+/* 목록 딱지는 손으로 붙인 것처럼 살짝 삐뚤게 (놀잇감이 아니라 고르는 칸이라 괜찮다) */
+.list .puzzle-card:nth-child(4n+1) { rotate: -1.4deg; }
+.list .puzzle-card:nth-child(4n+2) { rotate:  1.2deg; }
+.list .puzzle-card:nth-child(4n+3) { rotate:  1.5deg; }
+.list .puzzle-card:nth-child(4n+4) { rotate: -1.1deg; }
+
+/* ─────────── 놀이(발굴) ─────────── */
+.play-stage {
+  width: 100%; max-width: 1080px; flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(8px, 1.8vmin, 16px);
+}
+.dig-col {
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(6px, 1.4vmin, 12px); min-height: 0; flex: none;
+}
+
+/* 흙판 — 놀잇감. 기울이거나 키우지 않는다(transform 금지). */
+.dig-wrap {
+  position: relative;
+  width: min(90vw, 46vh); max-width: 460px;
+  aspect-ratio: 1; flex: none;
+  border-radius: 26px 21px 27px 22px;
+  overflow: hidden;
+  background: #FFFDF6;
+  box-shadow: 0 0 0 3px rgba(46,42,36,.85), 4px 5px 0 rgba(58,46,38,.16);
+}
+.dig-wrap canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; display: block;
+  border: 0;                 /* ← border 금지(좌표가 밀린다) */
+}
+#dirt-canvas { touch-action: none; cursor: crosshair; }
+/* "여기를 문질러" 손가락 안내 — 처음 문지르면 사라진다 */
+.rub-hint {
+  position: absolute; left: 50%; top: 50%; margin: -13% 0 0 -13%;
+  width: 26%; height: 26%; line-height: 0; pointer-events: none;
+  opacity: .95; animation: rub 1.5s ease-in-out infinite;
+}
+.rub-hint .ic { width: 100%; height: 100%; }
+.rub-hint.gone { display: none; }
+@keyframes rub {
+  0%, 100% { translate: -8% 0; }
+  50%      { translate:  8% 0; }
+}
+
+.dig-tools {
+  display: flex; align-items: center; justify-content: center; gap: clamp(8px, 2vmin, 16px);
+  flex: none; flex-wrap: wrap;
+}
+.star-hint { display: inline-flex; gap: 2px; line-height: 0; }
+.star-hint .sh .ic, .reward-stars .sh .ic {
+  width: clamp(22px, 4.4vmin, 34px); height: clamp(22px, 4.4vmin, 34px);
+}
+.star-hint .sh.off, .reward-stars .sh.off { opacity: .22; }
+
+/* 보기 단추 줄 — 흙을 어느 정도 파면 스르륵 올라온다.
+   ⚠️ transform 이 아니라 낱개 속성(translate)으로 움직인다. */
+.choice-bar {
+  display: none;
+  gap: clamp(8px, 2vmin, 16px);
+  flex-wrap: wrap; justify-content: center; align-items: stretch;
+  width: 100%; max-width: 660px; flex: none;
+}
+.choice-bar.on { display: flex; animation: bar-up .34s ease-out; }
+@keyframes bar-up {
+  from { opacity: 0; translate: 0 24px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+.choice-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-width: clamp(76px, 21vw, 132px); min-height: 46px;
+  padding: clamp(6px, 1.4vmin, 12px);
+  border: 3px solid rgba(46,42,36,.85); border-radius: 22px 18px 23px 19px;
+  background: #fff; cursor: pointer; font-family: inherit;
+  box-shadow: 2px 3px 0 rgba(58,46,38,.14);
+}
+.choice-btn:active { translate: 2px 3px; box-shadow: none; }
+.cb-pic { width: clamp(48px, 12vw, 84px); aspect-ratio: 1; line-height: 0; }
+.cb-pic svg { width: 100%; height: 100%; display: block; }
+.cb-name { font-size: clamp(12px, 2.4vmin, 17px); font-weight: 900; color: #4A3218; word-break: keep-all; }
+/* 틀린 보기 — 벌 주는 빨강이 아니라 조용히 물러난다(무벌점) */
+.choice-btn.miss { opacity: .38; box-shadow: none; }
+
+/* ─────────── 가로 화면: 흙판 왼쪽 · 보기 오른쪽 ─────────── */
+@media (orientation: landscape) {
+  .play-stage {
+    flex-direction: row; align-items: center; justify-content: center;
+    gap: clamp(12px, 2.6vw, 30px);
+  }
+  .dig-wrap { width: min(52vw, 62vh); }
+  .choice-bar {
+    display: none;
+    width: clamp(150px, 24vw, 300px); max-width: none;
+  }
+  .choice-bar.on { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .choice-btn { min-width: 0; }
+  .cb-pic { width: clamp(40px, 6vw, 76px); }
+}
+/* 폰 가로(낮은 화면): 흙판을 조금 더 줄여 잘림 없이 */
+@media (orientation: landscape) and (max-height: 480px) {
+  .dig-wrap { width: min(48vw, 56vh); }
+  .cb-pic { width: clamp(34px, 5vw, 56px); }
+  .choice-btn { padding: 4px; }
+}
+
+/* ─────────── 보상 오버레이 ─────────── */
+.reward {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  align-items: center; justify-content: center;
+  background: rgba(70,48,26,.32);
+}
+.reward.on { display: flex; animation: fade-in .2s ease-out; }
+.reward-card {
+  background: var(--tint);
+  border-radius: 30px; padding: clamp(18px, 3.6vmin, 34px) clamp(22px, 4.6vmin, 44px);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  max-width: 92vw;
+}
+.reward-face { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rw-pic { width: clamp(96px, 22vmin, 170px); aspect-ratio: 1; line-height: 0; }
+.rw-pic svg { width: 100%; height: 100%; display: block; }
+.rw-name { font-size: clamp(17px, 3.4vmin, 26px); font-weight: 900; color: #5A3C1E; }
+.reward-stars { display: flex; gap: 4px; line-height: 0; }
+.reward-praise { font-size: clamp(18px, 3.8vmin, 28px); font-weight: 900; color: #6B4A28; text-align: center; word-break: keep-all; }
+.reward-btns { display: flex; gap: 12px; margin-top: 2px; }
+
+/* ─────────── 색종이 축하 ─────────── */
+.confetti { position: fixed; inset: 0; z-index: 95; pointer-events: none; overflow: hidden; }
+.cf { position: absolute; top: -20px; width: 12px; height: 16px; display: block; animation: cf-fall linear forwards; }
+@keyframes cf-fall {
+  0%   { transform: translateY(-20px) translateX(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(102vh) translateX(var(--dx)) rotate(var(--rot)); opacity: .9; }
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ─────────── 손그림 아이콘 ─────────── */
+.ic { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -.22em; flex: none; }
+h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -.2em; }
+.back .ic, .vs-btn .ic { width: 1.5em; height: 1.5em; vertical-align: middle; font-size: 20px; }
+.bigbtn .ic { width: 1.4em; height: 1.4em; }
+.mc-prog .ic { width: 1em; height: 1em; vertical-align: -.14em; }
+.ic-next { transform: scaleX(-1); }   /* 뒤로 화살표를 뒤집어 "다음" 으로 */
+
+/* ─────────── 윗줄 오른쪽: 집 단추·남은시간 쪽지에 자리를 내준다 ───────────
+ * 집 단추(shared/home-button.js)가 오른쪽 위에 떠 있고, 남은시간 쪽지는
+ * 넓은 화면에서는 그 왼쪽에, **폰 세로에서는 그 아래**(y≈101px)에 붙는다.
+ * 그래서 좁은 화면에서는 목록 첫 줄이 쪽지 밑으로 들어가 글씨를 가렸다 —
+ * 목록을 그만큼 내려 준다(놀이 화면은 흙판이 가운데라 겹치지 않는다). */
+@media (min-width: 701px) {
+  #scr-play .bar, #scr-list .bar {
+    padding-right: calc(clamp(60px, 8.6vw, 80px) + 98px) !important;
+  }
+}
+@media (max-width: 700px) {
+  #scr-list .list { margin-top: 46px; }
+}
+
+/* ─────────── 모션 줄이기 존중 ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rub-hint, .choice-bar.on, .cf, .reward.on { animation: none !important; }
+  .list .puzzle-card { rotate: none !important; }
+  * { transition: none !important; }
+}

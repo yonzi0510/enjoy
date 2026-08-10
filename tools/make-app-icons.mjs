@@ -343,6 +343,59 @@ export const PROPS = {
     <circle cx="29" cy="54" r="3.8" fill="${INK}"/><circle cx="52" cy="54" r="3.8" fill="${INK}"/>
     <path d="M26 72 Q40.5 83 55 72" fill="none" stroke="${INK}" stroke-width="4.4" stroke-linecap="round"/>`,
 
+  /* 🦴 발굴 놀이터 — 흙더미에 삽이 꽂혀 있고 뼈가 삐죽 나왔다.
+     48px 에서 「비스듬한 자루 + 낮은 둔덕」 실루엣이라 다른 28개와 안 겹친다. */
+  dig: `
+    <path d="M4 74 Q22 46 50 46 Q78 46 96 74 L96 92 L4 92 Z"
+      fill="#C89A62" stroke="${INK}" stroke-width="4.4" stroke-linejoin="round"/>
+    <path d="M14 74 Q30 60 46 66" fill="none" stroke="#A87C46" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M60 78 Q74 68 86 76" fill="none" stroke="#A87C46" stroke-width="3.4" stroke-linecap="round"/>
+    <g transform="rotate(-16 40 58)">
+      <path d="M31 34 h12 v26 h-12 Z" fill="${WOOD}" stroke="${INK}" stroke-width="3.6" stroke-linejoin="round"/>
+      <path d="M27 12 h20 v10 a10 10 0 0 1 -20 0 Z" fill="none" stroke="${INK}" stroke-width="3.6" stroke-linejoin="round"/>
+      <path d="M25 58 h24 l-4 20 a8 8 0 0 1 -16 0 Z"
+        fill="#BFC7CE" stroke="${INK}" stroke-width="3.8" stroke-linejoin="round"/>
+    </g>
+    <g transform="rotate(18 74 56)">
+      <path d="M62 52 h24" stroke="${PAPER}" stroke-width="11" stroke-linecap="round"/>
+      <circle cx="62" cy="47" r="6.5" fill="${PAPER}"/><circle cx="62" cy="57" r="6.5" fill="${PAPER}"/>
+      <circle cx="86" cy="47" r="6.5" fill="${PAPER}"/><circle cx="86" cy="57" r="6.5" fill="${PAPER}"/>
+      <path d="M62 52 h24" stroke="${INK}" stroke-width="3.4" stroke-linecap="round" fill="none" opacity="0"/>
+      <path d="M55.5 47 a6.5 6.5 0 1 1 0 .01 M55.5 57 a6.5 6.5 0 1 1 0 .01" fill="none" stroke="${INK}" stroke-width="3.4"/>
+      <path d="M62 41.5 h24 M62 62.5 h24" stroke="${INK}" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M92.5 47 a6.5 6.5 0 1 1 0 .01 M92.5 57 a6.5 6.5 0 1 1 0 .01" fill="none" stroke="${INK}" stroke-width="3.4"/>
+    </g>`,
+
+  /* 🤖 로봇 심부름 — 안테나 달린 둥근 로봇 + 나아갈 방향 화살표.
+     주사위(정육면체)와 헷갈리지 않게 **모서리를 둥글리고 안테나·바퀴**를 달았다. */
+  robot: `
+    <path d="M50 6 v10" stroke="${INK}" stroke-width="3.8" stroke-linecap="round"/>
+    <circle cx="50" cy="7" r="6" fill="${RED}" stroke="${INK}" stroke-width="3.4"/>
+    <rect x="17" y="16" width="66" height="46" rx="15" fill="${PAPER}" stroke="${INK}" stroke-width="4.6"/>
+    <circle cx="36" cy="36" r="8.5" fill="${BLU}" stroke="${INK}" stroke-width="3.4"/>
+    <circle cx="64" cy="36" r="8.5" fill="${BLU}" stroke="${INK}" stroke-width="3.4"/>
+    <circle cx="36" cy="36" r="3.2" fill="${INK}"/><circle cx="64" cy="36" r="3.2" fill="${INK}"/>
+    <path d="M40 51 h20" stroke="${INK}" stroke-width="4.2" stroke-linecap="round"/>
+    <rect x="27" y="64" width="46" height="20" rx="8" fill="#BFC7CE" stroke="${INK}" stroke-width="4.2"/>
+    <circle cx="22" cy="86" r="8" fill="${INK}"/><circle cx="78" cy="86" r="8" fill="${INK}"/>
+    <path d="M84 40 h10 M89 34 l6 6 l-6 6" fill="none" stroke="${GRN}" stroke-width="5.4"
+      stroke-linecap="round" stroke-linejoin="round"/>`,
+
+  /* 💗 마음 놀이터 — 얼굴에 눈썹 조각을 붙이는 중.
+     하트는 쓰지 않는다(픽셀 놀이터의 계단 하트와 48px 에서 겹친다). */
+  heart: `
+    <circle cx="46" cy="52" r="36" fill="${PAPER}" stroke="${INK}" stroke-width="4.6"/>
+    <path d="M28 36 q7 -6 15 -2" fill="none" stroke="${INK}" stroke-width="4.6" stroke-linecap="round"/>
+    <circle cx="34" cy="50" r="5.4" fill="${INK}"/>
+    <circle cx="58" cy="50" r="5.4" fill="${INK}"/>
+    <path d="M32 68 q14 12 28 0" fill="none" stroke="${INK}" stroke-width="4.6" stroke-linecap="round"/>
+    <circle cx="18" cy="62" r="7" fill="${PNK}" opacity=".55"/>
+    <circle cx="74" cy="62" r="7" fill="${PNK}" opacity=".55"/>
+    <g transform="rotate(14 78 26)">
+      <rect x="62" y="18" width="32" height="16" rx="8" fill="${YEL}" stroke="${INK}" stroke-width="3.6"/>
+      <path d="M69 27 q9 -7 18 -2" fill="none" stroke="${INK}" stroke-width="4.2" stroke-linecap="round"/>
+    </g>`,
+
   /* 🍩 도넛 짝맞추기 — 가운데가 뻥 뚫린 고리 */
   donut: `
     <circle cx="50" cy="52" r="30" fill="none" stroke="#D89A56" stroke-width="32"/>
@@ -493,4 +546,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
  *  tubes 유리관 세 개 · slide 네 자리 세로 더미 · burger 층층 빵 · kkochi 세로 꼬치
  *  pattern 가로 띠+빈 칸 · connect 점+지그재그 · dice 정육면체 · donut 뚫린 고리
  *  twist 드럼 2단 얼굴 · matrix 2×2 방향 삼각형 · bag 전구
+ *  dig 흙더미+비스듬한 삽+뼈 · robot 안테나 로봇+화살표 · heart 얼굴+떠 있는 눈썹 조각
  */
