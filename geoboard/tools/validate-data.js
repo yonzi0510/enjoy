@@ -49,6 +49,18 @@ const sameEndpoints = (a, b) => {
   return (eq(a.from, b.from) && eq(a.to, b.to)) || (eq(a.from, b.to) && eq(a.to, b.from));
 };
 
+/* 두 선분이 서로 지나가는가 — 고무줄이 자기끼리 엇갈리는지 볼 때 쓴다.
+ * 좌표가 전부 정수라 부동소수 오차 걱정이 없다. */
+function crosses(p1, p2, p3, p4) {
+  const d = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  const on = (a, b, c) => d(a, b, c) === 0 &&
+    Math.min(a[0], b[0]) <= c[0] && c[0] <= Math.max(a[0], b[0]) &&
+    Math.min(a[1], b[1]) <= c[1] && c[1] <= Math.max(a[1], b[1]);
+  const d1 = d(p3, p4, p1), d2 = d(p3, p4, p2), d3 = d(p1, p2, p3), d4 = d(p1, p2, p4);
+  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
+  return on(p3, p4, p1) || on(p3, p4, p2) || on(p1, p2, p3) || on(p1, p2, p4);
+}
+
 (D.PUZZLES || []).forEach(pz => {
   const tag = '퍼즐 ' + (pz.id || '?');
   if (!pz.id || seenIds.has(pz.id)) err(tag + ': id 누락/중복');
@@ -79,6 +91,49 @@ const sameEndpoints = (a, b) => {
   // sameSeg 계약 확인(순서 무관 매칭)
   const s0 = pz.segments[0];
   if (!D.sameSeg(s0, s0.from, s0.to) || !D.sameSeg(s0, s0.to, s0.from)) err(tag + ': sameSeg 판정 오류');
+
+  /* ── 고무줄 계약 ──────────────────────────────────────────────
+   * 여기가 이 검증기의 핵심이다. 예전 데이터는 **30개 중 27개가 실물 고무줄로는
+   * 만들 수 없는 그림**이었는데(끝이 열린 선·한 못에서 여러 갈래), 그걸 잡아낼 검사가
+   * 하나도 없었다. 아래 넷을 다 통과해야 진짜 고무줄로 만들 수 있다. */
+  if (!Array.isArray(pz.bands) || !pz.bands.length) { err(tag + ': bands 없음'); return; }
+  pz.bands.forEach((b, bi) => {
+    const btag = tag + ' 고무줄 ' + bi;
+    if (!D.hasColor(b.color)) err(btag + ': 없는 색 — ' + b.color);
+    if (!Array.isArray(b.pegs)) { err(btag + ': pegs 없음'); return; }
+
+    // ① 못 3개 이상 — 둘 이하로는 고리가 안 된다
+    if (b.pegs.length < 3) { err(btag + ': 못이 ' + b.pegs.length + '개 — 고리가 되려면 3개 이상'); return; }
+    // ② 격자 안 · 같은 못을 두 번 두르지 않는다
+    const seen = new Set();
+    b.pegs.forEach((pt, pi) => {
+      if (!inGrid(pt)) { err(btag + ' 못 ' + pi + ': 격자 범위(0~' + (D.GRID - 1) + ') 오류 — ' + JSON.stringify(pt)); return; }
+      const k = pt[0] + ',' + pt[1];
+      if (seen.has(k)) err(btag + ': 같은 못(' + k + ')을 두 번 두름');
+      seen.add(k);
+    });
+    // ③ 세 못이 한 줄로 늘어서면 가운데 못은 고무줄이 안 걸린다(팽팽히 펴지며 지나쳐 버린다)
+    for (let i = 0; i < b.pegs.length; i++) {
+      const a = b.pegs[(i - 1 + b.pegs.length) % b.pegs.length];
+      const c = b.pegs[i], d = b.pegs[(i + 1) % b.pegs.length];
+      const cross = (c[0] - a[0]) * (d[1] - a[1]) - (c[1] - a[1]) * (d[0] - a[0]);
+      if (cross === 0) err(btag + ': 못 ' + JSON.stringify(c) + ' 가 이웃 두 못과 일직선 — 고무줄이 안 걸리고 지나친다');
+    }
+    // ④ 고무줄이 자기 자신과 엇갈리면 안 된다(실물에서는 그런 모양이 안 나온다)
+    const n = b.pegs.length;
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        if (j === i || (j + 1) % n === i || (i + 1) % n === j) continue; // 이웃한 변끼리는 제외
+        if (crosses(b.pegs[i], b.pegs[(i + 1) % n], b.pegs[j], b.pegs[(j + 1) % n])) {
+          err(btag + ': 고무줄이 자기끼리 엇갈림 (변 ' + i + ' × ' + j + ')');
+        }
+      }
+    }
+  });
+
+  // 파생된 segments 가 bands 와 실제로 맞는지 (직접 적어 넣는 실수 방지)
+  const derived = D.allSegments(pz.bands);
+  if (derived.length !== pz.segments.length) err(tag + ': segments 가 bands 에서 뽑은 것과 다름');
 });
 [1, 2, 3].forEach(st => { if (perStage[st] !== 10) err('단계 ' + st + ' 퍼즐이 10개여야 함 — ' + perStage[st]); });
 

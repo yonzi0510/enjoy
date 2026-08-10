@@ -1,9 +1,18 @@
-/* 앱 셸 — 홈(단계 3개) → 퍼즐 목록(단계별 10) → 놀이(고무줄 걸기).
- * 왼쪽 본보기 카드(못판에 색 고무줄을 건 모습)를 보고, 오른쪽 놀이판에 트레이의 색을 골라
- * 못 두 개를 순서대로 탭해 그 사이에 고무줄을 건다(실제 지오보드 장난감과 같은 조작).
- * (색, 못A, 못B)가 아직 안 건 목표 세그먼트와 맞으면(순서 상관없이) 통! 소리와 함께 걸리고,
- * 안 맞으면 아무 일도 없이 살짝 안내만 한다(무벌점). 다 걸면 색종이 축하 + TTS + 별 + 펫 간식.
- * 별 = 그 퍼즐의 세그먼트 수. 진행도는 완성한 퍼즐 id로 저장한다. */
+/* 앱 셸 — 홈(단계 3개) → 퍼즐 목록(단계별 10) → 놀이(고무줄 주무르기).
+ *
+ * ── 2026-08 개편: 「못 찍기」에서 「고무줄 당기기」로 ────────────────────
+ * 예전에는 색을 고르고 **못 두 개를 차례로 탭**하면 그 사이에 선이 하나 생겼다. 부모님 지적:
+ * "지금은 선그리기랑 다를바가 없어서", "유연하게 다양한 모양으로 늘어나면서 모양이 잡혀가는,
+ * 그게 지오보드의 핵심이잖아".
+ *
+ * 지금은 판에 **고무줄 한 가닥이 걸려 있고**, 아이는 그 줄의 **아무 데나 집어 새 못으로 당긴다**.
+ * 당긴 자리에 못이 있으면 통! 걸려 고리가 그만큼 커지고, 못이 없으면 탁 되돌아간다.
+ * 걸린 못을 집어 밖으로 빼면 다시 빠진다. 고리 모양이 본보기와 같아지면 그 고무줄이 완성된다.
+ * 못을 하나씩 지정하는 게 아니라 **있는 모양을 주물러 다음 모양으로** 만드는 것 —
+ * 이것이 지오보드다.
+ *
+ * 무벌점은 그대로다. 틀린 모양이라는 것 자체가 없고, 본보기와 같아지면 완성일 뿐이다.
+ * 별 = 그 퍼즐의 세그먼트 수(= 고리들의 변 개수 합). 진행도는 완성한 퍼즐 id로 저장한다. */
 window.App = (() => {
   const D = window.GeoboardData;
   const A = window.Audio2;
@@ -25,20 +34,62 @@ window.App = (() => {
     if (id === 'scr-home') renderHome();
   }
 
-  /* ─────────── 못판 SVG 그리기 ───────────
-   * segments: 그릴 세그먼트 목록 · matched: 세그먼트별 완성 여부(불리언 배열, variant='play'에서만 사용)
-   * variant: 'card'(본보기, 전부 실선) · 'thumb'(목록 미리보기, 전부 실선, 작게) · 'play'(놀이판) */
-  function lineSVG(s, solid) {
-    const [x1, y1] = pegPx(s.from[0], s.from[1]);
-    const [x2, y2] = pegPx(s.to[0], s.to[1]);
-    if (solid) {
-      const c = D.colorMeta(s.color);
-      return '<line class="band c-' + s.color + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
-        '" stroke="' + c.hex + '" stroke-width="3.4" stroke-linecap="round"/>';
-    }
-    return '<line class="guide-line" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
-      '" stroke="#B6AECC" stroke-width="1.8" stroke-dasharray="3 4.5" stroke-linecap="round" opacity=".65"/>';
+  /* ─────────── 고무줄 그리기 ───────────
+   * 고무줄은 선이 아니라 **못들을 두르는 닫힌 고리**다. 꼭짓점을 바깥으로 밀어
+   * 못을 감싸고 도는 모양을 만들고, 둘레가 길수록 얇게 그린다(늘어난 고무줄).
+   * 실물 사진과 같은 결이 나오도록 어두운 테두리 + 본색 + 위쪽 하이라이트 세 겹으로 긋는다. */
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+  const vlen = a => Math.hypot(a[0], a[1]) || 1e-6;
+  const vnorm = a => { const L = vlen(a); return [a[0] / L, a[1] / L]; };
+
+  function outset(pts, d) {
+    const n = pts.length;
+    if (n < 2) return pts.slice();
+    return pts.map((p, i) => {
+      const prev = pts[(i - 1 + n) % n], next = pts[(i + 1) % n];
+      const u = vnorm(sub(p, prev)), v = vnorm(sub(p, next));
+      let b = [u[0] + v[0], u[1] + v[1]];
+      if (vlen(b) < 0.08) b = [-u[1], u[0]];              // 일직선이면 옆으로 민다
+      b = vnorm(b);
+      const half = Math.max(0.42, vlen([u[0] + v[0], u[1] + v[1]]) / 2);
+      const k = Math.min(2.1, 1 / half);
+      return [p[0] + b[0] * d * k, p[1] + b[1] * d * k];
+    });
   }
+  function loopPerim(pts) {
+    let L = 0;
+    for (let i = 0; i < pts.length; i++) L += vlen(sub(pts[(i + 1) % pts.length], pts[i]));
+    return L;
+  }
+  const pathD = pts => pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join(' ') + ' Z';
+
+  /* pts = 고무줄이 지나는 자리들(못 좌표 + 끌고 있는 손끝). 한 가닥을 <g class="band"> 로 낸다. */
+  function bandSVG(pts, color, cls) {
+    const c = D.colorMeta(color) || D.COLORS.red;
+    const w = Math.max(1.9, 3.6 - loopPerim(pts) * 0.0055);
+    let inner = '';
+    if (pts.length === 1) {                                // 못 하나에 걸쳐진 동그란 고무줄
+      const r = 3.4 + 2.6;
+      inner =
+        '<circle cx="' + pts[0][0] + '" cy="' + pts[0][1] + '" r="' + r + '" fill="none" stroke="' + c.dk + '" stroke-width="' + (w + 1.15) + '"/>' +
+        '<circle cx="' + pts[0][0] + '" cy="' + pts[0][1] + '" r="' + r + '" fill="none" stroke="' + c.hex + '" stroke-width="' + w + '"/>';
+    } else {
+      const d = pathD(outset(pts, 2.6 + w * 0.55));
+      inner =
+        '<path d="' + d + '" fill="none" stroke="' + c.dk + '" stroke-width="' + (w + 1.15) + '" stroke-linejoin="round" stroke-linecap="round"/>' +
+        '<path d="' + d + '" fill="none" stroke="' + c.hex + '" stroke-width="' + w + '" stroke-linejoin="round" stroke-linecap="round"/>' +
+        '<path d="' + d + '" fill="none" stroke="' + c.lt + '" stroke-width="' + (w * 0.34) + '" stroke-linejoin="round" stroke-linecap="round" opacity=".5"/>';
+    }
+    return '<g class="band c-' + color + (cls ? ' ' + cls : '') + '">' + inner + '</g>';
+  }
+
+  /* 아직 안 만든 고무줄은 흐린 점선 고리로 「여기에 걸어요」를 보여 준다 */
+  function guideSVG(pts) {
+    const d = pathD(outset(pts, 3.6));
+    return '<path class="guide-line" d="' + d + '" fill="none" stroke="#B6AECC" stroke-width="1.6" ' +
+      'stroke-dasharray="3 4.5" stroke-linejoin="round" stroke-linecap="round" opacity=".6"/>';
+  }
+
   function pegSVG(gx, gy, hi) {
     const [x, y] = pegPx(gx, gy);
     const idx = gy * GRID + gx;
@@ -49,21 +100,48 @@ window.App = (() => {
     s += '</g>';
     return s;
   }
-  function boardSVG(pz, matched, variant, pendingFrom) {
-    let under = '', over = '', pegs = '';
-    pz.segments.forEach((s, i) => {
-      if (variant === 'play') {
-        if (matched[i]) over += lineSVG(s, true);
-        else under += lineSVG(s, false);
-      } else {
-        over += lineSVG(s, true);
-      }
-    });
-    for (let gy = 0; gy < GRID; gy++) for (let gx = 0; gx < GRID; gx++) {
-      const idx = gy * GRID + gx;
-      pegs += pegSVG(gx, gy, variant === 'play' && pendingFrom === idx);
+
+  const pegsToPts = pegs => pegs.map(p => pegPx(p[0], p[1]));
+  const idxToPts  = list => list.map(i => pegPx(i % GRID, Math.floor(i / GRID)));
+
+  /* variant: 'card'/'thumb'(본보기 — 전부 완성 모습) · 'play'(놀이판) */
+  function boardSVG(pz, state, variant) {
+    let guide = '', bands = '', pegs = '';
+    if (variant === 'play') {
+      pz.bands.forEach((b, i) => {
+        if (state.made[i]) bands += bandSVG(idxToPts(state.made[i]), b.color);
+        else guide += guideSVG(pegsToPts(b.pegs));
+      });
+      if (state.active) bands += bandSVG(activePts(state.active), state.active.color, 'live');
+    } else {
+      pz.bands.forEach(b => { bands += bandSVG(pegsToPts(b.pegs), b.color); });
     }
-    return '<svg class="board-svg" viewBox="0 0 100 100" xmlns="' + SVGNS + '">' + under + over + pegs + '</svg>';
+    const hot = variant === 'play' ? hotPegs(state) : [];
+    for (let gy = 0; gy < GRID; gy++) for (let gx = 0; gx < GRID; gx++) {
+      pegs += pegSVG(gx, gy, hot.indexOf(gy * GRID + gx) >= 0);
+    }
+    return '<svg class="board-svg" viewBox="0 0 100 100" xmlns="' + SVGNS + '">' + guide + bands + pegs + '</svg>';
+  }
+
+  // 지금 주무르는 고무줄이 실제로 지나는 자리 (집은 데가 있으면 손끝을 끼워 넣는다)
+  function activePts(a) {
+    const pts = idxToPts(a.verts);
+    if (!a.grab || !a.grab.tip) return pts;
+    if (a.grab.kind === 'edge') { const out = pts.slice(); out.splice(a.grab.at + 1, 0, a.grab.tip); return out; }
+    const out = pts.slice(); out[a.grab.at] = a.grab.tip; return out;
+  }
+  // 당기는 동안 「여기 걸면 돼」로 반짝일 못 — 아직 안 만든 본보기 고무줄의 못들
+  function hotPegs(state) {
+    if (!state.active || !state.active.grab || !state.active.grab.tip) return [];
+    const out = [];
+    state.pz.bands.forEach((b, i) => {
+      if (state.made[i] || b.color !== state.active.color) return;
+      b.pegs.forEach(p => {
+        const idx = p[1] * GRID + p[0];
+        if (state.active.verts.indexOf(idx) < 0) out.push(idx);
+      });
+    });
+    return out;
   }
 
   /* 손그림 아이콘 한 조각 — index.html 의 <symbol> 을 가리킨다(이모지 대신) */
@@ -83,7 +161,7 @@ window.App = (() => {
       b.className = 'menu-card ' + lv.cls;
       // 첫 칸을 가리키는 시작 화살표는 shared/screen.css 가 얹는다 — 앱에서 그리지 않는다
       b.innerHTML =
-        '<span class="mc-icon">' + boardSVG(pz, pz.segments.map(() => true), 'thumb') + '</span>' +
+        '<span class="mc-icon">' + boardSVG(pz, null, 'thumb') + '</span>' +
         '<span class="mc-name">' + lv.name + '</span>' +
         '<span class="mc-desc">' + lv.desc + '</span>' +
         '<span class="mc-prog">' + (done ? ico('star') + ' ' + done + ' / ' + ids.length : '처음이야!') + '</span>';
@@ -109,7 +187,7 @@ window.App = (() => {
       b.dataset.id = pz.id;
       b.innerHTML =
         '<span class="pz-no">' + (i + 1) + '</span>' +
-        '<span class="pz-thumb">' + boardSVG(pz, pz.segments.map(() => true), 'thumb') + '</span>' +
+        '<span class="pz-thumb">' + boardSVG(pz, null, 'thumb') + '</span>' +
         '<span class="pz-badge">' + (done ? ico('star') : ico('pin')) + '</span>';
       b.addEventListener('click', ev => { ev.preventDefault(); A.sfx.tap(); openPlay(pz); });
       box.appendChild(b);
@@ -118,99 +196,156 @@ window.App = (() => {
   }
 
   /* ─────────── 놀이 ─────────── */
-  let cur = null; // { pz, matched:[bool...], pendingFrom, locked }
-  let selColor = null;
+  let cur = null; // { pz, made:[verts|null...], active:{color,verts,grab}|null, locked }
+
+  /* 못에 걸리는 거리. 못 간격이 16 이라 절반이 8 인데, 8 로 두면 **판 위 어디에 놓아도**
+   * 어딘가에 걸려서 「탁 되돌아가기」가 아예 일어나지 않는다. 못과 못 사이에 안 걸리는
+   * 자리를 남겨야 고무줄이 고무줄답다. */
+  const CATCH = 6.4;
 
   function openPlay(pz) {
-    cur = { pz, matched: new Array(pz.segments.length).fill(false), pendingFrom: null, locked: false };
-    selColor = null;
+    cur = { pz, made: pz.bands.map(() => null), active: null, locked: false };
     $('play-title').innerHTML = ico('pin') + ' 똑같이 걸어요';
-    $('card-board').innerHTML = boardSVG(pz, pz.segments.map(() => true), 'card');
+    $('card-board').innerHTML = boardSVG(pz, null, 'card');
     renderTray();
     renderBoard();
     showScreen('scr-play');
-    setTimeout(() => { if (cur && !cur.locked) A.speak('카드처럼 고무줄을 걸어 볼까?'); }, 300);
+    setTimeout(() => { if (cur && !cur.locked) A.speak('고무줄을 잡아당겨 볼까?'); }, 300);
   }
 
-  const totalMatched = () => cur.matched.filter(Boolean).length;
-  const placedSegments = () => cur.pz.segments.filter((s, i) => cur.matched[i]);
-  const remainingSegments = () => cur.pz.segments.filter((s, i) => !cur.matched[i]);
+  const madeCount = () => cur.made.filter(Boolean).length;
+  const placedSegments = () =>
+    cur.pz.bands.reduce((acc, b, i) => acc.concat(cur.made[i] ? D.bandSegments(b) : []), []);
+  const totalMatched = () => placedSegments().length;
 
-  function renderBoard() {
-    $('board').innerHTML = boardSVG(cur.pz, cur.matched, 'play', cur.pendingFrom);
+  function renderBoard() { $('board').innerHTML = boardSVG(cur.pz, cur, 'play'); }
+
+  /* 트레이 — 이 퍼즐에 필요한 색만 낸다. 다 만든 색은 완성 표시.
+   * (없는 색을 골라 봐야 아무 데도 안 맞으니, 다섯 살에게는 막다른 길이 된다) */
+  function trayColors() {
+    const out = [];
+    cur.pz.bands.forEach(b => { if (out.indexOf(b.color) < 0) out.push(b.color); });
+    return out;
   }
+  const colorDone = id =>
+    cur.pz.bands.every((b, i) => b.color !== id || cur.made[i]);
 
-  // 색 고무줄 트레이 5종(소모되지 않음, 여러 번 고를 수 있다)
   function renderTray() {
     const box = $('tray');
     box.innerHTML = '';
-    D.COLOR_IDS.forEach(id => {
+    trayColors().forEach(id => {
+      const done = colorDone(id);
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'tray-item c-' + id + (selColor === id ? ' sel' : '');
+      b.className = 'tray-item c-' + id +
+        (cur.active && cur.active.color === id ? ' sel' : '') + (done ? ' done' : '');
       b.dataset.id = id;
-      b.innerHTML = '<span class="ti-band">' + D.bandSwatchSVG(id, 'sw-' + id) + '</span>';
+      b.innerHTML = '<span class="ti-band">' + D.bandSwatchSVG(id, 'sw-' + id) + '</span>' +
+        (done ? '<span class="ti-done">' + ico('star') + '</span>' : '');
       b.addEventListener('click', ev => { ev.preventDefault(); trayPick(id); });
       box.appendChild(b);
     });
   }
+
+  // 그 색으로 아직 안 만든 본보기 고무줄 (여러 개면 첫 번째)
+  const nextTarget = color => cur.pz.bands.findIndex((b, i) => !cur.made[i] && b.color === color);
+
+  /* 색을 고르면 그 색 고무줄이 **판에 걸려 나온다** — 본보기의 첫 두 못에 걸쳐서.
+   * 빈 판에서 시작하지 않는 것은 실물과 같고(고무줄은 늘 어딘가 걸려 있다),
+   * 다섯 살이 「이걸 잡아당기면 되는구나」를 바로 알게 한다. */
   function trayPick(id) {
     if (!cur || cur.locked) return;
-    selColor = (selColor === id) ? null : id;
-    cur.pendingFrom = null;
+    const t = nextTarget(id);
+    if (t < 0) { A.sfx.tap(); A.speak(D.COLORS[id].say + '은 다 걸었어!'); return; }
+    if (cur.active && cur.active.color === id) { cur.active = null; A.sfx.tap(); renderTray(); renderBoard(); return; }
+    const pegs = cur.pz.bands[t].pegs;
+    cur.active = {
+      color: id,
+      verts: [pegs[0][1] * GRID + pegs[0][0], pegs[1][1] * GRID + pegs[1][0]],
+      grab: null,
+    };
     A.sfx.tap();
     renderTray();
     renderBoard();
-    if (selColor) A.speak(D.COLORS[selColor].say + '! 어느 못이야?');
+    A.speak(D.COLORS[id].say + '! 잡아당겨 봐.');
   }
 
-  /* ─────────── 못 탭 → 걸기 판정 ─────────── */
-  function pegTap(idx) {
-    if (!cur || cur.locked) return;
-    if (!selColor) { A.sfx.tap(); A.speak('색을 먼저 골라 봐!'); return; }
-    if (cur.pendingFrom === null) {
-      cur.pendingFrom = idx;
-      A.sfx.tap();
-      renderBoard();
-      return;
+  /* ─────────── 집어서 당기기 ─────────── */
+  function boardPoint(ev) {
+    const svg = $('board').querySelector('.board-svg');
+    if (!svg) return null;
+    const r = svg.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    return [(ev.clientX - r.left) / r.width * 100, (ev.clientY - r.top) / r.height * 100];
+  }
+  function nearestPeg(x, y, within) {
+    let best = null, bd = Infinity;
+    for (let gy = 0; gy < GRID; gy++) for (let gx = 0; gx < GRID; gx++) {
+      const [cx, cy] = pegPx(gx, gy);
+      const d = Math.hypot(x - cx, y - cy);
+      if (d < bd) { bd = d; best = gy * GRID + gx; }
     }
-    if (cur.pendingFrom === idx) { // 같은 못 다시 탭 = 선택 취소
-      cur.pendingFrom = null;
-      renderBoard();
-      return;
-    }
-    const from = cur.pendingFrom;
-    cur.pendingFrom = null;
-    attemptPlace(selColor, from, idx);
+    return bd <= within ? best : null;
+  }
+  function distToSeg(p, a, b) {
+    const ab = sub(b, a), ap = sub(p, a);
+    const den = ab[0] * ab[0] + ab[1] * ab[1] || 1e-6;
+    const t = Math.max(0, Math.min(1, (ap[0] * ab[0] + ap[1] * ab[1]) / den));
+    return vlen(sub(p, [a[0] + ab[0] * t, a[1] + ab[1] * t]));
   }
 
-  function attemptPlace(color, fromIdx, toIdx) {
-    if (!cur || cur.locked) return;
-    if (fromIdx === toIdx) return;
-    const p1 = [fromIdx % GRID, Math.floor(fromIdx / GRID)];
-    const p2 = [toIdx % GRID, Math.floor(toIdx / GRID)];
-    const idx = cur.pz.segments.findIndex((s, i) => !cur.matched[i] && s.color === color && D.sameSeg(s, p1, p2));
-    if (idx >= 0) {
-      cur.matched[idx] = true;
-      A.sfx.twang();
-      selColor = null;
-      renderTray();
-      renderBoard();
-      if (totalMatched() === cur.pz.segments.length) complete();
+  function grabAt(p) {
+    const a = cur.active;
+    if (!a) return null;
+    const pts = idxToPts(a.verts);
+    // ① 걸린 못을 집었나 — 그대로 빼거나 다른 못으로 옮길 수 있다
+    let vi = -1, vd = Infinity;
+    pts.forEach((q, i) => { const d = vlen(sub(p, q)); if (d < vd) { vd = d; vi = i; } });
+    if (vd <= 6.5 && a.verts.length > 2) return { kind: 'vert', at: vi, tip: p };
+    // ② 줄 위 아무 데나 — 못이 아니어도 집힌다(손가락이 정확할 필요가 없다)
+    let ei = -1, ed = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const d = distToSeg(p, pts[i], pts[(i + 1) % pts.length]);
+      if (d < ed) { ed = d; ei = i; }
+    }
+    return ed <= 7.5 ? { kind: 'edge', at: ei, tip: p } : null;
+  }
+
+  function releaseGrab() {
+    const a = cur.active;
+    if (!a || !a.grab) return;
+    const { kind, at, tip } = a.grab;
+    a.grab = null;
+    const peg = tip ? nearestPeg(tip[0], tip[1], CATCH) : null;
+    const fresh = peg !== null && a.verts.indexOf(peg) < 0;
+
+    if (kind === 'edge') {
+      if (fresh) { a.verts.splice(at + 1, 0, peg); A.sfx.twang(); }
+      else A.sfx.hmm();                                   // 탁 되돌아간다 (무벌점)
     } else {
-      // 안 맞는 자리 — 무벌점, 아무것도 걸리지 않고 부드럽게 안내
-      A.sfx.hmm();
-      wobblePegs(fromIdx, toIdx);
-      renderBoard();
+      if (fresh) { a.verts[at] = peg; A.sfx.twang(); }
+      else if (peg === null && a.verts.length > 2) { a.verts.splice(at, 1); A.sfx.hmm(); }
+      else A.sfx.hmm();
     }
+    checkBand();
+    renderBoard();
   }
-  function wobblePegs(a, b) {
-    [a, b].forEach(i => {
-      const g = $('board').querySelector('.peg[data-i="' + i + '"]');
-      if (!g) return;
-      g.classList.remove('wrong'); void g.getBoundingClientRect();
-      g.classList.add('wrong');
-    });
+
+  /* 지금 모양이 본보기의 어느 고무줄과 같아졌나 — 시작 못·도는 방향이 달라도 같다고 본다 */
+  function checkBand() {
+    const a = cur.active;
+    if (!a) return;
+    const t = cur.pz.bands.findIndex((b, i) =>
+      !cur.made[i] && b.color === a.color &&
+      D.sameLoop(a.verts, b.pegs.map(p => p[1] * GRID + p[0])));
+    if (t < 0) return;
+    cur.made[t] = a.verts.slice();
+    cur.active = null;
+    A.sfx.twang();
+    renderTray();
+    renderBoard();
+    if (madeCount() === cur.pz.bands.length) complete();
+    else setTimeout(() => { if (cur && !cur.locked) A.speak('좋아! 다음 고무줄.'); }, 260);
   }
 
   /* ─────────── 완성 ─────────── */
@@ -235,7 +370,7 @@ window.App = (() => {
   /* ─────────── 보상 오버레이 ─────────── */
   function showReward(praise) {
     $('reward-praise').textContent = praise;
-    $('reward-board').innerHTML = boardSVG(cur.pz, cur.pz.segments.map(() => true), 'card');
+    $('reward-board').innerHTML = boardSVG(cur.pz, null, 'card');
     $('reward').classList.add('on');
   }
   function nextPuzzle() {
@@ -282,9 +417,10 @@ window.App = (() => {
     $('btn-listen').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap();
       if (!cur) return;
-      const rem = remainingSegments();
-      if (!rem.length) { A.speak('다 걸었어요!'); return; }
-      A.speak(D.COLORS[rem[0].color].say + '이 아직 남았어!');
+      const left = cur.pz.bands.filter((b, i) => !cur.made[i]);
+      if (!left.length) { A.speak('다 걸었어요!'); return; }
+      if (cur.active) A.speak('잡아당겨서 본보기랑 똑같이 만들어 봐!');
+      else A.speak(D.COLORS[left[0].color].say + '이 아직 남았어!');
     });
     $('reward-next').addEventListener('click', ev => {
       ev.preventDefault(); A.sfx.tap(); $('reward').classList.remove('on'); nextPuzzle();
@@ -294,27 +430,73 @@ window.App = (() => {
       openList(D.levelDef(cur.pz.stage));
     });
 
-    $('board').addEventListener('pointerdown', ev => {
-      if (!cur || cur.locked) return;
-      const g = ev.target.closest('.peg');
+    const board = $('board');
+    board.addEventListener('pointerdown', ev => {
+      if (!cur || cur.locked || !cur.active) return;
+      const p = boardPoint(ev);
+      if (!p) return;
+      const g = grabAt(p);
       if (!g) return;
-      pegTap(+g.dataset.i);
+      ev.preventDefault();
+      try { board.setPointerCapture(ev.pointerId); } catch (e) {}
+      cur.active.grab = g;
+      A.sfx.tap();
+      renderBoard();
     });
+    board.addEventListener('pointermove', ev => {
+      if (!cur || cur.locked || !cur.active || !cur.active.grab) return;
+      ev.preventDefault();
+      const p = boardPoint(ev);
+      if (!p) return;
+      cur.active.grab.tip = p;
+      renderBoard();
+    });
+    const letGo = ev => {
+      if (!cur || !cur.active || !cur.active.grab) return;
+      try { board.releasePointerCapture(ev.pointerId); } catch (e) {}
+      releaseGrab();
+    };
+    board.addEventListener('pointerup', letGo);
+    board.addEventListener('pointercancel', letGo);
 
     renderHome();
   }
   init();
 
   /* ─────────── 종단 테스트용 ─────────── */
+
+  /* 아이가 하듯 「줄의 한 곳을 집어 그 못으로 당기기」를 한 번 한다.
+   * 집는 자리는 그 못에 가장 가까운 변 — 실제 손가락이 고르는 자리와 같다. */
+  function pullTo(pegIdx) {
+    if (!cur || cur.locked || !cur.active) return false;
+    const a = cur.active;
+    if (a.verts.indexOf(pegIdx) >= 0) return false;
+    const target = pegPx(pegIdx % GRID, Math.floor(pegIdx / GRID));
+    const pts = idxToPts(a.verts);
+    let ei = 0, ed = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const m = [(pts[i][0] + pts[(i + 1) % pts.length][0]) / 2,
+                 (pts[i][1] + pts[(i + 1) % pts.length][1]) / 2];
+      const d = vlen(sub(m, target));
+      if (d < ed) { ed = d; ei = i; }
+    }
+    a.grab = { kind: 'edge', at: ei, tip: target };
+    releaseGrab();
+    return true;
+  }
+
   function solveAll() {
     if (!cur || cur.locked) return;
-    cur.pz.segments.forEach((s, i) => {
-      if (!cur.matched[i]) {
-        const fromIdx = s.from[1] * GRID + s.from[0];
-        const toIdx = s.to[1] * GRID + s.to[0];
-        attemptPlace(s.color, fromIdx, toIdx);
-      }
-    });
+    // 색마다 그 색 고무줄을 하나씩 꺼내 본보기 못을 차례로 걸어 준다
+    for (let guard = 0; guard < 40 && madeCount() < cur.pz.bands.length; guard++) {
+      const t = cur.pz.bands.findIndex((b, i) => !cur.made[i]);
+      if (t < 0) break;
+      trayPick(cur.pz.bands[t].color);
+      if (!cur.active) break;
+      const want = cur.pz.bands[t].pegs.map(p => p[1] * GRID + p[0]);
+      want.forEach(idx => { if (cur.active) pullTo(idx); });
+      if (cur.active) { cur.active = null; renderTray(); renderBoard(); }  // 못 맞추면 접고 다음으로
+    }
   }
   function debug() {
     return {
@@ -330,11 +512,16 @@ window.App = (() => {
       locked: cur ? cur.locked : null,
       done: cur ? P.isDone(cur.pz.id) : null,
       bandCount: $('board') ? $('board').querySelectorAll('.band').length : 0,
+      bands: cur ? cur.pz.bands.length : null,
+      madeCount: cur ? madeCount() : null,
+      activeColor: cur && cur.active ? cur.active.color : null,
+      activeVerts: cur && cur.active ? cur.active.verts.slice() : null,
     };
   }
   return {
     debug,
-    _attempt: (color, fromIdx, toIdx) => attemptPlace(color, fromIdx, toIdx),
+    _pick: trayPick,
+    _pullTo: pullTo,
     _solve: solveAll,
   };
 })();

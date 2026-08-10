@@ -219,7 +219,9 @@ h1 {
 }
 .tray-item {
   display: flex; align-items: center; justify-content: center;
-  width: clamp(58px, 12vmin, 92px); padding: 6px; aspect-ratio: 100 / 44;
+  /* 견본이 「선」에서 「고리」로 바뀌면서 비율도 100/44 → 100/76 이 됐다 */
+  width: clamp(58px, 12vmin, 92px); padding: 6px; aspect-ratio: 100 / 76;
+  position: relative;
   border: none; border-radius: 16px; cursor: pointer; font-family: inherit; touch-action: manipulation;
   background: linear-gradient(180deg, #FFFFFF 0%, #F2EEFF 100%);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 4px 0 #C9BFF5, 0 8px 14px rgba(var(--accent), .14);
@@ -232,6 +234,17 @@ h1 {
 }
 .ti-band { width: 100%; line-height: 0; }
 .ti-band svg { display: block; width: 100%; }
+
+/* 다 만든 색 — 흐리게 두고 별을 얹는다. 지우지 않는 것은 아이가
+   「내가 이건 했구나」를 보게 하려는 것이다(무벌점과 같은 결). */
+.tray-item.done { opacity: .5; }
+.tray-item.done .ti-band { filter: grayscale(.45); }
+.ti-done {
+  position: absolute; right: 2px; bottom: 2px;
+  width: clamp(16px, 3.4vmin, 24px); height: clamp(16px, 3.4vmin, 24px);
+  line-height: 0; color: #F4CE2A;
+}
+.ti-done .ico { width: 100%; height: 100%; }
 
 /* ─────────── 가로모드 2단 배치 (태블릿 가로 우선) ───────────
  * 왼쪽 본보기 못판(크게) + 오른쪽 놀이 못판·트레이. 못판은 세로 공간에 맞춰 최대한 크게. */
