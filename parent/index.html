@@ -333,10 +333,25 @@
   }
 
   /* ─────────── 백업 (내려받기 / 되살리기) ─────────── */
+  /* 아이별로 따로 저장되는 진행도 키 (아래에서 서하 몫 'p2:' 도 함께 담는다).
+   *
+   * ⚠️ **새 놀이를 만들면 여기에 반드시 한 줄 더한다.** 2026-08 이전에는 여덟 개만 적혀 있었고
+   * 나머지 21개 앱과 학습 펫은 백업 파일에 아예 안 담겼다 — 기기를 바꾸면 대부분의 진행도가
+   * 돌아오지 않는 상태였다. 다시 조용히 썩지 않게 `parent/tools/validate-backup-keys.js` 가
+   * 앱들의 실제 키를 훑어 이 목록과 대조한다. */
   const PROGRESS_KEYS = [
-    'chatgi-playground-v1', 'chatgi-stickerboard-v1',
-    'english-playground-v1', 'pixel-playground-v1',
-    'hangul-playground-v1', 'japanese-playground-v1', 'practika-playground-v1', 'write-playground-v1'
+    'chatgi-playground-v1', 'chatgi-stickerboard-v1',              // 찾기 놀이터 · 스티커판
+    'english-playground-v1', 'hangul-playground-v1', 'japanese-playground-v1',
+    'practika-playground-v1', 'write-playground-v1', 'pixel-playground-v1',
+    'math-playground-v1', 'market-playground-v1', 'shape-playground-v1',
+    'lab-playground-v1', 'bag-playground-v1', 'coloring-playground-v1',
+    'burger-playground-v1', 'kkochi-playground-v1', 'pattern-playground-v1',
+    'matrix-playground-v1', 'beads-playground-v1', 'cups-playground-v1',
+    'tubes-playground-v1', 'connect-playground-v1', 'dice-playground-v1',
+    'rings-playground-v1', 'slide-playground-v1', 'donut-playground-v1',
+    'twist-playground-v1', 'tangram-playground-v1', 'geoboard-playground-v1',
+    'lines-playground-v1',
+    'enjoy-pet-v1',                                                // 학습 펫 (아이별로 각자 키운다)
   ];
   const BACKUP_KEYS = [
     ...PROGRESS_KEYS,                          // 은아
