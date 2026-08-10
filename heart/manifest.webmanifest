@@ -1,0 +1,16 @@
+{
+  "name": "마음 놀이터",
+  "short_name": "마음놀이",
+  "description": "장면 속 친구가 어떤 마음일지 짐작해 얼굴을 만들어 주고, 해 주고 싶은 것을 골라 건네는 놀이 — 맞고 틀림이 없다. 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFF0F3",
+  "theme_color": "#E48CA6",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

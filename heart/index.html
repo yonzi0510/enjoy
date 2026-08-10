@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFF0F3">
+<title>마음 놀이터</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../shared/voice-settings.css">
+<link rel="stylesheet" href="../shared/time-limit.css">
+<link rel="stylesheet" href="../shared/pet.css">
+<link rel="stylesheet" href="../shared/crayon.css">
+<link rel="stylesheet" href="../shared/doodle-menu.css">
+<link rel="stylesheet" href="../shared/screen.css">
+</head>
+<body>
+
+<!-- ═══════════ 아이가 그린 손그림 (인라인 SVG) ═══════════
+     화면 틀에 쓰던 이모지(💗 ◀ 🔊 🗣️ ✅) 대신 쓰는 그림들.
+     굵고 고른 획, 삐뚤한 선, 안 닫히는 동그라미.
+     ⚠️ 얼굴 부품(눈썹·눈·입)과 장면 그림은 여기 없다 — js/data.js 가 놀잇감으로 그린다. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <!-- 윤곽선용 떨림 — 자로 그은 티를 없앤다 -->
+  <filter id="ht-hand" x="-18%" y="-18%" width="136%" height="136%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="7"/>
+    <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+  </filter>
+  <!-- 칠(크레용)용 떨림 — 더 크게 흔들어 윤곽 밖으로 삐져나가게 한다 -->
+  <filter id="ht-crayon" x="-30%" y="-30%" width="160%" height="160%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="2" seed="13"/>
+    <feDisplacementMap in="SourceGraphic" scale="5"/>
+  </filter>
+
+  <!-- 하트 — 제목·모은 마음 -->
+  <symbol id="ht-heart" viewBox="0 0 48 48">
+    <g filter="url(#ht-crayon)" transform="translate(1.5,2)">
+      <path d="M24 40 C10 30, 6 22, 8 16 C10 10, 19 9, 24 16 C29 9, 38 10, 40 16 C42 22, 38 30, 24 40 Z" fill="#F79EB4"/>
+    </g>
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 40 C10 30, 6 22, 8 16 C10 10, 19 9, 24 16 C29 9, 38 10, 40 16 C42 22, 38 30, 24 40 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 뒤로 가기 화살표 -->
+  <symbol id="ht-back" viewBox="0 0 48 48">
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M29 11 L15 24 L29 37"/><path d="M16 24 H35"/>
+    </g>
+  </symbol>
+
+  <!-- 목소리 설정(말풍선) -->
+  <symbol id="ht-talk" viewBox="0 0 48 48">
+    <g filter="url(#ht-crayon)" transform="translate(1.6,2.2)"><path d="M7 10 H41 V30 H21 L13 38 V30 H7 Z" fill="#F7C9D8"/></g>
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 10 H41 V30 H21 L13 38 V30 H7 Z"/>
+      <path d="M16 20 h.6 M24 20 h.6 M32 20 h.6" stroke-width="4.6"/>
+    </g>
+  </symbol>
+
+  <!-- 소리 듣기(나팔) -->
+  <symbol id="ht-sound" viewBox="0 0 48 48">
+    <g filter="url(#ht-crayon)" transform="translate(1.4,2)"><path d="M8 19 H16 L26 11 V37 L16 29 H8 Z" fill="#FFD6A0"/></g>
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 19 H16 L26 11 V37 L16 29 H8 Z"/>
+      <path d="M32 18 C36 22, 36 26, 32 30" stroke-width="3.4"/>
+      <path d="M38.5 13 C45 21, 45 27, 38.5 35" stroke-width="3.4"/>
+    </g>
+  </symbol>
+
+  <!-- 다 했다 도장 -->
+  <symbol id="ht-check" viewBox="0 0 48 48">
+    <g filter="url(#ht-crayon)" transform="translate(1.6,2.2)"><circle cx="24" cy="24" r="15" fill="#F7C9D8"/></g>
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M29 9.2 a16 16 0 1 1 -8 .4"/>
+      <path d="M15 24.5 L22 32 L34 15" stroke-width="5"/>
+    </g>
+  </symbol>
+
+  <!-- 묶음: 집 -->
+  <symbol id="ht-g-home" viewBox="0 0 48 48">
+    <g filter="url(#ht-crayon)" transform="translate(1.6,2.2)">
+      <path d="M9 22 L24 9 L39 22 V40 H9 Z" fill="#FFE0BF"/>
+    </g>
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 23 L24 8 L41 23"/><path d="M11 23 V40 H37 V23"/><path d="M20 40 V29 H28 V40"/>
+    </g>
+  </symbol>
+  <!-- 묶음: 놀이터 -->
+  <symbol id="ht-g-park" viewBox="0 0 48 48">
+    <g filter="url(#ht-crayon)" transform="translate(1.6,2.2)">
+      <path d="M30 38 V14 L12 38 Z" fill="#9FD3E8"/>
+    </g>
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M30 39 V13 L11 39 Z"/><path d="M30 13 h7 v26"/><path d="M6 39 H43"/>
+    </g>
+  </symbol>
+  <!-- 묶음: 유치원 -->
+  <symbol id="ht-g-kinder" viewBox="0 0 48 48">
+    <g filter="url(#ht-crayon)" transform="translate(1.6,2.2)">
+      <path d="M8 10 H40 V32 H8 Z" fill="#C8E6C2"/>
+    </g>
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 10 H40 V32 H8 Z"/><path d="M14 18 h16 M14 25 h20"/><path d="M14 32 v7 M34 32 v7"/>
+    </g>
+  </symbol>
+  <!-- 자유 얼굴 만들기 -->
+  <symbol id="ht-g-free" viewBox="0 0 48 48">
+    <g filter="url(#ht-crayon)" transform="translate(1.6,2.2)"><circle cx="24" cy="24" r="16" fill="#FFF0D2"/></g>
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M29 8 a17 17 0 1 1 -9 .5"/>
+      <path d="M14 17 q4 -3 8 0 M26 17 q4 -3 8 0"/>
+      <path d="M17 29 q7 7 14 0" stroke-width="4.4"/>
+    </g>
+  </symbol>
+  <!-- 마음 도감 -->
+  <symbol id="ht-g-book" viewBox="0 0 48 48">
+    <g filter="url(#ht-crayon)" transform="translate(1.6,2.2)">
+      <path d="M8 10 H23 V38 H8 Z M25 10 H40 V38 H25 Z" fill="#F7C9D8"/>
+    </g>
+    <g filter="url(#ht-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 10 H23 V38 H8 Z"/><path d="M25 10 H40 V38 H25 Z"/><path d="M24 12 V38"/>
+    </g>
+  </symbol>
+</defs></svg>
+
+<!-- 홈 -->
+<section class="screen on" id="scr-home">
+  <header class="home-head">
+    <h1><svg class="ic ic-title" aria-hidden="true"><use href="#ht-heart"/></svg> 마음 놀이터</h1>
+    <div class="stats">
+      <span class="stat"><svg class="ic" aria-hidden="true"><use href="#ht-heart"/></svg> <b id="home-stars">0</b></span>
+      <a href="../" class="vs-btn" style="text-decoration:none" aria-label="메인 놀이터로">🏠</a>
+      <span id="pet-slot"></span>
+      <button type="button" id="btn-voice" class="vs-btn" aria-label="목소리 설정">
+        <svg class="ic" aria-hidden="true"><use href="#ht-talk"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="menu" id="menu"></div>
+</section>
+
+<!-- 장면 목록 -->
+<section class="screen" id="scr-list">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home" aria-label="처음으로">
+      <svg class="ic" aria-hidden="true"><use href="#ht-back"/></svg>
+    </button>
+    <h2 id="list-title">집</h2>
+    <span class="page-count" id="list-count">0 / 9</span>
+  </header>
+  <div class="scene-list" id="list"></div>
+</section>
+
+<!-- 놀이(장면) -->
+<section class="screen" id="scr-play">
+  <header class="bar">
+    <button type="button" class="back" id="btn-play-back" aria-label="장면 고르기로">
+      <svg class="ic" aria-hidden="true"><use href="#ht-back"/></svg>
+    </button>
+    <h2 id="play-title">집</h2>
+    <button type="button" class="bigbtn small" id="btn-listen">
+      <svg class="ic" aria-hidden="true"><use href="#ht-sound"/></svg> 듣기
+    </button>
+  </header>
+  <div class="play-stage" id="play-stage">
+    <!-- 장면: 친구와 상황 한 줄 -->
+    <div class="scene-card" id="scene-card">
+      <div class="scene-pic" id="scene-pic"></div>
+      <p class="scene-line" id="scene-line"></p>
+    </div>
+    <!-- 아이가 만드는 얼굴 -->
+    <div class="face-col">
+      <div class="face-box" id="face-box"></div>
+      <p class="face-hint" id="face-hint"></p>
+    </div>
+    <!-- 아래 띠: 부품 → (얼굴 완성 뒤) 도움 카드 -->
+    <div class="tray-wrap" id="tray-wrap">
+      <div class="parts-tray" id="parts"></div>
+      <div class="help-cards" id="help-cards" hidden></div>
+    </div>
+  </div>
+</section>
+
+<!-- 자유 모드: 장면 없이 표정만 -->
+<section class="screen" id="scr-free">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home" aria-label="처음으로">
+      <svg class="ic" aria-hidden="true"><use href="#ht-back"/></svg>
+    </button>
+    <h2>내 마음 얼굴</h2>
+    <button type="button" class="bigbtn small" id="btn-free-save">
+      <svg class="ic" aria-hidden="true"><use href="#ht-check"/></svg> 담기
+    </button>
+  </header>
+  <div class="play-stage free">
+    <div class="face-col">
+      <div class="face-box" id="free-face"></div>
+      <p class="face-hint" id="free-hint">얼굴을 만들어 봐!</p>
+    </div>
+    <div class="tray-wrap">
+      <div class="parts-tray" id="free-parts"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 마음 도감 -->
+<section class="screen" id="scr-book">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home" aria-label="처음으로">
+      <svg class="ic" aria-hidden="true"><use href="#ht-back"/></svg>
+    </button>
+    <h2>마음 도감</h2>
+    <span class="page-count" id="book-count">0 / 12</span>
+  </header>
+  <div class="book-wrap">
+    <div class="book-grid" id="book-grid"></div>
+    <div class="sticker-row" id="sticker-row"></div>
+  </div>
+</section>
+
+<!-- 보상 오버레이 -->
+<div class="reward" id="reward">
+  <div class="reward-card">
+    <div class="reward-face" id="reward-face"></div>
+    <div class="reward-mood" id="reward-mood"></div>
+    <div class="reward-praise" id="reward-praise"></div>
+    <div class="reward-btns">
+      <button type="button" class="bigbtn" id="reward-close">그만할래</button>
+      <button type="button" class="bigbtn primary" id="reward-next">다음 <svg class="ic ic-next" aria-hidden="true"><use href="#ht-back"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<!-- 끌고 다니는 조각 -->
+<div class="drag-ghost" id="drag-ghost" hidden aria-hidden="true"></div>
+
+<!-- 색종이 축하 -->
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<script src="../shared/profile.js"></script>
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/app.js"></script>
+<script src="../shared/parent-settings.js"></script>
+<script src="../shared/voice-settings.js"></script>
+<script src="../shared/pet-avatar.js"></script>
+<script src="../shared/pet.js"></script>
+<script src="../shared/time-limit.js"></script>
+<script src="../shared/sw-register.js"></script>
+<script src="../shared/home-button.js"></script>
+</body>
+</html>
