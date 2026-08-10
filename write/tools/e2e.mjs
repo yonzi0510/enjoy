@@ -595,6 +595,35 @@ await check('첫 화면 규격: 세 화면에서 겹침 0 · 터치 46px · 넘�
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+/* 밖에서 낱말을 들고 들어오는 길 — 홈의 언어 토끼가 `write/?word=토끼` 로 보낸다.
+ * 예전엔 그냥 `write/` 로 보내서 아이가 **첫 화면 메뉴**를 만났다("게임화면이 나와").
+ * 곧장 그 낱말의 필사 장이 열려야 한다. */
+await check('주소로 낱말을 들고 들어오면 곧장 그 낱말의 필사 장', async () => {
+  await page.goto(BASE + '?word=' + encodeURIComponent('구름'));
+  await page.waitForSelector('#scr-write.on');
+  const d = await page.evaluate(() => App.debug());
+  expect(d.pageText === '구름', '페이지 글: ' + d.pageText);
+  const home = await page.evaluate(() => document.getElementById('scr-home').classList.contains('on'));
+  expect(!home, '첫 화면 메뉴가 보이면 안 된다');
+  // 주소에 낱말이 남으면 앱 안에서 홈으로 나갔다 새로고침했을 때 다시 튄다
+  expect(!/word=/.test(page.url()), '주소에서 낱말이 지워져야 함: ' + page.url());
+  // ◀ 로 나가면 첫 화면이 아니라 물어보기 화면 (낱말을 또 물어볼 수 있게)
+  await page.click('#btn-write-back');
+  await page.waitForSelector('#scr-ask.on');
+});
+
+await check('주소의 낱말이 한글이 아니면 물어보기 화면 (첫 화면에 떨구지 않는다)', async () => {
+  await page.goto(BASE + '?word=' + encodeURIComponent('abcdefghijk'));
+  await page.waitForSelector('#scr-ask.on');
+  const write = await page.evaluate(() => document.getElementById('scr-write').classList.contains('on'));
+  expect(!write, '필사 화면이 열리면 안 된다');
+});
+
+await check('낱말 없이 들어오면 예전 그대로 첫 화면', async () => {
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });

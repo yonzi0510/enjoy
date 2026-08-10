@@ -788,7 +788,33 @@ window.App = (() => {
     });
 
     renderHome();
+    openFromUrl();
   }
+
+  /* 밖에서 낱말을 들고 들어오는 길 — `write/?word=토끼`
+   *
+   * 홈의 언어 토끼가 "토끼는 어떻게 써?" 에 답한 뒤 「글씨 놀이터에서 써 보기」를 준다.
+   * 예전에는 그냥 `write/` 로 보내서, 아이는 물어본 낱말이 아니라 **첫 화면 메뉴**를 만났다 —
+   * 거기서 다시 🎤 물어보고 쓰기를 찾아 들어가 낱말을 또 말해야 했다. 다섯 살에게는 그 두 걸음이
+   * 곧 포기다. 낱말을 주소에 실어 보내 **곧장 그 낱말의 필사 장**으로 연다.
+   *
+   * 낱말은 `Ask.parseWord` 로 거른다(한글 1~8자) — 주소는 누구나 고칠 수 있는 자리라
+   * 화면에 그대로 얹지 않는다. 걸러지지 않으면 메뉴가 아니라 **물어보기 화면**을 연다:
+   * 낱말을 들고 온 아이를 첫 화면에 떨구지 않기 위해서다.
+   *
+   * 연 뒤에는 주소에서 낱말을 지운다(`replaceState`). 안 지우면 앱 안에서 홈으로 나갔다가
+   * 새로고침했을 때 다시 그 낱말로 튄다. */
+  function openFromUrl() {
+    let raw;
+    try { raw = new URL(location.href).searchParams.get('word'); } catch (e) { return; }
+    if (!raw) return;
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+
+    const w = Ask.parseWord(raw);
+    if (w) askWord(w);
+    else openAsk();
+  }
+
   init();
 
   // 종단 테스트용 상태 확인
