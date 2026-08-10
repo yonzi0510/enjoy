@@ -10,6 +10,7 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8777/geoboard/';
+const GRIDN = 6;   // 못 격자 — 못 인덱스↔좌표 환산에 쓴다
 let passed = 0, failed = 0;
 function ok(name) { passed++; console.log('  ✅ ' + name); }
 function fail(name, extra) { failed++; console.error('  ❌ ' + name + (extra ? ' — ' + extra : '')); }
@@ -47,48 +48,71 @@ await check('놀이 진입: 본보기 못판·놀이 못판·트레이, 세그�
   await page.waitForSelector('#scr-play.on');
   const d = await page.evaluate(() => App.debug());
   expect(d.total >= 2 && d.total <= 4, '단계1 세그먼트 수: ' + d.total);
-  expect(d.placedCount === 0, '처음엔 걸린 고무줄 0: ' + d.placedCount);
-  expect(await page.locator('#card-board .band').count() === d.total, '본보기 못판 고무줄 수');
+  expect(d.madeCount === 0, '처음엔 만든 고무줄 0: ' + d.madeCount);
+  expect(d.activeColor === null, '처음엔 주무르는 고무줄 없음');
+  expect(await page.locator('#card-board .band').count() === d.bands, '본보기 고무줄 가닥 수: ' + d.bands);
   expect(await page.locator('#board .peg').count() === 36, '놀이 못판 못 36개');
-  expect(await page.locator('#tray .tray-item').count() === 5, '트레이 색 5종');
+  const colors = await page.evaluate(() => GeoboardData.colorsOf(App.debug().puzzleId
+    ? GeoboardData.puzzleById(App.debug().puzzleId) : null).length);
+  expect(await page.locator('#tray .tray-item').count() === colors, '트레이 = 이 퍼즐에 쓰는 색만 (' + colors + ')');
 });
 
-await check('오답 무벌점: 안 맞는 자리는 안 걸리고 축하도 없다', async () => {
-  const wrong = await page.evaluate(() => {
-    const d = App.debug();
-    const used = new Set(d.segments.map(s => s.color));
-    let color = GeoboardData.COLOR_IDS.find(c => !used.has(c));
-    let fromIdx, toIdx;
-    if (color) { fromIdx = 0; toIdx = 1; }
-    else {
-      color = d.segments[0].color;
-      const GRID = GeoboardData.GRID;
-      outer:
-      for (let a = 0; a < GRID * GRID; a++) {
-        for (let b = a + 1; b < GRID * GRID; b++) {
-          const p1 = [a % GRID, Math.floor(a / GRID)], p2 = [b % GRID, Math.floor(b / GRID)];
-          if (!d.segments.some(s => GeoboardData.sameSeg(s, p1, p2))) { fromIdx = a; toIdx = b; break outer; }
-        }
-      }
-    }
-    return { color, fromIdx, toIdx };
+await check('고무줄은 닫힌 고리다 — 못 3개 이상, 자기끼리 안 엇갈림', async () => {
+  const bad = await page.evaluate(() => {
+    const out = [];
+    GeoboardData.PUZZLES.forEach(pz => pz.bands.forEach((b, i) => {
+      if (b.pegs.length < 3) out.push(pz.id + '#' + i + ' 못 ' + b.pegs.length + '개');
+    }));
+    return out;
   });
-  await page.evaluate((w) => App._attempt(w.color, w.fromIdx, w.toIdx), wrong);
-  await page.waitForTimeout(120);
-  const d = await page.evaluate(() => App.debug());
-  expect(d.placedCount === 0, '오답인데 걸림: ' + d.placedCount);
-  expect(d.locked === false, '오답인데 완성됨');
-  expect(!(await page.locator('#reward').evaluate(el => el.classList.contains('on'))), '오답인데 축하가 뜸');
+  expect(bad.length === 0, '고리가 안 되는 고무줄: ' + bad.slice(0, 3).join(', '));
 });
+
+await check('색을 고르면 고무줄이 판에 걸려 나온다 (빈 판에서 시작하지 않는다)', async () => {
+  const r = await page.evaluate(() => {
+    const pz = GeoboardData.puzzleById(App.debug().puzzleId);
+    App._pick(pz.bands[0].color);
+    const d = App.debug();
+    return { color: d.activeColor, verts: d.activeVerts, want: pz.bands[0].color };
+  });
+  expect(r.color === r.want, '고른 색이 주무르는 고무줄이 됨: ' + r.color);
+  expect(r.verts && r.verts.length === 2, '못 두 개에 걸쳐 나온다: ' + JSON.stringify(r.verts));
+  expect(await page.locator('#board .band').count() === 1, '판에 고무줄 한 가닥이 보인다');
+});
+
+await check('줄을 당겨 못에 걸면 고리가 커진다 · 못 없는 자리는 안 걸린다(무벌점)', async () => {
+  const before = await page.evaluate(() => App.debug().activeVerts.length);
+  // 본보기에 없는 못으로 당겨도 걸리기는 한다(어떤 모양이든 만들 수 있다) — 다만 완성은 안 된다
+  const r = await page.evaluate(() => {
+    const pz = GeoboardData.puzzleById(App.debug().puzzleId);
+    const used = new Set(pz.bands[0].pegs.map(p => p[1] * GeoboardData.GRID + p[0]));
+    let free = 0;
+    while (used.has(free)) free++;
+    App._pullTo(free);
+    const d = App.debug();
+    return { n: d.activeVerts.length, made: d.madeCount, locked: d.locked };
+  });
+  expect(r.n === before + 1, '당긴 만큼 고리가 커진다: ' + before + '→' + r.n);
+  expect(r.made === 0, '본보기와 다른데 완성됨');
+  expect(r.locked === false, '본보기와 다른데 퍼즐이 끝남');
+  expect(!(await page.locator('#reward').evaluate(el => el.classList.contains('on'))), '틀린 모양인데 축하가 뜸');
+});
+
+/* 옛 「오답 무벌점」 검사는 걷어냈다 — 못 두 개를 찍어 선을 놓던 시절의 것이라
+ * App._attempt 와 함께 사라졌다. 지금의 무벌점은 위 「줄을 당겨…」 검사가 잰다:
+ * 본보기에 없는 못으로 당겨도 걸리기는 하되(어떤 모양이든 만들 수 있다) 완성되지 않고,
+ * 못이 없는 자리에 놓으면 탁 되돌아갈 뿐 잃는 것이 없다. */
 
 await check('카드대로 걸기 → 완성 → 별(세그먼트 수)·펫 간식', async () => {
+  await page.evaluate(() => App._pick(App.debug().activeColor));   // 주무르던 것 접기
   const petBefore = await page.evaluate(() => window.Pet ? Pet.state().snacks : 0);
   const before = await page.evaluate(() => App.debug());
   await solve(page);
   await page.waitForSelector('#reward.on', { timeout: 5000 });
   const d = await page.evaluate(() => App.debug());
   expect(d.locked === true, '완성 잠금');
-  expect(d.placedCount === d.total, '고무줄 다 걸음: ' + d.placedCount + '/' + d.total);
+  expect(d.madeCount === d.bands, '고무줄 다 만듦: ' + d.madeCount + '/' + d.bands);
+  expect(d.placedCount === d.total, '변 다 걸림: ' + d.placedCount + '/' + d.total);
   expect(d.done === true, '퍼즐 완료 저장');
   expect(d.stars === before.stars + d.total, '별 증가(세그먼트 수만큼): ' + before.stars + '→' + d.stars);
   const petAfter = await page.evaluate(() => window.Pet ? Pet.state().snacks : 0);
@@ -380,6 +404,74 @@ await check('목소리 단추: 놀이 화면에 안 보인다 (부모님 페이�
   expect(m.gone || (m.display === 'none' && !m.laidOut && !m.w && !m.h),
     '목소리 단추가 아직 놀이 화면에 보인다: ' + JSON.stringify(m));
   // 길게 눌러 여는 방식(shared/voice-settings.js)은 그대로 살려 뒀다 — CSS 규칙만 걷어내면 되돌아온다
+});
+
+await check('진짜 손가락 드래그로 걸린다 (내부 함수가 아니라 포인터로)', async () => {
+  /* 아래 검사들은 App._solve/_pullTo 라는 **내부 함수**를 부른다. 그것만 있으면
+   * 포인터 배선이 통째로 죽어도 전부 통과한다 — 아이는 아무것도 못 하는데 초록불인 것이다.
+   * 그래서 여기서 한 번은 진짜 마우스/터치로 집어 끌어 본다. */
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-l1');
+  await page.waitForSelector('#scr-list.on');
+  await page.click('#list .puzzle-card');
+  await page.waitForSelector('#scr-play.on');
+  await page.waitForTimeout(200);
+
+  await page.click('#tray .tray-item');
+  await page.waitForTimeout(150);
+  const st = await page.evaluate(() => ({
+    d: App.debug(),
+    pegs: GeoboardData.puzzleById(App.debug().puzzleId).bands[0].pegs,
+  }));
+  expect(st.d.activeVerts.length === 2, '색을 누르면 고무줄이 걸려 나온다');
+
+  const svg = await page.locator('#board .board-svg').boundingBox();
+  const at = (gx, gy) => ({ x: svg.x + (10 + gx * 16) / 100 * svg.width,
+                            y: svg.y + (10 + gy * 16) / 100 * svg.height });
+  const G = GRIDN;
+  const want = st.pegs.map(p => p[1] * G + p[0]).filter(i => st.d.activeVerts.indexOf(i) < 0);
+  const a = { gx: st.d.activeVerts[0] % G, gy: Math.floor(st.d.activeVerts[0] / G) };
+  const b = { gx: st.d.activeVerts[1] % G, gy: Math.floor(st.d.activeVerts[1] / G) };
+  const from = at((a.gx + b.gx) / 2, (a.gy + b.gy) / 2);          // 못이 아닌 줄 한가운데를 집는다
+  const to = at(want[0] % G, Math.floor(want[0] / G));
+
+  /* 먼저 **못이 없는 자리**(칸 한복판)에 놓아 본다 — 고무줄이라면 탁 되돌아가야 한다.
+   * 걸리는 거리를 넉넉하게 잡으면 판 위 어디에 놓아도 걸려 버려서 되튀는 맛이 사라진다.
+   * 실제로 그 실수를 했었고, 그때 이 검사가 없어 아무도 못 잡았다. */
+  const dead = at(0.5, 0.5);                       // 못 네 개 사이 한복판 (가장 가까운 못까지 11.3)
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(dead.x, dead.y, { steps: 6 });
+  await page.mouse.up();
+  await page.waitForTimeout(150);
+  const afterDead = await page.evaluate(() => App.debug().activeVerts.length);
+  expect(afterDead === 2, '못 없는 자리에 놓았는데 걸렸다 — 되돌아가야 함 (' + afterDead + ')');
+
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.waitForTimeout(90);
+  const hi = await page.locator('#board .peg.hi').count();
+  expect(hi > 0, '집는 순간 걸 수 있는 못이 반짝여야 함');
+  await page.mouse.move((from.x + to.x) / 2, (from.y + to.y) / 2, { steps: 6 });
+  await page.waitForTimeout(60);
+  const live = await page.evaluate(() => {
+    const el = document.querySelector('#board .band.live path');
+    return el ? el.getAttribute('d').split('L').length : 0;
+  });
+  expect(live >= 3, '끄는 동안 손끝까지 고무줄이 늘어나야 함 (꼭짓점 ' + live + ')');
+  await page.mouse.move(to.x, to.y, { steps: 8 });
+  await page.waitForTimeout(90);
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+
+  const d2 = await page.evaluate(() => App.debug());
+  expect(d2.madeCount === 1, '드래그로 고무줄이 완성돼야 함: ' + d2.madeCount);
+  await page.waitForSelector('#reward.on', { timeout: 4000 });
+  await page.click('#reward-close');
+  await page.waitForSelector('#scr-list.on');
+  await page.click('#scr-list [data-go="scr-home"]');
+  await page.waitForSelector('#scr-home.on');
 });
 
 await check('콘솔 오류 0', async () => {
