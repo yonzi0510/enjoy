@@ -371,15 +371,16 @@ export const PROPS = {
   robot: `
     <path d="M50 6 v10" stroke="${INK}" stroke-width="3.8" stroke-linecap="round"/>
     <circle cx="50" cy="7" r="6" fill="${RED}" stroke="${INK}" stroke-width="3.4"/>
-    <rect x="17" y="16" width="66" height="46" rx="15" fill="${PAPER}" stroke="${INK}" stroke-width="4.6"/>
-    <circle cx="36" cy="36" r="8.5" fill="${BLU}" stroke="${INK}" stroke-width="3.4"/>
-    <circle cx="64" cy="36" r="8.5" fill="${BLU}" stroke="${INK}" stroke-width="3.4"/>
-    <circle cx="36" cy="36" r="3.2" fill="${INK}"/><circle cx="64" cy="36" r="3.2" fill="${INK}"/>
-    <path d="M40 51 h20" stroke="${INK}" stroke-width="4.2" stroke-linecap="round"/>
-    <rect x="27" y="64" width="46" height="20" rx="8" fill="#BFC7CE" stroke="${INK}" stroke-width="4.2"/>
-    <circle cx="22" cy="86" r="8" fill="${INK}"/><circle cx="78" cy="86" r="8" fill="${INK}"/>
-    <path d="M84 40 h10 M89 34 l6 6 l-6 6" fill="none" stroke="${GRN}" stroke-width="5.4"
-      stroke-linecap="round" stroke-linejoin="round"/>`,
+    <rect x="8" y="16" width="60" height="44" rx="14" fill="${PAPER}" stroke="${INK}" stroke-width="4.6"/>
+    <circle cx="26" cy="35" r="8" fill="${BLU}" stroke="${INK}" stroke-width="3.4"/>
+    <circle cx="52" cy="35" r="8" fill="${BLU}" stroke="${INK}" stroke-width="3.4"/>
+    <circle cx="26" cy="35" r="3" fill="${INK}"/><circle cx="52" cy="35" r="3" fill="${INK}"/>
+    <path d="M30 49 h18" stroke="${INK}" stroke-width="4.2" stroke-linecap="round"/>
+    <rect x="17" y="62" width="42" height="19" rx="8" fill="#BFC7CE" stroke="${INK}" stroke-width="4.2"/>
+    <circle cx="14" cy="84" r="7.5" fill="${INK}"/><circle cx="62" cy="84" r="7.5" fill="${INK}"/>
+    <!-- 나아갈 방향 — 돌림블록(twist)과 갈리는 유일한 표시라 크고 굵게 -->
+    <path d="M72 48 h16" fill="none" stroke="${GRN}" stroke-width="9" stroke-linecap="round"/>
+    <path d="M82 36 l14 12 l-14 12" fill="${GRN}" stroke="${INK}" stroke-width="3.6" stroke-linejoin="round"/>`,
 
   /* 💗 마음 놀이터 — 얼굴에 눈썹 조각을 붙이는 중.
      하트는 쓰지 않는다(픽셀 놀이터의 계단 하트와 48px 에서 겹친다). */
