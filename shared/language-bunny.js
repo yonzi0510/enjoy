@@ -464,7 +464,10 @@ window.LanguageBunny = (() => {
     }
     const acts = [BTN_ASK, BTN_PICK];
     if (focus === 'word') {
-      acts.splice(1, 0, '<a class="lb-act plain" href="' + ROOT + 'write/">✍️ 글씨 놀이터에서 써 보기</a>');
+      // 낱말을 실어 보낸다 — 그냥 `write/` 로 보내면 아이가 첫 화면 메뉴를 만나고,
+      // 거기서 🎤 물어보고 쓰기를 다시 찾아 낱말을 또 말해야 한다. 받는 쪽은 write/js/app.js 의 openFromUrl.
+      const href = ROOT + 'write/?word=' + encodeURIComponent(e.ko);
+      acts.splice(1, 0, '<a class="lb-act plain" href="' + href + '">✍️ 글씨 놀이터에서 써 보기</a>');
     }
     stage.innerHTML = html + actBtns(acts);
 

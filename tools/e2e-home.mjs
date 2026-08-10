@@ -267,6 +267,16 @@ console.log('\n[언어 토끼]');
     ok('낱말 카드도 언어를 가려 읽는다',
        spoken.some(s => s.lang === 'ko-KR' && s.text.includes('토끼')) &&
        spoken.some(s => s.lang === 'en-US' && s.text === 'rabbit'), JSON.stringify(spoken));
+
+    /* 「글씨 놀이터에서 써 보기」는 **물어본 낱말을 실어 보내야** 한다.
+     * 그냥 write/ 로 보내면 아이가 첫 화면 메뉴를 만나고, 거기서 🎤 물어보고 쓰기를
+     * 다시 찾아 낱말을 또 말해야 한다 — 부모님이 "게임화면이 나와" 라고 짚으신 자리다.
+     * 받는 쪽은 write/js/app.js 의 openFromUrl (write e2e 가 그쪽을 잰다). */
+    const href = await pg.$eval('.lb-act.plain[href*="write/"]', a => a.getAttribute('href'))
+      .catch(() => null);
+    ok('낱말 카드에 「글씨 놀이터에서 써 보기」가 있다', !!href, String(href));
+    ok('그 링크가 물어본 낱말을 실어 보낸다',
+       !!href && href.includes('write/?word=' + encodeURIComponent('토끼')), String(href));
   }
 
   /* 갈래를 가르는 말이 낱말을 잘라먹지 않는지 — '일어나기' 가 '일어'(로) 에 잘렸던 자리 */
