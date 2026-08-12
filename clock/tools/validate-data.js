@@ -20,11 +20,20 @@ let errors = 0;
 function err(msg) { errors++; console.error('❌ ' + msg); }
 function eq(got, want, msg) { if (got !== want) err(msg + ' — ' + got + ' (기대 ' + want + ')'); }
 
-/* ══════════ ① 방 3개 ══════════ */
+/* ══════════ ① 방 3개 — 이제 셋 다 열려 있다 ══════════
+ * 1차에는 "열린 방은 하나"를 일부러 걸어 두었다(만들지도 않은 방이 열리는 것을 막으려고).
+ * 2차에서 방②③ 을 만들었으므로 그 자물쇠를 **풀지 않고 다시 적는다** —
+ * 이제는 「셋 다 열려 있고, 세 방이 각자 제 데이터를 갖췄는가」를 본다. */
 if (!Array.isArray(D.ROOMS) || D.ROOMS.length !== 3) err('방이 3개여야 함 — ' + (D.ROOMS ? D.ROOMS.length : 0));
 const readyRooms = (D.ROOMS || []).filter(r => r.ready);
-if (readyRooms.length !== 1) err('이번 차수에 열린 방은 하나(뻐꾸기 시계)여야 함 — ' + readyRooms.length);
-if (!readyRooms.length || readyRooms[0].id !== 'cuckoo') err('열린 방이 뻐꾸기 시계가 아님');
+if (readyRooms.length !== 3) err('방 셋이 모두 열려 있어야 함 — ' + readyRooms.length);
+['cuckoo', 'wake', 'day'].forEach((id, i) => {
+  const r = (D.ROOMS || [])[i];
+  if (!r || r.id !== id) err('방 차례가 어긋남 — ' + i + '번째가 ' + (r ? r.id : '없음') + ' (기대 ' + id + ')');
+});
+(D.ROOMS || []).forEach(r => {
+  if (/곧 만들어요/.test(r.desc || '')) err('방 ' + r.id + ': 설명이 아직 「곧 만들어요」다 — 다 만들었으면 바꿀 것');
+});
 (D.ROOMS || []).forEach(r => {
   if (!r.id || !r.name || !r.desc || !r.cls) err('방 ' + (r.id || '?') + ': 이름/설명/클래스 누락');
   if (!D.roomDef(r.id)) err('방 ' + r.id + ': roomDef 조회 실패');
@@ -269,10 +278,243 @@ if (grabPx < 46) err('잡는 영역이 폰 세로에서 ' + grabPx.toFixed(1) + 
 // 한복판은 안 잡힌다
 if (E.R_GRAB_IN < 12) err('한복판이 잡힌다 — 잡는 자리는 중심에서 떨어져야 함 (R_GRAB_IN=' + E.R_GRAB_IN + ')');
 
+/* ══════════════════════════════════════════════════════════════════
+ *            ⑪ 방② ⏰ 잠꾸러기 깨우기
+ * ══════════════════════════════════════════════════════════════════ */
+
+/* ⑪-1 단계 둘 — 정각과 반뿐이다.
+ * 방② 는 「맞춰 두고 기다리기」가 중심이라 잔 눈금을 두지 않는다(js/data.js 머리 주석).
+ * 5분·15분 단계가 생기면 여기서 막힌다 — 늘리려면 그 판단부터 다시 하라는 뜻이다. */
+const WAKE_UNITS = [60, 30];
+if (!Array.isArray(D.WAKE_STAGES) || D.WAKE_STAGES.length !== 2) err('방② 단계가 2개여야 함 — ' + (D.WAKE_STAGES ? D.WAKE_STAGES.length : 0));
+(D.WAKE_STAGES || []).forEach((s, i) => {
+  if (s.id !== i + 1) err('방② 단계 차례가 어긋남 — ' + s.id);
+  if (s.unit !== WAKE_UNITS[i]) err('방② 단계 ' + s.id + ' 단위는 ' + WAKE_UNITS[i] + '분이어야 함 — ' + s.unit);
+  if (!s.name || !s.desc || !s.cls) err('방② 단계 ' + s.id + ': 이름/설명/클래스 누락');
+  if (D.wakeUnitOf(s.id) !== s.unit) err('방② 단계 ' + s.id + ': wakeUnitOf 불일치');
+});
+
+/* ⑪-2 잠꾸러기 8~12종 · 반응 3~5개 — 두 번째·세 번째가 달라야 한다 */
+const S = D.SLEEPERS || [];
+if (S.length < 8 || S.length > 12) err('잠꾸러기는 8~12종이어야 함 — ' + S.length);
+const EARS = ['round', 'long', 'point', 'flop', 'mane', 'small', 'none'];
+const palIds = new Set();
+const sayAll = [];
+S.forEach(p => {
+  const tag = '잠꾸러기 ' + (p.id || '?');
+  if (!p.id || !p.name) err(tag + ': id/이름 누락');
+  if (palIds.has(p.id)) err(tag + ': id 중복');
+  palIds.add(p.id);
+  if (EARS.indexOf(p.ear) < 0) err(tag + ': 귀 모양이 낯설다 — ' + p.ear);
+  ['fur', 'belly', 'nose'].forEach(k => {
+    if (!/^#[0-9A-Fa-f]{6}$/.test(p[k] || '')) err(tag + ': ' + k + ' 색값 오류 — ' + p[k]);
+  });
+  if (!Array.isArray(p.wakes) || p.wakes.length < 3 || p.wakes.length > 5) {
+    err(tag + ': 깨어나는 장면이 3~5개여야 함 — ' + (p.wakes ? p.wakes.length : 0));
+    return;
+  }
+  // 같은 친구 안에서 자세도 대사도 겹치면 안 된다 — 두 번째가 첫 번째와 같으면 놀이가 죽는다
+  const poses = new Set(), says = new Set();
+  p.wakes.forEach((wk, i) => {
+    const wt = tag + ' 장면 ' + (i + 1);
+    if (!D.POSES[wk.pose]) err(wt + ': 모르는 자세 — ' + wk.pose);
+    if (poses.has(wk.pose)) err(wt + ': 앞 장면과 같은 자세 — ' + wk.pose);
+    poses.add(wk.pose);
+    if (says.has(wk.say)) err(wt + ': 앞 장면과 같은 대사 — ' + wk.say);
+    says.add(wk.say);
+    sayAll.push([wt, wk.say]);
+  });
+  // 자는 자세를 깨어나는 장면에 쓰면 「안 깨어난 것」이 된다
+  if (poses.has('sleep')) err(tag + ': 깨어나는 장면에 자는 자세(sleep)가 들어 있음');
+});
+// 친구마다 대사 꾸러미가 달라야 한다 — 열 마리가 같은 말을 하면 만난 보람이 없다
+const sayKeys = S.map(p => (p.wakes || []).map(k => k.say).join('|'));
+if (new Set(sayKeys).size !== sayKeys.length) err('잠꾸러기 둘이 똑같은 대사 꾸러미를 쓰고 있음');
+// 넘겨도 마지막 장면이 이어질 뿐, 사라지거나 되감기지 않는다
+S.forEach(p => {
+  const last = p.wakes[p.wakes.length - 1];
+  if (D.wakeSceneOf(p.id, 99) !== last) err('잠꾸러기 ' + p.id + ': 많이 깨웠을 때 장면이 마지막으로 이어지지 않음');
+  if (D.wakeSceneOf(p.id, 0) !== p.wakes[0]) err('잠꾸러기 ' + p.id + ': 첫 장면 조회 오류');
+});
+
+/* ⑪-3 판 24개 — 파생 필드·정답 필드 금지 */
+const WB = D.WAKE_BOARDS || [];
+const W_ALLOWED = ['stage', 'id', 'ask', 'pal'];
+if (WB.length < 20 || WB.length > 30) err('방② 판은 20~30개여야 함 — ' + WB.length);
+const wSeen = new Set(), wPerStage = { 1: 0, 2: 0 }, wPerStageTime = { 1: new Set(), 2: new Set() };
+const palUse = {};
+WB.forEach(bd => {
+  const tag = '방② 판 ' + (bd.id || '?');
+  if (!bd.id || wSeen.has(bd.id)) err(tag + ': id 누락/중복');
+  wSeen.add(bd.id);
+  Object.keys(bd).forEach(k => {
+    if (W_ALLOWED.indexOf(k) < 0) err(tag + ': 쓸데없는 필드 — ' + k);
+    if (BANNED.indexOf(k) >= 0) err(tag + ': 파생 필드 금지 — ' + k);
+  });
+  if (!WAKE_UNITS[bd.stage - 1]) { err(tag + ': 단계 오류 — ' + bd.stage); return; }
+  wPerStage[bd.stage]++;
+  const unit = D.wakeUnitOf(bd.stage);
+  if (!Number.isInteger(bd.ask) || bd.ask < 0 || bd.ask > 719) { err(tag + ': ask 는 0~719 정수 — ' + bd.ask); return; }
+  if (bd.ask % unit !== 0) err(tag + ': 단계 ' + bd.stage + ' 는 ' + unit + '분의 배수여야 함 — ' + bd.ask);
+  if (wPerStageTime[bd.stage].has(bd.ask)) err(tag + ': 단계 안에서 시각 중복 — ' + bd.ask);
+  wPerStageTime[bd.stage].add(bd.ask);
+  if (!palIds.has(bd.pal)) err(tag + ': 없는 친구 — ' + bd.pal);
+  palUse[bd.pal] = (palUse[bd.pal] || 0) + 1;
+  if (!D.wakeBoardById(bd.id)) err(tag + ': wakeBoardById 조회 실패');
+});
+[1, 2].forEach(s => {
+  if (wPerStage[s] !== 12) err('방② 단계 ' + s + ' 판이 12개여야 함 — ' + wPerStage[s]);
+  if (D.wakeBoardsOf(s).length !== 12) err('방② 단계 ' + s + ': wakeBoardsOf 가 12개가 아님');
+});
+// 두 번째·세 번째 장면을 볼 수 있어야 한다 — 한 번만 나오는 친구가 있으면 그 장면은 죽은 데이터다
+S.forEach(p => { if ((palUse[p.id] || 0) < 2) err('잠꾸러기 ' + p.id + ': 판에 ' + (palUse[p.id] || 0) + '번만 나옴 — 두 번째 장면을 볼 길이 없다'); });
+// 도감 12칸처럼 앨범 칸을 다 채울 수 있어야 한다
+if (Object.keys(palUse).length !== S.length) err('앨범을 다 채울 수 없다 — 판에 안 나오는 친구가 있음');
+
+/* ⑪-4 알람 바늘 시작 자리 — 열자마자 정답이거나 몇 바퀴짜리가 아니게(방① 과 같은 규칙) */
+WB.forEach(bd => {
+  const tag = '방② 판 ' + bd.id;
+  const st = D.wakeStartOf(bd);
+  const unit = D.wakeUnitOf(bd.stage);
+  if (!Number.isInteger(st) || st < 0 || st > 719) { err(tag + ': 시작 자리가 0~719 정수가 아님 — ' + st); return; }
+  if (st === bd.ask) { err(tag + ': 열자마자 카드 시각'); return; }
+  const fwd = ((bd.ask - st) % 720 + 720) % 720;
+  if (fwd <= unit / 2) err(tag + ': 시작 자리가 자석 반경 안 (' + fwd + '분)');
+  if (fwd >= 60) err(tag + ': 시작 자리가 한 바퀴 밖 (' + fwd + '분)');
+});
+/* ⑪-5 시간이 흐르는 거리는 **아이가 맞춘 시각**에서 잰다 — 카드 시각에서 재면 벌점이 된다
+ * (카드와 다르게 맞췄을 때만 오래 기다리게 되면, 그것이 곧 벌이다) */
+for (let a = 0; a < 720; a += 5) {
+  const from = D.wakeRunFrom(a);
+  const gap = ((a - from) % 720 + 720) % 720;
+  if (gap !== D.WAKE_RUN) err('방② 시간 흐름: 알람 ' + a + '분에서 도는 거리가 ' + gap + '분 (늘 ' + D.WAKE_RUN + '분이어야 함)');
+  if (!Number.isInteger(from) || from < 0 || from > 719) err('방② 시간 흐름: 출발 자리가 0~719 밖 — ' + from);
+}
+
+/* ⑪-6 잠꾸러기 그림 — 회전 없이 좌표로만 */
+S.forEach(p => {
+  ['sleep'].concat(p.wakes.map(k => k.pose)).forEach(pose => {
+    const svg = D.sleeperSVG(p.id, pose, 'v' + p.id + pose);
+    if (typeof svg !== 'string' || svg.indexOf('<svg') < 0 || svg.indexOf('</svg>') < 0) err('잠꾸러기 ' + p.id + '/' + pose + ': SVG 문자열 오류');
+    if (/transform=/.test(svg)) err('잠꾸러기 ' + p.id + '/' + pose + ': SVG 에 transform 이 있음 — 좌표로 그릴 것');
+    if (/[\u{1F300}-\u{1FAFF}]/u.test(svg)) err('잠꾸러기 ' + p.id + '/' + pose + ': 이모지가 섞임');
+  });
+});
+if (D.sleeperSVG('bear', 'jump', 'uidA') === D.sleeperSVG('bear', 'jump', 'uidB')) err('sleeperSVG: uid 가 반영되지 않음(그라데이션 id 충돌 위험)');
+// 자세마다 그림이 실제로 달라야 한다 — 표만 다르고 그림이 같으면 반응이 다른 척만 하는 것이다
+{
+  const drawn = Object.keys(D.POSES).map(k => D.sleeperSVG('bear', k, 'same'));
+  if (new Set(drawn).size !== drawn.length) err('잠꾸러기 자세 그림이 서로 같다 — 반응이 달라 보이지 않는다');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ *            ⑫ 방③ 🍚 내 하루 만들기 — 정답이 없다
+ * ══════════════════════════════════════════════════════════════════ */
+const DC = D.DAY_CARDS || [];
+if (DC.length < 12 || DC.length > 16) err('하루 카드는 12~16종이어야 함 — ' + DC.length);
+const NO_ANSWER = ['answer', 'correct', 'right', 'score', 'goal', 'hour', 'slot', 'target'];
+const cardIds = new Set();
+DC.forEach(c => {
+  const tag = '하루 카드 ' + (c.id || '?');
+  if (!c.id || !c.name || !c.say) err(tag + ': id/이름/대사 누락');
+  if (cardIds.has(c.id)) err(tag + ': id 중복');
+  cardIds.add(c.id);
+  if (['day', 'night'].indexOf(c.kind) < 0) err(tag + ': kind 는 day/night — ' + c.kind);
+  if (typeof c.food !== 'boolean') err(tag + ': food 는 true/false');
+  /* ⚠️ 정답 필드 금지 — 「이 카드는 몇 시가 맞다」를 데이터에 적는 순간 이 방은 죽는다.
+   * hour·slot·target 까지 막는 것은, 「어울리는 자리」라는 이름으로 정답이 슬쩍 들어오는
+   * 것이 가장 흔한 길이기 때문이다. */
+  NO_ANSWER.forEach(k => { if (k in c) err(tag + ': 정답 필드(' + k + ')가 생겼다 — 이 방에 정답은 없다'); });
+  if (!D.dayCardOf(c.id)) err(tag + ': dayCardOf 조회 실패');
+});
+if (DC.filter(c => c.food).length < 3) err('밥 카드가 3종 미만 — 배가 빵빵해지는 웃음을 만들 수 없다');
+if (!DC.some(c => c.kind === 'night')) err('밤에 하는 카드가 없다 — 낮에 놓았을 때의 웃음이 없다');
+// 낮 자리·밤 자리 여섯씩, 열두 자리를 빠짐없이 나눈다
+if (!Array.isArray(D.NIGHT_HOURS) || D.NIGHT_HOURS.length !== 6) err('밤 자리는 6칸이어야 함 — ' + (D.NIGHT_HOURS || []).length);
+{
+  let night = 0;
+  for (let h = 1; h <= 12; h++) if (D.isNightHour(h)) night++;
+  if (night !== 6) err('밤 자리가 6칸이 아님 — ' + night);
+  if (!Array.isArray(D.DAY_ORDER) || D.DAY_ORDER.length !== 12) err('재생 차례가 12칸이 아님');
+  if (new Set(D.DAY_ORDER).size !== 12) err('재생 차례에 같은 자리가 두 번 나옴');
+  D.DAY_ORDER.forEach(h => { if (h < 1 || h > 12) err('재생 차례에 시계에 없는 자리 — ' + h); });
+  if (D.isNightHour(D.DAY_ORDER[0])) err('재생이 밤에서 시작한다 — 하루는 아침에서 시작해야 읽힌다');
+}
+
+/* ⑫-2 장면 그림 — 웃음이 그림으로 실제로 갈린다 */
+DC.forEach(c => {
+  const dayPic = D.daySceneSVG(c.id, { hour: 6, tummy: 0 });      // 낮 자리
+  const nightPic = D.daySceneSVG(c.id, { hour: 2, tummy: 0 });    // 밤 자리
+  const tag = '하루 장면 ' + c.id;
+  [['낮', dayPic], ['밤', nightPic]].forEach(([w, svg]) => {
+    if (typeof svg !== 'string' || svg.indexOf('<svg') < 0 || svg.indexOf('</svg>') < 0) err(tag + '(' + w + '): SVG 문자열 오류');
+    if (/transform=/.test(svg)) err(tag + '(' + w + '): SVG 에 transform 이 있음 — 좌표로 그릴 것');
+    if (/[\u{1F300}-\u{1FAFF}]/u.test(svg)) err(tag + '(' + w + '): 이모지가 섞임');
+  });
+  if (dayPic === nightPic) err(tag + ': 낮 자리와 밤 자리 그림이 같다 — 이상하게 놓아도 안 웃기다');
+  // 배가 부푼다
+  if (c.food) {
+    const t0 = D.daySceneSVG(c.id, { hour: 6, tummy: 0 });
+    const t3 = D.daySceneSVG(c.id, { hour: 6, tummy: 3 });
+    if (t0 === t3) err(tag + ': 여러 번 먹어도 배가 그대로다');
+  }
+  if (D.dayPropSVG(c.id).length < 40) err(tag + ': 소품 그림이 비었다');
+});
+// 낮 것을 밤에 놓으면 창밖에 부엉이가 온다 (요구된 웃음 포인트다)
+{
+  const bathNight = D.daySceneSVG('bath', { hour: 3, tummy: 0 });
+  const bathDay = D.daySceneSVG('bath', { hour: 6, tummy: 0 });
+  if (bathNight.indexOf('#8B6A4F') < 0) err('새벽에 목욕을 놓았는데 창밖에 부엉이가 없다');
+  if (bathDay.indexOf('#8B6A4F') >= 0) err('낮에 목욕을 놓았는데 부엉이가 와 있다');
+  const sleepDay = D.daySceneSVG('sleep', { hour: 6, tummy: 0 });
+  const sleepNight = D.daySceneSVG('sleep', { hour: 1, tummy: 0 });
+  if (sleepDay === sleepNight) err('잠을 낮에 놓아도 밤에 놓은 것과 같다');
+}
+
+/* ══════════ ⑬ 말 계약 — 두 갈래, 겹치지 않는다 ══════════
+ * ① 시각 안내는 readTime 한마디뿐이고, ② 장면 대사에는 시각이 한 글자도 안 섞인다.
+ * 「검사를 느슨하게 고치는 것」과 「계약을 정확히 다시 적는 것」은 다르다 — 여기는 후자다. */
+const times = D.SPEECH.times();
+const scenes = D.SPEECH.scenes();
+if (!times.length || !scenes.length) err('말 계약: 집합이 비어 있음');
+if (D.SPEECH.all().length !== times.length + scenes.length) err('말 계약: all() 이 두 집합의 합이 아님');
+{
+  const tset = new Set(times);
+  scenes.forEach(s => { if (tset.has(s)) err('말 계약: 장면 대사가 시각 읽기와 겹침 — ' + s); });
+}
+const BAD_WORDS = ['늦', '지각', '빨리', '얼른', '큰일', '혼나', '틀렸', '틀려', '잘못', '실패', '안 돼', '안돼', '왜 안', '땡'];
+scenes.forEach(s => {
+  const tag = '장면 대사 「' + s + '」';
+  if (/[0-9]/.test(s)) err(tag + ': 숫자가 섞임 — 시각 안내가 아니다');
+  if (/시|분/.test(s)) err(tag + ': 시각을 가리키는 글자가 섞임 — 시각은 시각 한마디로만 말한다');
+  if (s.length > 8) err(tag + ': 너무 길다(' + s.length + '자) — 장면 대사는 짧다');
+  if (/[\u{1F300}-\u{1FAFF}]/u.test(s)) err(tag + ': 이모지가 섞임');
+  BAD_WORDS.forEach(bw => { if (s.indexOf(bw) >= 0) err(tag + ': 재촉·야단 낱말 「' + bw + '」'); });
+});
+// 잠꾸러기 대사·카드 이름이 빠짐없이 집합에 들어 있어야 한다(e2e 가 이 집합으로 대조한다)
+{
+  const sset = new Set(scenes);
+  sayAll.forEach(([where, s]) => { if (!sset.has(s)) err(where + ': SPEECH.scenes() 에 없는 대사 — ' + s); });
+  DC.forEach(c => { if (!sset.has(c.say)) err('하루 카드 ' + c.id + ': SPEECH.scenes() 에 없는 대사'); });
+}
+// 이름·설명에도 재촉·야단이 없다
+[].concat(
+  S.map(p => ['잠꾸러기 이름 ' + p.id, p.name]),
+  DC.map(c => ['하루 카드 이름 ' + c.id, c.name]),
+  (D.ROOMS || []).map(r => ['방 설명 ' + r.id, r.desc]),
+  (D.WAKE_STAGES || []).map(s => ['방② 단계 설명 ' + s.id, s.desc])
+).forEach(([where, text]) => {
+  BAD_WORDS.forEach(bw => { if (String(text).indexOf(bw) >= 0) err(where + ': 재촉·야단 낱말 「' + bw + '」 — ' + text); });
+});
+
 if (errors) {
   console.error('\n검증 실패: 오류 ' + errors + '개');
   process.exit(1);
 }
-console.log('✅ 데이터·계약 검증 통과 — 방 ' + D.ROOMS.length + '개(열림 1) · 단계 ' + D.STAGES.length +
-  '개(60/30/15/5분) · 판 ' + D.BOARDS.length + '개(단계별 10) · 친구 ' + D.BIRDS.length + '종 · ' +
-  '각도↔분 고정표 ' + (ANGLES.length * Object.keys(EXPECT).length) + '칸 대조');
+console.log('✅ 데이터·계약 검증 통과 — 방 ' + D.ROOMS.length + '개(셋 다 열림)\n' +
+  '   방① 단계 ' + D.STAGES.length + '개(60/30/15/5분) · 판 ' + D.BOARDS.length + '개 · 새 ' + D.BIRDS.length + '종 · ' +
+  '각도↔분 고정표 ' + (ANGLES.length * Object.keys(EXPECT).length) + '칸 대조\n' +
+  '   방② 단계 ' + D.WAKE_STAGES.length + '개(60/30분) · 판 ' + WB.length + '개 · 잠꾸러기 ' + S.length + '종 · ' +
+  '깨어나는 장면 ' + S.reduce((n, p) => n + p.wakes.length, 0) + '개 · 무벌점(판정 필드 0)\n' +
+  '   방③ 하루 카드 ' + DC.length + '종(밥 ' + DC.filter(c => c.food).length + ') · 자리 12(밤 6) · 정답 필드 0\n' +
+  '   말 계약 — 시각 ' + times.length + '마디 · 장면 대사 ' + scenes.length + '마디, 겹침 0');

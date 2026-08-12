@@ -21,7 +21,7 @@
  * 48px 에서 헷갈리기 쉬운 짝(시험관·구슬↔슬라이드, 햄버거↔꼬치, 도형↔탱그램, 주사위↔돌림블록)은
  * 일부러 배열의 양 끝에 두어 밝기까지 벌어지게 했다. */
 export const GROUPS = {
-  learn: { c: '#E0A21B', apps: ['heart', 'hangul', 'english', 'japanese', 'math', 'market', 'pixel', 'practika'] },
+  learn: { c: '#E0A21B', apps: ['heart', 'hangul', 'clock', 'english', 'japanese', 'math', 'market', 'pixel', 'practika'] },
   draw:  { c: '#3E86BE', apps: ['write', 'lines', 'coloring'] },
   shape: { c: '#4E9B48', apps: ['shape', 'geoboard', 'cups', 'tangram'] },
   color: { c: '#7E57B5', apps: ['tubes', 'beads', 'lab', 'rings', 'slide'] },

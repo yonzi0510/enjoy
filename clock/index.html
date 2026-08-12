@@ -105,6 +105,62 @@
     </g>
   </symbol>
 
+  <!-- 알람 종 (방② 카드·큰 단추) -->
+  <symbol id="ck-bell" viewBox="0 0 48 48">
+    <g filter="url(#ck-crayon)" transform="translate(1.4,2)"><path d="M12 32 V22 a12 12 0 0 1 24 0 V32 Z" fill="#FFD34E"/></g>
+    <g filter="url(#ck-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 32 V22 a12 12 0 0 1 24 0 V32"/>
+      <path d="M8 32 H40"/>
+      <path d="M24 10 V6"/>
+      <path d="M20 37 a4 4 0 0 0 8 0"/>
+    </g>
+  </symbol>
+
+  <!-- 해와 달 한 바퀴 (방③) -->
+  <symbol id="ck-daily" viewBox="0 0 48 48">
+    <g filter="url(#ck-crayon)" transform="translate(1.4,2)"><circle cx="24" cy="24" r="15" fill="#DFF1FA"/></g>
+    <g filter="url(#ck-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 9 a15 15 0 0 1 0 30"/>
+      <path d="M24 9 a15 15 0 0 0 0 30" stroke-dasharray="3.4 5"/>
+      <path d="M24 15 v-5 M24 38 v5"/>
+    </g>
+    <g filter="url(#ck-crayon)"><circle cx="34" cy="17" r="4" fill="#FFD34E"/><circle cx="14" cy="31" r="4" fill="#B9C6E4"/></g>
+  </symbol>
+
+  <!-- 재생 -->
+  <symbol id="ck-play" viewBox="0 0 48 48">
+    <g filter="url(#ck-crayon)" transform="translate(1.4,2)"><path d="M17 12 L37 24 L17 36 Z" fill="#A9E0AE"/></g>
+    <g filter="url(#ck-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 12 L37 24 L17 36 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 멈춤 -->
+  <symbol id="ck-stop" viewBox="0 0 48 48">
+    <g filter="url(#ck-crayon)" transform="translate(1.4,2)"><path d="M15 14 H33 V32 H15 Z" fill="#FFC7B0"/></g>
+    <g filter="url(#ck-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 14 H33 V32 H15 Z"/>
+    </g>
+  </symbol>
+
+  <!-- 보관함 (상자) -->
+  <symbol id="ck-keep" viewBox="0 0 48 48">
+    <g filter="url(#ck-crayon)" transform="translate(1.4,2)"><path d="M8 18 H40 V38 H8 Z" fill="#FFE0C2"/></g>
+    <g filter="url(#ck-hand)" fill="none" stroke="#2E2A24" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 18 H40 V38 H8 Z"/>
+      <path d="M6 11 H42 V18 H6 Z"/>
+      <path d="M20 26 H28"/>
+    </g>
+  </symbol>
+
+  <!-- 다시 하기 (되돌아가는 화살표) -->
+  <symbol id="ck-again" viewBox="0 0 48 48">
+    <g filter="url(#ck-hand)" fill="none" stroke="#2E2A24" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M38 24 a14 14 0 1 1 -5 -10.8"/>
+      <path d="M36 6 V15 H27"/>
+    </g>
+  </symbol>
+
   <!-- 완성 도장 -->
   <symbol id="ck-check" viewBox="0 0 48 48">
     <g filter="url(#ck-crayon)" transform="translate(1.6,2.2)"><circle cx="24" cy="24" r="15" fill="#A9E0AE"/></g>
@@ -187,6 +243,112 @@
     </div>
   </div>
 </section>
+
+<!-- ═══════════ 방② ⏰ 잠꾸러기 깨우기 ═══════════
+     그림 카드가 시각을 부탁하고, 아이는 알람 바늘을 맞춘 뒤 큰 단추를 누른다.
+     ⚠️ 틀린 시각이 없다 — 어디에 맞춰도 종은 울리고 친구는 깨어난다.
+     ⚠️ #wdial 에 transform·border 를 주지 마라(시계 엔진 계약). -->
+<section class="screen" id="scr-wake">
+  <header class="bar">
+    <button type="button" class="back" id="btn-wake-back" aria-label="판 고르기로">
+      <svg class="ic" aria-hidden="true"><use href="#ck-back"/></svg>
+    </button>
+    <h2 id="wake-title">잠꾸러기 깨우기</h2>
+    <button type="button" class="bigbtn small" id="btn-pals">
+      <svg class="ic" aria-hidden="true"><use href="#ck-book"/></svg> <span id="pals-count">0</span>
+    </button>
+  </header>
+  <div class="wake-stage" id="wake-stage">
+    <!-- 친구가 놓고 잔 그림 카드 — 시계 그림 + 그 시각이 굵게 -->
+    <div class="ask-card" id="ask-card">
+      <div class="ask-face" id="ask-face"></div>
+      <div class="ask-digit" id="ask-digit"></div>
+    </div>
+    <!-- 자는 방 — 단추를 누르면 밤이 되고, 알람이 울리면 아침이 된다 -->
+    <div class="wake-room" id="wake-room">
+      <div class="wake-pal" id="wake-pal"></div>
+      <div class="wake-say" id="wake-say" aria-live="polite"></div>
+    </div>
+    <!-- 알람 시계 — 엔진(js/clock.js)이 좌표로 그린다 -->
+    <div class="dial" id="wdial"></div>
+    <div class="wake-btns" id="wake-btns">
+      <button type="button" class="ringbtn" id="btn-ring">
+        <svg class="ic" aria-hidden="true"><use href="#ck-bell"/></svg>
+        <span>깨우기</span>
+      </button>
+      <button type="button" class="bigbtn" id="btn-wake-again" hidden>
+        <svg class="ic" aria-hidden="true"><use href="#ck-again"/></svg> 다시
+      </button>
+      <button type="button" class="bigbtn primary" id="btn-wake-next" hidden>
+        다음 <svg class="ic ic-next" aria-hidden="true"><use href="#ck-back"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- 방② 앨범 10칸 -->
+<section class="screen" id="scr-pals">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-stages" aria-label="단계 고르기로">
+      <svg class="ic" aria-hidden="true"><use href="#ck-back"/></svg>
+    </button>
+    <h2>깨운 친구</h2>
+    <span class="page-count" id="pals-total">0 / 10</span>
+  </header>
+  <div class="dex-grid" id="pals-grid"></div>
+</section>
+
+<!-- ═══════════ 방③ 🍚 내 하루 만들기 ═══════════
+     ⚠️ **정답이 없다.** 맞고 틀림을 재는 것이 어디에도 없어야 한다.
+     하루 카드를 시계 둘레 열두 자리에 끌어다 놓고 ▶ 로 재생한다. -->
+<section class="screen" id="scr-day">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-home" aria-label="처음으로">
+      <svg class="ic" aria-hidden="true"><use href="#ck-back"/></svg>
+    </button>
+    <h2 id="day-title">내 하루 만들기</h2>
+    <button type="button" class="bigbtn small" id="btn-days">
+      <svg class="ic" aria-hidden="true"><use href="#ck-keep"/></svg> <span id="days-count">0</span>
+    </button>
+  </header>
+  <div class="day-stage" id="day-stage">
+    <div class="day-ring" id="day-ring">
+      <div class="dial" id="day-dial"></div>
+    </div>
+    <div class="day-side">
+      <!-- 카드 서랍 — 몇 번이고 다시 쓸 수 있다(같은 것을 여러 자리에) -->
+      <div class="day-tray" id="day-tray"></div>
+      <!-- 재생 중에 뜨는 장면 -->
+      <div class="day-show" id="day-show" hidden>
+        <div class="ds-pic" id="ds-pic"></div>
+        <div class="ds-time" id="ds-time"></div>
+      </div>
+      <div class="day-btns">
+        <button type="button" class="bigbtn primary" id="btn-day-play">
+          <svg class="ic" aria-hidden="true"><use href="#ck-play"/></svg> 재생
+        </button>
+        <button type="button" class="bigbtn" id="btn-day-keep">
+          <svg class="ic" aria-hidden="true"><use href="#ck-keep"/></svg> 보관
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 방③ 보관함 -->
+<section class="screen" id="scr-days">
+  <header class="bar">
+    <button type="button" class="back" data-go="scr-day" aria-label="만들던 하루로">
+      <svg class="ic" aria-hidden="true"><use href="#ck-back"/></svg>
+    </button>
+    <h2>보관한 하루</h2>
+    <span class="page-count" id="days-total">0 / 6</span>
+  </header>
+  <div class="days-grid" id="days-grid"></div>
+</section>
+
+<!-- 끌고 다니는 카드 그림자 (방③) -->
+<div class="day-ghost" id="day-ghost" hidden aria-hidden="true"></div>
 
 <!-- 친구 도감 12칸 -->
 <section class="screen" id="scr-dex">
