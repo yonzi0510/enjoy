@@ -474,6 +474,85 @@ await check('진짜 손가락 드래그로 걸린다 (내부 함수가 아니라
   await page.waitForSelector('#scr-home.on');
 });
 
+await check('고무줄 30개 전부 볼록하다 (실물로 걸리는 모양인가)', async () => {
+  /* 고무줄은 **당기기만** 하고 못은 **밀기만** 한다 — 안으로 파인 꼭짓점에서는 양쪽 줄이
+   * 둘 다 안쪽으로 당겨 못이 붙잡을 방법이 없고, 줄은 이웃 두 못을 잇는 곧은 줄로 튕겨 나간다.
+   * 그래서 한 가닥은 언제나 볼록하다. validate-data.js 의 계약 ⑤ 와 같은 규칙을
+   * 브라우저에서도 한 번 잰다 — 데이터를 고치고 validate 를 안 돌린 채 커밋해도 여기서 걸린다. */
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const bad = await page.evaluate(() => {
+    const out = [];
+    GeoboardData.PUZZLES.forEach(pz => pz.bands.forEach((b, bi) => {
+      const n = b.pegs.length;
+      let cw = 0, ccw = 0;
+      for (let i = 0; i < n; i++) {
+        const a = b.pegs[i], c = b.pegs[(i + 1) % n], d = b.pegs[(i + 2) % n];
+        const t = (c[0] - a[0]) * (d[1] - a[1]) - (c[1] - a[1]) * (d[0] - a[0]);
+        if (t > 0) cw++; else if (t < 0) ccw++;
+      }
+      if (cw && ccw) out.push(pz.id + '/' + bi);
+    }));
+    return out;
+  });
+  expect(bad.length === 0, '안으로 파인 고무줄이 있다 — ' + bad.join(', '));
+});
+
+await check('같은 색 고무줄 두 가닥도 차례로 걸린다', async () => {
+  /* 화살표·자동차·연처럼 **한 색으로 두 가닥**을 거는 퍼즐이 생겼다(파인 그림을 볼록한
+   * 조각으로 나눈 결과다). 트레이는 색마다 칸 하나뿐이라, 첫 가닥을 걸어도 그 색이
+   * 「다 걸었음」으로 꺼지면 두 번째를 못 건다. 그 자리를 잰다. */
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  const twin = await page.evaluate(() => {
+    const pz = GeoboardData.PUZZLES.find(x =>
+      x.bands.length > GeoboardData.colorsOf(x).length);
+    return pz ? { id: pz.id, stage: pz.stage, color: pz.bands[0].color, bands: pz.bands.length } : null;
+  });
+  expect(twin !== null, '같은 색 두 가닥짜리 퍼즐이 데이터에 없다 — 이 검사가 헛돈다');
+
+  await page.click('.menu-card.c-l' + twin.stage);
+  await page.waitForSelector('#scr-list.on');
+  await page.click('#list .puzzle-card[data-id="' + twin.id + '"]');
+  await page.waitForSelector('#scr-play.on');
+  await page.waitForTimeout(150);
+
+  const chips = await page.locator('#tray .tray-item[data-id="' + twin.color + '"]').count();
+  expect(chips === 1, '트레이에 같은 색 칸이 여러 개다 (' + chips + ') — 색마다 하나여야 한다');
+
+  // 첫 가닥을 건다
+  const first = await page.evaluate(color => {
+    App._pick(color);
+    const d = App.debug();
+    const pz = GeoboardData.puzzleById(d.puzzleId);
+    pz.bands[0].pegs.forEach(p => App._pullTo(p[1] * GeoboardData.GRID + p[0]));
+    return App.debug().madeCount;
+  }, twin.color);
+  expect(first === 1, '첫 가닥이 안 걸렸다 (madeCount ' + first + ')');
+
+  const dimmed = await page.locator('#tray .tray-item[data-id="' + twin.color + '"].done').count();
+  expect(dimmed === 0, '첫 가닥만 걸었는데 그 색이 「다 걸었음」으로 꺼졌다 — 두 번째를 못 건다');
+
+  // 두 번째 가닥이 그 색으로 다시 나오는가 — 나오면 그것도 손으로 건다
+  const second = await page.evaluate(color => {
+    App._pick(color);
+    const d = App.debug();
+    return d.activeVerts ? d.activeVerts.length : 0;
+  }, twin.color);
+  expect(second === 2, '같은 색을 다시 눌렀는데 두 번째 고무줄이 안 나온다');
+
+  await page.evaluate(() => {
+    const pz = GeoboardData.puzzleById(App.debug().puzzleId);
+    pz.bands[1].pegs.forEach(p => App._pullTo(p[1] * GeoboardData.GRID + p[0]));
+  });
+  await page.waitForTimeout(200);
+  const d = await page.evaluate(() => App.debug());
+  expect(d.madeCount === d.bands, '두 가닥을 다 걸었는데 완성이 안 됐다 (' + d.madeCount + '/' + d.bands + ')');
+  await page.waitForSelector('#reward.on', { timeout: 4000 });
+  await page.click('#reward-close');
+  await page.waitForSelector('#scr-list.on');
+});
+
 await check('콘솔 오류 0', async () => {
   expect(consoleErrors.length === 0, consoleErrors.join(' | '));
 });
