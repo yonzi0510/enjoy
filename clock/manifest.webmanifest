@@ -1,0 +1,16 @@
+{
+  "name": "시계 놀이터",
+  "short_name": "시계놀이",
+  "description": "긴바늘을 돌려 시각을 맞추면 문이 열리고 새가 나와 시각을 말해 주는 시계 읽기 놀이 — 5세 놀이",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFF3E0",
+  "theme_color": "#C08A4A",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -397,6 +397,19 @@ export const PROPS = {
       <path d="M69 27 q9 -7 18 -2" fill="none" stroke="${INK}" stroke-width="4.2" stroke-linecap="round"/>
     </g>`,
 
+  /* 🕐 시계 놀이터 — 뻐꾸기 집 지붕 + 시계판. 바늘은 4시 20분(둘이 확실히 갈리는 각도).
+     48px 에서 「지붕 + 동그란 판 + 두 바늘」 실루엣이라 다른 32개와 안 겹친다. */
+  clock: `
+    <path d="M50 4 L92 26 L8 26 Z" fill="${WOOD}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="50" cy="62" r="34" fill="${WOOD}" stroke="${INK}" stroke-width="4.4"/>
+    <circle cx="50" cy="62" r="27" fill="${PAPER}" stroke="${INK}" stroke-width="3"/>
+    <g stroke="${INK}" stroke-width="3.2" stroke-linecap="round">
+      <path d="M50 39 v4"/><path d="M50 81 v4"/><path d="M27 62 h4"/><path d="M69 62 h4"/>
+    </g>
+    <path d="M50 62 L50 46" stroke="${RED}" stroke-width="5.4" stroke-linecap="round"/>
+    <path d="M50 62 L69 72" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="50" cy="62" r="3.6" fill="${INK}"/>`,
+
   /* 🍩 도넛 짝맞추기 — 가운데가 뻥 뚫린 고리 */
   donut: `
     <circle cx="50" cy="52" r="30" fill="none" stroke="#D89A56" stroke-width="32"/>
@@ -548,4 +561,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
  *  pattern 가로 띠+빈 칸 · connect 점+지그재그 · dice 정육면체 · donut 뚫린 고리
  *  twist 드럼 2단 얼굴 · matrix 2×2 방향 삼각형 · bag 전구
  *  dig 흙더미+비스듬한 삽+뼈 · robot 안테나 로봇+화살표 · heart 얼굴+떠 있는 눈썹 조각
+ *  clock 뻐꾸기 집 지붕+시계판+두 바늘
  */

@@ -1,0 +1,528 @@
+/* 시계 놀이터 — 5세용 큰 조작, 나무·호박색 톤(벽시계).
+ *
+ * ⚠️ 시계판(.dial · .ck-face 와 그 안의 모든 것)에는 **transform 을 주지 마라.**
+ *    바늘을 회전으로 돌리지 않고 좌표로 그리는 것이 이 앱의 뼈대다(js/clock.js).
+ *    판이 조금이라도 기울거나 커지면 손끝 각도 계산이 통째로 어긋난다.
+ *    tools/e2e.mjs 의 「놀이판 무변형」 검사가 이것을 엄격하게 지킨다.
+ * ⚠️ 시계판에 border 를 주지 마라 — getBoundingClientRect 가 밀려 각도가 틀어진다.
+ *    테두리는 SVG 안의 .ck-rim 이 그린다.
+ */
+:root {
+  --accent: 200,150,90;    /* 호박색 대표색 rgb 삼중값 */
+  --chunk: #C08A4A;
+  --chunk-soft: #E5C79B;
+  --tint: #FFF3E0;
+}
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+/* hidden 은 언제나 이긴다.
+ * .bigbtn·.ringbtn·.day-tray 처럼 display 를 정한 규칙은 브라우저 기본값 [hidden]{display:none}
+ * 과 무게가 같아 **뒤에 오는 우리 규칙이 이겨 버린다** — 숨긴 단추가 그대로 보인다.
+ * (방②의 「다시·다음」, 방③의 카드 서랍이 실제로 그랬다) */
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background: linear-gradient(160deg, #FFF8EC 0%, #FDEFD9 55%, #F7EAD8 100%);
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+/* ─────────── 화면 ─────────── */
+.screen {
+  display: none; position: fixed; inset: 0;
+  flex-direction: column; align-items: center;
+  padding: clamp(10px, 2.5vmin, 24px);
+  gap: clamp(8px, 1.8vmin, 16px);
+  overflow-y: auto;
+}
+.screen.on { display: flex; }
+#scr-home { justify-content: safe center; }
+
+/* ─────────── 손그림 아이콘 ─────────── */
+.ic { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -.22em; flex: none; }
+h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -.2em; }
+.back .ic, .vs-btn .ic { width: 1.5em; height: 1.5em; vertical-align: middle; }
+.bigbtn .ic { width: 1.4em; height: 1.4em; }
+.ic-next { transform: scaleX(-1); }
+.mc-prog .ic { width: 1em; height: 1em; vertical-align: -.14em; }
+.rd-badge { line-height: 0; }
+.rd-badge .ic { width: 1.4em; height: 1.4em; }
+.back { display: inline-flex; align-items: center; justify-content: center; }
+
+/* ═══════════ 시계판 — 엔진이 그리는 SVG 의 옷 ═══════════
+ * 여기 있는 규칙은 **색과 굵기만** 정한다. 자리는 전부 좌표(js/clock.js)다. */
+.ck-face { display: block; width: 100%; height: 100%; overflow: visible; }
+.ck-rim   { fill: #FFFDF6; stroke: #2E2A24; stroke-width: 2.2; }
+.ck-tick  { stroke: #8B7B66; stroke-width: .8; stroke-linecap: round; }
+.ck-tick.big { stroke: #2E2A24; stroke-width: 2.2; }
+.ck-num   { font-family: inherit; font-size: 9px; font-weight: 900; fill: #2E2A24; }
+.ck-ghost { stroke: #C6B79E; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 3 3.5; }
+.ck-hour  { stroke: #2E2A24; stroke-width: 5; stroke-linecap: round; }
+.ck-min   { stroke: #D9543B; stroke-width: 3.4; stroke-linecap: round; }
+.ck-knob  { fill: #FFC24E; stroke: #2E2A24; stroke-width: 1.6; }
+.ck-glow  { fill: #FFC24E; opacity: .3; }
+.ck-cap   { fill: #2E2A24; }
+
+/* 손끝이 닿는 곳은 **잡는 자리(.ck-grab)와 손잡이(.ck-knob/.ck-glow)와 숫자칸(.ck-numhit)**
+ * 뿐이다. 나머지는 전부 통과시킨다 — 그래야 한복판(중심 r<15)이 진짜로 비어 있다.
+ * 그려진 바늘까지 잡히게 두면 바늘이 중심을 지나가므로 한복판이 되살아난다. */
+.ck-rim, .ck-tick, .ck-num, .ck-ghost, .ck-hour, .ck-min, .ck-cap { pointer-events: none; }
+
+/* 안 잡고 있을 때 손잡이가 반짝인다 — 「여기를 잡아」(아이는 글을 못 읽는다).
+   ⚠️ 반드시 **불투명도만** 흔든다. transform·scale 을 쓰면 무변형 계약이 깨진다. */
+@keyframes ck-blink { 0%, 100% { opacity: .18; } 50% { opacity: .62; } }
+.dial .ck-glow { animation: ck-blink 1.4s ease-in-out infinite; }
+.dial.dragging .ck-glow { animation: none; opacity: .5; }
+
+/* 빗나갔을 때 목표 숫자가 반짝인다 (2번부터) */
+@keyframes ck-hint { 0%, 100% { fill: #2E2A24; } 50% { fill: #D9543B; } }
+.ck-num.hint { animation: ck-hint 1s ease-in-out infinite; font-size: 11px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dial .ck-glow, .ck-num.hint { animation: none !important; }
+}
+
+/* ─────────── 홈 ─────────── */
+.home-head {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 2vmin;
+  animation: card-in .35s ease-out backwards;
+}
+h1 {
+  font-size: clamp(24px, 5.6vmin, 46px); font-weight: 900;
+  color: #8B5E34; text-align: center;
+}
+.stats { display: flex; gap: 12px; align-items: center; }
+.stat {
+  background: #fff; border-radius: 999px; padding: 6px 16px;
+  font-size: clamp(15px, 3vmin, 20px); font-weight: 800; color: #8B5E34;
+}
+.vs-btn {
+  width: clamp(46px, 8vmin, 54px); height: clamp(46px, 8vmin, 54px);
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 999px; cursor: pointer;
+  font-size: clamp(18px, 4vmin, 24px); background: #fff;
+}
+
+.menu { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: clamp(12px, 2.5vmin, 24px); }
+.menu-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: clamp(12px, 2.6vmin, 20px); border: none; border-radius: 26px;
+  background: var(--tint); cursor: pointer; font-family: inherit;
+  animation: card-in .35s ease-out backwards;
+}
+.mc-icon { line-height: 0; display: block; width: clamp(74px, 19vmin, 118px); aspect-ratio: 1; }
+.mc-icon .ic-soon { width: 74%; height: 74%; margin: 13%; }
+.mc-name { font-size: clamp(17px, 3.4vmin, 25px); font-weight: 900; color: #6B451F; word-break: keep-all; }
+.mc-desc { font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; color: #97724A; word-break: keep-all; }
+.mc-prog { font-size: clamp(12px, 2.4vmin, 16px); font-weight: 800; color: #8B5E34; padding: 2px 4px; word-break: keep-all; }
+/* 아직 안 만든 방 — 잠겼다고 겁주지 않고 연하게만 둔다 */
+.menu-card.soon { opacity: .72; }
+.menu-card.soon .mc-name { color: #8A7A68; }
+
+.c-r1 { --tint: #FFF3E0; }
+.c-r2 { --tint: #EFEAE1; }
+.c-r3 { --tint: #EDE7F2; }
+.c-l1 { --tint: #FFF1D8; }
+.c-l2 { --tint: #E9F4E2; }
+.c-l3 { --tint: #E2EEF6; }
+.c-l4 { --tint: #F6E6EC; }
+
+/* ─────────── 상단 바 ─────────── */
+.bar {
+  width: 100%; max-width: 1080px;
+  display: flex; align-items: center; gap: 10px; padding: 2px 4px;
+  animation: card-in .3s ease-out backwards;
+}
+.bar h2 {
+  flex: 1; text-align: center; word-break: keep-all;
+  font-size: clamp(18px, 4vmin, 30px); font-weight: 900; color: #8B5E34;
+}
+.back {
+  width: clamp(46px, 9vmin, 56px); height: clamp(46px, 9vmin, 56px); flex: none;
+  border: none; border-radius: 999px; cursor: pointer;
+  font-size: clamp(18px, 4vmin, 26px); font-weight: 900; color: #6B451F; background: #fff;
+}
+.page-count {
+  flex: none; font-size: clamp(13px, 2.6vmin, 18px); font-weight: 800; color: #6B451F;
+  background: #fff; border-radius: 20px 16px 21px 17px; padding: 6px 14px;
+}
+.bigbtn {
+  border: none; border-radius: 20px; cursor: pointer; font-family: inherit;
+  font-size: clamp(15px, 3vmin, 21px); font-weight: 900; color: #4A3A2C;
+  padding: 10px 20px; min-height: 46px; background: rgba(255,255,255,.92);
+  display: inline-flex; align-items: center; justify-content: center; gap: .35em;
+}
+.bigbtn.small { flex: none; padding: 8px 14px; font-size: clamp(13px, 2.6vmin, 18px); }
+.bigbtn.primary { background: #FFD08A; }
+@media (max-width: 480px) {
+  .bar h2 { font-size: clamp(15px, 4.6vw, 20px); }
+  .bigbtn.small { padding: 8px 10px; }
+}
+
+/* ─────────── 판 목록 ─────────── */
+.rounds-list {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: clamp(10px, 2vmin, 18px); width: 100%; max-width: 720px; padding-bottom: 12px;
+}
+.round-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: clamp(12px, 2.4vmin, 20px) 8px; border: none; border-radius: 24px; cursor: pointer;
+  background: #fff; font-family: inherit; min-height: clamp(96px, 20vmin, 132px);
+  animation: card-in .35s ease-out backwards;
+}
+.round-card.done { --tint: #F1FAE8; }
+.rd-no {
+  position: absolute; left: 8px; top: 8px; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900; color: #2E2A24; background: #fff;
+  border: 2.5px solid rgba(46,42,36,.85);
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+}
+.round-card.done .rd-no { background: #C6EBC6; }
+.rd-face { line-height: 0; display: block; width: clamp(52px, 12vmin, 84px); aspect-ratio: 1; }
+.rd-badge { font-size: clamp(16px, 3vmin, 22px); }
+
+/* ═══════════ 놀이 화면 ═══════════ */
+.play-stage {
+  width: 100%; max-width: 1080px; flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(8px, 1.8vmin, 18px);
+}
+
+/* 목표 — 1단계는 큰 시계 그림, 2단계 이후는 숫자 */
+.goal-card {
+  flex: none; display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: clamp(8px, 1.6vmin, 14px) clamp(14px, 3vmin, 26px);
+  background: rgba(255,255,255,.8);
+  border: 3px solid rgba(46,42,36,.85);
+  border-radius: 24px 19px 26px 21px;
+  animation: card-in .35s ease-out backwards;
+}
+.goal-face { line-height: 0; display: block; width: clamp(104px, 26vmin, 164px); aspect-ratio: 1; }
+.goal-digit {
+  font-size: clamp(36px, 9vmin, 74px); font-weight: 900; color: #D9543B;
+  letter-spacing: .02em; line-height: 1.1;
+}
+
+/* 시계와 뻐꾸기 집 */
+.clock-col {
+  display: flex; flex-direction: column; align-items: center; min-height: 0;
+  gap: clamp(2px, .8vmin, 8px);
+}
+
+/* 시계판 — 폭에 꽉 채우지 않는다. 좌우 여백이 없으면 바늘 끝을 잡을 때
+   엄지가 화면 가장자리에 걸린다. 폰 세로 390px 에서 312px(양옆 39px). */
+.dial {
+  --dialw: clamp(190px, min(80vw, 50vh), 330px);
+  width: var(--dialw); height: var(--dialw); flex: none;
+  touch-action: none;   /* 끄는 동안 화면이 따라 움직이지 않게 */
+  line-height: 0;
+}
+
+/* 뻐꾸기 집 — 맞추면 문이 열리고 새가 나온다.
+   ⚠️ 문·새는 transform 이 아니라 **낱개 속성 translate** 로 움직인다
+      (시계판 무변형 계약을 넓게 지켜 둔다). */
+.door-box { position: relative; width: clamp(106px, 28vmin, 168px); aspect-ratio: 64/48; flex: none; }
+/* 집 그림은 절대 배치로 깐다 — 흐름에 두면 viewBox 없는 <svg> 의 기본 크기(300×150)가
+   상자 높이를 밀어 올려 aspect-ratio 를 이긴다(폰 가로에서 시계판이 화면 밖으로 밀렸다) */
+.ic-house { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.door-hole {
+  position: absolute; left: 30%; top: 46%; width: 40%; height: 44%;
+  background: #4A3A2C; border-radius: 4px 4px 2px 2px;
+}
+.door-leaf {
+  position: absolute; top: 46%; width: 20%; height: 44%;
+  background: #D9A863; border: 2px solid #2E2A24;
+  transition: translate .45s ease;
+}
+.door-leaf.left { left: 30%; border-radius: 3px 0 0 3px; }
+.door-leaf.right { left: 50%; border-radius: 0 3px 3px 0; }
+.door-box.open .door-leaf.left { translate: -100% 0; }
+.door-box.open .door-leaf.right { translate: 100% 0; }
+.door-bird {
+  position: absolute; left: 18%; bottom: 4%; width: 66%; line-height: 0;
+  opacity: 0; translate: 0 34%;
+  transition: opacity .3s ease .18s, translate .5s cubic-bezier(.3,1.5,.5,1) .18s;
+}
+.door-box.open .door-bird { opacity: 1; translate: 0 0; }
+
+/* ─────────── 친구 도감 ─────────── */
+.dex-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: clamp(8px, 1.8vmin, 16px); width: 100%; max-width: 640px; padding-bottom: 12px;
+}
+.dex-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 10px 4px; background: rgba(255,255,255,.7);
+  border: 3px solid rgba(46,42,36,.35); border-radius: 22px 18px 23px 19px;
+}
+.dex-cell.got { border-color: rgba(46,42,36,.85); background: #fff; }
+.dx-pic { line-height: 0; display: block; width: clamp(46px, 12vmin, 84px); aspect-ratio: 1; opacity: .35; }
+.dex-cell.got .dx-pic { opacity: 1; }
+.dx-pic .ic-soon { width: 70%; height: 70%; margin: 15%; }
+.dx-time { font-size: clamp(12px, 2.4vmin, 17px); font-weight: 900; color: #8B5E34; }
+@media (min-width: 620px) { .dex-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* ─────────── 가로 화면: 목표 왼쪽 · 시계 오른쪽 ─────────── */
+@media (orientation: landscape) {
+  .play-stage { flex-direction: row; align-items: center; justify-content: center; gap: clamp(14px, 3vw, 36px); }
+  .goal-card { flex: 0 0 auto; flex-direction: column; }
+  .dial { --dialw: clamp(160px, min(42vw, 62vh), 330px); }
+  .door-box { width: clamp(68px, 15vh, 130px); }
+}
+@media (orientation: landscape) and (max-height: 480px) {
+  .dial { --dialw: clamp(150px, min(40vw, 58vh), 260px); }
+  .goal-digit { font-size: clamp(28px, 7vh, 52px); }
+  .goal-face { width: clamp(70px, 18vh, 120px); }
+}
+
+/* ═══════════ 방② ⏰ 잠꾸러기 깨우기 ═══════════
+ * ⚠️ #wdial 과 그 안의 모든 것에 transform·border 를 주지 마라 — 방① 과 같은 계약이다.
+ *    알람 바늘도 좌표로 그린다. 판이 기울면 손끝 각도가 통째로 어긋난다. */
+.wake-stage {
+  width: 100%; max-width: 1080px; flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(6px, 1.4vmin, 16px);
+}
+
+/* 친구가 놓고 잔 그림 카드 — 시계 그림 + 그 시각이 굵게 */
+.ask-card {
+  flex: none; display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: clamp(6px, 1.2vmin, 12px) clamp(12px, 2.6vmin, 22px);
+  background: rgba(255,255,255,.8);
+  border: 3px solid rgba(46,42,36,.85);
+  border-radius: 24px 19px 26px 21px;
+  animation: card-in .35s ease-out backwards;
+}
+.ask-face { line-height: 0; display: block; width: clamp(58px, 14vmin, 104px); aspect-ratio: 1; }
+.ask-digit {
+  font-size: clamp(30px, 7.6vmin, 62px); font-weight: 900; color: #D9543B;
+  letter-spacing: .02em; line-height: 1.1;
+}
+
+/* 자는 방 — 밤이 되었다가 아침이 된다.
+   ⚠️ 색과 밝기만 바꾼다. transform 을 쓰면 놀이판 무변형 계약이 흔들린다. */
+.wake-room {
+  position: relative; flex: none;
+  width: clamp(140px, 30vmin, 240px); aspect-ratio: 120/100;
+  background: #FFF6E4; border: 3px solid rgba(46,42,36,.85);
+  border-radius: 20px 16px 21px 17px; overflow: hidden;
+  transition: background .5s ease;
+}
+.wake-room.night { background: #35406B; }
+.wake-room.morning { background: #FFE7B8; }
+.wake-pal { position: absolute; inset: 0; line-height: 0; transition: filter .5s ease; }
+.wake-room.night .wake-pal { filter: brightness(.62) saturate(.7); }
+.wake-say {
+  position: absolute; left: 0; right: 0; top: 4%; text-align: center;
+  font-size: clamp(14px, 3vmin, 22px); font-weight: 900; color: #6B451F;
+  text-shadow: 0 0 6px #fff, 0 0 6px #fff, 0 0 6px #fff;
+  pointer-events: none;
+}
+
+/* 알람 시계 — 잡는 굵기가 46px 아래로 내려가지 않게 폰에서도 넉넉히 잡는다 */
+#wdial { --dialw: clamp(190px, min(76vw, 42vh), 320px); }
+/* 알람 표식 — 아이가 맞춘 자리에 남는 흐린 바늘. 방① 의 힌트 바늘과 색을 달리한다. */
+#wdial .ck-ghost { stroke: #E0632C; stroke-width: 3.2; opacity: .85; }
+
+.wake-btns { display: flex; align-items: center; justify-content: center; gap: clamp(8px, 2vmin, 18px); flex: none; }
+/* 손바닥만 한 단추 — 여기서만 시간이 흐르기 시작한다 */
+.ringbtn {
+  width: clamp(84px, 19vmin, 128px); height: clamp(84px, 19vmin, 128px);
+  border: 3px solid rgba(46,42,36,.85); border-radius: 999px; cursor: pointer;
+  background: #FFD08A; font-family: inherit; color: #4A3A2C;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+}
+.ringbtn .ic { width: 2em; height: 2em; }
+.ringbtn span { font-size: clamp(12px, 2.4vmin, 17px); font-weight: 900; }
+.ringbtn:disabled { opacity: .45; }
+@keyframes ck-ringpulse { 0%, 100% { opacity: 1; } 50% { opacity: .72; } }
+.ringbtn:not(:disabled) { animation: ck-ringpulse 1.6s ease-in-out infinite; }
+
+/* 판 목록 — 방② 칸에는 자는 친구가 앉는다 */
+.rd-pal { line-height: 0; display: block; width: clamp(58px, 13vmin, 92px); aspect-ratio: 120/100; }
+.rd-ask { font-size: clamp(15px, 3vmin, 22px); font-weight: 900; color: #D9543B; }
+.c-w1 { --tint: #FFF1D8; }
+.c-w2 { --tint: #E9F4E2; }
+.mc-icon .ic-room { width: 84%; height: 84%; margin: 8%; }
+
+/* ═══════════ 방③ 🍚 내 하루 만들기 ═══════════
+ * ⚠️ 여기에는 맞고 틀림이 없다. 자리에 '정답' 표시(초록 테두리 같은 것)를 붙이지 마라.
+ * ⚠️ 자리는 **좌표와 여백**으로 놓는다. translate/rotate 를 쓰지 않는다. */
+.day-stage {
+  width: 100%; max-width: 1180px; flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: clamp(6px, 1.4vmin, 16px);
+}
+.day-ring {
+  position: relative; flex: none;
+  --ringw: clamp(240px, min(84vw, 42vh), 420px);
+  width: var(--ringw); height: var(--ringw);
+}
+/* 시계는 고리 한가운데 — 폭을 %로 준다(늘 정사각이라 좌표가 안 흔들린다) */
+#day-dial { position: absolute; left: 20%; top: 20%; width: 60%; height: 60%; }
+/* 열두 자리 — 가운데 좌표에 반만큼 여백을 빼서 앉힌다(translate 를 쓰지 않는 까닭) */
+.day-slot {
+  position: absolute; width: 17%; aspect-ratio: 1;
+  margin-left: -8.5%; margin-top: -8.5%;
+  border: 3px dashed rgba(46,42,36,.4); border-radius: 50%;
+  background: rgba(255,255,255,.72); cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+.day-slot.night { background: rgba(210,220,245,.8); border-color: rgba(60,70,110,.45); }
+.day-slot.filled { border-style: solid; border-color: rgba(46,42,36,.85); background: #fff; }
+.day-slot.over { border-color: #E0632C; background: #FFF0DE; }
+.day-slot.now { border-color: #E0632C; box-shadow: 0 0 0 5px rgba(224,99,44,.28); }
+.dsl-num { font-size: clamp(13px, 2.6vmin, 19px); font-weight: 900; color: #97724A; }
+.dsl-pic { line-height: 0; display: block; width: 84%; }
+
+.day-side {
+  width: 100%; max-width: 720px; flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.day-tray {
+  width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(66px, 9vw, 96px), 1fr));
+  gap: clamp(5px, 1vmin, 10px); overflow-y: auto; padding: 2px;
+}
+.day-card {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  min-height: 58px; padding: 5px 2px; border: 3px solid rgba(46,42,36,.5);
+  border-radius: 17px 14px 18px 15px; background: #fff; cursor: pointer; font-family: inherit;
+}
+.day-card.sel { border-color: #E0632C; background: #FFF0DE; }
+.day-card.lift { opacity: .4; }
+.dc-pic { line-height: 0; display: block; width: clamp(34px, 5vw, 52px); }
+.dc-name { font-size: clamp(10px, 1.9vmin, 14px); font-weight: 800; color: #6B451F; word-break: keep-all; }
+
+/* 재생 중에 뜨는 장면 — 카드 서랍 자리에 들어선다 */
+.day-show { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ds-pic { line-height: 0; display: block; width: clamp(150px, 34vmin, 300px); }
+.ds-time { font-size: clamp(22px, 4.6vmin, 36px); font-weight: 900; color: #D9543B; }
+.day-btns { display: flex; gap: 10px; flex: none; padding-bottom: 4px; }
+#btn-day-play.playing { background: #FFC7B0; }
+
+/* 끌고 다니는 카드 그림자 — 손끝을 따라다닌다(놀이판 밖이라 translate 를 써도 된다) */
+.day-ghost {
+  position: fixed; z-index: 130; width: 62px; height: 62px; line-height: 0;
+  translate: -50% -50%; pointer-events: none; opacity: .92;
+}
+
+/* 보관함 */
+.days-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: clamp(10px, 2vmin, 18px); width: 100%; max-width: 720px; padding-bottom: 12px;
+}
+.day-keepcard {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: clamp(12px, 2.4vmin, 20px) 8px; border: 3px solid rgba(46,42,36,.85);
+  border-radius: 24px 19px 26px 21px; cursor: pointer; background: #fff;
+  font-family: inherit; min-height: clamp(96px, 20vmin, 132px);
+  animation: card-in .35s ease-out backwards;
+}
+.dk-no {
+  position: absolute; left: 8px; top: 8px; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900; color: #2E2A24; background: #FFF3E0;
+  border: 2.5px solid rgba(46,42,36,.85);
+  border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%;
+}
+.dk-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+.dk-pic { line-height: 0; display: block; width: clamp(26px, 5vmin, 40px); }
+.dk-count { font-size: clamp(12px, 2.4vmin, 16px); font-weight: 800; color: #8B5E34; }
+.days-empty {
+  grid-column: 1 / -1; text-align: center; padding: 30px 10px;
+  font-size: clamp(15px, 3vmin, 21px); font-weight: 800; color: #97724A;
+}
+@media (min-width: 620px) { .days-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* ─────────── 가로 화면: 방②③ ─────────── */
+@media (orientation: landscape) {
+  .wake-stage { flex-direction: row; align-items: center; justify-content: center; gap: clamp(10px, 2.4vw, 30px); }
+  .ask-card { flex-direction: column; }
+  .wake-btns { flex-direction: column; }
+  #wdial { --dialw: clamp(200px, min(40vw, 66vh), 320px); }
+  .wake-room { width: clamp(120px, 26vh, 220px); }
+
+  .day-stage { flex-direction: row; align-items: center; justify-content: center; gap: clamp(10px, 2vw, 26px); }
+  .day-ring { --ringw: clamp(240px, min(44vw, 74vh), 420px); }
+  .day-side { width: auto; flex: 1 1 auto; max-width: 620px; height: 100%; justify-content: center; }
+}
+@media (orientation: landscape) and (max-height: 480px) {
+  /* 폰 가로에서도 잡는 굵기(판 너비의 19%)가 46px 아래로 내려가지 않게 —
+     240px 밑으로 내려가면 그 순간 다섯 살 손가락으로 못 잡는다 */
+  #wdial { --dialw: clamp(200px, min(38vw, 64vh), 280px); }
+  .ask-digit { font-size: clamp(24px, 6.4vh, 44px); }
+  .ask-face { width: clamp(48px, 13vh, 84px); }
+  .day-ring { --ringw: clamp(230px, min(40vw, 78vh), 300px); }
+}
+
+/* ─────────── 쪽지 ─────────── */
+.toast {
+  position: fixed; left: 50%; bottom: 12%; translate: -50% 0; z-index: 120;
+  padding: 12px 24px; border-radius: 22px 18px 23px 19px;
+  background: #fff; border: 3px solid rgba(46,42,36,.85);
+  font-size: clamp(15px, 3vmin, 21px); font-weight: 900; color: #6B451F;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.toast.on { opacity: 1; }
+
+/* ─────────── 보상 오버레이 ─────────── */
+.reward {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  align-items: center; justify-content: center;
+  background: rgba(70,50,30,.32); backdrop-filter: blur(2px);
+}
+.reward.on { display: flex; animation: fade-in .2s ease-out; }
+/* 축하 패널은 뒤가 비치면 시계와 겹쳐 어수선하다.
+   shared/crayon.css 가 !important 로 반투명하게 칠하므로 선택자를 한 단계 더 준다. */
+.reward .reward-card { background: #FFF6E8 !important; }
+.reward-card {
+  background: var(--tint);
+  border-radius: 30px; padding: clamp(20px, 4vmin, 36px) clamp(24px, 5vmin, 46px);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  animation: pop-in .4s cubic-bezier(.3,1.6,.5,1);
+}
+.reward-face { width: clamp(128px, 32vmin, 200px); line-height: 0; }
+.reward-praise { font-size: clamp(22px, 4.6vmin, 34px); font-weight: 900; color: #8B5E34; text-align: center; }
+.reward-btns { display: flex; gap: 12px; margin-top: 4px; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { 0% { transform: scale(.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+/* ─────────── 색종이 축하 ─────────── */
+.confetti { position: fixed; inset: 0; z-index: 95; pointer-events: none; overflow: hidden; }
+.cf { position: absolute; top: -20px; width: 12px; height: 16px; display: block; animation: cf-fall linear forwards; }
+@keyframes cf-fall {
+  0% { transform: translateY(-20px) translateX(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(102vh) translateX(var(--dx)) rotate(var(--rot)); opacity: .9; }
+}
+
+/* ─────────── 등장 모션 ─────────── */
+@keyframes card-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .menu-card, .round-card, .goal-card, .ask-card, .day-keepcard,
+  .home-head, .bar, .reward.on, .reward-card, .cf { animation: none !important; }
+  .door-leaf, .door-bird { transition: none !important; }
+  .ringbtn { animation: none !important; }
+  * { transition: none !important; }
+}
+
+/* ── 목록은 오른쪽 위 집 단추·남은시간 쪽지 **아래**에서 시작한다 ──
+ * 폰에서는 쪽지가 집 단추 밑(위에서 78~101px)으로 내려온다. 그냥 두면 첫 줄 카드가
+ * 덮여 아이가 못 누른다. 목록은 어차피 세로로 굴리는 화면이라 위를 조금 비운다. */
+@media (max-width: 700px), (max-height: 560px) {
+  #scr-list .rounds-list, #scr-dex .dex-grid,
+  #scr-pals .dex-grid, #scr-days .days-grid { padding-top: 46px; }
+}
+
+/* ── 윗줄 오른쪽: 집 단추·남은시간 쪽지에 자리를 내준다 ── */
+@media (min-width: 701px) {
+  #scr-play .bar, #scr-list .bar, #scr-stages .bar, #scr-dex .bar,
+  #scr-wake .bar, #scr-pals .bar, #scr-day .bar, #scr-days .bar {
+    padding-right: calc(clamp(60px, 8.6vw, 80px) + 98px) !important;
+  }
+}
