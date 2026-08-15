@@ -869,6 +869,7 @@ window.App = (() => {
       hourAngle: t === null ? null : E.hourAngle(t),
       live: cur && cur.ctrl ? cur.ctrl.live() : null,
       dragging: cur && cur.ctrl ? cur.ctrl.dragging() : false,
+      dragKind: cur && cur.ctrl ? cur.ctrl.dragKind() : null,
       misses: cur ? cur.misses : null,
       locked: cur ? cur.locked : null,
       opened: document.getElementById('door-box').classList.contains('open'),

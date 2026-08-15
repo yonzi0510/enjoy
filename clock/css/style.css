@@ -65,25 +65,30 @@ h1 .ic-title, .bar h2 .ic-title { width: 1.2em; height: 1.2em; vertical-align: -
 .ck-min   { stroke: #D9543B; stroke-width: 3.4; stroke-linecap: round; }
 .ck-knob  { fill: #FFC24E; stroke: #2E2A24; stroke-width: 1.6; }
 .ck-glow  { fill: #FFC24E; opacity: .3; }
+/* 짧은바늘 손잡이 — 2026-08: 이제 이것도 손으로 끈다. 긴바늘과 같은 언어(노란 손잡이 +
+   반짝임)로 「여기도 잡아도 돼」를 알려 준다. 길이가 짧은 만큼 손잡이도 한 치수 작다. */
+.ck-hour-knob { fill: #FFC24E; stroke: #2E2A24; stroke-width: 1.4; }
+.ck-hour-glow { fill: #FFC24E; opacity: .3; }
 .ck-cap   { fill: #2E2A24; }
 
-/* 손끝이 닿는 곳은 **잡는 자리(.ck-grab)와 손잡이(.ck-knob/.ck-glow)와 숫자칸(.ck-numhit)**
- * 뿐이다. 나머지는 전부 통과시킨다 — 그래야 한복판(중심 r<15)이 진짜로 비어 있다.
+/* 손끝이 닿는 곳은 **잡는 자리(.ck-grab/.ck-hour-grab)와 손잡이
+ * (.ck-knob/.ck-glow/.ck-hour-knob/.ck-hour-glow)와 숫자칸(.ck-numhit)** 뿐이다.
+ * 나머지는 전부 통과시킨다 — 그래야 한복판(중심 r<15)이 진짜로 비어 있다.
  * 그려진 바늘까지 잡히게 두면 바늘이 중심을 지나가므로 한복판이 되살아난다. */
 .ck-rim, .ck-tick, .ck-num, .ck-ghost, .ck-hour, .ck-min, .ck-cap { pointer-events: none; }
 
-/* 안 잡고 있을 때 손잡이가 반짝인다 — 「여기를 잡아」(아이는 글을 못 읽는다).
+/* 안 잡고 있을 때 손잡이가 반짝인다 — 「여기를 잡아」(아이는 글을 못 읽는다). 두 손잡이 다.
    ⚠️ 반드시 **불투명도만** 흔든다. transform·scale 을 쓰면 무변형 계약이 깨진다. */
 @keyframes ck-blink { 0%, 100% { opacity: .18; } 50% { opacity: .62; } }
-.dial .ck-glow { animation: ck-blink 1.4s ease-in-out infinite; }
-.dial.dragging .ck-glow { animation: none; opacity: .5; }
+.dial .ck-glow, .dial .ck-hour-glow { animation: ck-blink 1.4s ease-in-out infinite; }
+.dial.dragging .ck-glow, .dial.dragging .ck-hour-glow { animation: none; opacity: .5; }
 
 /* 빗나갔을 때 목표 숫자가 반짝인다 (2번부터) */
 @keyframes ck-hint { 0%, 100% { fill: #2E2A24; } 50% { fill: #D9543B; } }
 .ck-num.hint { animation: ck-hint 1s ease-in-out infinite; font-size: 11px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .dial .ck-glow, .ck-num.hint { animation: none !important; }
+  .dial .ck-glow, .dial .ck-hour-glow, .ck-num.hint { animation: none !important; }
 }
 
 /* ─────────── 홈 ─────────── */

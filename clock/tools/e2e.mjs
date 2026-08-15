@@ -22,7 +22,8 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8777/clock/';
-const GRAB_R = 26;   // 바늘을 집는 반지름(viewBox 100 기준) — 손잡이와 한복판 사이
+const GRAB_R = 26;   // 긴바늘을 집는 반지름(viewBox 100 기준) — 자리는 23~39
+const HOUR_GRAB_R = 18;   // 짧은바늘을 집는 반지름 — 자리는 15~21, 긴바늘 자리와 안 겹친다
 
 let passed = 0, failed = 0;
 let preWin = null;   // 완성 직전의 별·간식 (검사 (e) 가 적고 (a) 가 견준다)
@@ -81,6 +82,24 @@ async function dragBy(deltaDeg, opt) {
   const steps = o.steps || Math.max(10, Math.ceil(Math.abs(deltaDeg) / 12));
   for (let i = 1; i <= steps; i++) {
     const p = at(box, GRAB_R, start + deltaDeg * i / steps);
+    await page.mouse.move(p.x, p.y);
+    if (o.onStep && i === Math.floor(steps / 2)) await o.onStep(start);
+  }
+  if (!o.hold) { await page.mouse.up(); await page.waitForTimeout(120); }
+  return start;
+}
+/* 짧은바늘을 집어 deltaDeg 만큼 돌린다(양수 = 시계 방향). opt.hold 면 놓지 않는다.
+ * dragBy 와 짝 — 손잡이 반경만 다르다(HOUR_GRAB_R, 긴바늘 자리와 안 겹치는 안쪽). */
+async function dragHourBy(deltaDeg, opt) {
+  const o = opt || {};
+  const box = await dialBox();
+  const start = (await dbg()).hourAngle;
+  const from = at(box, HOUR_GRAB_R, start);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  const steps = o.steps || Math.max(10, Math.ceil(Math.abs(deltaDeg) / 12));
+  for (let i = 1; i <= steps; i++) {
+    const p = at(box, HOUR_GRAB_R, start + deltaDeg * i / steps);
     await page.mouse.move(p.x, p.y);
     if (o.onStep && i === Math.floor(steps / 2)) await o.onStep(start);
   }
@@ -401,6 +420,77 @@ await check('(h) 한복판은 안 잡힌다 / 숫자를 톡 누르면 시(時)�
   expect(d.total === want, '숫자 ' + n + ' 을 눌렀는데 ' + d.total + ' (기대 ' + want + ')');
   expect(d.hour === (n % 12), '숫자 ' + n + ' 을 눌렀는데 시가 ' + d.hour + ' (기대 ' + (n % 12) + ')');
   expect(d.minutes === beforeTap.minutes, '숫자를 눌렀는데 분이 바뀌었다: ' + beforeTap.minutes + '→' + d.minutes);
+});
+
+/* ═══════════ (j) 짧은바늘도 손으로 끈다 (2026-08 재개편) ═══════════
+ * 부모님 지시: "긴바늘만 움직여서 어떻게 시간을 맞춰. 짧은 바늘도 움직일 수 있게
+ * 해야지". 숫자 탭(h)만으로는 부족하다고 하셨으니, 여기서는 **진짜 마우스로 짧은바늘을
+ * 집어 끄는** 흐름만 잰다 — 내부 함수가 아니라 포인터 배선이 실제로 살아 있는지. */
+
+await check('(j-1) 짧은바늘을 끌면 시가 바뀌고 분은 그대로다 (긴바늘은 안 건드려도 된다)', async () => {
+  await openBoard('c-l3', 0);   // 15분 단위 — 분이 0 이 아닌 판도 섞여 있다
+  const d0 = await dbg();
+  const wantHour = (d0.hour + 5) % 12;   // 다섯 시간 떨어진 곳으로 크게 돌린다
+  const fwd = ((wantHour - d0.hour) % 12 + 12) % 12;
+  await dragHourBy(fwd * 30);
+  const d = await dbg();
+  expect(d.hour === wantHour, '짧은바늘을 끌었는데 시가 ' + d.hour + ' (기대 ' + wantHour + ')');
+  expect(d.minutes === d0.minutes, '짧은바늘만 끌었는데 분이 바뀌었다: ' + d0.minutes + '→' + d.minutes);
+  expect(d.hourAngle === wantHour * 30, '시침각이 그 시에 안 붙었다: ' + d.hourAngle);
+});
+
+await check('(j-2) 손끝 추종: 짧은바늘을 끄는 도중에도 손끝을 그대로 따라간다', async () => {
+  await openBoard('c-l1', 2);
+  const d0 = await dbg();
+  let mid = null;
+  await dragHourBy(150, {   // 다섯 시간어치(150°)를 천천히 돌린다
+    hold: true,
+    onStep: async (start) => {
+      const st = await dbg();
+      const drawn = await drawnAngle('.ck-hour');
+      mid = { start, st, drawn };
+    },
+  });
+  expect(mid, '끄는 도중을 못 쟀다');
+  expect(mid.st.dragKind === 'hour', '끄는 중인데 dragKind 가 hour 가 아니다: ' + mid.st.dragKind);
+  const goneFwd = ((mid.drawn - mid.start) % 360 + 360) % 360;
+  expect(goneFwd > 5 && goneFwd < 150 + 5, '끄는 도중 시침이 시작~목표 사이가 아니다: +' + goneFwd.toFixed(1) + '°');
+  /* 여기가 이 검사의 핵심이다 — 손을 놓기 **전**에는 정수 시각(30°의 배수)에
+   * 미리 붙어 있으면 안 된다. 손을 떼기도 전에 반올림해 버리면 「손끝 추종」이
+   * 아니라 그냥 칸칸이 튀는 것이다(다섯 시간어치를 도는 중이니 30°의 배수에
+   * 정확히 걸릴 확률은 희박하다 — 걸렸다면 우연이 아니라 반올림 버그다). */
+  const distToGrid = Math.min(mid.drawn % 30, 30 - (mid.drawn % 30));
+  expect(distToGrid > 2, '손을 놓기도 전에 시침이 정수 시각(30°의 배수)에 붙어 버렸다 — ' +
+    mid.drawn.toFixed(2) + '° (반올림이 너무 이르다)');
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  const d = await dbg();
+  expect(d.hourAngle % 30 === 0, '손을 뗐는데 시침이 정수 시각에 안 붙었다: ' + d.hourAngle);
+});
+
+await check('(j-3) 짧은바늘도 가장 가까운 시로 붙는다 (자석 — 12시 경계 포함)', async () => {
+  await openBoard('c-l1', 0);
+  for (const deg of [37, 91, 149, 211, 283, 341]) {
+    const d0 = await dbg();
+    await dragHourBy(deg);
+    const d = await dbg();
+    expect(d.hourAngle % 30 === 0, deg + '° 뒤 시침각 ' + d.hourAngle + ' 이 정수 시각이 아니다');
+    expect(Number.isInteger(d.hour) && d.hour >= 0 && d.hour <= 11, '시가 0~11 밖 — ' + d.hour);
+    if (d.locked) break;   // 어쩌다 맞으면 그 판은 여기까지
+  }
+});
+
+await check('(j-4) 두 바늘의 잡는 자리가 겹치지 않는다 (한쪽을 끌 때 한쪽만 움직인다)', async () => {
+  await openBoard('c-l4', 0);
+  const d0 = await dbg();
+  // 긴바늘을 끌어도 시는 안 바뀐다(이미 (c)(f)가 잰다 — 여기서는 짧은바늘 쪽을 마저 잰다)
+  await dragHourBy(60);
+  const afterHour = await dbg();
+  expect(afterHour.minutes === d0.minutes, '짧은바늘 드래그가 분을 건드렸다');
+  // 이어서 긴바늘을 끌어도 방금 바뀐 시가 그대로다
+  await dragBy(90);
+  const afterMinute = await dbg();
+  expect(afterMinute.hour === afterHour.hour, '긴바늘 드래그가 시를 건드렸다: ' + afterHour.hour + '→' + afterMinute.hour);
 });
 
 /* ═══════════ (i) 말 ═══════════ */
