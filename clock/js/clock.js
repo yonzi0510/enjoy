@@ -1,20 +1,25 @@
 /* ═══════════ 시계 엔진 ═══════════
- * 시계판을 그리고, 긴바늘을 손끝으로 돌리게 하고, 손을 뗄 때 눈금에 붙인다.
+ * 시계판을 그리고, 두 바늘을 손끝으로 돌리게 하고, 손을 뗄 때 각자의 눈금에 붙인다.
  * 방① 뻐꾸기 시계가 지금 쓰고 있고, **방② 깨우기·방③ 하루 만들기가 그대로 쓴다.**
  * 앱 로직(판·보상·진행도)은 여기 넣지 마라 — 여긴 「시계라는 물건」만 안다.
  *
- * ── 2026-08 개편: 시침·분침을 완전히 분리했다 ─────────────────────────
- * 부모님 지시: "작은바늘과 큰바늘이 따로 움직여서 아이가 시간 설정하기 쉽게 바꾸기".
- * 전에는 두 바늘이 「총 분」 하나에서 함께 나왔다 — 분침을 끌면 시침도 분마다 조금씩
- * 물려 돌고(실물 그대로의 톱니 맞물림), 분침이 60분을 넘어 돌면 시가 저절로 올라갔다.
+ * ── 2026-08 개편: 시침·분침을 완전히 분리했다(두 차례) ────────────────
+ * 1차 — 부모님 지시: "작은바늘과 큰바늘이 따로 움직여서 아이가 시간 설정하기 쉽게".
+ * 전에는 두 바늘이 「총 분」 하나에서 함께 나왔다(실물 그대로의 톱니 맞물림) — 분침을
+ * 끌면 시침도 분마다 조금씩 물려 돌고, 분침이 60분을 넘어 돌면 시가 저절로 올라갔다.
  * 실물에 가장 가깝지만, 시를 하나 바꾸려면 분침을 한 바퀴 다 돌려야 했다.
+ * 1차에서는 시를 **숫자 탭**으로만 바꾸게 했었다(분은 긴바늘 끌기만). 그런데 부모님이:
+ * "긴바늘만 움직여서 어떻게 시간을 맞춰. 짧은 바늘도 움직일 수 있게 해야지" —
+ * 탭만으로는 "손으로 시간을 맞춘다"는 실물 감각이 안 났다. 그래서 2차에서
+ * **짧은바늘도 긴바늘과 똑같이 손끝으로 끌리게** 했다(숫자 탭은 지름길로 남겨 뒀다).
  *
- * 지금은 **시(時)와 분(分)이 서로 다른 손짓에서 나온다**:
- *   - 시는 숫자를 톡 누르면 그 시각으로 **바로** 간다(분은 그대로 둔다).
+ * 지금은 **시(時)와 분(分)이 서로 다른 바늘·서로 다른 손짓에서 나온다**:
+ *   - 시는 **짧은바늘을 끌거나**(그 시 눈금에 가장 가깝게 붙는다) **숫자를 톡 누르면**
+ *     그 시각으로 바로 간다 — 어느 쪽이든 분은 그대로 둔다.
  *   - 분은 긴바늘을 끄는 것으로만 바뀐다 — **그 시 안에서만** 0~59 를 돈다.
  *     한 바퀴를 넘게 돌려도 시는 더 이상 따라 오르지 않는다.
- *   - 짧은바늘은 그 시의 숫자에 **딱** 붙는다(분과 상관없이 늘 정수 위치) — 톱니
- *     맞물림은 포기했다. "3시 반인데 시침이 3에 딱 붙은 그림"은 이제 **의도된 모습**이다.
+ *   - 가만히 있을 때 짧은바늘은 그 시의 숫자에 **딱** 붙는다(분과 상관없이 늘 정수 위치) —
+ *     톱니 맞물림은 포기했다. "3시 반인데 시침이 3에 딱 붙은 그림"은 **의도된 모습**이다.
  * 상태는 여전히 총 분 하나(`hour*60+minute`)로 들고 다닌다 — 판의 목표(`board.minutes`)와
  * 채점(`total === target`)은 손대지 않았다. 바뀐 것은 그 값에 **손이 닿는 방식** 뿐이다.
  *
@@ -38,7 +43,8 @@
  *
  *  조종기(attach 가 돌려주는 것)
  *    total()                 지금 총 분(정수, 손을 뗀 뒤 값)
- *    live()                  끄는 중이면 실수 총 분, 아니면 null
+ *    live()                  분침을 끄는 중이면 실수 총 분, 아니면 null
+ *    dragKind()              지금 끄는 바늘 — 'minute' | 'hour' | null
  *    setTotal(t)             바늘을 옮긴다 (onChange 를 부르지 않는다)
  *    setHint(h12|null)       그 숫자를 반짝이게 (틀렸을 때 힌트를 키운다)
  *    setGhost(t|null)        흐린 안내 바늘
@@ -51,19 +57,22 @@
  *
  * ── 반드시 지킬 것 ──────────────────────────────────────────────────
  * ① 상태는 「총 분」 하나(`hour*60+minute`)로 밖에 낸다 — 판정·저장은 이 값 하나만 본다.
- *    다만 **바뀌는 통로는 둘로 갈렸다**: 숫자 탭(시) · 긴바늘 끌기(분). 서로 남의 값을 안 건드린다.
+ *    다만 **바뀌는 통로는 셋으로 갈렸다**: 짧은바늘 끌기(시) · 숫자 탭(시) · 긴바늘 끌기(분).
+ *    시를 바꾸는 통로 둘은 분을 안 건드리고, 분을 바꾸는 통로는 시를 안 건드린다.
  * ② 회전을 DOM 에 주지 마라(transform). 좌표를 계산해 <line> 에 직접 쓴다.
  *    회전을 걸면 손끝 좌표를 역행렬로 되돌려야 하고, 그게 이 저장소가 겪은
  *    「채점 좌표가 어긋난다」 사고의 정체다. 그래서 각 앱 e2e 가 시계판 전체에
  *    computed transform === 'none' 을 엄격하게 건다.
- * ③ 분침을 끄는 **동안에는 반올림하지 않는다.** 손끝을 그대로 따라간다.
+ * ③ 바늘을 끄는 **동안에는 반올림하지 않는다.** 손끝을 그대로 따라간다(어느 바늘이든).
  *    툭툭 끊기면 다섯 살은 「고장났다」고 느낀다. 붙이는 것은 손을 뗄 때 딱 한 번.
  * ④ 안 붙는 자리를 두지 마라. 놓으면 반드시 어딘가에 선다(지오보드의 CATCH 를 베끼지 말 것).
  * ⑤ 각도는 **직전 프레임과의 차이를 접어 누적**한다. atan2 절대값을 상태로 쓰면
- *    11:59 → 12:00 에서 11시간이 점프한다. 분은 **그 시 안에서만** 0↔59 로 접힌다 —
- *    시각으로 넘어가지 않는다(옛날에는 여기서 시가 따라 올랐다. 지금은 안 오른다).
- * ⑥ 잡히는 것은 **긴바늘뿐**이다. 짧은바늘은 직접 못 만진다(1시간 = 30°, 5세 정밀도를
- *    넘는다) — 시는 숫자를 눌러서만 바꾼다. 한복판(r<15)도 안 잡힌다 — 각도가 불안정하다.
+ *    11:59 → 12:00 에서 11시간이 점프한다. 분은 **그 시 안에서만** 0↔59 로, 시는
+ *    **한 바퀴(12시간) 안에서만** 0↔11 로 접힌다 — 서로의 값으로 안 넘어간다.
+ * ⑥ **두 바늘 다** 잡는 자리가 있다 — 짧은바늘은 반경 15~21(그 자체 길이 안),
+ *    긴바늘은 23~39(짧은바늘 자리와 겹치지 않게 살짝 띄웠다). 두 자리 사이가 비므로
+ *    어느 반경에서 손을 떼도 어떤 바늘을 잡았는지 헷갈리지 않는다. 한복판(r<15)은
+ *    두 바늘 다 안 잡힌다 — 각도가 불안정하다.
  */
 window.ClockEngine = (() => {
   const SVGNS = 'http://www.w3.org/2000/svg';
@@ -80,7 +89,9 @@ window.ClockEngine = (() => {
   const R_MIN_TAIL = -6;   // 긴바늘 꼬리(중심 뒤)
   const R_HOUR_TIP = 21;   // 짧은바늘 끝
   const R_HOUR_TAIL = -5;
-  const R_GRAB_IN = 15;    // 잡히기 시작하는 반경 — 한복판은 안 잡힌다
+  const R_HOUR_GRAB_IN = 15;   // 짧은바늘 잡는 자리 — 한복판은 안 잡힌다
+  const R_HOUR_GRAB_OUT = 21;  // 짧은바늘 길이 안에서만(그 바깥은 긴바늘 자리)
+  const R_GRAB_IN = 23;    // 긴바늘 잡는 자리 — 짧은바늘 자리(15~21)와 안 겹치게 띄웠다
   const R_GRAB_OUT = 39;
   const W_GRAB = 19;       // 잡는 굵기 — 312px 판에서 59px (터치 하한 46px 위)
 
@@ -177,8 +188,17 @@ window.ClockEngine = (() => {
     s += line('ck-ghost', 0, R_MIN_TIP, gv === null ? 0 : gv,
       gv === null ? ' visibility="hidden"' : '');
 
-    // 짧은바늘 — 따라 돌 뿐 직접 못 만진다
+    // 짧은바늘 잡는 자리(투명) → 짧은바늘 → 반짝임 → 손잡이
+    if (o.interactive) {
+      s += line('ck-hour-grab', R_HOUR_GRAB_IN, R_HOUR_GRAB_OUT, ha,
+        ' stroke="rgba(0,0,0,0)" stroke-width="' + W_GRAB + '" stroke-linecap="butt" pointer-events="stroke"');
+    }
     s += line('ck-hour', R_HOUR_TAIL, R_HOUR_TIP, ha);
+    const htip = polar(CX, CY, R_HOUR_TIP, ha);
+    if (o.interactive) {
+      s += '<circle class="ck-hour-glow" cx="' + f(htip[0]) + '" cy="' + f(htip[1]) + '" r="7"/>';
+    }
+    s += '<circle class="ck-hour-knob" cx="' + f(htip[0]) + '" cy="' + f(htip[1]) + '" r="4.2"/>';
 
     // 긴바늘 잡는 자리(투명) → 긴바늘 → 반짝임 → 손잡이
     if (o.interactive) {
@@ -205,19 +225,33 @@ window.ClockEngine = (() => {
     let hint = o.hint || null;
     let ghost = (o.ghost === 0 || o.ghost) ? o.ghost : null;
 
-    // { last:절대각, hourFixed:잡는 순간의 시(고정), liveMinute:실수 분(그 시 안에서만 0↔59), moved, step }
+    /* drag 는 둘 중 하나:
+     *   { kind:'minute', last:절대각, hourFixed:잡는 순간의 시(고정),
+     *     liveMinute:실수 분(그 시 안에서만 0↔59), moved, step }
+     *   { kind:'hour',   last:절대각, minuteFixed:잡는 순간의 분(고정),
+     *     liveHour:실수 시(한 바퀴 12시간 안에서만 0↔11.999…), moved }
+     * 시를 끄는 동안엔 분이, 분을 끄는 동안엔 시가 붙박이로 고정된다 — 서로 안 건드린다. */
     let drag = null;
-    // 끄는 동안의 실수 총분 — 시는 drag.hourFixed 로 고정, 분만 산다
-    const dragLive = () => drag ? drag.hourFixed * 60 + drag.liveMinute : null;
     host.innerHTML = faceSVG({ total, interactive, hint, ghost, numbers: o.numbers });
 
     const q = sel => host.querySelector(sel);
     let svg = q('.ck-face');
 
+    // 지금 그려야 할 두 바늘의 각도 — 끄는 중인 바늘만 손끝을 그대로 따라간다
+    function anglesNow() {
+      if (drag && drag.kind === 'hour') {
+        return { ma: minutesToAngle(drag.minuteFixed), ha: norm360(drag.liveHour * 30) };
+      }
+      if (drag && drag.kind === 'minute') {
+        return { ma: minutesToAngle(drag.liveMinute), ha: hourOf(drag.hourFixed * 60) * 30 };
+      }
+      return { ma: minuteAngle(total), ha: hourAngle(total) };
+    }
+
     function rebuild() {
       host.innerHTML = faceSVG({ total, interactive, hint, ghost, numbers: o.numbers });
       svg = q('.ck-face');
-      paint(drag ? dragLive() : total);
+      paint();
     }
     // 바늘만 다시 놓는다 — 판·숫자는 그대로 둔다(끄는 동안 60번/초 다시 그리지 않게)
     function setL(el, r0, r1, deg) {
@@ -226,15 +260,21 @@ window.ClockEngine = (() => {
       el.setAttribute('x1', f(a[0])); el.setAttribute('y1', f(a[1]));
       el.setAttribute('x2', f(b[0])); el.setAttribute('y2', f(b[1]));
     }
-    function paint(t) {
-      const ma = minuteAngle(t), ha = hourAngle(t);
+    function paint() {
+      const { ma, ha } = anglesNow();
       setL(q('.ck-hour'), R_HOUR_TAIL, R_HOUR_TIP, ha);
       setL(q('.ck-min'), R_MIN_TAIL, R_MIN_TIP, ma);
       setL(q('.ck-grab'), R_GRAB_IN, R_GRAB_OUT, ma);
+      setL(q('.ck-hour-grab'), R_HOUR_GRAB_IN, R_HOUR_GRAB_OUT, ha);
       const tip = polar(CX, CY, R_MIN_TIP, ma);
       [q('.ck-knob'), q('.ck-glow')].forEach(el => {
         if (!el) return;
         el.setAttribute('cx', f(tip[0])); el.setAttribute('cy', f(tip[1]));
+      });
+      const htip = polar(CX, CY, R_HOUR_TIP, ha);
+      [q('.ck-hour-knob'), q('.ck-hour-glow')].forEach(el => {
+        if (!el) return;
+        el.setAttribute('cx', f(htip[0])); el.setAttribute('cy', f(htip[1]));
       });
       const g = q('.ck-ghost');
       if (g) {
@@ -255,40 +295,54 @@ window.ClockEngine = (() => {
     function onDown(ev) {
       if (!interactive) return;
       const t = ev.target;
-      // 숫자를 톡 눌렀나 — **시(時)만** 바뀐다, 분은 그대로 둔다
+      // 숫자를 톡 눌렀나 — **시(時)만** 바뀐다, 분은 그대로 둔다 (짧은바늘 끌기의 지름길)
       if (t && t.classList && t.classList.contains('ck-numhit')) {
         ev.preventDefault();
         const n = parseInt(t.getAttribute('data-h'), 10);
         const next = tapTotal(total, n);
         const moved = next !== total;
         total = next;
-        paint(total);
+        paint();
         if (o.onNumber) o.onNumber(n);
         if (o.onChange) o.onChange(total, { snapped: true, moved, tap: true });
         return;
       }
-      /* 잡히는 것은 **잡는 자리(.ck-grab)와 손잡이(.ck-knob/.ck-glow)뿐**이다.
-       * 그려진 바늘(.ck-min)은 잡히지 않는다 — 바늘은 중심을 지나가므로 그것까지 잡히게
-       * 두면 한복판이 다시 잡히고, 거기서는 각도가 불안정하다. 나머지(판·눈금·숫자 글자·
-       * 시침·가운데 못)는 CSS 에서 pointer-events:none 이라 여기까지 오지도 않는다. */
-      if (!t || !t.classList ||
-          !(t.classList.contains('ck-grab') ||
-            t.classList.contains('ck-knob') || t.classList.contains('ck-glow'))) return;
+      /* 잡히는 것은 **두 바늘의 잡는 자리와 손잡이뿐**이다. 그려진 바늘(.ck-min/.ck-hour)
+       * 은 안 잡힌다 — 바늘은 중심을 지나가므로 그것까지 잡히게 두면 한복판이 다시
+       * 잡히고, 거기서는 각도가 불안정하다. 나머지(판·눈금·숫자 글자·가운데 못)는
+       * CSS 에서 pointer-events:none 이라 여기까지 오지도 않는다. */
+      const isMinute = t && t.classList &&
+        (t.classList.contains('ck-grab') || t.classList.contains('ck-knob') || t.classList.contains('ck-glow'));
+      const isHour = t && t.classList &&
+        (t.classList.contains('ck-hour-grab') || t.classList.contains('ck-hour-knob') || t.classList.contains('ck-hour-glow'));
+      if (!isMinute && !isHour) return;
       const p = local(ev);
       if (!p) return;
       ev.preventDefault();
       try { host.setPointerCapture(ev.pointerId); } catch (e) {}
-      /* 긴바늘은 **분만** 끈다 — 잡는 순간의 시(hourFixed)는 붙박이로 고정해 둔다.
-       * 한 바퀴를 넘게 끌어도 분만 0↔59 로 돌 뿐, 시는 절대 따라 오르지 않는다
-       * (완전 분리 — 시를 바꾸는 것은 숫자 탭뿐이다). */
-      drag = {
-        last: pointAngle(CX, CY, p[0], p[1]),
-        hourFixed: hourOf(total),
-        liveMinute: minuteOf(total),
-        moved: 0,
-        step: Math.round(minuteOf(total) / unit),
-      };
-      paint(drag.hourFixed * 60 + drag.liveMinute);
+      if (isMinute) {
+        /* 긴바늘은 **분만** 끈다 — 잡는 순간의 시(hourFixed)는 붙박이로 고정해 둔다.
+         * 한 바퀴를 넘게 끌어도 분만 0↔59 로 돌 뿐, 시는 절대 따라 오르지 않는다. */
+        drag = {
+          kind: 'minute',
+          last: pointAngle(CX, CY, p[0], p[1]),
+          hourFixed: hourOf(total),
+          liveMinute: minuteOf(total),
+          moved: 0,
+          step: Math.round(minuteOf(total) / unit),
+        };
+      } else {
+        /* 짧은바늘은 **시만** 끈다 — 잡는 순간의 분(minuteFixed)은 붙박이로 고정해 둔다.
+         * 몇 바퀴를 돌든 12시간 안에서만 접힌다(⑤). */
+        drag = {
+          kind: 'hour',
+          last: pointAngle(CX, CY, p[0], p[1]),
+          minuteFixed: minuteOf(total),
+          liveHour: hourOf(total),
+          moved: 0,
+        };
+      }
+      paint();
     }
 
     function onMove(ev) {
@@ -300,25 +354,36 @@ window.ClockEngine = (() => {
       const d = fold(a - drag.last);   // ← 매 프레임 접어 누적 (12시/59↔0 경계 안전)
       drag.last = a;
       drag.moved += Math.abs(d);
-      // 끄는 동안에는 반올림하지 않는다 — 다만 **그 시 안에서만** 0↔59 로 돈다
-      drag.liveMinute = ((drag.liveMinute + d / 6) % 60 + 60) % 60;
-      const live = drag.hourFixed * 60 + drag.liveMinute;
-      paint(live);
-      const st = Math.round(drag.liveMinute / unit);
-      if (st !== drag.step) { drag.step = st; if (o.onTick) o.onTick(); }
-      if (o.onDrag) o.onDrag(live);
+      if (drag.kind === 'minute') {
+        // 끄는 동안에는 반올림하지 않는다 — 다만 **그 시 안에서만** 0↔59 로 돈다
+        drag.liveMinute = ((drag.liveMinute + d / 6) % 60 + 60) % 60;
+        const st = Math.round(drag.liveMinute / unit);
+        if (st !== drag.step) { drag.step = st; if (o.onTick) o.onTick(); }
+      } else {
+        // 시침 한 바퀴는 30°/시 — **한 바퀴(12시간) 안에서만** 0↔11.999… 로 돈다
+        drag.liveHour = ((drag.liveHour + d / 30) % 12 + 12) % 12;
+      }
+      paint();
+      if (o.onDrag) o.onDrag(drag.kind === 'minute' ? drag.hourFixed * 60 + drag.liveMinute : null);
     }
 
     function onUp(ev) {
       if (!drag) return;
       try { host.releasePointerCapture(ev.pointerId); } catch (e) {}
       const moved = drag.moved > 1.5;   // 툭 건드린 것은 움직인 것으로 세지 않는다
-      const hourFixed = drag.hourFixed, liveMinute = drag.liveMinute;
+      let finalTotal;
+      if (drag.kind === 'minute') {
+        // 붙이는 것은 여기 한 번뿐 — 분만 눈금에 붙이고, 시는 그대로 둔다
+        const snappedMinute = roundToUnit(drag.liveMinute, unit) % 60;
+        finalTotal = norm720(drag.hourFixed * 60 + snappedMinute);
+      } else {
+        // 짧은바늘은 **가장 가까운 시**로 붙는다 — 시는 정수만 있다(반올림 자체가 자석)
+        const snappedHour = Math.round(drag.liveHour) % 12;
+        finalTotal = norm720(snappedHour * 60 + drag.minuteFixed);
+      }
       drag = null;
-      // 붙이는 것은 여기 한 번뿐 — 분만 눈금에 붙이고, 시는 그대로 둔다
-      const snappedMinute = roundToUnit(liveMinute, unit) % 60;
-      total = norm720(hourFixed * 60 + snappedMinute);
-      paint(total);
+      total = finalTotal;
+      paint();
       if (o.onChange) o.onChange(total, { snapped: true, moved });
     }
 
@@ -327,18 +392,19 @@ window.ClockEngine = (() => {
     host.addEventListener('pointerup', onUp);
     host.addEventListener('pointercancel', onUp);
 
-    paint(total);
+    paint();
 
     return {
       el: host,
       total: () => total,
-      live: () => (drag ? dragLive() : null),
+      live: () => (drag && drag.kind === 'minute' ? drag.hourFixed * 60 + drag.liveMinute : null),
+      dragKind: () => (drag ? drag.kind : null),
       dragging: () => !!drag,
       unit: () => unit,
       setUnit(u) { unit = u || 1; },
-      setTotal(t) { total = norm720(t); if (!drag) paint(total); },
+      setTotal(t) { total = norm720(t); if (!drag) paint(); },
       setHint(h) { hint = h || null; rebuild(); },
-      setGhost(g) { ghost = (g === 0 || g) ? g : null; paint(drag ? dragLive() : total); },
+      setGhost(g) { ghost = (g === 0 || g) ? g : null; paint(); },
       setInteractive(v) { interactive = !!v; rebuild(); },
       render: rebuild,
       destroy() {
@@ -351,7 +417,8 @@ window.ClockEngine = (() => {
   }
 
   return {
-    CX, CY, R_MIN_TIP, R_GRAB_IN, R_GRAB_OUT, W_GRAB, R_NUM, R_NUMHIT,
+    CX, CY, R_MIN_TIP, R_GRAB_IN, R_GRAB_OUT, R_HOUR_TIP, R_HOUR_GRAB_IN, R_HOUR_GRAB_OUT,
+    W_GRAB, R_NUM, R_NUMHIT,
     norm720, norm360, hourOf, minuteOf, hour12,
     minuteAngle, hourAngle, minutesToAngle, angleToMinutes, snapTotal,
     fold, pointAngle, polar, tapTotal,

@@ -16,7 +16,7 @@
  * **캐시 이름의 날짜를 바꾸면 옛 캐시가 통째로 청소된다.** 화면이 크게 바뀌는 배포에서는
  * 날짜를 올려 두면 기기에 남은 옛 파일이 확실히 사라진다.
  */
-const CACHE = 'enjoy-cache-2026-08-15a';
+const CACHE = 'enjoy-cache-2026-08-15b';
 
 self.addEventListener('install', () => self.skipWaiting());
 
