@@ -205,8 +205,10 @@ window.App = (() => {
     });
 
     showScreen('scr-play');
-    // 2단계 이후는 목표를 소리로도 준다 — **시각 한마디뿐이다**
-    if (bd.stage > 1) setTimeout(() => { if (cur && !cur.locked) A.speak(D.readTime(bd.minutes)); }, 320);
+    // 목표를 소리로도 준다(1단계도 포함) — **시각 한마디뿐이다**.
+    // 전에는 2단계 이후만 말해 줬다 — 1단계는 그림만 보여주고 말이 없어서
+    // 아이가 「듣기」 단추를 직접 눌러야만 시각을 들을 수 있었다(부모님 지적).
+    setTimeout(() => { if (cur && !cur.locked) A.speak(D.readTime(bd.minutes)); }, 320);
   }
 
   // 손을 뗐다(또는 숫자를 눌렀다) — 여기서 판정한다

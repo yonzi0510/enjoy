@@ -373,10 +373,24 @@ await check('(h) 한복판은 안 잡힌다 / 숫자를 톡 누르면 긴바늘�
 
 /* ═══════════ (i) 말 ═══════════ */
 
-await check('(i) 말: 「○ 시!」 한마디만 — 순우리말, 설명 안 붙음', async () => {
+await check('(i) 말: 판을 열면 목표를 미리 읽어 준다 — 「○ 시」 한마디, 설명 안 붙음', async () => {
+  /* 예전에는 1단계가 그림만 보여주고 말이 없어서, 아이가 「듣기」 단추를 직접
+   * 눌러야만 시각을 들을 수 있었다(부모님 지적). 지금은 판을 열면 자동으로 읽는다 —
+   * 완성했을 때와 같은 「시각 한마디」 규칙을 그대로 따른다(느낌표만 없다). */
+  const idx = await page.evaluate(() => ClockData.boardsOf(1).findIndex(b => b.minutes === 4 * 60));
+  expect(idx >= 0, '4시 판이 없다');
+  await openBoard('c-l1', idx);   // addInitScript 가 매 goto 마다 __said 를 새로 비운다
+  await page.waitForTimeout(700);
+  const preview = await page.evaluate(() => window.__said.slice());
+  expect(preview.length === 1, '판을 열었을 때 한마디만 해야 하는데 ' + preview.length + '마디: ' + JSON.stringify(preview));
+  expect(preview[0] === '네 시', '미리 읽기가 「네 시」 가 아니다 — ' + JSON.stringify(preview[0]));
+});
+
+await check('(i) 말: 완성하면 「○ 시!」 한마디만 — 순우리말, 설명 안 붙음', async () => {
   const idx = await page.evaluate(() => ClockData.boardsOf(1).findIndex(b => b.minutes === 4 * 60));
   expect(idx >= 0, '4시 판이 없다');
   await openBoard('c-l1', idx);
+  await page.waitForTimeout(700);              // 열자마자 읽는 미리보기 말이 먼저 끝나게 기다린다
   await page.evaluate(() => { window.__said = []; });
   const d0 = await dbg();
   await dragForward(d0.target);
