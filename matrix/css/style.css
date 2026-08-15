@@ -191,6 +191,14 @@ h1 {
 .board.n2 { --cell: clamp(58px, 22vmin, 116px); --head: clamp(44px, 16vmin, 90px); }
 .board.n3 { --cell: clamp(48px, 15vmin, 92px); --head: clamp(38px, 11vmin, 72px); }
 .board.n4 { --cell: clamp(38px, 11.4vmin, 76px); --head: clamp(30px, 8.6vmin, 58px); }
+/* 2026-08: 패드 가로에서 격자가 화면의 14%(374px)뿐이었다 — 부모님이 이 화면을
+   사진으로 짚으며 "게임조작화면이 너무 작음" 이라 지적하셨다. 최대값만 올렸다
+   (가로모드 아래 재정의가 이 값들을 다시 덮는다 — clock 과 같은 종류의 함정). */
+@media (orientation: landscape) {
+  .board.n2 { --cell: clamp(58px, 22vmin, 230px); --head: clamp(44px, 16vmin, 175px); }
+  .board.n3 { --cell: clamp(48px, 15vmin, 190px); --head: clamp(38px, 11vmin, 145px); }
+  .board.n4 { --cell: clamp(38px, 11.4vmin, 150px); --head: clamp(30px, 8.6vmin, 115px); }
+}
 
 .bd-corner {
   display: flex; align-items: center; justify-content: center;

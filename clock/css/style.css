@@ -267,12 +267,19 @@ h1 {
 .dx-time { font-size: clamp(12px, 2.4vmin, 17px); font-weight: 900; color: #8B5E34; }
 @media (min-width: 620px) { .dex-grid { grid-template-columns: repeat(4, 1fr); } }
 
-/* ─────────── 가로 화면: 목표 왼쪽 · 시계 오른쪽 ─────────── */
+/* ─────────── 가로 화면: 목표 왼쪽 · 시계 오른쪽 ───────────
+ * 2026-08: 패드 가로에서 시계판이 화면의 11%(330px)뿐이었다 — 부모님 지적
+ * "테블릿으로 사용하는데도 빈공간이 많고 그에비해 게임조작화면이 너무 작음".
+ * 최대값이 낮게 고정돼 있어 화면이 아무리 넓어도 그 값을 못 넘었다(첫 화면 규격
+ * 라운드 때 겪은 것과 같은 종류의 함정 — `27vmin=221px` 카드 폭 문제, DESIGN.md 참고).
+ * 최대값만 올렸다 — 패드 가로에서 시계판이 화면의 25%(520px)까지 커진다. */
 @media (orientation: landscape) {
   .play-stage { flex-direction: row; align-items: center; justify-content: center; gap: clamp(14px, 3vw, 36px); }
   .goal-card { flex: 0 0 auto; flex-direction: column; }
-  .dial { --dialw: clamp(160px, min(42vw, 62vh), 330px); }
-  .door-box { width: clamp(68px, 15vh, 130px); }
+  .dial { --dialw: clamp(160px, min(42vw, 66vh), 520px); }
+  .door-box { width: clamp(68px, 18vh, 200px); }
+  .goal-face { width: clamp(120px, 22vh, 260px); }
+  .goal-digit { font-size: clamp(40px, 14vh, 100px); }
 }
 @media (orientation: landscape) and (max-height: 480px) {
   .dial { --dialw: clamp(150px, min(40vw, 58vh), 260px); }
