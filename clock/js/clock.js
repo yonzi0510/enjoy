@@ -3,19 +3,34 @@
  * 방① 뻐꾸기 시계가 지금 쓰고 있고, **방② 깨우기·방③ 하루 만들기가 그대로 쓴다.**
  * 앱 로직(판·보상·진행도)은 여기 넣지 마라 — 여긴 「시계라는 물건」만 안다.
  *
+ * ── 2026-08 개편: 시침·분침을 완전히 분리했다 ─────────────────────────
+ * 부모님 지시: "작은바늘과 큰바늘이 따로 움직여서 아이가 시간 설정하기 쉽게 바꾸기".
+ * 전에는 두 바늘이 「총 분」 하나에서 함께 나왔다 — 분침을 끌면 시침도 분마다 조금씩
+ * 물려 돌고(실물 그대로의 톱니 맞물림), 분침이 60분을 넘어 돌면 시가 저절로 올라갔다.
+ * 실물에 가장 가깝지만, 시를 하나 바꾸려면 분침을 한 바퀴 다 돌려야 했다.
+ *
+ * 지금은 **시(時)와 분(分)이 서로 다른 손짓에서 나온다**:
+ *   - 시는 숫자를 톡 누르면 그 시각으로 **바로** 간다(분은 그대로 둔다).
+ *   - 분은 긴바늘을 끄는 것으로만 바뀐다 — **그 시 안에서만** 0~59 를 돈다.
+ *     한 바퀴를 넘게 돌려도 시는 더 이상 따라 오르지 않는다.
+ *   - 짧은바늘은 그 시의 숫자에 **딱** 붙는다(분과 상관없이 늘 정수 위치) — 톱니
+ *     맞물림은 포기했다. "3시 반인데 시침이 3에 딱 붙은 그림"은 이제 **의도된 모습**이다.
+ * 상태는 여전히 총 분 하나(`hour*60+minute`)로 들고 다닌다 — 판의 목표(`board.minutes`)와
+ * 채점(`total === target`)은 손대지 않았다. 바뀐 것은 그 값에 **손이 닿는 방식** 뿐이다.
+ *
  * ── 공개 API ────────────────────────────────────────────────────────
  *  값 계산 (전부 순수 함수, node 에서도 부를 수 있다)
  *    norm720(t)              총 분을 0~719 로 접는다 (실수도 된다)
  *    hourOf(t) / minuteOf(t) / hour12(t)
  *    minuteAngle(t)          분침각 = (t % 60) * 6
- *    hourAngle(t)            시침각 = t * 0.5          ← 시침 맞물림(톱니)이 여기서 나온다
+ *    hourAngle(t)            시침각 = hourOf(t) * 30   ← 분과 무관하게 그 시에 딱 붙는다
  *    minutesToAngle(m)       m * 6
  *    angleToMinutes(a, unit) 각도 → 분(0~59). **반올림은 이 한 곳에서 한 번만.**
  *    snapTotal(t, unit)      손 뗄 때 붙는 총 분 (같은 반올림 규칙)
  *    fold(deg)               각도를 [-180,180) 로 접는다 ← 12시 경계
  *    pointAngle(cx,cy,x,y)   손끝의 절대각 0~360. **상태에 그대로 쓰지 마라**(11시간 점프)
  *    polar(cx,cy,r,deg)      중심 + 길이 × (sinθ, −cosθ)
- *    tapTotal(cur, n, unit)  숫자 n 을 톡 눌렀을 때 갈 총 분
+ *    tapTotal(cur, n)        숫자 n 을 톡 눌렀을 때 갈 총 분 — **시만** 바꾼다(분은 그대로)
  *
  *  화면
  *    faceSVG(opt)            시계판 SVG 문자열 (opt: total, interactive, numbers, hint, ghost)
@@ -35,18 +50,20 @@
  *                     onTick() · onNumber(h12)
  *
  * ── 반드시 지킬 것 ──────────────────────────────────────────────────
- * ① 상태는 「총 분」 하나다. 분침·시침을 따로 두지 마라.
+ * ① 상태는 「총 분」 하나(`hour*60+minute`)로 밖에 낸다 — 판정·저장은 이 값 하나만 본다.
+ *    다만 **바뀌는 통로는 둘로 갈렸다**: 숫자 탭(시) · 긴바늘 끌기(분). 서로 남의 값을 안 건드린다.
  * ② 회전을 DOM 에 주지 마라(transform). 좌표를 계산해 <line> 에 직접 쓴다.
  *    회전을 걸면 손끝 좌표를 역행렬로 되돌려야 하고, 그게 이 저장소가 겪은
  *    「채점 좌표가 어긋난다」 사고의 정체다. 그래서 각 앱 e2e 가 시계판 전체에
  *    computed transform === 'none' 을 엄격하게 건다.
- * ③ 끄는 **동안에는 반올림하지 않는다.** 손끝을 그대로 따라간다.
+ * ③ 분침을 끄는 **동안에는 반올림하지 않는다.** 손끝을 그대로 따라간다.
  *    툭툭 끊기면 다섯 살은 「고장났다」고 느낀다. 붙이는 것은 손을 뗄 때 딱 한 번.
  * ④ 안 붙는 자리를 두지 마라. 놓으면 반드시 어딘가에 선다(지오보드의 CATCH 를 베끼지 말 것).
  * ⑤ 각도는 **직전 프레임과의 차이를 접어 누적**한다. atan2 절대값을 상태로 쓰면
- *    11:59 → 12:00 에서 11시간이 점프한다.
- * ⑥ 잡히는 것은 **긴바늘뿐**이다. 시침은 따라 돌 뿐 직접 못 만진다(1시간 = 30°,
- *    5세 정밀도를 넘는다). 한복판(r<15)도 안 잡힌다 — 각도가 불안정하다.
+ *    11:59 → 12:00 에서 11시간이 점프한다. 분은 **그 시 안에서만** 0↔59 로 접힌다 —
+ *    시각으로 넘어가지 않는다(옛날에는 여기서 시가 따라 올랐다. 지금은 안 오른다).
+ * ⑥ 잡히는 것은 **긴바늘뿐**이다. 짧은바늘은 직접 못 만진다(1시간 = 30°, 5세 정밀도를
+ *    넘는다) — 시는 숫자를 눌러서만 바꾼다. 한복판(r<15)도 안 잡힌다 — 각도가 불안정하다.
  */
 window.ClockEngine = (() => {
   const SVGNS = 'http://www.w3.org/2000/svg';
@@ -75,7 +92,7 @@ window.ClockEngine = (() => {
   const hour12 = t => { const h = hourOf(t); return h === 0 ? 12 : h; };
 
   const minuteAngle = t => norm360((t % 60) * 6);
-  const hourAngle = t => norm360(norm720(t) * 0.5);
+  const hourAngle = t => norm360(hourOf(t) * 30);   // 분과 무관 — 그 시에 딱 붙는다(완전 분리)
   const minutesToAngle = m => norm360(m * 6);
 
   /* 반올림은 여기 하나뿐이다. 각도 → 분에서 한 번, 손 뗄 때 한 번 —
@@ -105,26 +122,11 @@ window.ClockEngine = (() => {
     return [cx + r * Math.sin(t), cy - r * Math.cos(t)];
   }
 
-  /* 숫자 n(1~12)을 톡 눌렀을 때 갈 자리.
-   * 눈금이 한 시간인 정각 단계에서는 「그 숫자의 시」로 간다 — 긴바늘이 12 로 가고
-   * 시침이 그 숫자를 가리킨다. 다른 단계에서는 말 그대로 **긴바늘이 그 숫자로** 간다
-   * (가까운 쪽으로 돈다). 어느 쪽이든 결과는 반드시 눈금 위에 선다. */
-  function tapTotal(cur, n, unit) {
-    const u = unit || 1;
-    if (u >= 60) return norm720((n % 12) * 60);
-    const want = (n % 12) * 5;                       // 긴바늘이 가리킬 분
-    const now = norm720(cur);
-    const base = Math.floor(now / 60) * 60;
-    // 12시를 넘나드는 것까지 보려면 720 을 한 바퀴로 접어 견준다
-    const fold720 = x => ((x % 720) + 1080) % 720 - 360;
-    let best = null, bd = Infinity;
-    // 차례가 곧 동점일 때의 우선순위다 — 꼭 같은 거리면 **지금 시 안**을 고른다
-    [0, 60, -60].forEach(off => {
-      const cand = base + off + want;
-      const d = Math.abs(fold720(cand - now));
-      if (d < bd) { bd = d; best = cand; }
-    });
-    return snapTotal(best, u);
+  /* 숫자 n(1~12)을 톡 눌렀을 때 갈 자리 — **시(時)만** 바꾼다.
+   * 분은 지금 값 그대로 둔다(완전 분리: 분은 오직 긴바늘을 끌어야 바뀐다).
+   * 12시(0시)는 n=12 로 받는다. */
+  function tapTotal(cur, n) {
+    return norm720((n % 12) * 60 + minuteOf(cur));
   }
 
   /* ─────────── 시계판 그리기 ───────────
@@ -203,7 +205,10 @@ window.ClockEngine = (() => {
     let hint = o.hint || null;
     let ghost = (o.ghost === 0 || o.ghost) ? o.ghost : null;
 
-    let drag = null;   // { last:절대각, live:실수 총분, moved:움직인 각도합, step:눈금칸 }
+    // { last:절대각, hourFixed:잡는 순간의 시(고정), liveMinute:실수 분(그 시 안에서만 0↔59), moved, step }
+    let drag = null;
+    // 끄는 동안의 실수 총분 — 시는 drag.hourFixed 로 고정, 분만 산다
+    const dragLive = () => drag ? drag.hourFixed * 60 + drag.liveMinute : null;
     host.innerHTML = faceSVG({ total, interactive, hint, ghost, numbers: o.numbers });
 
     const q = sel => host.querySelector(sel);
@@ -212,7 +217,7 @@ window.ClockEngine = (() => {
     function rebuild() {
       host.innerHTML = faceSVG({ total, interactive, hint, ghost, numbers: o.numbers });
       svg = q('.ck-face');
-      paint(drag ? drag.live : total);
+      paint(drag ? dragLive() : total);
     }
     // 바늘만 다시 놓는다 — 판·숫자는 그대로 둔다(끄는 동안 60번/초 다시 그리지 않게)
     function setL(el, r0, r1, deg) {
@@ -250,11 +255,11 @@ window.ClockEngine = (() => {
     function onDown(ev) {
       if (!interactive) return;
       const t = ev.target;
-      // 숫자를 톡 눌렀나 — 끌기가 안 되는 아이를 위한 두 번째 길
+      // 숫자를 톡 눌렀나 — **시(時)만** 바뀐다, 분은 그대로 둔다
       if (t && t.classList && t.classList.contains('ck-numhit')) {
         ev.preventDefault();
         const n = parseInt(t.getAttribute('data-h'), 10);
-        const next = tapTotal(total, n, unit);
+        const next = tapTotal(total, n);
         const moved = next !== total;
         total = next;
         paint(total);
@@ -273,13 +278,17 @@ window.ClockEngine = (() => {
       if (!p) return;
       ev.preventDefault();
       try { host.setPointerCapture(ev.pointerId); } catch (e) {}
+      /* 긴바늘은 **분만** 끈다 — 잡는 순간의 시(hourFixed)는 붙박이로 고정해 둔다.
+       * 한 바퀴를 넘게 끌어도 분만 0↔59 로 돌 뿐, 시는 절대 따라 오르지 않는다
+       * (완전 분리 — 시를 바꾸는 것은 숫자 탭뿐이다). */
       drag = {
         last: pointAngle(CX, CY, p[0], p[1]),
-        live: total,
+        hourFixed: hourOf(total),
+        liveMinute: minuteOf(total),
         moved: 0,
-        step: Math.round(total / unit),
+        step: Math.round(minuteOf(total) / unit),
       };
-      paint(drag.live);
+      paint(drag.hourFixed * 60 + drag.liveMinute);
     }
 
     function onMove(ev) {
@@ -288,23 +297,27 @@ window.ClockEngine = (() => {
       if (!p) return;
       ev.preventDefault();
       const a = pointAngle(CX, CY, p[0], p[1]);
-      const d = fold(a - drag.last);   // ← 12시 경계는 여기서 접힌다
+      const d = fold(a - drag.last);   // ← 매 프레임 접어 누적 (12시/59↔0 경계 안전)
       drag.last = a;
       drag.moved += Math.abs(d);
-      drag.live += d / 6;              // 끄는 동안에는 반올림하지 않는다
-      paint(drag.live);
-      const st = Math.round(drag.live / unit);
+      // 끄는 동안에는 반올림하지 않는다 — 다만 **그 시 안에서만** 0↔59 로 돈다
+      drag.liveMinute = ((drag.liveMinute + d / 6) % 60 + 60) % 60;
+      const live = drag.hourFixed * 60 + drag.liveMinute;
+      paint(live);
+      const st = Math.round(drag.liveMinute / unit);
       if (st !== drag.step) { drag.step = st; if (o.onTick) o.onTick(); }
-      if (o.onDrag) o.onDrag(drag.live);
+      if (o.onDrag) o.onDrag(live);
     }
 
     function onUp(ev) {
       if (!drag) return;
       try { host.releasePointerCapture(ev.pointerId); } catch (e) {}
       const moved = drag.moved > 1.5;   // 툭 건드린 것은 움직인 것으로 세지 않는다
-      const live = drag.live;
+      const hourFixed = drag.hourFixed, liveMinute = drag.liveMinute;
       drag = null;
-      total = snapTotal(live, unit);    // 붙이는 것은 여기 한 번뿐
+      // 붙이는 것은 여기 한 번뿐 — 분만 눈금에 붙이고, 시는 그대로 둔다
+      const snappedMinute = roundToUnit(liveMinute, unit) % 60;
+      total = norm720(hourFixed * 60 + snappedMinute);
       paint(total);
       if (o.onChange) o.onChange(total, { snapped: true, moved });
     }
@@ -319,13 +332,13 @@ window.ClockEngine = (() => {
     return {
       el: host,
       total: () => total,
-      live: () => (drag ? drag.live : null),
+      live: () => (drag ? dragLive() : null),
       dragging: () => !!drag,
       unit: () => unit,
       setUnit(u) { unit = u || 1; },
       setTotal(t) { total = norm720(t); if (!drag) paint(total); },
       setHint(h) { hint = h || null; rebuild(); },
-      setGhost(g) { ghost = (g === 0 || g) ? g : null; paint(drag ? drag.live : total); },
+      setGhost(g) { ghost = (g === 0 || g) ? g : null; paint(drag ? dragLive() : total); },
       setInteractive(v) { interactive = !!v; rebuild(); },
       render: rebuild,
       destroy() {

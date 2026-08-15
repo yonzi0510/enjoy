@@ -891,6 +891,8 @@ window.App = (() => {
       pal: wcur.board.pal,
       ask: wcur.board.ask,
       total: t,
+      hour: t === null ? null : E.hourOf(t),
+      minutes: t === null ? null : E.minuteOf(t),
       alarm: wcur.alarm,
       phase: wcur.phase,
       matched: wcur.matched,
