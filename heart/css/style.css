@@ -240,11 +240,15 @@ h1 {
   text-align: center; word-break: keep-all; line-height: 1.15;
 }
 
-/* ─────────── 가로 화면: 장면 · 얼굴 · 띠 를 옆으로 ─────────── */
+/* ─────────── 가로 화면: 장면 · 얼굴 · 띠 를 옆으로 ───────────
+ * 2026-08: 장면 카드(참고용)가 최대 420px, 정작 아이가 만드는 얼굴은 최대 150px 였다 —
+ * 부모님 지적 "쓸데없이 예시장면이 너무 커. 메인화면인 얼굴이 너무 작아". 손대는 것이
+ * 참고 그림보다 작아서는 안 된다 — 장면은 줄이고 얼굴은 늘렸다(시계·방향색과 같은
+ * 함정: 최댓값이 폰 기준으로 낮게/높게 고정돼 있었다. DESIGN.md 「놀이판 규격」). */
 @media (orientation: landscape) {
   .play-stage { flex-direction: row; align-items: center; justify-content: center; gap: clamp(10px, 2vw, 26px); }
-  .scene-card { flex: 0 0 clamp(240px, 34vw, 420px); max-width: none; }
-  .face-box { width: clamp(96px, 20vh, 150px); }
+  .scene-card { flex: 0 0 clamp(160px, 18vw, 240px); max-width: none; }
+  .face-box { width: clamp(140px, 34vh, 320px); }
   .tray-wrap { width: auto; }
   .part-item { width: clamp(46px, min(11vw, 9vh), 72px); height: clamp(46px, min(11vw, 9vh), 72px); }
   .help-cards { flex-wrap: wrap; max-width: clamp(200px, 34vw, 460px); }

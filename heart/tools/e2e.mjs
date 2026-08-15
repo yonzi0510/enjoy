@@ -528,6 +528,25 @@ await check('3해상도 잘림 없음 (폰 세로·폰 가로·패드)', async (
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+await check('패드 가로: 얼굴판이 장면 카드보다 작지 않다 (빈 공간 지적 재발 방지)', async () => {
+  /* 부모님 지적: "여기 역시 메인화면인 얼굴이 너무 작아. 쓸데없이 예시장면이 너무 커."
+   * 예전엔 장면 카드가 최대 420px, 정작 아이가 만드는 얼굴은 최대 150px 였다 —
+   * 참고 그림이 작업판보다 훨씬 컸다. 최댓값을 조정했을 뿐이라 회귀하기 쉽다. */
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  await enterScene(page, 'c-l3');
+  await page.waitForTimeout(200);
+  const m = await page.evaluate(() => {
+    const box = sel => document.querySelector(sel).getBoundingClientRect();
+    const f = box('#face-box'), s = box('#scene-card');
+    return { faceW: f.width, faceH: f.height, sceneW: s.width, sceneH: s.height };
+  });
+  expect(m.faceW >= 220, '패드 가로 얼굴판이 ' + m.faceW.toFixed(0) + 'px 뿐이다(220px 이상이어야 함)');
+  expect(m.faceW >= m.sceneW * 0.9,
+    '얼굴판(' + m.faceW.toFixed(0) + 'px)이 장면 카드(' + m.sceneW.toFixed(0) + 'px)보다 훨씬 작다');
+});
+
 await check('폰·패드: 겹침 없음 · 터치 46px · 화면 이탈 없음', async () => {
   const sizes = [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드' }];
   for (const s of sizes) {
