@@ -93,7 +93,7 @@ await check('① 부품을 붙이면 얼굴 SVG 가 실제로 바뀐다 (id + pa
     const want = HeartData.PARTS.brow.list[1];      // 치켜뜬 눈썹
     App._put('brow', want.id);
     const after = readFace();
-    return { before, after, wantId: want.id, wantD: want.d };
+    return { before, after, wantId: want.id, wantD: want.d || want.fd };
   });
   expect(r.before.parts.length === 0, '붙이기 전에 이미 부품이 그려져 있다');
   expect(r.after.brow === r.wantId, 'data-brow 가 안 바뀜: ' + r.after.brow);

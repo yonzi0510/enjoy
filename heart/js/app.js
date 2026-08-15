@@ -152,10 +152,11 @@ window.App = (() => {
       box.appendChild(row);
     });
   }
-  // 부품 띠 한 칸 — 그 부위만 잘라 크게 보여 준다
+  // 부품 띠 한 칸 — 그 부위만 잘라 크게 보여 준다. 부위 색을 입힌다(눈썹·눈·입 구별,
+  // 2026-08) — 완성된 얼굴(renderFace)은 이 색을 안 쓰고 항상 검정이다.
   function partChipSvg(slot, id) {
     return '<svg class="chip-svg" viewBox="' + D.PARTS[slot].vb + '" width="100%" xmlns="http://www.w3.org/2000/svg">' +
-      D.partPaths(slot, id) + '</svg>';
+      D.partPaths(slot, id, D.SLOT_COLOR[slot]) + '</svg>';
   }
 
   /* 부품 붙이기 — 어떤 부품이든 그대로 붙는다(고를 것만 있고 맞출 것은 없다) */
