@@ -87,10 +87,23 @@ async function dragBy(deltaDeg, opt) {
   if (!o.hold) { await page.mouse.up(); await page.waitForTimeout(120); }
   return start;
 }
-// 지금 자리에서 목표까지 시계 방향으로 끈다(+extra 분 더 갈 수도 있다)
+// 숫자를 톡 눌러 그 시(時)로 보낸다 — 분은 그대로 둔다(완전 분리)
+async function tapHour(hour0based) {
+  const box = await dialBox();
+  const n = hour0based === 0 ? 12 : hour0based;
+  const p = at(box, 30, n * 30);
+  await page.mouse.click(p.x, p.y);
+  await page.waitForTimeout(160);
+}
+/* 지금 자리에서 목표까지 — 시가 다르면 먼저 숫자를 눌러 시를 맞추고,
+ * 그다음 분만큼 긴바늘을 시계 방향으로 끈다(+extra 분 더 갈 수도 있다).
+ * **완전 분리**이므로 긴바늘만으로는 시를 못 넘는다 — 시가 다르면 반드시 먼저 탭한다. */
 async function dragForward(targetTotal, extraMin) {
-  const d = await dbg();
-  const fwd = ((targetTotal - d.total) % 720 + 720) % 720;
+  const wantHour = Math.floor((((targetTotal % 720) + 720) % 720) / 60);
+  let d = await dbg();
+  if (d.hour !== wantHour) { await tapHour(wantHour); d = await dbg(); }
+  const wantMinute = ((targetTotal % 60) + 60) % 60;
+  const fwd = ((wantMinute - d.minutes) % 60 + 60) % 60;
   return dragBy((fwd + (extraMin || 0)) * 6);
 }
 async function openBoard(stageCls, boardIdx) {
@@ -177,8 +190,9 @@ await check('놀이 진입: 시계판 · 시작 자리가 정답이 아니다 ·
 
 await check('(d) 무벌점: 틀린 시각에 놓아도 잠기지 않고 별도 안 줄고 축하도 안 뜬다', async () => {
   const before = await dbg();
-  // 목표를 지나쳐 한 눈금 더 간다 (단계1 이라 한 시간 더)
-  await dragForward(before.target, 60);
+  // 목표와 다른 시를 숫자로 톡 눌러 일부러 틀린다(완전 분리 — 시는 탭 하나로 바로 간다)
+  const wrongHour = (Math.floor(before.target / 60) + 1) % 12;
+  await tapHour(wrongHour);
   const d = await dbg();
   expect(d.total !== d.target, '일부러 빗나가려 했는데 맞아 버렸다');
   expect(d.locked === false, '틀렸는데 판이 잠겼다');
@@ -187,9 +201,13 @@ await check('(d) 무벌점: 틀린 시각에 놓아도 잠기지 않고 별도 �
   expect(d.reward === false, '틀렸는데 축하가 떴다');
   expect(d.stars === before.stars, '틀렸는데 별이 바뀌었다: ' + before.stars + '→' + d.stars);
   expect(d.misses === 1, '빗나감이 안 세어졌다: ' + d.misses);
-  // 다시 끌 수 있다 (한 눈금은 넘게 돌려야 자리가 바뀐다)
-  await dragBy(d.unit * 0.9 * 6);
-  expect((await dbg()).total !== d.total, '틀린 뒤 바늘이 안 움직인다');
+  // 다시 시도할 수 있다(판이 잠기지 않았다) — 이번엔 **또 다른** 틀린 시를 눌러 본다
+  // (다음 검사가 misses>=2 로 뜨는 힌트를 재므로 여기서 맞혀 버리면 안 된다)
+  const wrongHour2 = (wrongHour + 1) % 12;
+  await tapHour(wrongHour2);
+  const d2 = await dbg();
+  expect(d2.total !== d2.target, '두 번째도 빗나가야 하는데 맞아 버렸다');
+  expect(d2.misses === 2, '두 번째 빗나감이 안 세어졌다: ' + d2.misses);
 });
 
 await check('무벌점 힌트: 두 번 빗나가면 목표 숫자가 반짝인다 (정답을 공개하지는 않는다)', async () => {
@@ -206,11 +224,15 @@ await check('무벌점 힌트: 두 번 빗나가면 목표 숫자가 반짝인�
 /* ═══════════ (e)(g)(a) 끌어서 맞추기 ═══════════ */
 
 await check('(e) 손끝 추종: 끄는 도중 바늘이 시작과 목표 사이에 있다 (툭툭 끊기지 않는다)', async () => {
-  // 앞 검사에서 일부러 멀리 보내 뒀으므로 같은 판을 새로 연다(빗나감도 0으로 돌아온다)
-  await openBoard('c-l1', 0);
-  const d0 = await dbg();
-  expect(((d0.target - d0.total) % 720 + 720) % 720 < 60, '시작 자리가 한 바퀴 밖이다');
-  const fwd = ((d0.target - d0.total) % 720 + 720) % 720;
+  /* 5분 단위(4단계)를 쓴다 — 완전 분리 이후로는 분침 드래그가 **그 시 안에서만** 뜻이
+   * 있어서, 실제로 손끝을 따라가는 거리가 있는 단계라야 이 검사가 무언가를 잰다. */
+  await openBoard('c-l4', 0);
+  let d0 = await dbg();
+  const wantHour = Math.floor(d0.target / 60);
+  if (d0.hour !== wantHour) { await tapHour(wantHour); d0 = await dbg(); }
+  const wantMinute = d0.target % 60;
+  const fwd = ((wantMinute - d0.minutes) % 60 + 60) % 60;
+  expect(fwd > 0 && fwd < 60, '분 차이가 없거나 한 바퀴 밖이다: ' + fwd);
   let mid = null;
   await dragBy(fwd * 6, {
     hold: true,
@@ -260,7 +282,7 @@ await check('(g) 그림-상태 일치: SVG 바늘 끝점으로 역산한 각도�
   expect(Math.abs(mA - d.minuteAngle) < 0.6, '분침 그림 ' + mA.toFixed(2) + '° ≠ 상태 ' + d.minuteAngle + '°');
   expect(Math.abs(hA - d.hourAngle) < 0.6, '시침 그림 ' + hA.toFixed(2) + '° ≠ 상태 ' + d.hourAngle + '°');
   expect(Math.abs(d.minuteAngle - (d.minutes % 60) * 6) < 1e-6, '분침각이 분과 안 맞는다');
-  expect(Math.abs(d.hourAngle - (d.total * 0.5) % 360) < 1e-6, '시침각이 총분과 안 맞는다');
+  expect(Math.abs(d.hourAngle - (d.hour * 30) % 360) < 1e-6, '시침각이 시와 안 맞는다(분과 무관해야 한다)');
 });
 
 await check('완성 표시: 목록에 done + 진행 1 / 10', async () => {
@@ -287,49 +309,57 @@ await check('(b) 자석: 눈금 사이 어중간한 자리에 놓아도 총분�
   }
 });
 
-/* ═══════════ (c) 12시 넘기기 ═══════════ */
+/* ═══════════ (c) 완전 분리 — 분침은 시를 못 넘는다 ═══════════ */
 
-await check('(c) 12시 넘기기: 11시 45분 판에서 계속 끌어 12를 지나면 시가 하나만 올라간다', async () => {
+await check('(c) 완전 분리: 분침을 한 바퀴 넘게 돌려도 시는 그대로다 (12시 경계 포함)', async () => {
+  /* 예전에는 여기서 「11시 45분 판에서 계속 끌면 시가 하나 올라 12시가 된다」를 쟀다 —
+   * 두 바늘이 총 분 하나에서 나오던 시절의 이야기다. 지금은 정반대를 잰다:
+   * 긴바늘이 아무리 여러 바퀴를 돌아도 시(hourFixed)는 **절대** 안 바뀐다. */
   const idx = await page.evaluate(() =>
     ClockData.boardsOf(3).findIndex(b => b.minutes === 11 * 60 + 45));
   expect(idx >= 0, '11시 45분 판이 없다');
   await openBoard('c-l3', idx);
-  const d0 = await dbg();
-  expect(d0.target === 705, '목표가 11시 45분이 아니다: ' + d0.target);
-  expect(d0.hour12 === 11, '시작이 11시대가 아니다: ' + d0.hour12);
-  // 12시(총분 0)까지 시계 방향으로 한 번에 끈다 — 목표(11:45)를 지나 12를 넘는다
-  await dragForward(720);
+  let d0 = await dbg();
+  if (d0.hour !== 11) { await tapHour(11); d0 = await dbg(); }
+  expect(d0.hour === 11, '시작이 11시가 아니다: ' + d0.hour);
+  // 분침을 한 바퀴하고도 더 돌린다(400°) — 12시를 여러 번 지나가도 시는 안 바뀐다
+  await dragBy(400);
   const d = await dbg();
-  expect(d.total === 0, '12를 지난 뒤 총분이 0(12시)이어야 하는데 ' + d.total +
-    ' (' + d.hour12 + '시 ' + d.minutes + '분) — 각도 접기가 빠지면 여기서 몇 시간이 점프한다');
-  expect(d.hour12 === 12, '시가 12가 아니다: ' + d.hour12);
-  expect(d.hourAngle === 0, '시침각이 0이 아니다: ' + d.hourAngle);
+  expect(d.hour === 11, '분침을 한 바퀴 넘게 돌렸는데 시가 바뀌었다: ' + d.hour);
   expect(d.locked === false && d.reward === false, '지나가다 완성돼 버렸다');
+  // 숫자 "12" 를 누르면 시가 0(12시)이 되고, 시침각은 정확히 0°다
+  await tapHour(0);
+  const d2 = await dbg();
+  expect(d2.hour === 0, '12를 눌렀는데 시가 0이 아니다: ' + d2.hour);
+  expect(d2.hourAngle === 0, '12시 시침각이 0이 아니다: ' + d2.hourAngle);
 });
 
-/* ═══════════ (f) 시침 연동 ═══════════ */
+/* ═══════════ (f) 시침·분침 분리 ═══════════ */
 
-await check('(f) 시침 연동: 30분에서 시침각 = 시×30+15 (정수 시각에 붙어 있으면 실패)', async () => {
+await check('(f) 완전 분리: 분침을 끌어도 시침은 꼼짝 않는다 (그 시에 딱 붙어 있다)', async () => {
   const idx = await page.evaluate(() =>
     ClockData.boardsOf(2).findIndex(b => b.minutes % 60 === 30));
   await openBoard('c-l2', idx);
-  const d0 = await dbg();
+  let d0 = await dbg();
+  const wantHour = Math.floor(d0.target / 60);
+  if (d0.hour !== wantHour) { await tapHour(wantHour); d0 = await dbg(); }
+  const hourAngleBefore = await drawnAngle('.ck-hour');
   await dragForward(d0.target);
   const d = await dbg();
   expect(d.total === d.target, '목표에 못 섰다: ' + d.total + '/' + d.target);
   expect(d.minutes === 30, '30분이 아니다: ' + d.minutes);
-  const want = d.hour * 30 + 15;
-  expect(Math.abs(d.hourAngle - want) < 1e-6, '시침각 ' + d.hourAngle + '° (기대 ' + want + '°)');
-  expect(d.hourAngle % 30 !== 0, '시침이 정수 시각에 딱 붙어 있다 — 실물에 없는 그림이다');
-  const drawn = await drawnAngle('.ck-hour');
-  expect(Math.abs(drawn - want) < 0.6, '그려진 시침도 반 칸 물려 있어야 한다: ' + drawn.toFixed(2) + '°');
+  expect(d.hourAngle === d.hour * 30, '시침각이 시×30 이 아니다: ' + d.hourAngle);
+  expect(d.hourAngle % 30 === 0, '시침이 정수 시각에 안 붙어 있다 — 완전 분리인데 어중간하다');
+  const hourAngleAfter = await drawnAngle('.ck-hour');
+  expect(Math.abs(hourAngleAfter - hourAngleBefore) < 0.6,
+    '분침을 끌었는데 시침 그림이 움직였다: ' + hourAngleBefore.toFixed(2) + '° → ' + hourAngleAfter.toFixed(2) + '°');
   await page.waitForSelector('#reward.on', { timeout: 4000 });
   await page.click('#reward-close');
 });
 
 /* ═══════════ (h) 한복판 · 숫자 탭 ═══════════ */
 
-await check('(h) 한복판은 안 잡힌다 / 숫자를 톡 누르면 긴바늘이 간다', async () => {
+await check('(h) 한복판은 안 잡힌다 / 숫자를 톡 누르면 시(時)만 바뀐다', async () => {
   await openBoard('c-l4', 0);
   const box = await dialBox();
   const before = await dbg();
@@ -353,7 +383,7 @@ await check('(h) 한복판은 안 잡힌다 / 숫자를 톡 누르면 긴바늘�
     expect(afterCenter.misses === before.misses, '한복판을 끌었는데 빗나감으로 세어졌다');
   }
 
-  // ② 숫자 탭 — 바늘이 덮지 않은 숫자를 고른다
+  // ② 숫자 탭 — 완전 분리: **시만** 바뀌고 분은 그대로다 (바늘이 덮지 않은 숫자를 고른다)
   const n = await page.evaluate(() => {
     const d = App.debug();
     for (let k = 1; k <= 12; k++) {
@@ -362,13 +392,15 @@ await check('(h) 한복판은 안 잡힌다 / 숫자를 톡 누르면 긴바늘�
     }
     return 1;
   });
-  const want = await page.evaluate(k => ClockEngine.tapTotal(App.debug().total, k, App.debug().unit), n);
+  const beforeTap = await dbg();
+  const want = await page.evaluate(k => ClockEngine.tapTotal(App.debug().total, k), n);
   const p = at(box, 30, n * 30);
   await page.mouse.click(p.x, p.y);
   await page.waitForTimeout(180);
   const d = await dbg();
   expect(d.total === want, '숫자 ' + n + ' 을 눌렀는데 ' + d.total + ' (기대 ' + want + ')');
-  expect(d.minutes === (n % 12) * 5, '긴바늘이 ' + n + ' 을 안 가리킨다: ' + d.minutes + '분');
+  expect(d.hour === (n % 12), '숫자 ' + n + ' 을 눌렀는데 시가 ' + d.hour + ' (기대 ' + (n % 12) + ')');
+  expect(d.minutes === beforeTap.minutes, '숫자를 눌렀는데 분이 바뀌었다: ' + beforeTap.minutes + '→' + d.minutes);
 });
 
 /* ═══════════ (i) 말 ═══════════ */
@@ -434,12 +466,26 @@ await check('방①의 말은 언제나 시각 읽기뿐이다 (장면 대사가
 
 async function wdialBox() { return await page.locator('#wdial .ck-face').boundingBox(); }
 const wdbg = async () => (await page.evaluate(() => App.debug())).wake;
-// 알람 바늘을 집어 목표 총분까지 시계 방향으로 끈다
-async function wdragTo(targetTotal) {
+// 숫자를 톡 눌러 그 시(時)로 보낸다 — 방①의 tapHour 와 같되 #wdial 을 쓴다
+async function wTapHour(hour0based) {
   const box = await wdialBox();
-  const d = await wdbg();
+  const n = hour0based === 0 ? 12 : hour0based;
+  const p = at(box, 30, n * 30);
+  await page.mouse.click(p.x, p.y);
+  await page.waitForTimeout(160);
+}
+/* 알람 바늘을 목표 총분까지 맞춘다 — 완전 분리이므로 시가 다르면 먼저 숫자를 눌러
+ * 시를 맞추고, 그다음 분만큼만 긴바늘을 시계 방향으로 끈다. */
+async function wdragTo(targetTotal) {
+  const wantHour = Math.floor((((targetTotal % 720) + 720) % 720) / 60);
+  let d = await wdbg();
+  if (d.hour !== wantHour) { await wTapHour(wantHour); d = await wdbg(); }
+  const wantMinute = ((targetTotal % 60) + 60) % 60;
+  const fwd = ((wantMinute - d.minutes) % 60 + 60) % 60;
+  if (fwd === 0) return;
+  const box = await wdialBox();
   const start = d.minuteAngle;
-  const delta = ((targetTotal - d.total) % 720 + 720) % 720 * 6;
+  const delta = fwd * 6;
   const from = at(box, GRAB_R, start);
   await page.mouse.move(from.x, from.y);
   await page.mouse.down();
