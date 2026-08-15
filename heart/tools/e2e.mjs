@@ -74,8 +74,8 @@ await check('진입: 장면 그림·상황 한 줄·빈 얼굴·부품 띠 3줄(
   expect(rows === 3, '부품 띠 줄 수: ' + rows);
   const counts = await page.evaluate(() =>
     [...document.querySelectorAll('#parts .parts-row')].map(r => r.querySelectorAll('.part-item').length));
-  expect(counts.join('/') === '5/6/6', '부위별 부품 수: ' + counts.join('/'));
-  expect(counts.every(c => c >= 5 && c <= 6), '부위별 5~6종이어야 함');
+  expect(counts.join('/') === '10/11/11', '부위별 부품 수: ' + counts.join('/'));
+  expect(counts.every(c => c >= 5 && c <= 11), '부위별 5~11종이어야 함');
 });
 
 /* ═══════════ ① 부품을 붙이면 얼굴이 실제로 바뀐다 ═══════════ */

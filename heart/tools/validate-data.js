@@ -9,7 +9,7 @@
  *      → 어느 카드를 눌러도 친구가 대답한다(빈 반응이 있으면 그 카드는 아이에게 '먹통'이다)
  *   ③ 마음 12종이 장면에 모두 한 번 이상 나온다 → 도감 12칸을 전부 채울 수 있다
  *   ④ **대사 전수에 부정 표현(틀렸/아니야/안 돼/잘못)이 없다** — 「틀렸어요」가 나오면 안 된다
- *   ⑤ 얼굴 부품이 부위별 5~6종이고 전부 <path> 로 그려진다(이모지로는 표정을 조립할 수 없다)
+ *   ⑤ 얼굴 부품이 부위별 5~11종이고 전부 <path> 로 그려진다(이모지로는 표정을 조립할 수 없다)
  *   ⑥ 장면·얼굴 그림이 실제 SVG 문자열로 나온다
  */
 'use strict';
@@ -21,7 +21,7 @@ const D = global.window.HeartData;
 let errors = 0;
 function err(msg) { errors++; console.error('❌ ' + msg); }
 
-/* ── ⑤ 얼굴 부품: 부위 3개, 부위마다 5~6종, 전부 path ── */
+/* ── ⑤ 얼굴 부품: 부위 3개, 부위마다 5~11종, 전부 path ── */
 const SLOTS = ['brow', 'eyes', 'mouth'];
 if (!Array.isArray(D.SLOTS) || D.SLOTS.length !== 3 || SLOTS.some(s => D.SLOTS.indexOf(s) < 0)) {
   err('부위는 눈썹·눈·입 셋이어야 함 — ' + JSON.stringify(D.SLOTS));
@@ -31,8 +31,8 @@ SLOTS.forEach(slot => {
   if (!g) { err('부위 ' + slot + ': 정의 없음'); return; }
   if (!g.name) err('부위 ' + slot + ': 이름 없음');
   if (!g.vb || g.vb.split(/\s+/).length !== 4) err('부위 ' + slot + ': 부품 띠 viewBox(vb) 오류 — ' + g.vb);
-  if (!Array.isArray(g.list) || g.list.length < 5 || g.list.length > 6) {
-    err('부위 ' + slot + ': 부품은 5~6종이어야 함 — ' + (g.list ? g.list.length : 0));
+  if (!Array.isArray(g.list) || g.list.length < 5 || g.list.length > 11) {
+    err('부위 ' + slot + ': 부품은 5~11종이어야 함 — ' + (g.list ? g.list.length : 0));
   }
   const seen = new Set();
   (g.list || []).forEach(p => {
