@@ -1009,6 +1009,18 @@ await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침)', async 
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+await check('패드 가로: 시계판이 화면을 넉넉히 쓴다 (빈 공간 지적 재발 방지)', async () => {
+  /* 부모님 지적: "테블릿으로 사용하는데도 빈공간이 많고 그에비해 게임조작화면이
+   * 너무 작음". 예전엔 시계판이 330px(화면의 11%)로 고정 상한에 막혀 있었다.
+   * 최대값을 올렸을 뿐이라 회귀하기 쉽다 — 여기서 최소 점유율을 못 박는다. */
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await openBoard('c-l1', 0);
+  const box = await page.locator('#dial').boundingBox();
+  const pct = box.width * box.height / (1180 * 820) * 100;
+  expect(pct >= 20, '패드 가로 시계판이 화면의 ' + pct.toFixed(1) + '% 뿐이다(20% 이상이어야 함)');
+  expect(box.width >= 450, '패드 가로 시계판이 ' + box.width.toFixed(0) + 'px 뿐이다(450px 이상이어야 함)');
+});
+
 await check('폰·패드: 겹침 없음 · 터치 46px · 화면 이탈 없음', async () => {
   const sizes = [{ w: 390, h: 844, name: '폰 세로' }, { w: 1180, h: 820, name: '패드' }];
   for (const s of sizes) {

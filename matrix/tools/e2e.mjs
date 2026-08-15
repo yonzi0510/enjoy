@@ -177,6 +177,24 @@ await check('3해상도 잘림 없음 (가로 스크롤·세로 넘침, 4×4 로
   await page.setViewportSize({ width: 1180, height: 820 });
 });
 
+await check('패드 가로: 격자가 화면을 넉넉히 쓴다 (빈 공간 지적 재발 방지)', async () => {
+  /* 부모님이 이 화면(작은 격자)을 사진으로 짚으며 "게임조작화면이 너무 작음" 이라
+   * 지적하셨다. 예전엔 격자가 374px(화면의 14%)로 고정 상한에 막혀 있었다.
+   * 최대값을 올렸을 뿐이라 회귀하기 쉽다 — 여기서 최소 점유율을 못 박는다. */
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.goto(BASE);
+  await page.waitForSelector('#scr-home.on');
+  await page.click('.menu-card.c-l1');
+  await page.waitForSelector('#scr-puzzles.on');
+  await page.click('#puzzles-list .puzzle-card');
+  await page.waitForSelector('#scr-play.on');
+  await page.waitForTimeout(200);
+  const box = await page.locator('#board').boundingBox();
+  const pct = box.width * box.height / (1180 * 820) * 100;
+  expect(pct >= 20, '패드 가로 격자가 화면의 ' + pct.toFixed(1) + '% 뿐이다(20% 이상이어야 함)');
+  expect(box.width >= 450, '패드 가로 격자가 ' + box.width.toFixed(0) + 'px 뿐이다(450px 이상이어야 함)');
+});
+
 /* ─── 낙서장 배치 (「시안 3」) ─────────────────────────────────────── */
 
 await check('첫 화면 낙서장: 칸마다 다른 기울기 · 크기 위계(1>2>3) · 안 겹침', async () => {
