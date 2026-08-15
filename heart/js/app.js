@@ -111,15 +111,19 @@ window.App = (() => {
     setTimeout(() => { if (cur === null) return; A.speak(sc.line + ' 지금 어떤 마음일까?'); }, 260);
   }
 
+  /* 장면 속 친구 얼굴 — 들어가자마자 표정을 보여 주면 아이가 그걸 그대로 베낀다는
+   * 지적(2026-08)에 **다 만들기 전에는 빈 얼굴**로 둔다. 완성되면(3/3) 그제야
+   * 아이가 고른 얼굴이 여기에도 옮겨 붙는다 — 예시가 아니라 결과가 된다. */
   function renderScene() {
-    const sel = cur.helped ? D.HAPPY : cur.scene.look;
+    const sel = cur.helped ? D.HAPPY : (filledCount(cur.sel) === 3 ? cur.sel : {});
     $('scene-pic').innerHTML = D.sceneSvg(cur.scene, sel, D.nextUid());
   }
 
-  /* 아이가 만드는 얼굴 — 붙인 부품만 그린다 */
+  /* 아이가 만드는 얼굴 — 붙인 부품만 그린다. 몸통을 붙였다(2026-08) —
+   * 원 안에 머리만 떠 있으면 "이게 얼굴인가?" 헷갈린다는 지적에 답했다. */
   function renderFace() {
     const box = $('face-box');
-    box.innerHTML = D.faceSvg(cur.sel, { cls: 'big-face' });
+    box.innerHTML = D.bodySvg(cur.sel, { cls: 'big-face' });
     box.dataset.filled = filledCount(cur.sel);
     const left = D.SLOTS.filter(s => !cur.sel[s]);
     $('face-hint').textContent = left.length
@@ -165,6 +169,7 @@ window.App = (() => {
     const was = filledCount(cur.sel);
     cur.sel[slot] = id;
     renderFace();
+    renderScene();
     markChosen($('parts'), cur.sel);
     A.sfx.stick();
     const now = filledCount(cur.sel);

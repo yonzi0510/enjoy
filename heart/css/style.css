@@ -182,11 +182,13 @@ h1 {
   font-size: clamp(13px, 2.6vmin, 20px); font-weight: 800; color: #6B4A56;
 }
 
-/* 아이가 만드는 얼굴 */
+/* 아이가 만드는 얼굴 — 머리만 떠 있으면 헷갈린다는 지적(2026-08)에 몸통을 붙였다.
+ * 원(50%) 대신 몸통 비율(20 6 80 114 viewBox 그대로 = 세로가 긴 인형)에 맞춘
+ * 둥근 네모 받침으로 바꿨다 — 원 halo 는 사람 모양과 안 맞아서 뺐다. */
 .face-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; }
 .face-box {
-  width: clamp(96px, 20vh, 172px); aspect-ratio: 1; line-height: 0;
-  border-radius: 50%; background: rgba(255, 255, 255, .6);
+  width: clamp(74px, 9.5vh, 124px); aspect-ratio: 80 / 114; line-height: 0;
+  border-radius: 22px; background: rgba(255, 255, 255, .6);
   box-shadow: 0 0 0 3px rgba(46, 42, 36, .18);
 }
 .face-box.hover { box-shadow: 0 0 0 5px #E4649A; background: #FFF2F6; }
@@ -202,7 +204,9 @@ h1 {
    그러면 감춘 부품 띠가 자리를 그대로 차지해 폰 가로에서 카드가 화면 밖으로 밀렸다. */
 .parts-tray[hidden], .help-cards[hidden] { display: none !important; }
 .parts-tray { display: flex; flex-direction: column; gap: clamp(4px, 1vmin, 10px); align-items: center; }
-.parts-row { display: flex; gap: clamp(5px, 1.2vmin, 12px); justify-content: center; }
+/* flex-wrap — 2026-08 표정 부품이 부위마다 +5(최대 11개/줄)로 늘어 폰 너비에서
+   한 줄로 안 들어간다. 줄바꿈으로 받는다(부위 하나가 그림처럼 2줄이 될 수 있다). */
+.parts-row { display: flex; flex-wrap: wrap; gap: clamp(5px, 1.2vmin, 12px); justify-content: center; }
 .part-item {
   width: clamp(46px, min(13vw, 10vh), 84px); height: clamp(46px, min(13vw, 10vh), 84px);
   min-width: 46px; min-height: 46px;
@@ -248,9 +252,12 @@ h1 {
 @media (orientation: landscape) {
   .play-stage { flex-direction: row; align-items: center; justify-content: center; gap: clamp(10px, 2vw, 26px); }
   .scene-card { flex: 0 0 clamp(160px, 18vw, 240px); max-width: none; }
-  .face-box { width: clamp(140px, 34vh, 320px); }
+  .face-box { width: clamp(120px, 30vh, 260px); }
   .tray-wrap { width: auto; }
-  .part-item { width: clamp(46px, min(11vw, 9vh), 72px); height: clamp(46px, min(11vw, 9vh), 72px); }
+  /* 표정 부품이 부위마다 최대 11개로 늘어(2026-08) 폭 제한 없이는 화면 밖으로
+     삐져나간다 — 도움 카드(.help-cards)와 같은 폭으로 묶어 줄바꿈을 강제한다. */
+  .parts-row { max-width: clamp(200px, 60vw, 560px); }
+  .part-item { width: clamp(44px, min(9vw, 8vh), 66px); height: clamp(44px, min(9vw, 8vh), 66px); }
   .help-cards { flex-wrap: wrap; max-width: clamp(200px, 34vw, 460px); }
   .help-card { width: clamp(70px, min(15vw, 20vh), 130px); }
 }
